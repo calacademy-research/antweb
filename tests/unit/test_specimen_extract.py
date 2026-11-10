@@ -56,7 +56,9 @@ with open(os.path.join(d, "calls.jsonl"), "a") as f:
     f.write(json.dumps({"argv": sys.argv[1:], "has_pwd": bool(os.environ.get("MYSQL_PWD")), "sql": sql}) + "\n")
 data = json.load(open(os.path.join(d, "answers.json")))
 def out(rows): sys.stdout.write("".join("\t".join(r) + "\n" for r in rows))
-if "/* outdated names */" in sql: out(data["outdated"])
+if "s.country is null" in sql and "select s.*" in sql: out([data["header"]] + data["no_country_rows"])
+elif "s.country is null" in sql: out([[str(data["no_country_count"])]])
+elif "/* outdated names */" in sql: out(data["outdated"])
 elif "/* per country */" in sql: out(data["per_country"])
 elif "from geolocale" in sql: out(data["places"])
 elif "select s.*" in sql: out([data["header"]] + data["rows"])
@@ -66,7 +68,15 @@ else: sys.exit("unexpected sql: " + sql)
 '''
 
 
-def setup(counts=None, places=None, rows=None, outdated=None, per_country=None):
+NO_COUNTRY_ROWS = [
+    ["utah1", "myrmicinaestenamma utah01", "myrmicinae", "stenamma", "NULL", "somewhere in Utah",
+     "NULL", "NULL", "formicidae", "NULL", "NULL", "NULL", "morphotaxon", "0", "species", "NULL", "NULL", "University of Utah", "0"],
+    ["utep1", "myrmicinaestenamma diecki", "myrmicinae", "stenamma", "", "El Paso",
+     "31.7", "-106.4", "formicidae", "NULL", "NULL", "NULL", "valid", "0", "species", "NULL", "Emery, 1895", " UTEP", "0"],
+]
+
+
+def setup(counts=None, places=None, rows=None, outdated=None, per_country=None, no_country_count=2):
     d = tempfile.mkdtemp(prefix="extract-test-")
     os.makedirs(os.path.join(d, "proj", "etc"))
     os.makedirs(os.path.join(d, "bin"))
@@ -85,7 +95,8 @@ def setup(counts=None, places=None, rows=None, outdated=None, per_country=None):
         json.dump({"places": places or PLACES, "header": HEADER, "rows": ROWS if rows is None else rows, "counts": counts, "list": LIST,
                    # index of the requested country, then the old name / the number of its specimens
                    "outdated": [["0", "USA"]] if outdated is None else outdated,
-                   "per_country": [["0", "2"], ["1", "1"], ["2", "1"]] if per_country is None else per_country}, f)
+                   "per_country": [["0", "2"], ["1", "1"], ["2", "1"]] if per_country is None else per_country,
+                   "no_country_rows": NO_COUNTRY_ROWS, "no_country_count": no_country_count}, f)
     return d
 
 
@@ -197,7 +208,7 @@ def test_specimens_under_an_outdated_name_are_in_the_file_and_counted():
     count = [c["sql"] for c in calls(d) if "group by 1, 2" in c["sql"]][0]
     assert "'USA'" in count
     m = json.load(open(os.path.join(d, "out", "manifest.json")))
-    assert m["tool_version"] == "3"
+    assert m["tool_version"] == "4"
     assert m["outdated_names"] == [{"name": "USA", "valid_name": "United States"}]
     assert m["filed_under_outdated_name"] == 1 and m["specimens"] == 6 and m["verified"] is True
     assert m["countries_without_specimens"] == []
@@ -231,8 +242,8 @@ def test_a_second_run_and_a_failed_run_leave_no_stale_or_partial_file():
     partial specimens.csv.gz that looked finished."""
     d = setup()
     out = os.path.join(d, "out")
-    assert run(d, "--countries", "United States,Canada,Mexico", "--bioregion", "Nearctic").returncode == 0
-    assert os.path.exists(os.path.join(out, "bioregion_list.csv"))
+    assert run(d, "--countries", "United States,Canada,Mexico", "--bioregion", "Nearctic", "--with-no-country").returncode == 0
+    assert os.path.exists(os.path.join(out, "bioregion_list.csv")) and os.path.exists(os.path.join(out, "specimens_no_country.csv.gz"))
     assert run(d, "--countries", "United States,Canada,Mexico").returncode == 0
     assert sorted(os.listdir(out)) == ["genus_summary.csv", "manifest.json", "manifest.txt", "specimens.csv.gz"]
     # an export that breaks off (a row with a field too few): no specimens.csv.gz, no manifest, nothing half-written
@@ -251,6 +262,30 @@ def test_a_second_run_and_a_failed_run_leave_no_stale_or_partial_file():
     assert run(d, "--countries", "United States,Canada,Mexico").returncode != 0
     assert os.listdir(os.path.join(d, "out")) == []
     print("ok   test_a_second_run_and_a_failed_run_leave_no_stale_or_partial_file")
+def test_specimens_with_no_country_go_in_their_own_file():
+    """Production 2026-11-10: 1,623 specimens have no country (Utah 303, UTEP 167, ...); no country filter finds them."""
+    d = setup()
+    r = run(d, "--countries", "United States,Canada,Mexico", "--with-no-country")
+    assert r.returncode == 0, r.stdout + r.stderr
+    with gzip.open(os.path.join(d, "out", "specimens_no_country.csv.gz"), "rt", encoding="utf-8", newline="") as f:
+        rows = list(csv.DictReader(f))
+    assert [x["code"] for x in rows] == ["utah1", "utep1"] and rows[0]["country"] == ""
+    m = json.load(open(os.path.join(d, "out", "manifest.json")))
+    assert m["no_country"] == {"specimens": 2, "in_database": 2, "with_coordinates": 1, "names": 2,
+                               "names_not_in_the_countries_file": 1,
+                               "by_group": {"University of Utah": 1, " UTEP": 1}}
+    assert "specimens_no_country.csv.gz" in m["files"] and m["specimens"] == 5 and m["verified"] is True
+    assert "Specimens with no country, in specimens_no_country.csv.gz" in r.stdout
+    # a different database count fails the run
+    d = setup(no_country_count=3)
+    r = run(d, "--countries", "United States,Canada,Mexico", "--with-no-country")
+    assert r.returncode == 1 and "DIFFERENT" in r.stdout
+    # without the option: no file, no query
+    d = setup()
+    run(d, "--countries", "United States,Canada,Mexico")
+    assert not os.path.exists(os.path.join(d, "out", "specimens_no_country.csv.gz"))
+    assert not any("s.country is null" in c["sql"] for c in calls(d))
+    print("ok   test_specimens_with_no_country_go_in_their_own_file")
 
 
 def test_islands_can_be_left_out():
@@ -288,4 +323,5 @@ if __name__ == "__main__":
     test_specimens_under_an_outdated_name_are_in_the_file_and_counted()
     test_a_country_without_specimens_is_a_warning()
     test_a_second_run_and_a_failed_run_leave_no_stale_or_partial_file()
+    test_specimens_with_no_country_go_in_their_own_file()
     print("ok")
