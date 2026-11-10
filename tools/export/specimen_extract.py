@@ -15,6 +15,8 @@ It writes one folder (default /root/antweb-extracts/<date>-<names>/):
                           WITHOUT coordinates are in the file (has_coordinates says which): a cut by a shape
                           file would lose them. Specimens whose name has no taxon row are in the file too
                           (no_taxon_row = 1; the API's specimen view leaves those out).
+  specimens_no_country.csv.gz   with --with-no-country: every specimen of AntWeb with no country (same columns).
+                          No country filter can find these; some belong to the countries asked for.
   genus_summary.csv       per genus: specimens, names (distinct taxon names), names with at least one
                           specimen with coordinates, and the same for the chosen bioregion.
   bioregion_list.csv      with --bioregion: AntWeb's species list of that bioregion (the list its page shows),
@@ -47,7 +49,7 @@ import re
 import subprocess
 import sys
 
-VERSION = "2"
+VERSION = "3"
 TAXON_COLUMNS = ("taxon_status", "taxon_fossil", "taxon_rank", "taxon_current_valid_name", "taxon_author_date",
                  "group_name", "no_taxon_row")
 PLACE_NAME = re.compile(r"^[^\x00-\x1f;\\]{1,64}$")
@@ -112,6 +114,15 @@ def export_sql(countries, islands):
             "from specimen s left join taxon t on t.taxon_name = s.taxon_name "
             "left join ant_group g on g.id = s.access_group "
             "where " + where_sql(countries, islands) + " order by s.code")
+
+
+NO_COUNTRY = "(s.country is null or s.country = '')"
+
+
+def no_country_export_sql():
+    """Specimens with no country at all: no country filter can find them (production 2026-11-10: 1,623, among them
+    303 of the University of Utah and 167 of UTEP), so they go in a file of their own for the curators to look through."""
+    return export_sql([], []).replace(where_sql([], []), NO_COUNTRY)
 
 
 def count_sql(countries, islands):
@@ -329,6 +340,12 @@ def manifest_text(m):
         b = m["bioregion_list"]
         lines += ["", "AntWeb's %s species list: %s names; %s of them have no specimen in this extract (literature, or other countries)"
                   % (m["bioregion"], "{:,}".format(b["names"]), "{:,}".format(b["names_without_specimen_in_extract"]))]
+    if m.get("no_country"):
+        nc = m["no_country"]
+        lines += ["", "Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them): "
+                  "{:,}; with coordinates {:,}; {:,} names, {:,} of them not in the countries file".format(
+                      nc["specimens"], nc["with_coordinates"], nc["names"], nc["names_not_in_the_countries_file"]),
+                  "  by upload group: " + ", ".join("%s %s" % (g.strip() or "(none)", "{:,}".format(n)) for g, n in nc["by_group"].items())]
     lines += ["", "Files (sha256):"]
     for name, info in m["files"].items():
         lines.append("  %s  %s" % (info["sha256"], name))
@@ -360,6 +377,8 @@ def main(argv=None):
     a.add_argument("--countries", required=True, help='AntWeb country names, comma-separated: "United States,Canada,Mexico"')
     a.add_argument("--bioregion", default="", help="also write AntWeb's species list of this bioregion (for example Nearctic)")
     a.add_argument("--no-islands", action="store_true", help="leave out islands AntWeb treats as countries")
+    a.add_argument("--with-no-country", action="store_true",
+                   help="also write specimens_no_country.csv.gz: every specimen of AntWeb that has no country")
     a.add_argument("--project", default=None, help="AntWeb checkout with etc/db.properties (default: found)")
     a.add_argument("--container", default="antweb_mysql_1")
     a.add_argument("--out", default=None, help="folder to write (default /root/antweb-extracts/<date>-<names>)")
@@ -394,9 +413,29 @@ def main(argv=None):
     header = write_specimens(stream_query(project, export_sql(countries, islands), args.container), spec_path, stats)
     verified, diffs = compare_counts(stats, run_query(project, count_sql(countries, islands), args.container))
 
+    no_country = None
+    extra_files = []
+    if args.with_no_country:
+        nc_stats = Stats("")
+        nc_path = os.path.join(out, "specimens_no_country.csv.gz")
+        write_specimens(stream_query(project, no_country_export_sql(), args.container), nc_path, nc_stats)
+        nc_db = int(run_query(project, "select count(*) from specimen s where " + NO_COUNTRY, args.container)[0][0])
+        groups = collections.Counter()
+        with gzip.open(nc_path, "rt", encoding="utf-8", newline="") as f:
+            for row in csv.DictReader(f):
+                groups[row.get("group_name", "")] += 1
+        no_country = {"specimens": nc_stats.rows, "in_database": nc_db, "with_coordinates": nc_stats.rows - nc_stats.no_coordinates,
+                      "names": len(nc_stats.name_specimens),
+                      "names_not_in_the_countries_file": len(set(nc_stats.name_specimens) - set(stats.name_specimens)),
+                      "by_group": dict(groups.most_common())}
+        if nc_stats.rows != nc_db:
+            verified = False
+            diffs.append({"file": "specimens_no_country.csv.gz", "in_file": nc_stats.rows, "in_database": nc_db})
+        extra_files.append(nc_path)
+
     genus_path = os.path.join(out, "genus_summary.csv")
     write_genus_summary(genus_path, stats)
-    files = [spec_path, genus_path]
+    files = [spec_path] + extra_files + [genus_path]
     bio = None
     if args.bioregion:
         list_path = os.path.join(out, "bioregion_list.csv")
@@ -414,7 +453,7 @@ def main(argv=None):
         "by_bioregion": dict(sorted(stats.by_bioregion.items())), "by_taxon_status": dict(sorted(stats.by_status.items())),
         "without_coordinates": stats.no_coordinates, "no_taxon_row": stats.no_taxon_row, "flagged": stats.flagged,
         "not_ants": stats.not_ants, "genera": len(stats.genus), "names": len(stats.name_specimens),
-        "bioregion_list": bio,
+        "bioregion_list": bio, "no_country": no_country,
         "files": {os.path.basename(p): {"sha256": sha256(p), "bytes": os.path.getsize(p)} for p in files},
     }
     with open(os.path.join(out, "manifest.json"), "w", encoding="utf-8") as f:
