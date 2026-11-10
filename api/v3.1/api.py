@@ -25,10 +25,11 @@ and rate-limits it per visitor).
 
 Routes (all GET, JSON, or one record per line with ndjson=true): / (the documentation page link and health
 check, always open), /specimens, /geoSpecimens, /geoSpeciesStats, /taxa, /distinctTaxa, /images, /measurements,
-/taxaImages, /geolocales, /geolocaleTaxa, /bioregions, /bioregionTaxa and /unimagedGeolocaleTaxa. The data routes
-answer only with up=1 (an admin switch, see down(); once V4_OPEN is True it also needs an admin key in X-API-Key,
-upSwitch()); without it HTTP 503 with a JSON message. Unknown parameters
-get HTTP 400 naming the accepted ones. Records per request are capped
+/taxaImages, /geolocales, /geolocaleTaxa, /bioregions, /bioregionTaxa and /unimagedGeolocaleTaxa. While v4 is closed
+(V4_OPEN False) the data routes answer only with up=1 (an admin switch, see down()); without it HTTP 503 with a JSON
+message. Once v4 is open (V4_OPEN True; decided by Brian Fisher 2026-11-09) v3.1 has ended: every data route answers
+HTTP 410 Gone with a JSON signpost to v4 (apiEnded()), up=1 does nothing, and / stays 200 with status "ended".
+Unknown parameters get HTTP 400 naming the accepted ones. Records per request are capped
 (MAX_LIMIT, maxLimit= in etc/api-db.properties); every reply carries the CC BY 4.0 licence in a Link header,
 and JSON data replies also in a license field.
 
@@ -39,8 +40,10 @@ cannot reach the database. v3.1 writes nothing.
 Version 4 (/v4/, step 6 PR 3, 2026-11-08) is api_v4.py, mounted under /v4 at the end of this file: the same routes
 with free registered API keys (header X-API-Key), limits per level and the field names specimenCode,
 collectingEventCode and localityCode. Its counts are written with a second login that may write only the API key
-tables (usageUser= and usagePassword=, api_keys.py). V4_OPEN below says whether v4 is open to everyone. The counts /taxa serves are written into the taxon table by the
-nightly (TaxonApiCountDb). User documentation: https://www.antweb.org/apiV3.1.do; developer documentation:
+tables (usageUser= and usagePassword=, api_keys.py). V4_OPEN below says whether v4 is open to everyone; it is read at
+start from v4Open= in etc/api-db.properties (readV4Open()), so opening and closing need no code change. v4 runs the
+route functions of this file in an inner request (g.apiV4Inner), in both states. The counts /taxa serves are written
+into the taxon table by the daily update (TaxonApiCountDb). User documentation: https://www.antweb.org/apiV3.1.do; developer documentation:
 docs/flows/api.md. Tests: tests/unit/test_api_*.py, tests/e2e (API tests).
 """
 
@@ -248,11 +251,12 @@ print("server started. devMode:" + str(isDevMode) + " platform:" + sys.platform)
 def hello():
     """The API's front door (step 6, API keys PR 1, 2026-11-08): what the API is, whether it is open, and where the
     documentation, terms of use and the plain-text guide for programs and AI agents (/llms.txt) are. Always 200 (the
-    uptime check and the deploy smoke run read it; both look for "Antweb API")."""
-    return jsonify(
+    uptime check and the deploy smoke run read it; both look for "Antweb API"). Once v4 is open (V4_OPEN) the status
+    is "ended" and the message points to v4; the data routes then answer 410 (apiEnded())."""
+    body = dict(
         name="Antweb API " + version,
-        status="closed",
-        message=API_DOWN_MESSAGE,
+        status="ended" if V4_OPEN else "closed",
+        message=apiDownMessage(V4_OPEN),
         documentation=API_DOCS_URL,
         terms=API_TERMS_URL,
         guideForPrograms=LLMS_URL,
@@ -263,6 +267,7 @@ def hello():
             "message": ("Version 4 is open with free registered API keys." if V4_OPEN else
                         "Version 4, with free registered API keys, is not open yet.")},
     )
+    return jsonify(**body)
 
 
 # - Various Methods, etc.. ---------------------------------------------------------------
@@ -318,60 +323,45 @@ def numbers(value, count):
 
 
 def down(request):
-    # The data routes answer only with &up=1 (admin switch, see the documentation page). Returns 1 when the request is
-    # not let in (503), 0 when it is. The inner requests of v4 (api_v4.run) are let in by g.apiV4Inner, set only there;
-    # they never depend on up=1. Once V4_OPEN is True, up=1 also needs an active admin key in X-API-Key (upSwitch()).
+    # Returns 1 when the request is not let in, 0 when it is. The inner requests of v4 (api_v4.run) are let in by
+    # g.apiV4Inner, set only there; they never depend on up=1. While v4 is closed (V4_OPEN False) a data route answers
+    # only with &up=1 (admin switch; the staging tests use it), else 503. Once v4 is open, v3.1 has ended: nothing but
+    # v4's inner requests is let in, with or without up=1 (410, apiEnded(); decided by Brian Fisher 2026-11-09).
     if g.get('apiV4Inner'):
         return 0
-    up = request.args.get('up', default='*', type=str)
-    if up != '1':
+    if V4_OPEN:
         return 1
-    return 0 if upSwitch(request) == 'ok' else 1
+    up = request.args.get('up', default='*', type=str)
+    return 0 if up == '1' else 1
 
 
-def upSwitch(request):
-    """'ok' when up=1 may open v3.1 for this request, 'down' (503) or 'badkey' (401). While V4_OPEN is False, up=1 alone
-    is enough (as before; the staging tests use it). Once V4_OPEN is True, it needs an active admin key in the X-API-Key
-    header, looked up with the v4 usage login (api_v4.usage); without that login, refused. Decided once per request
-    (g.apiUpSwitch), since checkUp() and the route's own down() both ask."""
-    if not V4_OPEN:
-        return 'ok'
-    cached = g.get('apiUpSwitch')
-    if cached is not None:
-        return cached
-    result = 'down'
-    store = getattr(sys.modules.get('api_v4'), 'usage', None)
-    sent = request.headers.get('X-API-Key')
-    if store is not None and sent is not None:
-        import api_keys
-        sent = sent.strip()
-        try:
-            row = store.find_key(api_keys.key_hash(sent)) if api_keys.KEY_RE.match(sent) else None
-        except Exception as err:  # noqa: BLE001  counter database down: refused
-            print('API up switch: key lookup failed: ' + type(err).__name__, flush=True)
-            row = None
-            sent = None
-        if sent is not None and (row is None or row.status != 'active'):
-            result = 'badkey'
-        elif row is not None and (row.level or '').lower() == 'admin':
-            result = 'ok'
-    g.apiUpSwitch = result
-    return result
+def readV4Open(props, env=None):
+    """Is v4 open? The one switch (decided by Brian Fisher 2026-11-09): v4Open=true in etc/api-db.properties on the
+    server, read at start (docker restart antweb_api_1 after a change). Without the line, or with any other value:
+    closed. The environment variable API_V4_OPEN, when set, wins (development and tests)."""
+    env = os.environ if env is None else env
+    raw = env.get('API_V4_OPEN', '')
+    if not str(raw).strip():
+        raw = next((v for k, v in props.items() if k.strip() == 'v4Open'), '')
+    return str(raw).strip().lower() in ('1', 'true', 'yes', 'on')
 
 
-# Version 4 with free registered API keys (api_v4.py). False: v4 answers only admin keys, and v3.1 keeps the message
-# below. True (when keys go live, Brian Fisher's decision): v4 is open to everyone at its limits, and the v3.1 503
-# points to v4.
-V4_OPEN = False
+# Version 4 with free registered API keys (api_v4.py). False (the default): v4 answers only admin keys, and v3.1 is as
+# it was (503 without up=1). True: v4 is open to everyone at its limits and v3.1 has ended: its data routes answer 410
+# with a signpost to v4, up=1 does nothing, / says "ended" (decided by Brian Fisher 2026-11-09). Set on the server
+# without a code change: v4Open=true in etc/api-db.properties, then docker restart antweb_api_1; rollback: remove the
+# line and restart.
+V4_OPEN = readV4Open(_apiProps)
+print('API v4 open:', V4_OPEN, flush=True)
 V4_URL = "https://www.antweb.org/v4/"
 GET_A_KEY_URL = "https://www.antweb.org/apiKey.do"
 API_CLOSED_MESSAGE = "The AntWeb API is closed while we add free registered API keys. It will reopen in the coming weeks; see antweb.org for news."
-API_MOVED_MESSAGE = ("The AntWeb API v3.1 is closed. Please use the AntWeb API v4 at " + V4_URL + " with a free API key"
+API_ENDED_MESSAGE = ("The AntWeb API v3.1 has ended. Please use the AntWeb API v4 at " + V4_URL + " with a free API key"
                      " from " + GET_A_KEY_URL + ".")
 
 
 def apiDownMessage(v4Open):
-    return API_MOVED_MESSAGE if v4Open else API_CLOSED_MESSAGE
+    return API_ENDED_MESSAGE if v4Open else API_CLOSED_MESSAGE
 
 
 API_DOWN_MESSAGE = apiDownMessage(V4_OPEN)
@@ -393,10 +383,25 @@ API_TERMS = [
 ]
 
 
+def apiEnded():
+    """v3.1 after v4 opened: HTTP 410 Gone with a short JSON signpost (where v4 is, where the free key comes from, the
+    documentation, the terms, the citation and the licence). No Retry-After (it does not come back) and no-store, so
+    no cache keeps the 410 if the switch is turned back."""
+    response = flaskJsonify(error=API_ENDED_MESSAGE, status="ended", v4=V4_URL, getAKey=GET_A_KEY_URL,
+                            documentation=API_DOCS_URL, terms=API_TERMS_URL, guideForPrograms=LLMS_URL,
+                            citation=CITATION, license=LICENSE)
+    response.status_code = 410
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 def apiDown():
-    # Without up=1: HTTP 503 with a JSON message (decided by Brian Fisher 2026-10-27; it was an empty page with
-    # HTTP 200). The / route stays open for health checks.
-    response = jsonify(error=API_DOWN_MESSAGE, documentation=API_DOCS_URL, terms=API_TERMS_URL)
+    # The reply of a data route that is not let in (down()). While v4 is closed: HTTP 503 with a JSON message (decided
+    # by Brian Fisher 2026-10-27; it was an empty page with HTTP 200). Once v4 is open: 410 (apiEnded()). The / route
+    # stays open for health checks.
+    if V4_OPEN:
+        return apiEnded()
+    response = jsonify(error=API_CLOSED_MESSAGE, documentation=API_DOCS_URL, terms=API_TERMS_URL)
     response.status_code = 503
     # programs should come back tomorrow, not retry at once (Brian Fisher's terms, 2026-11-08)
     response.headers["Retry-After"] = "86400"
@@ -2720,15 +2725,12 @@ def suggestParams(name, accepted):
 @application.before_request
 def checkUp():
     # Before any other check and before the route's own code (some routes answered a missing parameter first):
-    # every data route without up=1 answers 503 (apiDown). The per-route down() lines stay as a second check.
+    # every data route that is not let in answers 503 (v4 closed, no up=1) or 410 (v4 open: v3.1 has ended), see
+    # apiDown(). The per-route down() lines stay as a second check.
     endpoint = request.endpoint
     if endpoint is None or endpoint in UNCHECKED_ENDPOINTS or endpoint not in application.view_functions:
         return None
     if down(request):
-        if g.get('apiUpSwitch') == 'badkey':
-            response = jsonify(error="This API key is not valid.", documentation=API_DOCS_URL)
-            response.status_code = 401
-            return response
         return apiDown()
     return None
 

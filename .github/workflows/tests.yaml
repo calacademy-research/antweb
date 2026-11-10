@@ -180,7 +180,7 @@ jobs:
             -v "$PWD/docker-compose.yml:/repo/docker-compose.yml:ro" -v "$PWD/docker-compose.dev.yml:/repo/docker-compose.dev.yml:ro" \
             antweb/api:dev /t/test_api_decisions.py
 
-      - name: API v4 with free registered keys (header only, hashes, levels, 429 and 401, daily record limit, no key or token in logs, v3.1 admin switch, IPv6 per /64) (tests/unit/test_api_v4.py)
+      - name: API v4 with free registered keys (header only, hashes, levels, 429 and 401, daily record limit, no key or token in logs, IPv6 per /64; the one switch v4Open: closed as before, open = v4 for everyone and every v3.1 data route 410) (tests/unit/test_api_v4.py)
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" -v "$PWD/docker/caddy:/caddy:ro" \
             antweb/api:dev /t/test_api_v4.py

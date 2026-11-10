@@ -7,7 +7,8 @@ without stripping the path (docker/caddy/Caddyfile and Caddyfile.common). For ea
   1. refuses a key in the web address (400), keys go only in the X-API-Key header;
   2. answers 503 when the usage login is not configured (never open without limits);
   3. checks the key (401 if unknown, not active or malformed) and the level (api_keys.py);
-  4. while api.V4_OPEN is False, answers only admin keys (503 for everyone else);
+  4. while api.V4_OPEN is False (v4Open= in etc/api-db.properties, api.readV4Open()), answers only admin keys (503
+     for everyone else); once it is True, everyone at their level's limits, and v3.1 itself answers 410 (api.apiEnded());
   5. refuses unknown parameters (400, with the v4 names);
   6. counts the request and reserves its records in the database, or answers 429 with Retry-After;
   7. runs the v3.1 route itself in an inner request (let in by flask.g.apiV4Inner, not up=1, with the level's
