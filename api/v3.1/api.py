@@ -903,7 +903,8 @@ def getSpecimen():
         print("hasImage:" + hasImage)
         # print("hasImage:" + hasImage + " query:" + str(query))
     try:
-        data = query.all()
+        # v4 only: metaData.total, complete and afterCode=; outside v4 this is query.all() (api_v4.rows())
+        data = api_v4.rows(query, limit, offset, Specimen.code, after_code=True)
     except OperationalError as error:
         return apiError("specimens", error)
     except Exception as error:
@@ -1011,7 +1012,7 @@ def getGeoSpecimens():
         query = query.offset(offset)
 
         try:
-            data = query.all()
+            data = api_v4.rows(query, limit, offset)   # v4 only: metaData.total and complete; else query.all()
         except OperationalError as error:
             return apiError("geoSpecimens", error)
         except Exception as error:
@@ -1042,7 +1043,8 @@ def getGeoSpecimens():
     query = query.offset(offset)
 
     try:
-        data = query.all()
+        # v4 only: metaData.total, complete and afterCode=; outside v4 this is query.all() (api_v4.rows())
+        data = api_v4.rows(query, limit, offset, Specimen.code, after_code=True)
     except OperationalError as error:
         return apiError("geoSpecimens", error)
     except Exception as error:
@@ -1238,7 +1240,8 @@ def getTaxa():
     query = query.offset(offset)
 
     try:
-        data = query.all()
+        # v4 only: metaData.total and complete; outside v4 this is query.all() (api_v4.rows())
+        data = api_v4.rows(query, limit, offset, Taxon.taxonName)
     except OperationalError as error:
         return apiError("taxa", error)
     except Exception as error:

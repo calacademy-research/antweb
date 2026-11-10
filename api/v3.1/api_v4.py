@@ -21,6 +21,12 @@ Field names in v4 (the v3.1 name, then the Darwin Core term):
   localityCode         AntWeb's locality code (not in v3.1)                      dwc:locationID
 /specimens also takes collectingEventCode= and localityCode= as filters.
 
+Complete sets (2026-11-10; rows() below): the list routes /specimens, /geoSpecimens and /taxa say in metaData how
+many records match the filters (total, on the first page or with total=true), how many this answer holds (returned)
+and whether it reaches the end (complete). /specimens and /geoSpecimens take afterCode=<specimen code>: the records
+after that code in specimen code order, so a set fetched page by page neither skips nor repeats a record when
+records are added or removed meanwhile; metaData.nextAfterCode is the code to send next.
+
 The key is never written to a log, an error or a reply: the inner request has no key header, and nothing here prints
 headers. Docs: docs/flows/api.md, section "v4 and API keys". Tests: tests/unit/test_api_v4.py.
 """
@@ -28,7 +34,7 @@ import json
 import urllib.parse
 
 from flask import Flask, Response, g, request
-from sqlalchemy import bindparam, column, create_engine, select, table, text
+from sqlalchemy import bindparam, column, create_engine, func, select, table, text
 from sqlalchemy.engine import URL
 from werkzeug.datastructures import MultiDict
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
@@ -53,13 +59,34 @@ FIELDS = [
      'meaning': 'The locality where the specimen was collected, as coded by the collector.'},
 ]
 # New filters of v4 (applied inside the v3.1 /specimens query through flask.g, api.v4SpecimenFilters()).
-EXTRA_PARAMS = {'getSpecimen': ('collectingEventCode', 'localityCode')}
+# afterCode and total (rows()) are v4 names too: they reach the query through flask.g, never the v3.1 parameters.
+EXTRA_PARAMS = {'getSpecimen': ('collectingEventCode', 'localityCode', 'afterCode', 'total'),
+                'getGeoSpecimens': ('afterCode', 'total'),
+                'getTaxa': ('total',)}
 # Old or Darwin Core names, pointed to the v4 name in the 400 reply.
 HINTS = {'collectionCode': 'collectingEventCode', 'catalogNumber': 'specimenCode', 'eventID': 'collectingEventCode',
-         'fieldNumber': 'collectingEventCode', 'locationID': 'localityCode', 'code': 'specimenCode'}
+         'fieldNumber': 'collectingEventCode', 'locationID': 'localityCode', 'code': 'specimenCode',
+         'after': 'afterCode', 'cursor': 'afterCode'}
 # Routes whose records are specimens (they get localityCode).
 SPECIMEN_LISTS = {'specimens': 'specimens', 'geoSpecimens': 'specimens'}
 NOT_FOR_V4 = ('up', 'log')
+# Complete sets: what the list routes say and take (the v4 front door and docs/flows/api.md).
+PAGING = {
+    'routes': ['/v4/specimens', '/v4/geoSpecimens', '/v4/taxa'],
+    'total': 'metaData.total is the number of records that match the filters, whatever limit is. It is given on the'
+             ' first page (no offset, no afterCode) and on any page with total=true; total=false leaves it out.',
+    'returned': 'metaData.returned is the number of records in this answer.',
+    'complete': 'metaData.complete is true when this answer reaches the end of the set.',
+    'afterCode': 'On /v4/specimens and /v4/geoSpecimens, afterCode=<specimen code> gives the records after that code'
+                 ' in specimen code order. metaData.nextAfterCode is the last code of this answer; send it as'
+                 ' afterCode for the next one, until complete is true. Use afterCode or offset, not both.',
+    'ndjson': 'With ndjson=true the same values are in the headers X-AntWeb-Total, X-AntWeb-Returned,'
+              ' X-AntWeb-Complete and X-AntWeb-Next-After-Code (URL-encoded).',
+}
+BOTH_PAGINGS_MESSAGE = ('Use afterCode or offset, not both. afterCode=<the last specimen code you received> gives the'
+                        ' records after it; offset=<n> leaves out the first n records.')
+AFTER_CODE_DISTINCT_MESSAGE = 'afterCode pages specimen records; it cannot be used with distinct.'
+TOTAL_VALUE_MESSAGE = 'total must be true or false.'
 
 NOT_CONFIGURED_MESSAGE = ('The AntWeb API v4 is not available: API keys are not configured on this server. Please try'
                           ' again later or write to antweb@antweb.org.')
@@ -160,7 +187,7 @@ def front():
     return reply({
         'name': 'Antweb API v4', 'status': st, 'message': messages[st],
         'getAKey': api_keys.GET_A_KEY_URL, 'keyHeader': api_keys.KEY_HEADER, 'limits': lim,
-        'routes': ['/v4/' + r for r in sorted(routes())], 'fieldNames': FIELDS,
+        'routes': ['/v4/' + r for r in sorted(routes())], 'fieldNames': FIELDS, 'paging': PAGING,
         'documentation': api.API_DOCS_URL, 'terms': api.API_TERMS_URL, 'guideForPrograms': api.LLMS_URL,
         'terms_of_use': api.API_TERMS, 'contact': api_keys.CONTACT, 'citation': api.CITATION,
         'license': api.LICENSE,
@@ -197,7 +224,7 @@ def data(name):
     if not api.V4_OPEN and (row is None or (row.level or '').lower() != 'admin'):
         return error(NOT_OPEN_MESSAGE, 503, {'Retry-After': '86400'}, documentation=api.API_DOCS_URL,
                      terms=api.API_TERMS_URL)
-    bad = check_params(endpoint)
+    bad = check_params(endpoint) or check_paging(endpoint)
     if bad is not None:
         return bad
 
@@ -262,6 +289,20 @@ def check_params(endpoint):
     return error(message, 400, **extra)
 
 
+def check_paging(endpoint):
+    """400 for afterCode with offset (two ways of paging in one request), afterCode with distinct (the distinct lists
+    are names, not specimens) and a total that is not true or false. Before the request is counted."""
+    own = EXTRA_PARAMS.get(endpoint, ())
+    if 'total' in own and request.args.get('total') not in (None, 'true', 'false'):
+        return error(TOTAL_VALUE_MESSAGE, 400, documentation=PUBLIC_URL + '/')
+    if 'afterCode' in own and 'afterCode' in request.args:
+        if 'offset' in request.args:
+            return error(BOTH_PAGINGS_MESSAGE, 400, documentation=PUBLIC_URL + '/')
+        if 'distinct' in request.args:
+            return error(AFTER_CODE_DISTINCT_MESSAGE, 400, documentation=PUBLIC_URL + '/')
+    return None
+
+
 def run(name, endpoint, admission, has_key, limits):
     """The v3.1 route in an inner request (g.apiV4Inner) with limit = the reserved records; returns (response, records)."""
     filters = {}
@@ -280,6 +321,7 @@ def run(name, endpoint, admission, has_key, limits):
         g.apiMaxLimit = admission.reserved
         g.apiV4Filters = filters
         inner_response = api.application.full_dispatch_request()
+        found = getattr(g, 'apiV4Paging', None)     # set by rows() for the list routes
         body = inner_response.get_data()
         code = inner_response.status_code
         link = inner_response.headers.get('Link')
@@ -287,8 +329,10 @@ def run(name, endpoint, admission, has_key, limits):
     if code != 200:
         response = Response(body, status=code, content_type=content_type)
         return response, 0
+    paging = None
     if ndjson:
         records = ndjson_records(body)
+        paging = page_info(found, records, admission.reserved)
         records = records[:admission.reserved]
         add_locality_codes(name, records)
         lines = []
@@ -303,6 +347,7 @@ def run(name, endpoint, admission, has_key, limits):
         key = record_list(obj)
         count = 0
         if key is not None:
+            paging = page_info(found, obj[key], admission.reserved)
             if len(obj[key]) > admission.reserved:
                 obj[key] = obj[key][:admission.reserved]
             count = len(obj[key])
@@ -318,6 +363,8 @@ def run(name, endpoint, admission, has_key, limits):
                     obj[meta]['limitNotice'] = notice
                 obj[meta]['level'] = level_name(has_key)
                 obj[meta]['recordsLeftToday'] = admission.records_left + (admission.reserved - count)
+                if paging:
+                    obj[meta].update(paging)
         response = app.json.response(obj)
     notice = limit_notice(has_key, limits, admission, count)
     if notice:
@@ -326,7 +373,41 @@ def run(name, endpoint, admission, has_key, limits):
         response.headers['Link'] = link
     response.headers['X-AntWeb-Level'] = level_name(has_key)
     response.headers['X-AntWeb-Records-Left-Today'] = str(admission.records_left + (admission.reserved - count))
+    for field, header in PAGING_HEADERS:
+        if paging and field in paging:
+            value = paging[field]
+            if isinstance(value, bool):
+                value = 'true' if value else 'false'
+            # the code URL-encoded: ready for afterCode=, and safe as a header whatever characters a code has
+            response.headers[header] = urllib.parse.quote(str(value), safe='')
     return response, count
+
+
+PAGING_HEADERS = (('total', 'X-AntWeb-Total'), ('returned', 'X-AntWeb-Returned'), ('complete', 'X-AntWeb-Complete'),
+                  ('nextAfterCode', 'X-AntWeb-Next-After-Code'))
+
+
+def page_info(paging, records, reserved):
+    """What metaData says about this page: total (when counted), returned, complete and nextAfterCode (when there is
+    a next page of specimens). None for a route without rows(). If this answer had to be cut here (it holds more
+    than the reserved records; rows() never gives more), it is not complete and the next page starts after its last
+    record."""
+    if not paging:
+        return None
+    out = {}
+    if 'total' in paging:
+        out['total'] = paging['total']
+    cut = len(records) > reserved
+    out['returned'] = min(len(records), reserved)
+    out['complete'] = bool(paging.get('complete')) and not cut
+    if not out['complete'] and paging.get('byCode'):
+        last = records[reserved - 1] if cut else (records[-1] if records else None)
+        code = last.get('specimenCode') if isinstance(last, dict) else None
+        if code is None:
+            code = paging.get('lastCode')
+        if code is not None:
+            out['nextAfterCode'] = code
+    return out
 
 
 def level_name(has_key):
@@ -398,6 +479,45 @@ def add_locality_codes(name, records):
 # --- used by api.getSpecimen (inside the inner request) --------------------------------------------------------
 
 _specimen = table('specimen', column('code'), column('localitycode'))
+
+
+def rows(query, limit, offset, key=None, after_code=False):
+    """The records of one page of a list route. `query` is the route's own query: its filters, its fixed order,
+    its limit and its offset. Outside v4 (v3.1 while v4 is closed) this is query.all(), exactly as before.
+
+    In v4 it also tells run() (through flask.g.apiV4Paging) what metaData says about the page:
+      total     the number of records that match the filters. Counted from this same query without its order,
+                limit and offset, so the count and the records cannot use different filters. Only on the first
+                page (offset 0, no afterCode) or with total=true; never with total=false (a count reads every
+                matching row, so later pages leave it out).
+      complete  whether this page reaches the end: one record more than `limit` is read and not given, so this
+                costs no count and is right on every page.
+      lastCode  the specimen code of the last record (after_code routes), for metaData.nextAfterCode.
+    afterCode (after_code routes): only records with a specimen code greater than the given one, a bound parameter
+    compared with the same column the query is ordered by. `key` is a column that is never NULL (the specimen code,
+    the taxon name), counted directly; without it the query is counted as a subquery (the distinct lists)."""
+    if not getattr(g, 'apiV4Inner', False):
+        return query.all()
+    f = getattr(g, 'apiV4Filters', None) or {}
+    after = f.get('afterCode') if after_code else None
+    unlimited = query.limit(None).offset(None)
+    paging = {'byCode': bool(after_code)}
+    wanted = f.get('total')
+    if wanted == 'true' or (wanted != 'false' and offset == 0 and not after):
+        counted = unlimited.order_by(None)
+        if key is not None:
+            paging['total'] = counted.with_entities(func.count(key)).scalar()
+        else:
+            paging['total'] = counted.count()
+    if after:
+        unlimited = unlimited.filter(key > after)
+    found = unlimited.limit(limit + 1).offset(offset).all()
+    paging['complete'] = len(found) <= limit
+    found = found[:limit]
+    if after_code and found:
+        paging['lastCode'] = getattr(found[-1], key.key)
+    g.apiV4Paging = paging
+    return found
 
 
 def specimen_filters(query, Specimen):

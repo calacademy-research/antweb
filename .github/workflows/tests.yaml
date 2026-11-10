@@ -191,6 +191,13 @@ jobs:
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" -v "$PWD/docker/caddy:/caddy:ro" \
             antweb/api:dev /t/test_api_v4.py
 
+      - name: API v4 complete sets (metaData.total, returned and complete; afterCode paging that neither skips nor repeats when records change; afterCode with offset is 400; v3.1 unchanged while v4 is closed) (tests/unit/test_api_paging.py)
+        run: |
+          docker run --rm --entrypoint python -e REPO_DIR=/repo -v "$PWD/tests/unit:/t:ro" \
+            -v "$PWD/web/documentation/api/apiV3_1-body.jsp:/repo/web/documentation/api/apiV3_1-body.jsp:ro" \
+            -v "$PWD/web/llms.txt:/repo/web/llms.txt:ro" -v "$PWD/docs/flows/api.md:/repo/docs/flows/api.md:ro" \
+            antweb/api:dev /t/test_api_paging.py
+
       - name: API refuses to start without its read-only login (API_REQUIRE_READONLY_LOGIN=true, as on the servers)
         run: |
           d=$(mktemp -d)
