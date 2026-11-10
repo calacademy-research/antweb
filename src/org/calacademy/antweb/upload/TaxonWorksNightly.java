@@ -52,6 +52,16 @@ import org.calacademy.antweb.util.LogMgr;
  * The job skips (and logs why) when TaxonWorks is still building the archive,
  * when the archive is identical to the last one uploaded, or when it would
  * shrink the group's records by more than the guard allows.
+ *
+ * Early request (2026-11-10, Brian Fisher: a faster daily update; production 11-10 waited about 18 of the upload's 40
+ * minutes for a fresh archive): TaxonWorks builds an archive only when the download link is requested and the archive
+ * on offer is older than the project's maximum age (TaxonWorks, Project, Darwin core export preferences: "max age" in
+ * days, counted from the request that started the last build). So the link is also requested EARLY_REQUEST_MINUTES
+ * before the daily update (04:35; earlyRequest, scheduled by SessionRequestFilter.runTask): a request only, no upload,
+ * no database work, one line in compute.log. When that request starts a build, the upload at about 05:06 finds an
+ * archive built that morning and loads it at its first check. When it does not (maximum age of one day: the last build
+ * was requested less than 24 hours before), or when it fails, the upload requests and waits as before. Off without the
+ * settings file (staging, development). See docs/flows/specimen-upload.md section 5.
  */
 public final class TaxonWorksNightly {
 
@@ -274,6 +284,141 @@ public final class TaxonWorksNightly {
         } finally {
             connection.setAutoCommit(autoCommit);
         }
+    }
+
+    // ------------------------------------------------------------------ the early request (2026-11-10)
+
+    /** The archive is requested this many minutes before the daily update's launch hour (05:00: at 04:35). */
+    public static final int EARLY_REQUEST_MINUTES = 25;
+
+    /** The early request gives up after this long (the daily update then requests the archive itself, as before). */
+    static final int EARLY_REQUEST_TIMEOUT_MINUTES = 10;
+
+    /** compute.log: the line of the early request begins with this. */
+    public static final String EARLY_LOG = "TaxonWorks early request";
+
+    /**
+     * The next early request: EARLY_REQUEST_MINUTES before launchHour:00, strictly after now, by the clock of now's time
+     * zone (the JVM's: Pacific), so also on the days the clocks change.
+     */
+    public static java.util.Date nextEarlyRequestTime(java.util.Calendar now, int launchHour) {
+        java.util.Calendar c = (java.util.Calendar) now.clone();
+        int minuteOfDay = launchHour * 60 - EARLY_REQUEST_MINUTES;
+        c.set(java.util.Calendar.HOUR_OF_DAY, minuteOfDay / 60);
+        c.set(java.util.Calendar.MINUTE, minuteOfDay % 60);
+        c.set(java.util.Calendar.SECOND, 0);
+        c.set(java.util.Calendar.MILLISECOND, 0);
+        if (!c.after(now)) c.add(java.util.Calendar.DATE, 1);
+        return c.getTime();
+    }
+
+    /**
+     * Whether to send the early request: "off" without the settings file or its url (staging, development: nothing is
+     * requested and nothing logged), "busy" while the upload job itself runs (an administrator's run: it has requested
+     * the archive), else "request".
+     */
+    public static String earlyRequestDecision(boolean settingsFile, String url, boolean uploadRunning) {
+        if (!settingsFile || url == null || url.trim().isEmpty()) return "off";
+        if (uploadRunning) return "busy";
+        return "request";
+    }
+
+    /**
+     * The compute.log line of an early request. status: TaxonWorks' answer (0: none); builtUtc: when the archive it sent
+     * was built (null: not an archive, or not read); error: the exception's class when the request failed, else null.
+     * Never the URL (it carries the project token).
+     */
+    public static String earlyRequestLine(int status, java.time.LocalDateTime builtUtc, long nowMillis, String error) {
+        String asBefore = "; the daily update requests the archive itself, as before";
+        if (error != null) return EARLY_LOG + ": FAILED (" + error + ")" + asBefore;
+        if (status == 422) return EARLY_LOG + ": HTTP 422, TaxonWorks is building the archive";
+        if (status != 200) return EARLY_LOG + ": HTTP " + status + asBefore;
+        if (builtUtc == null) return EARLY_LOG + ": HTTP 200, the answer was not a readable archive" + asBefore;
+        long ageMinutes = (nowMillis - builtUtc.toInstant(java.time.ZoneOffset.UTC).toEpochMilli()) / 60000;
+        String age = ageMinutes < 0 ? "" : " (" + String.format(java.util.Locale.US, "%.1f", ageMinutes / 60.0) + " hours ago)";
+        return EARLY_LOG + ": HTTP 200, the archive on offer was built " + builtUtc + " UTC" + age
+            + "; TaxonWorks builds a new one now if that is over the project's maximum age, for the upload of the daily update";
+    }
+
+    /**
+     * Requests the archive from TaxonWorks so that it starts building a fresh one: a GET of the download link, the
+     * answer saved to a file of its own in the working directory, read for its build time and deleted. No upload, no
+     * database, none of the upload job's files. Returns the compute.log line, or null when off (no settings file or url).
+     * Never throws: a failure is the line's text, and the daily update requests the archive itself, as before.
+     */
+    public static String earlyRequest() {
+        try {
+            File config = new File(CONFIG);
+            String url = null;
+            if (config.isFile()) {
+                Properties props = new Properties();
+                try (InputStream in = new FileInputStream(config)) {
+                    props.load(in);
+                }
+                url = props.getProperty("url", "").trim();
+            }
+            String decision = earlyRequestDecision(config.isFile(), url, s_running.get());
+            if ("off".equals(decision)) return null;
+            if ("busy".equals(decision)) return EARLY_LOG + ": not sent, the TaxonWorks upload is running";
+            return earlyRequest(url, Paths.get(AntwebProps.getWorkingDir()), EARLY_REQUEST_TIMEOUT_MINUTES * 60);
+        } catch (Exception | LinkageError e) {
+            return earlyRequestLine(0, null, System.currentTimeMillis(), e.getClass().getSimpleName());
+        }
+    }
+
+    /** The request itself (the tests give a local address and a short timeout). Never throws. */
+    public static String earlyRequest(String url, Path workDir, int timeoutSeconds) {
+        Path tmp = null;
+        try {
+            Files.createDirectories(workDir);
+            tmp = workDir.resolve("taxonworksEarlyRequest.zip.part");
+            HttpClient client = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .connectTimeout(Duration.ofSeconds(Math.min(30, timeoutSeconds)))
+                .build();
+            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                .timeout(Duration.ofSeconds(timeoutSeconds))
+                .header("User-Agent", "AntWeb nightly TaxonWorks job (https://www.antweb.org)")
+                .GET().build();
+            HttpResponse<Path> response = client.send(request, HttpResponse.BodyHandlers.ofFile(tmp));
+            java.time.LocalDateTime built = response.statusCode() == 200 && isZip(tmp) ? archiveBuiltUtc(tmp) : null;
+            return earlyRequestLine(response.statusCode(), built, System.currentTimeMillis(), null);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return earlyRequestLine(0, null, System.currentTimeMillis(), "InterruptedException");
+        } catch (Exception e) {
+            // only the exception's class: its text can include the download URL (with its token)
+            return earlyRequestLine(0, null, System.currentTimeMillis(), e.getClass().getSimpleName());
+        } finally {
+            try {
+                if (tmp != null) Files.deleteIfExists(tmp);
+            } catch (IOException ignore) { }
+        }
+    }
+
+    /**
+     * Schedules the early request for the next EARLY_REQUEST_MINUTES before launchHour, and after each one the next
+     * (as the daily update's own timer: by the clock, not every 24 hours). The line goes to compute.log; off: no line.
+     */
+    public static void scheduleEarlyRequest(final java.util.Timer timer, final int launchHour) {
+        java.util.Date next = nextEarlyRequestTime(java.util.Calendar.getInstance(), launchHour);
+        timer.schedule(new java.util.TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    String line = earlyRequest();
+                    if (line != null) LogMgr.appendLog("compute.log", "  " + line, true);
+                } catch (Throwable t) {
+                    s_log.warn("early request e:" + t.getClass().getSimpleName());
+                } finally {
+                    try {
+                        scheduleEarlyRequest(timer, launchHour);
+                    } catch (RuntimeException e) {
+                        s_log.warn("early request: could not schedule the next one e:" + e);
+                    }
+                }
+            }
+        }, next);
     }
 
     /** True when the archive is the one already uploaded, older than this run's request, or still being built (HTTP 422). */

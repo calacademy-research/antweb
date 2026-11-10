@@ -661,7 +661,9 @@ jobs:
       - name: Java unit tests of uploads and the nightly TaxonWorks job (transform fixture, job decisions, name rule, nightly name update, password hash)
         # TaxonWorksTransformFixtureTest: test/.../upload/fixtures/taxonworks-data.tsv through the
         # TaxonWorks transform. TaxonWorksNightlyDecisionsTest: wait/skip decisions, one run at a
-        # time, no settings file. NameResolutionRuleTest: statuses that use the current valid name,
+        # time, no settings file; the early request (2026-11-10): 04:35 by the clock, off without the settings file,
+        # its compute.log line, and the request against a local server (zip, 422, error, no server; no file left, no
+        # address in the line). NameResolutionRuleTest: statuses that use the current valid name,
         # indet and morpho names. SpecimenNameUpdateTest: the upload's name rule with a fake taxon table
         # and the nightly name update's decisions, cap, settings and page line. GenusSynonymRuleTest: morphospecies and
         # indets of a synonym genus, names without subfamily ("(formicidae)pyramica ludovici"), combinations AntCat does
@@ -722,7 +724,7 @@ jobs:
               /t/org/calacademy/antweb/util/JobSummaryTest.java \
               /t/org/calacademy/antweb/upload/SubfamilyFromGenusTest.java \
               /t/org/calacademy/antweb/upload/LocalityCodePlainTest.java
-            for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:11 \
+            for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:15 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:19 upload.GenusSynonymRuleTest:16 upload.GenusConceptRuleTest:8 upload.GenusConceptProposalsTest:5 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:16 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
