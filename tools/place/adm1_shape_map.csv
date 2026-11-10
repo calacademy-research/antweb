@@ -6,7 +6,7 @@
 # names are (mapping_tested.csv of each run). This file is for decisions the specimens cannot make. A row here
 # wins over the test and over the names.
 #
-# Three kinds of line.
+# Five kinds of line.
 #
 # 1. country,level,shape,antweb_state[,new]
 #    country: AntWeb's valid country. level: the level of the boundary file (ADM1, ADM2 ...). shape: the file's
@@ -25,6 +25,21 @@
 # 3. within,country,state,coarser unit
 #    The coarser unit a state belongs to. Used for one check only: whether the stored coarser unit of a
 #    converted specimen is the one its coordinates' state belongs to. If not: "check the coordinates".
+# 4. split,country,shape,unit level,unit,antweb_state,note
+#    The shape of the state level is told apart by the units of a finer level of geoBoundaries (unit level: ADM2
+#    ...): a point in the shape gets the state of the unit it lies in. unit: the unit's shapeName; * stands
+#    for every unit not named. Without a * line a point in a unit not named gets no proposal. A state AntWeb
+#    does not have yet is proposed and marked "state to add in the Geolocale Manager first" until it exists.
+#    note: the law and its date, so a reader sees against what the list is kept current. The report of each
+#    run prints the split lines used, and the specimens and collecting events of each state.
+# 5. name,country,level,shape,antweb_state,why
+#    The shape's name is another name of this state (another language, spelling or transliteration). It is a
+#    name like any other: tested with AntWeb's specimens, reported and not used when they contradict it
+#    (the state has 20 or more specimens with coordinates and fewer than half of them lie in the shape).
+#    Nobody approved these lines one by one. 148 are the pairs of the production run of 2026-11-10 that the
+#    lead checked by the names; the others are plain from the names (the same name with the word kraj or
+#    län, Dutch for the Belgian provinces, ts/ch/sh/zh for c/č/š/ž in Macedonia ...). Where AntWeb has two
+#    valid states for one place (Mongolia, Qatar, Syria, Kuwait) the line names the form the lead's pairs use.
 #
 # Madagascar. AntWeb has the six provinces (faritany: Antananarivo, Antsiranana, Fianarantsoa, Mahajanga,
 # Toamasina, Toliara) and the 22 regions (faritra) they were divided into in 2004 (Loi n° 2004-001 relative aux
@@ -33,9 +48,32 @@
 # file's ADM1 has the 22 regions under AntWeb's names (a hyphen or not makes no difference), but for one: the
 # file's Matsiatra Ambony is AntWeb's Haute Matsiatra. Each region lies wholly in one province. Source of the
 # "within" lines: the "Province" column of https://en.wikipedia.org/wiki/Regions_of_Madagascar, read 2026-11-10,
-# every row checked. The file has Vatovavy-Fitovinany undivided (divided in 2021).
+# every row checked.
+# There are 24 regions today (Brian Fisher, 2026-11-10: "we need to keep this up to date"). AntWeb, geoBoundaries
+# and Natural Earth have 22. The two shapes that were divided are told apart by the districts of the file MDG
+# ADM2 (119 districts; names as the file spells them, read 2026-11-10):
+#   Vatovavy-Fitovinany became Vatovavy (districts Ifanadiana, Mananjary, Nosy-Varika) and Fitovinany (Ikongo,
+#   Manakara Atsimo, Vohipeno): Loi n° 2021-012 of 24 June 2021.
+#   Ambatosoa was made of the north of Analanjirofo (districts Maroantsetra and Mananara-Avaratra): Loi n°
+#   2023-012 of 29 June 2023, in place since 26 July 2025. Every other district of the shape stays Analanjirofo.
+# Source: https://en.wikipedia.org/wiki/Subdivisions_of_Madagascar and /wiki/Ambatosoa, read 2026-11-10 (they
+# cite the National Assembly). Vatovavy, Fitovinany and Ambatosoa are not in AntWeb yet.
+# The region file MDG ADM1 (source OpenStreetMap) and the district file MDG ADM2 (source BNGRC, OCHA) do not draw
+# the same lines: measured 2026-11-10 on a grid, 91 in 100 of the district Vohipeno lie in the region shape
+# Atsimo-Atsinanana, not in Vatovavy-Fitovinany. So that shape is split too: Vohipeno is Fitovinany.
 country,level,shape,antweb_state
 Madagascar,ADM1,Matsiatra Ambony,Haute Matsiatra
+split,Madagascar,Vatovavy-Fitovinany,ADM2,Ifanadiana,Vatovavy,Loi 2021-012 of 24 June 2021: Vatovavy Fitovinany divided into Vatovavy and Fitovinany
+split,Madagascar,Vatovavy-Fitovinany,ADM2,Mananjary,Vatovavy,Loi 2021-012 of 24 June 2021
+split,Madagascar,Vatovavy-Fitovinany,ADM2,Nosy-Varika,Vatovavy,Loi 2021-012 of 24 June 2021
+split,Madagascar,Vatovavy-Fitovinany,ADM2,Ikongo,Fitovinany,Loi 2021-012 of 24 June 2021
+split,Madagascar,Vatovavy-Fitovinany,ADM2,Manakara Atsimo,Fitovinany,Loi 2021-012 of 24 June 2021
+split,Madagascar,Vatovavy-Fitovinany,ADM2,Vohipeno,Fitovinany,Loi 2021-012 of 24 June 2021
+split,Madagascar,Analanjirofo,ADM2,Maroantsetra,Ambatosoa,Loi 2023-012 of 29 June 2023 (in place since 26 July 2025): Ambatosoa made of the north of Analanjirofo
+split,Madagascar,Analanjirofo,ADM2,Mananara-Avaratra,Ambatosoa,Loi 2023-012 of 29 June 2023
+split,Madagascar,Analanjirofo,ADM2,*,Analanjirofo,every other district of the shape stays Analanjirofo
+split,Madagascar,Atsimo-Atsinanana,ADM2,Vohipeno,Fitovinany,the region file (from OpenStreetMap) draws nine tenths of the district Vohipeno in Atsimo-Atsinanana; it is in Fitovinany (Loi 2021-012)
+split,Madagascar,Atsimo-Atsinanana,ADM2,*,Atsimo-Atsinanana,every other district of the shape stays Atsimo-Atsinanana
 convert,Madagascar,Antananarivo,Antsiranana,Fianarantsoa,Mahajanga,Toamasina,Toliara
 within,Madagascar,Analamanga,Antananarivo
 within,Madagascar,Bongolava,Antananarivo
@@ -48,12 +86,15 @@ within,Madagascar,Atsimo-Atsinanana,Fianarantsoa
 within,Madagascar,Haute Matsiatra,Fianarantsoa
 within,Madagascar,Ihorombe,Fianarantsoa
 within,Madagascar,Vatovavy Fitovinany,Fianarantsoa
+within,Madagascar,Vatovavy,Fianarantsoa
+within,Madagascar,Fitovinany,Fianarantsoa
 within,Madagascar,Betsiboka,Mahajanga
 within,Madagascar,Boeny,Mahajanga
 within,Madagascar,Melaky,Mahajanga
 within,Madagascar,Sofia,Mahajanga
 within,Madagascar,Alaotra Mangoro,Toamasina
 within,Madagascar,Analanjirofo,Toamasina
+within,Madagascar,Ambatosoa,Toamasina
 within,Madagascar,Atsinanana,Toamasina
 within,Madagascar,Androy,Toliara
 within,Madagascar,Anosy,Toliara
@@ -77,3 +118,246 @@ Mexico,ADM1,Mexico,México
 Mexico,ADM1,Mexico,Estado de México
 # United States. AntWeb's name for the District of Columbia (GeolocaleMgr.getGeolocaleFromProjectName).
 United States,ADM1,District of Columbia,"Washington, D.C."
+# Names: the shape's name is another name of the state. Tested with AntWeb's specimens (see 5 above).
+name,United Arab Emirates,ADM1,Ras al-Khaimah,Ra's al Khaymah,spelling or language of the same name
+name,United Arab Emirates,ADM1,Sharjah,Ash Shāriqah,"the same emirate, AntWeb's transliteration"
+name,Eritrea,ADM1,Northen Red Sea Region,Semēnawī K'eyih Bahrī,spelling or language of the same name (by AntWeb's old name Northern Red Sea)
+name,Democratic Republic of Congo,ADM1,Lower Uele,Bas-Uélé,English for Bas-Uélé
+name,Myanmar,ADM1,Tanitharyi,Taninthayi,spelling or language of the same name
+name,Brazil,ADM1,Rio de Jeneiro,Rio de Janeiro,spelling or language of the same name
+name,Tunisia,ADM1,El Kef,Kef,spelling or language of the same name
+name,Ivory Coast,ADM1,District Autonome D'Abidjan,Abidjan,spelling or language of the same name
+name,Democratic Republic of Congo,ADM1,Upper Uele,Haut-Uélé,English for Haut-Uélé
+name,Fiji,ADM2,Nadroga-Navosa,Nadroga and Navosa,spelling or language of the same name
+name,United Arab Emirates,ADM1,Fujairah,Al Fujayrah,spelling or language of the same name
+name,Turkmenistan,ADM1,Ahai,Ahal,spelling or language of the same name
+name,Morocco,ADM1,Fez-Meknes,Fès-Meknès,spelling or language of the same name
+name,Saudi Arabia,ADM1,Makkah Region,Makkah al Mukarramah,spelling or language of the same name (by AntWeb's old name Makkah)
+name,Saudi Arabia,ADM1,Riyadh Region,Ar Riyad,spelling or language of the same name (by AntWeb's old name Riyadh)
+name,South Africa,ADM1,Nothern Cape,Northern Cape,spelling or language of the same name
+name,Greece,ADM2,Kentrikis Makedonias,Kentrikí Makedonía,spelling or language of the same name
+name,Greece,ADM2,Kritis,Crete,spelling or language of the same name (by AntWeb's old name Kríti)
+name,Colombia,ADM1,Bogota Capital District,Bogotá,spelling or language of the same name
+name,Greece,ADM2,Notioy Aigaioy,Notío Aigaío,spelling or language of the same name
+name,Spain,ADM1,Andalucía,Andalusia,spelling or language of the same name
+name,Croatia,ADM1,Split-Dalmatia,Splitsko-Dalmatinska,spelling or language of the same name
+name,Croatia,ADM1,Zadar County,Zadarska,spelling or language of the same name
+name,Greece,ADM2,Peloponnisoy,Peloponnísos,spelling or language of the same name
+name,Seychelles,ADM3,Belombre,Bel Ombre,spelling or language of the same name
+name,Saudi Arabia,ADM1,Eastern Region,Ash Sharqiyah,spelling or language of the same name (by AntWeb's old name Eastern)
+name,Czech Republic,ADM1,Středočeský kraj,Středočeský,spelling or language of the same name
+name,Oman,ADM1,Muscat,Masqaţ,Muscat; AntWeb also has Muḩāfaz̧at Masqaţ as a valid state
+name,Democratic Republic of Congo,ADM1,Central Kasai,Kasaï Central,spelling or language of the same name
+name,Spain,ADM1,Castilla-La Mancha,Castille-La Mancha,the same place; AntWeb also has Castile-La Mancha as a valid state
+name,Thailand,ADM1,Nong Bua Lam Phu Province,Nong Bua Lamphu,spelling or language of the same name
+name,Germany,ADM1,Hessen,Hesse,spelling or language of the same name
+name,Greece,ADM2,Ionion Nison,Ionía Nísia,spelling or language of the same name
+name,Kazakhstan,ADM1,Jambyl Region,Zhambyl,spelling or language of the same name
+name,Kyrgyzstan,ADM1,Jalal-Abad Region,Jalal-Abad,the same place; AntWeb also has Jalal-Abad oblast as a valid state
+name,Syria,ADM1,Damascus,Dimashq,Damascus
+name,Germany,ADM1,Sachsen,Saxony,German name
+name,Bahrain,ADM1,Capital Governorate,Al 'Āşimah,Capital governorate
+name,Cuba,ADM1,Havana,La Habana,Havana
+name,Panama,ADM1,Comarca Ngäbe-Buglé,Ngäbe-Buglé,spelling or language of the same name
+name,Solomon Islands,ADM1,Makira,Makira-Ulawa,the same place; AntWeb also has Makira and Ulawa as a valid state
+name,Spain,ADM1,Cataluña/Catalunya,Catalonia,spelling or language of the same name (by AntWeb's old name Cataluña)
+name,Tanzania,ADM1,South Pemba,Pemba South,spelling or language of the same name
+name,Greece,ADM2,Attikis,Attikí,spelling or language of the same name
+name,Egypt,ADM1,Matrouh Governorate,Matruh,spelling or language of the same name
+name,Greece,ADM2,Dytikis Elladas,Dytikí Elláda,spelling or language of the same name
+name,Greece,ADM2,Stereas Elladas,Stereá Elláda,spelling or language of the same name
+name,Spain,ADM1,Castilla y León,Castile-Leon,the same place; AntWeb also has Castille and León as a valid state
+name,Uganda,ADM3,Kalanga,Kalangala,spelling or language of the same name
+name,Belgium,ADM2,Brussels,Brussels Capital,spelling or language of the same name
+name,China,ADM1,Xinjiang Uyghur Autonomous Region,Xinjiang,spelling or language of the same name (by AntWeb's old name Xinjiang Uyghur Autonomous)
+name,Czech Republic,ADM1,Kraj Vysočina,Vysočina,spelling or language of the same name
+name,Germany,ADM1,Nordrhein-Westfalen,North Rhine-Westphalia,German name
+name,Indonesia,ADM1,Jakarta Special Capital Region,Jakarta,spelling or language of the same name
+name,Iraq,ADM1,Erbil,Arbīl,spelling or language of the same name
+name,Kuwait,ADM1,Ahmadi,Al Aḩmadī,spelling or language of the same name
+name,Morocco,ADM1,Tangier-Tetouan-Al Hoceima,Tanger-Tétouan-Al Hoceïma,spelling or language of the same name
+name,Papua New Guinea,ADM1,West Sepik (Sandaun) Province,West Sepik,spelling or language of the same name
+name,Belgium,ADM2,Luik,Liege,Dutch name of Liège
+name,Chile,ADM1,Región del Bío-Bío,Biobío,spelling or language of the same name
+name,Germany,ADM1,Sachsen-Anhalt,Saxony-Anhalt,spelling or language of the same name
+name,Greece,ADM2,Ipeiroy,Ípeiros,spelling or language of the same name
+name,Russia,ADM1,Irkutsk Oblast,Irkut,spelling or language of the same name (by AntWeb's old name Irkutsk)
+name,Syria,ADM1,Rural Damascus,Rīf Dimashq,Rural Damascus; AntWeb also has Rif-dimashq as a valid state
+name,Chile,ADM1,Región del Libertador Bernardo O'Higgins,Libertador General Bernardo O'Higgins,spelling or language of the same name
+name,Kazakhstan,ADM1,Kyzylorda Region,Qyzylorda,spelling or language of the same name
+name,Sweden,ADM1,Gotlands län,Gotland,spelling or language of the same name
+name,Uzbekistan,ADM1,Bukhara Region,Buxoro,Uzbek spelling
+name,Brazil,ADM1,Rio Granda do Norte,Rio Grande do Norte,spelling or language of the same name
+name,Brunei,ADM1,Brunei-Muara,Brunei and Muara,spelling or language of the same name
+name,Finland,ADM1,Finland Proper,Varsinais-Suomi,English name; AntWeb also has Southwest Finland as a valid state
+name,Sweden,ADM1,Örebro län,Örebro,spelling or language of the same name
+name,Argentina,ADM1,La Roja,La Rioja,spelling or language of the same name
+name,Bhutan,ADM1,Thimpu,Thimphu,spelling or language of the same name
+name,Bulgaria,ADM1,Sofia City,Sofia-Capital,spelling or language of the same name
+name,Croatia,ADM1,Primorje-Gorski Kotar,Primorsko-Goranska,Croatian name
+name,Croatia,ADM1,Šibenik-Knin,Šibensko-Kninska,spelling or language of the same name
+name,Czech Republic,ADM1,Liberecký kraj,Liberecký,spelling or language of the same name
+name,Czech Republic,ADM1,Olomoucký kraj,Olomoucký,spelling or language of the same name
+name,Greece,ADM2,Anatolikis Makedonias kai Thr*,Anatolikí Makedonía kai Thráki,spelling or language of the same name
+name,Greece,ADM2,Thessalias,Thessalía,spelling or language of the same name
+name,Haiti,ADM1,Département de la Grande-Anse,Grand'Anse,spelling or language of the same name
+name,Kenya,ADM1,Tharaka,Tharaka - Nithi,the same place; AntWeb also has Tharaka-Nithi as a valid state
+name,Mongolia,ADM1,Khentii,Hentiy,spelling or language of the same name
+name,Nigeria,ADM1,Abuja Federal Capital Territory,Federal Capital Territory,AntWeb also has FCT as a valid state
+name,Papua New Guinea,ADM1,Northern (Oro) Province,Northern,spelling or language of the same name
+name,Russia,ADM1,Ivanovo Oblast,Ivanov,spelling or language of the same name (by AntWeb's old name Ivanovo)
+name,Spain,ADM1,Comunitat Valenciana,Valencia,spelling or language of the same name
+name,Sweden,ADM1,Jönköpings län,Jönköping,spelling or language of the same name
+name,Tanzania,ADM1,Zanzibar South & Central,Zanzibar Central/South,spelling or language of the same name
+name,Bahamas,ADM1,Biminis,Bimini,spelling or language of the same name
+name,Benin,ADM1,Atlanique,Atlantique,spelling or language of the same name
+name,Cyprus,ADM1,Famagusta,Ammochostos,Greek name of Famagusta
+name,Gambia,ADM1,Kerewan,North Bank,Kerewan is the area of the North Bank region
+name,Georgia,ADM1,Adjara,Ajaria,spelling or language of the same name
+name,Greece,ADM2,Voreioy Aigaioy,Voreío Aigaío,spelling or language of the same name
+name,Kazakhstan,ADM1,Kostanay Region,Qostanay,spelling or language of the same name
+name,Laos,ADM1,Savannakhet,Savannahkhét,the same place; AntWeb also has Khouèng Savannakhét as a valid state
+name,Mali,ADM1,Koulikouro,Koulikoro,spelling or language of the same name
+name,Mongolia,ADM1,Bayankhongor,Bayanhongor,spelling or language of the same name
+name,Myanmar,ADM1,Saigang,Sagaing,spelling or language of the same name
+name,Papua New Guinea,ADM1,Chimbu (Simbu) Province,Chimbu,spelling or language of the same name
+name,Saudi Arabia,ADM1,Northern Borders Region,Al Hudud ash Shamaliyah,spelling or language of the same name (by AntWeb's old name Northern Borders)
+name,Somalia,ADM1,Banadir,Banaadir,spelling or language of the same name
+name,South Korea,ADM1,North Chungcheong,Chungcheongbuk-do,spelling or language of the same name
+name,Spain,ADM1,País Vasco/Euskadi,Basque Country,the same community
+name,Syria,ADM1,Al-Hasakeh,Al Ḩasakah,the same place; AntWeb also has Al-Hasakah as a valid state
+name,Tanzania,ADM1,North Pemba,Pemba North,spelling or language of the same name
+name,Venezuela,ADM1,La Guaira,Vargas,the state was renamed La Guaira in 2019
+name,Botswana,ADM1,North-West District,North West,the same place; AntWeb also has North-West as a valid state
+name,China,ADM1,Guangzhou Province,Guangdong,the file names the province after its capital
+name,China,ADM1,Inner Mongolia Autonomous Region,Inner Mongolia,spelling or language of the same name
+name,Cyprus,ADM1,Larnaca,Larnaka,spelling or language of the same name
+name,Czech Republic,ADM1,Hlavní město Praha,Praha,"spelling or language of the same name (by AntWeb's old name Praha, Hlavní Město)"
+name,Eritrea,ADM1,Maekel Region,Ma'ākel,spelling or language of the same name (by AntWeb's old name Maekel)
+name,Eritrea,ADM1,Southern Red Sea Region,Debubawī K'eyih Bahrī,spelling or language of the same name (by AntWeb's old name Southern Red Sea)
+name,Finland,ADM1,Tavastia Proper,Kanta-Häme,English name
+name,Greece,ADM2,Dytikis Makedonias,Dytikí Makedonía,spelling or language of the same name
+name,Grenada,ADM1,Southern Grenadine Islands,Carriacou and Petite Martinique,the same islands
+name,Guyana,ADM1,Barina-Waini,Barima-Waini,spelling or language of the same name
+name,Iran,ADM1,Kohgiluyeh and Boyer-Ahmad,Kohgīlūyeh va Bowyer Aḩmad,spelling or language of the same name
+name,Iran,ADM1,West Azerbaijan,Āz̄arbāyjān-e Gharbī,West Azerbaijan (the tool suggested East)
+name,Kazakhstan,ADM1,Karaganda Region,Qaraghandy,spelling or language of the same name
+name,Laos,ADM1,Vientiane Capital,Viangchan (prefecture),"the capital prefecture, not the province"
+name,Libya,ADM1,Ash Shati',Wādī ash Shāţi',spelling or language of the same name
+name,Malta,ADM1,Mġarr,Imġarr,the same place; AntWeb also has L-Imġarr as a valid state
+name,Mongolia,ADM1,Darkhan-Uul,Darhan-Uul,spelling or language of the same name
+name,Nicaragua,ADM1,South Atlantic Autonomous Region,Costa Caribe Sur,the region's present name (the tool suggested Norte)
+name,North Korea,ADM1,North Hwanghae,Hwanghae-bukto,AntWeb also has Hwangbuk as a valid state
+name,Papua New Guinea,ADM1,Autonomous Region of Bougainville,Bougainville,spelling or language of the same name
+name,Poland,ADM1,Świętokrzyskie Voivodeship,Świętokrzyskie,spelling or language of the same name
+name,Puerto Rico,ADM2,Isabela,Municipio de Isabela,spelling or language of the same name
+name,Qatar,ADM1,Al Khor and Al Thakhira,Al Khawr wa adh Dhakhīrah,spelling or language of the same name
+name,Russia,ADM1,Kostroma Oblast,Kostrom,spelling or language of the same name (by AntWeb's old name Kostroma)
+name,Russia,ADM1,Sakha Republic,Sakha (Yakutiya),spelling or language of the same name (by AntWeb's old name Sakha)
+name,Russia,ADM1,Ulyanovsk Oblast,Ul'yanov,spelling or language of the same name (by AntWeb's old name Ulyanovsk)
+name,Serbia,ADM2,Belgrade,Beograd,spelling or language of the same name
+name,Sweden,ADM1,Jämtlands län,Jämtland,spelling or language of the same name
+name,Sweden,ADM1,Kalmar län,Kalmar,spelling or language of the same name
+name,Sweden,ADM1,Norrbottens län,Norrbotten,spelling or language of the same name
+name,Sweden,ADM1,Stockholms län,Stockholm,spelling or language of the same name
+name,Sweden,ADM1,Värmlands län,Värmland,spelling or language of the same name
+name,Sweden,ADM1,Västernorrlands län,Västernorrland,spelling or language of the same name
+name,Sweden,ADM1,Västra Götalands län,Västra Götaland,spelling or language of the same name
+name,Switzerland,ADM1,St. Gallen,Saint Gallen,the same place; AntWeb also has Sankt Gallen as a valid state
+name,Tajikistan,ADM1,Gorno-Badakhshan Autonomous Region,Gorno-Badakhshan,spelling or language of the same name
+name,Ukraine,ADM1,Autonomous Republic of Crimea,Crimea,spelling or language of the same name
+name,Uzbekistan,ADM1,Jizzakh Region,Jizzax,spelling or language of the same name
+name,United Arab Emirates,ADM1,Umm al-Quwain,Umm al Qaywayn,the same name in another spelling or language
+name,Saudi Arabia,ADM1,Al Madinah Region,Al Madinah al Munawwarah,the same name in another spelling or language
+name,Saudi Arabia,ADM1,Al-Qassim Region,Al Qasim,the same name in another spelling or language
+name,Saudi Arabia,ADM1,Hayel Region,Ha'il,the same name in another spelling or language
+name,Spain,ADM1,Canarias,Canary Islands,the same name in another spelling or language
+name,Spain,ADM1,Ciudad Autónoma de Melilla,Melilla,the same name in another spelling or language
+name,Spain,ADM1,Ciudad Autónoma de Ceuta,Ceuta,the same name in another spelling or language
+name,Spain,ADM1,Comunidad Foral de Navarra,Navarre,the same name in another spelling or language
+name,Spain,ADM1,Illes Balears,Balearic Islands,the same name in another spelling or language
+name,Spain,ADM1,Principado de Asturias,Asturias,the same name in another spelling or language
+name,Czech Republic,ADM1,Jihočeský kraj,Jihočeský,the same name with the word kraj (region)
+name,Czech Republic,ADM1,Karlovarský kraj,Karlovarský,the same name with the word kraj (region)
+name,Czech Republic,ADM1,Královéhradecký kraj,Královéhradecký,the same name with the word kraj (region)
+name,Czech Republic,ADM1,Pardubický kraj,Pardubický,the same name with the word kraj (region)
+name,Czech Republic,ADM1,Moravskoslezský kraj,Moravskoslezský,the same name with the word kraj (region)
+name,Czech Republic,ADM1,Zlínský kraj,Zlínský,the same name with the word kraj (region)
+name,Syria,ADM1,Idleb,Idlib,the same name in another spelling or language
+name,Syria,ADM1,Tartous,Tartus,the same name in another spelling or language
+name,Syria,ADM1,Lattakia,Al Lādhiqīyah,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Syria,ADM1,Ar-Raqqa,Ar Raqqah,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Syria,ADM1,As-Sweida,As Suwaydā',the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Mongolia,ADM1,Khovd,Hovd,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Mongolia,ADM1,Zavkhan,Dzavhan,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Mongolia,ADM1,Sükhbaatar,Sühbaatar,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Mongolia,ADM1,Govi-Altai,Govĭ-Altay,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Mongolia,ADM1,Orkhon,Orhon,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Mongolia,ADM1,Arkhangai,Arhangay,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Mongolia,ADM1,Övörkhangai,Övörhangay,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Mongolia,ADM1,Hovsgel,Hövsgöl,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Mongolia,ADM1,Bayan-Ölgii,Bayan-Ölgiy,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Belgium,ADM2,Antwerpen,Antwerp,the same name in another spelling or language
+name,Belgium,ADM2,Henegouwen,Hainaut,the same name in another spelling or language
+name,Belgium,ADM2,Namen,Namur,the same name in another spelling or language
+name,Belgium,ADM2,Waals-Brabant,Walloon Brabant,the same name in another spelling or language
+name,Sweden,ADM1,Västerbottens län,Västerbotten,the same name with the word län (county)
+name,Sweden,ADM1,Gävleborgs län,Gävleborg,the same name with the word län (county)
+name,Sweden,ADM1,Dalarnas län,Dalarna,the same name with the word län (county)
+name,Sweden,ADM1,Uppsala län,Uppsala,the same name with the word län (county)
+name,Sweden,ADM1,Västmanlands län,Västmanland,the same name with the word län (county)
+name,Sweden,ADM1,Hallands län,Halland,the same name with the word län (county)
+name,Sweden,ADM1,Skåne län,Skåne,the same name with the word län (county)
+name,Sweden,ADM1,Kronobergs län,Kronoberg,the same name with the word län (county)
+name,Sweden,ADM1,Blekinge län,Blekinge,the same name with the word län (county)
+name,Sweden,ADM1,Östergötlands län,Östergötland,the same name with the word län (county)
+name,Sweden,ADM1,Södermanlands län,Södermanland,the same name with the word län (county)
+name,Kuwait,ADM1,Farwaniya,Al Farwaniyah,the same name in another spelling or language
+name,Kuwait,ADM1,Mubarak Al-Kabeer,Mubārak al Kabīr,the same name in another spelling or language
+name,Kuwait,ADM1,Jahra,Al Jahrā',the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Qatar,ADM1,Al Wakra,Al Wakrah,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Qatar,ADM1,Al Shamal,Ash Shamāl,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Qatar,ADM1,Al Rayyan,Ar Rayyān,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Qatar,ADM1,Al Sheehaniya,Ash Shīḩānīyah,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Qatar,ADM1,Doha,Ad Dawḩah,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Qatar,ADM1,Umm Slal,Umm Şalāl,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Qatar,ADM1,Al Daayen,Az̧ Z̧a'āyin,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Macedonia,ADM2,Kavadartsi,Kavadarci,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Chashka,Čaška,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Vinitsa,Vinica,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Delchevo,Delčevo,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Zrnovtsi,Zrnovci,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Karbintsi,Karbinci,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Kochani,Kočani,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Makedonska Kamenitsa,Makedonska Kamenica,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Pehchevo,Pehčevo,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Probishtip,Probištip,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Cheshinovo - Obleshevo,Češinovo-Obleševo,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Shtip,Štip,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Vevchani,Vevčani,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Debartsa,Debarca,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Kichevo,Kičevo,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Plasnitsa,Plasnica,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Centar Zhupa,Centar Župa,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Bogdantsi,Bogdanci,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Konche,Konče,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Radovish,Radoviš,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Strumitsa,Strumica,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Krivogashtani,Krivogaštani,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Krushevo,Kruševo,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Novatsi,Novaci,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Brvenitsa,Brvenica,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Vrapchishte,Vrapčište,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Zhelino,Želino,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Jegunovtse,Jegunovce,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Mavrovo and Rostusha,Mavrovo and Rostuša,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Teartse,Tearce,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Rankovtse,Rankovce,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Staro Nagorichane,Staro Nagoričane,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Arachinovo,Aračinovo,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Petrovets,Petrovec,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Sopishte,Sopište,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Studenichani,Studeničani,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Chair,Čair,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Chucher - Sandevo,Čučer-Sandevo,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+name,Macedonia,ADM2,Shuto Orizari,Šuto Orizari,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
