@@ -39,6 +39,7 @@ def places():
         P("Old Lost State", "adm1", "Mexico", 0, "", "Neotropical", "", 0),
         P("California", "adm1", "United States", 1, "", "Nearctic", "", 0),
         P("Ontario", "adm1", "Canada", 1, "", "", "", 0),
+        P("Old Canadian Name", "adm1", "Canada", 0, "", "Oceania", "", 0),
     ])
 
 
@@ -55,8 +56,13 @@ def test_none_text_is_no_second_bioregion():
 def test_old_state_name_takes_the_valid_states_bioregion_not_its_own():
     assert d("Mexico", "Nuevo Leon", "").new_bioregion == "Nearctic"
     assert d("Mexico", "Baja California Norte", "Neotropical").new_bioregion == "Nearctic"
-    # an old name that points nowhere: its own row, as GeolocaleMgr.getAdm1 does
-    assert d("Mexico", "Old Lost State", "").new_bioregion == "Neotropical"
+    # an old name that points to no valid state defines nothing (Irian Jaya said Indomalaya, the map Australasia)
+    r = d("Mexico", "Old Lost State", "")
+    assert r.new_bioregion is KEEP, r
+    assert r.problem == "no bioregion: an old state name with no valid name in AntWeb, and the country has two bioregions", r
+    assert d("Mexico", "Old Lost State", "Nearctic") == pf.Decision(KEEP, KEEP, [], None)
+    # in a country with one bioregion the country decides, not the old row's own value
+    assert d("Canada", "Old Canadian Name", "").new_bioregion == "Nearctic"
 
 
 def test_state_with_two_bioregions_keeps_what_is_stored():
