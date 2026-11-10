@@ -974,12 +974,18 @@ def radiusBox(lat, lon, radiusKm):
     return lat - dLat, lat + dLat, lon - dLon, lon + dLon
 
 
+COORDS_REQUIRED_MESSAGE = ('The coords parameter is required: the latitude and longitude of the centre of the area,'
+                           ' for example coords=37.77,-122.47 (radius is in kilometres, default 5).')
+
+
 # http://localhost:5000/geoSpecimens?coords=37,%20-122&limit=8000&radius=2
 @application.route('/geoSpecimens', methods=['GET'])
 def getGeoSpecimens():
     coords = request.args.get('coords', default='*', type=str)  # (?coord=37, -122) is cal academy
     if coords == '*':
-        return 'Must enter coords for a geoSpecimens request'
+        # 2026-11-10: HTTP 400 as JSON. It was the plain text "Must enter coords for a geoSpecimens request" with
+        # HTTP 200, which v4 could not read as JSON and answered with HTTP 500.
+        return badRequest(COORDS_REQUIRED_MESSAGE)
     radius = request.args.get('radius', default=5.0, type=float)  # in kilometres
     distinct = request.args.get('distinct', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)

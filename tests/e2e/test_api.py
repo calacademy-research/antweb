@@ -58,6 +58,8 @@ V4_NOTICE = "Answers with your key hold at most 500 records"
 def _is_cap_notice(text):
     """The notice of a reply cut at 500 records: v3.1's text, or v4's for a key once v4 is open."""
     if v4_open():
+        # v4 names afterCode= for the specimen records of /specimens and /geoSpecimens (2026-11-10) and offset= for
+        # the other lists; both texts hold the word offset=
         return bool(text) and text.startswith(V4_NOTICE) and "offset=" in text
     return text == LIMIT_NOTICE
 

@@ -506,6 +506,63 @@ def test_a_total_is_not_a_record_and_the_daily_limit_cuts_a_page_cleanly():
     assert api_keys.REGISTERED.records_per_day == 50000 and api_keys.NO_KEY.max_records == 25
 
 
+def test_limit_notice_of_a_cut_page_names_after_code_for_specimens():
+    """/specimens and /geoSpecimens records: continue with afterCode=<last specimenCode> (offset stays allowed, and
+    the text keeps the word offset=). The lists of other routes and the distinct lists: offset=."""
+    fresh_usage()
+    by_code = ("Answers with your key hold at most 5 records, and 12 records a day. This answer holds 5; to continue,"
+               " send afterCode=<the last specimenCode of this answer> (offset= also works).")
+    with opened():
+        r = get(MADAGASCAR + "&limit=100", "small")
+        m = r.get_json()["metaData"]
+        assert m["limitNotice"] == r.headers["X-AntWeb-Limit-Notice"] == by_code, m["limitNotice"]
+        # the code the notice means is in the same answer, and going on with it works
+        assert m["nextAfterCode"] == codes_of(r)[-1] == "casent0004", m
+        fresh_usage()
+        r = get("/v4/geoSpecimens?coords=37.77,-122.47&radius=10", "small")
+        assert r.get_json()["metaData"]["limitNotice"] == by_code, r.get_json()["metaData"]
+        fresh_usage()
+        r = get(MADAGASCAR + "&ndjson=true", "small")
+        assert r.headers["X-AntWeb-Limit-Notice"] == by_code and r.headers["X-AntWeb-Next-After-Code"] == "casent0004"
+        # not specimen records: offset, as before
+        by_offset = ("Answers with your key hold at most 5 records, and 12 records a day. This answer holds {};"
+                     " ask for the next ones with offset=.")
+        fresh_usage()
+        r = get("/v4/taxa?limit=100", "small")
+        assert r.get_json()["metaData"]["limitNotice"] == by_offset.format(5), r.get_json()["metaData"]
+        fresh_usage()
+        r = get("/v4/geoSpecimens?coords=37.77,-122.47&radius=10&distinct=species&limit=100", "small")
+        assert r.get_json()["metaData"]["limitNotice"] == by_offset.format(3), r.get_json()["metaData"]
+        # a page that was not cut has no notice
+        fresh_usage()
+        assert "limitNotice" not in meta(MADAGASCAR + "&limit=3", "small")
+
+
+def test_geo_specimens_without_coords_is_400_naming_the_parameter():
+    """It was HTTP 500 in v4: the v3.1 route answered plain text with HTTP 200, which v4 read as JSON. Now the route
+    itself answers HTTP 400 as JSON, in v3.1 (while v4 is closed) and in v4."""
+    fresh_usage()
+    message = ("The coords parameter is required: the latitude and longitude of the centre of the area, for example"
+               " coords=37.77,-122.47 (radius is in kilometres, default 5).")
+    for url in ("/geoSpecimens?up=1", "/geoSpecimens?up=1&radius=10&limit=5", "/geoSpecimens?up=1&distinct=genus"):
+        r = client.get(url)
+        assert r.status_code == 400 and r.get_json() == {"error": message}, (url, r.status_code, r.get_data(as_text=True))
+    with opened():
+        for url in ("/v4/geoSpecimens", "/v4/geoSpecimens?radius=10&limit=5", "/v4/geoSpecimens?total=true",
+                    "/v4/geoSpecimens?afterCode=casent0004", "/v4/geoSpecimens?ndjson=true"):
+            r = get(url, expect=400)
+            assert r.get_json() == {"error": message}, (url, r.get_data(as_text=True))
+            assert "application/json" in r.headers["Content-Type"], dict(r.headers)
+        # no records were used, and the next request works
+        with api_v4.usage.engine.connect() as c:
+            assert c.execute(text("select coalesce(sum(records), 0) from api_usage_daily")).scalar() == 0
+        assert get("/v4/geoSpecimens?coords=37.77,-122.47&radius=10&limit=2").get_json()["metaData"]["returned"] == 2
+        # coords that are not two numbers were 400 already
+        get("/v4/geoSpecimens?coords=abc", expect=400)
+    # without up=1 v3.1 is closed as before (503 comes first)
+    assert client.get("/geoSpecimens").status_code == 503
+
+
 def test_page_info_when_an_answer_is_cut():
     records = [{"specimenCode": "a"}, {"specimenCode": "b"}, {"specimenCode": "c"}]
     found = {"byCode": True, "complete": True, "lastCode": "c", "total": 3}

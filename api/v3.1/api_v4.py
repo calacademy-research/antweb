@@ -330,6 +330,8 @@ def run(name, endpoint, admission, has_key, limits):
         response = Response(body, status=code, content_type=content_type)
         return response, 0
     paging = None
+    # specimen records in specimen code order (not the distinct lists of names): the next page is afterCode=
+    by_code = SPECIMEN_LISTS.get(name) is not None and 'distinct' not in request.args
     if ndjson:
         records = ndjson_records(body)
         paging = page_info(found, records, admission.reserved)
@@ -353,7 +355,7 @@ def run(name, endpoint, admission, has_key, limits):
             count = len(obj[key])
             if SPECIMEN_LISTS.get(name) == key:
                 add_locality_codes(name, obj[key])
-        notice = limit_notice(has_key, limits, admission, count)
+        notice = limit_notice(has_key, limits, admission, count, by_code)
         for meta in ('metaData', '_metaData'):
             if isinstance(obj.get(meta), dict):
                 obj[meta]['parameters'] = [request.args.to_dict()]
@@ -366,7 +368,7 @@ def run(name, endpoint, admission, has_key, limits):
                 if paging:
                     obj[meta].update(paging)
         response = app.json.response(obj)
-    notice = limit_notice(has_key, limits, admission, count)
+    notice = limit_notice(has_key, limits, admission, count, by_code)
     if notice:
         response.headers[api.LIMIT_HEADER] = notice
     if link:
@@ -414,15 +416,21 @@ def level_name(has_key):
     return 'key' if has_key else 'no key'
 
 
-def limit_notice(has_key, limits, admission, count):
+NEXT_BY_CODE = (' This answer holds {:,}; to continue, send afterCode=<the last specimenCode of this answer>'
+                ' (offset= also works).')
+NEXT_BY_OFFSET = ' This answer holds {:,}; ask for the next ones with offset=.'
+
+
+def limit_notice(has_key, limits, admission, count, by_code=False):
     """The notice when the answer was cut: more was asked for than was given, or no limit was given and the answer is
-    full (there may be more; the next page is offset=)."""
+    full (there may be more). How to go on: afterCode=<last specimenCode> for the specimen records of /specimens and
+    /geoSpecimens (by_code; offset stays allowed), offset= for every other list."""
     wanted = wanted_limit()
     if (wanted is not None and wanted > admission.reserved) or (wanted is None and count >= admission.reserved):
         who = 'with your key' if has_key else 'without a key'
         text_ = 'Answers {} hold at most {:,} records, and {:,} records a day.'.format(
             who, limits.max_records, limits.records_per_day)
-        text_ += ' This answer holds {:,}; ask for the next ones with offset=.'.format(count)
+        text_ += (NEXT_BY_CODE if by_code else NEXT_BY_OFFSET).format(count)
         if not has_key:
             text_ += ' For more, get a free API key at {}.'.format(api_keys.GET_A_KEY_URL)
         return text_

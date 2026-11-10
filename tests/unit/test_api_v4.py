@@ -258,6 +258,11 @@ def test_no_key_twenty_five_records_an_answer():
     assert r.status_code == 200 and len(j["specimens"]) == 25, (r.status_code, len(j.get("specimens", [])))
     assert "at most 25 records" in j["metaData"]["limitNotice"] and api.LIMIT_HEADER in r.headers
     assert "get a free API key" in r.headers[api.LIMIT_HEADER]
+    # the whole text: a cut page of specimens goes on with afterCode (offset stays allowed), 2026-11-10
+    assert j["metaData"]["limitNotice"] == r.headers[api.LIMIT_HEADER] == (
+        "Answers without a key hold at most 25 records, and 1,250 records a day. This answer holds 25; to continue,"
+        " send afterCode=<the last specimenCode of this answer> (offset= also works). For more, get a free API key at"
+        " https://www.antweb.org/apiKey.do."), j["metaData"]["limitNotice"]
     assert j["metaData"]["limit"] == 25 and j["metaData"]["level"] == "no key"
 
 
