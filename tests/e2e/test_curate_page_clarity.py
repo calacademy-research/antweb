@@ -81,6 +81,9 @@ def test_source_three_groups_one_link_per_line():
     # Administrators only, as before.
     assert re.search(r"isAdmin\(\)\) \{ %>\s*<li><a [^\n]*worldantsUploads", names)
     assert re.search(r"LoginMgr\.isAdmin\(accessLogin\)\) \{ %>\s*<li><a [^\n]*countCheck\.do", names)
+    jobs = src.split('id="curate-uploads"', 1)[1].split("</ul>", 1)[0]
+    assert ('<a href="<%= domainApp %>/jobStatus.do">Uploads and data jobs</a>: '
+            "Follow an upload or data job and read its result.") in jobs
     for old in ("View Your <a", "Manage Your <a", ">Name updates<", ">Count check<", "Past upload files of",
                 "past upload files", "uploadHistory.do", "Specimen files uploaded before"):
         assert old not in src, old
@@ -123,6 +126,12 @@ def test_curator_sees_three_groups_and_links_open(curator):
         for href in hrefs:
             _assert_opens(s, href)
     assert "Name update report" in _visible(_group(html, "curate-names"))
+    uploads = _group(html, "curate-uploads")
+    assert re.search(r'/jobStatus\.do">Uploads and data jobs</a>: Follow an upload or data job and read its result\.', uploads)
+    assert "Upload status" not in _visible(html)
+    jobs = _assert_opens(s, "/jobStatus.do")
+    assert "<h1>Uploads and data jobs</h1>" in jobs.text
+    assert re.search(r"<title>\s*Uploads and data jobs", jobs.text), "page title"
     for link in ADMIN_ONLY:
         assert link not in html, f"{link} is for administrators"
 

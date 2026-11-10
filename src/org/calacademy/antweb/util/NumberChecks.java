@@ -772,10 +772,11 @@ public final class NumberChecks {
             Map<String, long[]> files = inv.rows("select image_upload_id, count(*) from image_uploaded group by image_upload_id");
             boolean complete = has("image_upload", "complete");
             String sql = "select id, image_count, " + (complete ? "complete" : "1") + " from image_upload";
-            long total = 0;
+            long total = 0, maxId = 0;
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(sql))) {
                 while (r.next()) {
                     ++total;
+                    maxId = Math.max(maxId, r.getLong(1));
                     String id = r.getString(1);
                     uploads.putIfAbsent(id, "image upload " + id);
                     inv.compare(c, "image upload", id, "Image Count (listImageUploads.do) = its files", r.getLong(2),
@@ -783,6 +784,8 @@ public final class NumberChecks {
                 }
             }
             expected("imageUploads").put("total", total);
+            // The tests compare the page later in the same run; batches uploaded by other tests after this count (id > maxId) are left out there.
+            expected("imageUploads").put("maxId", maxId);
         });
     }
 

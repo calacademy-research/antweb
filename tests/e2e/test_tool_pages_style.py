@@ -128,7 +128,7 @@ def _tool_part(html, wrapper):
 PAGES = [
     ("/technical.do", "technical-page",
      ["/schedule.do?action=run&num=1", "/util.do?action=reloadAntwebMgr&name=group", "/serverDebug.do", "<h1>Technical page</h1>"]),
-    ("/jobStatus.do", "job-status-page", ["<h1>Upload status</h1>", 'class="aw-crumbs"']),
+    ("/jobStatus.do", "job-status-page", ["<h1>Uploads and data jobs</h1>", 'class="aw-crumbs"']),
     ("/serverStatus.do", "server-status-page",
      ["<h1>Server Status</h1>", "toggleDownTime", 'name="_csrf"', "/dbStatus.do", "Page Tracker"]),
     ("/countCheck.do?job=0", "count-check-page", ["<h1>Check the counts</h1>", 'id="count-check-run"']),
@@ -166,7 +166,7 @@ def test_finished_data_job_has_no_second_site_page(admin):
         if m and "Nightly" in row and "aw-status-finished" in row:
             ids.append(m.group(1))
     if not ids:
-        pytest.skip("no finished nightly set started by hand on the Upload status list")
+        pytest.skip("no finished nightly set started by hand on the Uploads and data jobs list")
     page = admin.get(BASE_URL + f"/jobStatus.do?id={ids[0]}", timeout=PAGE_TIMEOUT).text
     assert 'data-status="finished"' in page
     assert page.count("Cite AntWeb") == 0, "the site footer is inside the job page"
@@ -213,3 +213,84 @@ def test_source_admin_result_pages_have_a_title():
     # The explanation block keeps the class the manager-tool tests look for.
     assert 'class=\\"mgr_help\\">The server\'s log files' in _src("src/org/calacademy/antweb/util/LogMgrAction.java")
     assert 'class=\\"mgr_help\\" id=\\"qm-intro\\"' in _src("src/org/calacademy/antweb/util/Queries.java")
+
+
+# ---------- Server Status: jobs and image uploads (Brian Fisher, 2026-11-09) ----------
+# The running job links to its page, a "Last finished job" row, "Image upload in progress" (BusyStatus) instead of
+# "Is Image Upload locked" (table operation_lock, which nothing writes since 2026-10-17), no "Uptime Fail On Purpose"
+# switch, and the note "Restarts and deploys wait automatically while an upload or data job runs."
+
+SERVER_STATUS_NOTE = "Restarts and deploys wait automatically while an upload or data job runs."
+OLD_SERVER_STATUS = ("Is Image Upload locked", "Uptime Fail On Purpose", "toggle fail", "uptime.do?fail=", "operationLock",
+                     "isFailOnPurpose", "Upload status")
+
+
+def test_source_server_status_job_rows():
+    jsp = _src("web/util/serverStatus-body.jsp")
+    for row in ("Background job running", "Last finished job", "Image upload in progress"):
+        assert f'<th scope="row">{row}</th>' in jsp, row
+    assert "JobStatusAction.runningJobHtml(runningJob, domainApp)" in jsp
+    assert "JobStatusAction.lastJobHtml(lastJob, domainApp)" in jsp
+    assert "BusyStatus.openImageBatches(" in jsp
+    assert SERVER_STATUS_NOTE in jsp
+    for old in OLD_SERVER_STATUS:
+        assert old not in jsp, old
+    action = _src("src/org/calacademy/antweb/util/ServerStatusAction.java")
+    assert "OperationLock" not in action and "isFailOnPurpose" not in action
+    assert 'request.setAttribute("lastJob", BackgroundJobs.get().lastEnded())' in action
+    uptime = _src("src/org/calacademy/antweb/util/UptimeAction.java")
+    assert "FailOnPurpose" not in uptime and 'getParameter("fail")' not in uptime
+    assert 'findForward("success")' in uptime and "isDatabaseUp(request)" in uptime
+    assert not (REPO_ROOT / "web/util/uptimeFail.jsp").exists()
+    assert "uptimeFail" not in (REPO_ROOT / "WEB-INF/struts-config.xml").read_text(encoding="utf-8")
+    # AntwebMgr still loads its data by calling uptime.do on the local server.
+    assert '"/uptime.do"' in _src("src/org/calacademy/antweb/util/AntwebMgr.java")
+
+
+def test_source_job_page_is_called_uploads_and_data_jobs():
+    assert 'PAGE_TITLE = "Uploads and data jobs"' in _src("src/org/calacademy/antweb/util/JobStatusAction.java")
+    assert '<tiles:put name="title" value="Uploads and data jobs" />' in _src("web/curate/jobStatus.jsp")
+    for path in ("web/curate/curate-body.jsp", "web/util/serverStatus-body.jsp", "web/curate/jobStatus.jsp",
+                 "src/org/calacademy/antweb/util/JobStatusAction.java", "docs/guides/curate-page.md"):
+        text = _src(path).replace('"Upload status" until', "").replace("Upload status until", "")
+        assert "Upload status" not in text, path
+
+
+@needs("admin")
+def test_server_status_job_rows(admin):
+    r = admin.get(BASE_URL + "/serverStatus.do", timeout=PAGE_TIMEOUT)
+    assert r.status_code == 200 and classify(r).category == "ok", classify(r)
+    page = _tool_part(r.text, "server-status-page")
+    for row in ("Background job running", "Last finished job", "Image upload in progress"):
+        assert f'<th scope="row">{row}</th>' in page, row
+    for old in ("Is Image Upload locked", "Uptime Fail On Purpose", "toggle fail", "uptime.do?fail="):
+        assert old not in page, old
+    assert SERVER_STATUS_NOTE in page
+    running = re.search(r'<tr id="server-row-running-job">(.*?)</tr>', page, re.S).group(1)
+    assert ">Uploads and data jobs</a>" in running and "/jobStatus.do" in running
+    if 'id="server-running-job"' in running:
+        assert re.search(r'id="server-running-job"[^>]*href="[^"]*/jobStatus\.do\?id=\d+"', running), running
+    else:
+        assert ">none<" in running, running
+    last = re.search(r'<tr id="server-row-last-job">(.*?)</tr>', page, re.S).group(1)
+    m = re.search(r'id="server-last-job" href="([^"]*/jobStatus\.do\?id=(\d+))"', last)
+    if m:
+        assert re.search(r"</a>: (Finished|Did not complete|Interrupted)", last), last
+        result = re.search(r'<span id="server-last-job-result">(.*?)</span>', last, re.S)
+        if result:
+            assert "<" not in result.group(1) and len(result.group(1)) <= 200 * 6, result.group(1)[:300]
+        job = admin.get(BASE_URL + f"/jobStatus.do?id={m.group(2)}", timeout=PAGE_TIMEOUT)
+        assert job.status_code == 200 and 'id="job-status"' in job.text
+    else:
+        assert "None yet." in last, last
+    image = re.search(r'<tr id="server-row-image-upload">(.*?)</tr>', page, re.S).group(1)
+    assert re.search(r'class="aw-(ok|bad)">(true|false)</span>', image), image
+
+
+@needs("admin")
+def test_uptime_ignores_the_old_fail_switch(admin):
+    """uptime.do answers its health check whatever fail= says, even for an administrator (the switch is gone: before,
+    an admin's fail=1 asked for a POST confirmation and then failed every check). Read-only GET."""
+    r = admin.get(BASE_URL + "/uptime.do?fail=1", timeout=TIMEOUT)
+    assert r.status_code == 200 and "success" in r.text, r.text[:300]
+    assert "Intentional fail" not in r.text and 'name="_csrf"' not in r.text, r.text[:300]

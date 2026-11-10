@@ -14,7 +14,7 @@ The look lives in two files:
 Both are loaded by one include, `web/common/toolsHead.jsp`, which adds the version token to their
 addresses (`Asset.url`, so browsers and Cloudflare fetch a changed file at once).
 
-Pages in this look (batch 1, 2026-10-22): Curate page, Technical page, Upload status and each job's
+Pages in this look (batch 1, 2026-10-22): Curate page, Technical page, Uploads and data jobs (called Upload status until 2026-11-09) and each job's
 page (`jobStatus.do`), Server Status, Check the counts, Log Manager, Name update report, Specimen and
 Image upload lists, Daily update (`dailyUpdate.do`, 2026-11-07), API keys (`apiKeys.do`, 2026-11-08), named query results and the other admin result pages (`curate/adminHtmlMessage.jsp`),
 admin messages (`common/message-body.jsp`, `unboldMessage-body.jsp` inside the admin layout). The upload reports (static files written at upload time, `upload/UploadReportPage`, 2026-10-29) link

@@ -77,4 +77,36 @@ public class JobSummaryTest extends TestCase {
         assertFalse(page, page.contains("<script"));
         assertEquals("one title", 1, page.split("<h1>", -1).length - 1);
     }
+
+    /** Server Status, "Last finished job" (Brian Fisher, 2026-11-09): one short escaped line of the result. */
+    public void testServerStatusResultLine() {
+        assertEquals(SENTENCE, JobSummary.shortLine(SCHEDULER_RESULT, false, 500));
+        assertEquals("3 real differences", JobSummary.shortLine("<p>3 real <b>differences</b></p>", false, 200));
+        assertEquals("Bad line &lt;script&gt;x&lt;/script&gt;", JobSummary.shortLine("Bad line\n<script>x</script>", true, 200));
+        String cut = JobSummary.shortLine(SENTENCE, false, 40);
+        assertTrue(cut, cut.endsWith("...") && cut.length() <= 40);
+        assertEquals("", JobSummary.shortLine(null, true, 200));
+    }
+
+    /** Server Status: the running job and the last finished job, each linked to its page on jobStatus.do. */
+    public void testServerStatusJobLines() {
+        assertTrue(JobStatusAction.runningJobHtml(null, "https://example.org").contains(">none<"));
+        BackgroundJobs.Job up = new BackgroundJobs.Job(BackgroundJobs.UPLOAD, "specimenUpload", "Specimen upload for <group>", 7, "zz<test>", 5);
+        up.restore(42, BackgroundJobs.Status.running, "Reading", null, null, null, new java.util.Date(), new java.util.Date(), null);
+        String running = JobStatusAction.runningJobHtml(up, "https://example.org");
+        assertTrue(running, running.contains("href=\"https://example.org/jobStatus.do?id=42\""));
+        assertTrue(running, running.contains("Specimen upload for &lt;group&gt; (job 42, zz&lt;test&gt;)"));
+
+        assertEquals("None yet.", JobStatusAction.lastJobHtml(null, "https://example.org"));
+        BackgroundJobs.Job data = new BackgroundJobs.Job(BackgroundJobs.DATA, "schedule:run:2", "Nightly set 2 (started by hand)", 1, "admin", 0);
+        java.util.Date end = new java.util.Date(0);
+        data.restore(186, BackgroundJobs.Status.finished, "", SCHEDULER_RESULT, null, null, end, end, end);
+        String last = JobStatusAction.lastJobHtml(data, "https://example.org");
+        assertTrue(last, last.contains("href=\"https://example.org/jobStatus.do?id=186\">Nightly set 2 (started by hand) (job 186)</a>: Finished, ended "));
+        assertTrue(last, last.contains("<span id=\"server-last-job-result\">" + SENTENCE + "</span>"));
+        assertFalse(last, last.contains("Copyright"));
+        // A job interrupted by a restart has no end time.
+        data.restore(187, BackgroundJobs.Status.interrupted, BackgroundJobs.INTERRUPTED_STEP, null, null, null, end, end, null);
+        assertTrue(JobStatusAction.lastJobHtml(data, "x").endsWith("(job 187)</a>: Interrupted."));
+    }
 }

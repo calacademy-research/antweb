@@ -164,7 +164,7 @@
                   <li>Only ZIP files are accepted.</li>
                   <li><%= org.calacademy.antweb.upload.UploadFile.UTF8_NOTE %></li>
                   <li>Large files take several minutes; you will see the progress on the next page
-                      (and later under <a href="<%= domainApp %>/jobStatus.do">Upload status</a>).</li>
+                      (and later under <a href="<%= domainApp %>/jobStatus.do">Uploads and data jobs</a>).</li>
                 </ol>
             </div>
 
@@ -212,7 +212,7 @@
   <ul class="aw-links">
     <li><a href="<%= domainApp %>/listSpecimenUploads.do?groupId=<%= accessGroup.getId() %>">Specimen upload reports</a>: one report per specimen upload of your group, newest first.</li>
     <li><a href="<%= domainApp %>/listImageUploads.do?groupId=<%= accessGroup.getId() %>">Image upload reports</a>: one report per batch of uploaded images.</li>
-    <li><a href="<%= domainApp %>/jobStatus.do">Upload status</a>: uploads waiting or in progress, and their results.</li>
+    <li><a href="<%= domainApp %>/jobStatus.do">Uploads and data jobs</a>: Follow an upload or data job and read its result.</li>
   </ul>
 </div>
 

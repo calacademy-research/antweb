@@ -76,7 +76,7 @@ def test_upload_answers_at_once_and_shows_progress():
     # The list of recent uploads has this one.
     listing = s.get(BASE_URL + "/jobStatus.do", timeout=TIMEOUT).text
     job_id = r.job_url.split("id=", 1)[1].split("&", 1)[0]
-    assert f"jobStatus.do?id={job_id}" in listing, "the upload is not on the Upload status list"
+    assert f"jobStatus.do?id={job_id}" in listing, "the upload is not on the Uploads and data jobs list"
 
 
 @needs("uploader")
