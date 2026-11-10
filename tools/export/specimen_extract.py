@@ -15,6 +15,8 @@ It writes one folder (default /root/antweb-extracts/<date>-<names>/):
                           WITHOUT coordinates are in the file (has_coordinates says which): a cut by a shape
                           file would lose them. Specimens whose name has no taxon row are in the file too
                           (no_taxon_row = 1; the API's specimen view leaves those out).
+  specimens_no_country.csv.gz   with --with-no-country: every specimen of AntWeb with no country (same columns).
+                          No country filter can find these; some belong to the countries asked for.
   genus_summary.csv       per genus: specimens, names (distinct taxon names), names with at least one
                           specimen with coordinates, and the same for the chosen bioregion.
   bioregion_list.csv      with --bioregion: AntWeb's species list of that bioregion (the list its page shows),
@@ -32,8 +34,24 @@ Islands: AntWeb files an island that it treats as a country (is_island = 1) unde
 Islands whose geolocale row names one of the requested countries as parent or country are included and
 listed in the manifest; leave them out with --no-islands.
 
+Country names: only a valid country row is accepted (an old name is refused, with the valid one). Specimens
+still filed under an old name of a requested country (a geolocale country row that is not valid and whose
+valid_name is the country, USA for United States) are included; the manifest names those old names and counts
+the specimens ("Filed under an outdated country name"). A requested country with no specimen at all is named
+in a WARNING line of the manifest.
+
+A run starts by removing the files of an earlier run in the same folder; specimens.csv.gz is written as
+specimens.csv.gz.part and renamed when it is complete (a failed run leaves no file that looks finished), and
+manifest.json is written last, under a temporary name. Known limit: mysql prints the text NULL and a missing
+value the same way, so a field that holds the four letters NULL comes out empty here (the web page's extract
+keeps it).
+
 The password is read from <project>/etc/db.properties and goes to docker through the environment, never on
 a command line. Tests: tests/unit/test_specimen_extract.py.
+
+The admin page dataExtract.do writes the same files from the website (src/.../util/DataExtract.java, a port of
+this tool; docs/flows/data-extract.md). Keep the two in step: a change of the columns or the manifest goes into
+both, with VERSION raised in both.
 """
 import argparse
 import collections
@@ -47,10 +65,12 @@ import re
 import subprocess
 import sys
 
-VERSION = "1"
+VERSION = "4"
 TAXON_COLUMNS = ("taxon_status", "taxon_fossil", "taxon_rank", "taxon_current_valid_name", "taxon_author_date",
                  "group_name", "no_taxon_row")
 PLACE_NAME = re.compile(r"^[^\x00-\x1f;\\]{1,64}$")
+OUTPUT_FILES = ("specimens.csv.gz", "specimens_no_country.csv.gz", "genus_summary.csv", "bioregion_list.csv", "manifest.txt",
+                "manifest.json")
 
 
 def sql_string(value):
@@ -93,7 +113,7 @@ def unescape(field):
 def places_sql(countries):
     c = sql_list(countries)
     return ("select name, georank, is_valid, is_island, ifnull(parent, ''), ifnull(country, ''), ifnull(bioregion, ''), "
-            "ifnull(alt_bioregion, '') from geolocale where (georank = 'country' and name in " + c + ") "
+            "ifnull(alt_bioregion, ''), ifnull(valid_name, '') from geolocale where (georank = 'country' and name in " + c + ") "
             "or (is_island = 1 and (parent in " + c + " or country in " + c + ")) order by georank, name")
 
 
@@ -114,9 +134,54 @@ def export_sql(countries, islands):
             "where " + where_sql(countries, islands) + " order by s.code")
 
 
+def outdated_sql(countries):
+    """(index of the country, old name): geolocale country rows that are not valid and name the country as valid_name."""
+    return " union all ".join(
+        "select %d, name from geolocale where georank = 'country' and (is_valid is null or is_valid <> 1) and valid_name = %s"
+        % (i, sql_string(c)) for i, c in enumerate(countries)) + " /* outdated names */"
+
+
+def outdated_names(countries, rows):
+    """[{"name": old name, "valid_name": requested country}], by name; a requested name is never an old name."""
+    found = {}
+    for r in rows:
+        name, country = r[1], countries[int(r[0])]
+        if name and name not in countries and name not in found:
+            found[name] = country
+    return [{"name": n, "valid_name": found[n]} for n in sorted(found)]
+
+
+def per_country_sql(countries, outdated):
+    """(index of the country, its specimens in the database, also under its old names): 0 is worth a warning."""
+    parts = []
+    for i, c in enumerate(countries):
+        names = [c] + [o["name"] for o in outdated if o["valid_name"] == c]
+        parts.append("select %d, count(*) from specimen s where s.country in %s" % (i, sql_list(names)))
+    return " union all ".join(parts) + " /* per country */"
+
+
+NO_COUNTRY = "(s.country is null or s.country = '')"
+
+
+def no_country_export_sql():
+    """Specimens with no country at all: no country filter can find them (production 2026-11-10: 1,623, among them
+    303 of the University of Utah and 167 of UTEP), so they go in a file of their own for the curators to look through."""
+    return export_sql([], []).replace(where_sql([], []), NO_COUNTRY)
+
+
 def count_sql(countries, islands):
-    return ("select ifnull(s.country, ''), ifnull(s.island_country, ''), count(*) from specimen s where "
+    # Grouped by the bytes of the names: MySQL compares names without accents ("México" = "Mexico"), so a plain
+    # GROUP BY adds the two spellings up while the file has them apart (staging 2026-11-10: Mexico 52,206 in the
+    # database's count, 52,203 + 3 "México" in the file, reported as a difference).
+    # hex(): grouped and returned by the bytes, whatever the column's collation and the client's settings.
+    # convert(... using utf8mb4): the bytes are UTF-8 whatever the column's character set.
+    return ("select hex(convert(ifnull(s.country, '') using utf8mb4)), hex(convert(ifnull(s.island_country, '') using utf8mb4)), "
+            "count(*) from specimen s where "
             + where_sql(countries, islands) + " group by 1, 2 order by 1, 2")
+
+
+def unhex(value):
+    return bytes.fromhex(value).decode("utf-8", "replace")
 
 
 def bioregion_list_sql(bioregion):
@@ -178,8 +243,10 @@ def has_coordinates(lat, lon):
 
 
 class Stats:
-    def __init__(self, bioregion):
+    def __init__(self, bioregion, outdated=()):
         self.bioregion = bioregion
+        self.outdated = set(outdated)                # old country names included (exact spelling)
+        self.filed_outdated = 0
         self.rows = 0
         self.by_place = collections.Counter()        # (country, island_country)
         self.by_bioregion = collections.Counter()
@@ -196,6 +263,8 @@ class Stats:
     def add(self, row):
         self.rows += 1
         self.by_place[(row.get("country", ""), row.get("island_country", ""))] += 1
+        if row.get("country", "") in self.outdated:
+            self.filed_outdated += 1
         bio = row.get("bioregion", "")
         self.by_bioregion[bio] += 1
         self.by_status[row.get("taxon_status", "") or "(no taxon row)"] += 1
@@ -225,21 +294,28 @@ class Stats:
 def write_specimens(lines, path, stats):
     """Writes specimens.csv.gz from the stream; returns the column names."""
     header = None
-    with gzip.open(path, "wt", encoding="utf-8", newline="") as f:
-        w = csv.writer(f)
-        for line in lines:
-            fields = line.split("\t")
-            if header is None:
-                header = fields
-                w.writerow(header + ["has_coordinates"])
-                continue
-            if len(fields) != len(header):
-                sys.exit("export row with %d fields, header has %d: %r" % (len(fields), len(header), line[:200]))
-            values = [unescape(v) for v in fields]
-            coords = stats.add(dict(zip(header, values)))
-            w.writerow(values + ["1" if coords else "0"])
-    if header is None:
-        sys.exit("the export returned nothing, not even a header")
+    part = path + ".part"       # renamed when complete: a failed run leaves no specimens.csv.gz
+    try:
+        with gzip.open(part, "wt", encoding="utf-8", newline="") as f:
+            w = csv.writer(f)
+            for line in lines:
+                fields = line.split("\t")
+                if header is None:
+                    header = fields
+                    w.writerow(header + ["has_coordinates"])
+                    continue
+                if len(fields) != len(header):
+                    sys.exit("export row with %d fields, header has %d: %r" % (len(fields), len(header), line[:200]))
+                values = [unescape(v) for v in fields]
+                coords = stats.add(dict(zip(header, values)))
+                w.writerow(values + ["1" if coords else "0"])
+        if header is None:
+            sys.exit("the export returned nothing, not even a header")
+    except BaseException:
+        if os.path.exists(part):
+            os.remove(part)
+        raise
+    os.replace(part, path)
     return header
 
 
@@ -282,7 +358,7 @@ def sha256(path):
 
 def compare_counts(stats, db_rows):
     """(verified, differences): the rows written per (country, island country) against the database's count."""
-    db = {(r[0], r[1]): int(r[2]) for r in db_rows}
+    db = {(unhex(r[0]), unhex(r[1])): int(r[2]) for r in db_rows}
     diffs = []
     for key in sorted(set(db) | set(stats.by_place)):
         a, b = stats.by_place.get(key, 0), db.get(key, 0)
@@ -300,28 +376,47 @@ def manifest_text(m):
              "Made: %s (UTC)   AntWeb commit: %s   tool version %s" % (m["made_utc"], m["antweb_commit"], m["tool_version"]),
              "Countries: " + ", ".join(m["countries"]),
              "Islands included: " + (", ".join(m["islands"]) or "none"),
+             "Outdated country names included: " + (", ".join("%s (now %s)" % (o["name"], o["valid_name"])
+                                                             for o in m.get("outdated_names", [])) or "none"),
              "", "Specimens in the file: {:,}".format(m["specimens"]),
-             "Check against the database: " + ("VERIFIED, every count equal" if m["verified"] else "DIFFERENT, see differences; run again"),
-             "", "By country (country / island country):"]
+             "Check against the database: " + ("VERIFIED, every count equal" if m["verified"] else "DIFFERENT, see differences; run again")]
+    if m.get("countries_without_specimens"):
+        lines.append("WARNING: AntWeb has no specimen for: " + ", ".join(m["countries_without_specimens"])
+                     + " (check that these are the countries meant)")
+    lines += ["", "By country (country / island country):"]
     for p in m["by_place"]:
         lines.append("  {:<40} {:>10,}".format(p["country"] + (" / " + p["island_country"] if p["island_country"] else ""), p["specimens"]))
     lines += ["", "By AntWeb bioregion:"]
     for name, n in m["by_bioregion"].items():
         lines.append("  {:<40} {:>10,}".format(name or "(none)", n))
+    spellings = sorted({p["country"] for p in m["by_place"]} - set(m["countries"]) - set(m["islands"])
+                       - {o["name"] for o in m.get("outdated_names", [])})
+    if spellings:
+        lines += ["", "Country spellings in the file besides the names asked for (MySQL matches names without accents): "
+                  + ", ".join(spellings)]
     lines += ["", "Without usable coordinates: {:,} (in the file, has_coordinates = 0; a cut by a shape file loses them)".format(m["without_coordinates"]),
               "Name has no taxon row: {:,} (in the file, no_taxon_row = 1; the API's specimen view leaves these out)".format(m["no_taxon_row"]),
               "Red-flagged at upload: {:,} (column flag)".format(m["flagged"]),
               "Family not Formicidae: {:,}".format(m["not_ants"]),
+              "Filed under an outdated country name: {:,}".format(m.get("filed_under_outdated_name", 0)),
               "Genera: {:,}   distinct names: {:,}".format(m["genera"], m["names"])]
     if m.get("bioregion"):
         b = m["bioregion_list"]
         lines += ["", "AntWeb's %s species list: %s names; %s of them have no specimen in this extract (literature, or other countries)"
                   % (m["bioregion"], "{:,}".format(b["names"]), "{:,}".format(b["names_without_specimen_in_extract"]))]
+    if m.get("no_country"):
+        nc = m["no_country"]
+        lines += ["", "Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them): "
+                  "{:,}; with coordinates {:,}; {:,} names, {:,} of them not in the countries file".format(
+                      nc["specimens"], nc["with_coordinates"], nc["names"], nc["names_not_in_the_countries_file"]),
+                  "  by upload group: " + ", ".join("%s %s" % (g.strip() or "(none)", "{:,}".format(n)) for g, n in nc["by_group"].items())]
     lines += ["", "Files (sha256):"]
     for name, info in m["files"].items():
         lines.append("  %s  %s" % (info["sha256"], name))
     if m["differences"]:
         lines += ["", "Differences:"] + ["  " + json.dumps(d) for d in m["differences"]]
+    lines += ["", "Spreadsheets: import the columns of specimens.csv as text. Values are written as they are in the database,",
+              "also when they start with =, +, - or @."]
     lines += ["", "Cite: AntWeb. Version %s. California Academy of Sciences, online at https://www.antweb.org. Extract of %s."
               % (m.get("antweb_version") or "[version]", m["made_utc"][:10]),
               "Images and data on AntWeb are licensed CC BY 4.0."]
@@ -348,6 +443,8 @@ def main(argv=None):
     a.add_argument("--countries", required=True, help='AntWeb country names, comma-separated: "United States,Canada,Mexico"')
     a.add_argument("--bioregion", default="", help="also write AntWeb's species list of this bioregion (for example Nearctic)")
     a.add_argument("--no-islands", action="store_true", help="leave out islands AntWeb treats as countries")
+    a.add_argument("--with-no-country", action="store_true",
+                   help="also write specimens_no_country.csv.gz: every specimen of AntWeb that has no country")
     a.add_argument("--project", default=None, help="AntWeb checkout with etc/db.properties (default: found)")
     a.add_argument("--container", default="antweb_mysql_1")
     a.add_argument("--out", default=None, help="folder to write (default /root/antweb-extracts/<date>-<names>)")
@@ -360,27 +457,61 @@ def main(argv=None):
     now = datetime.datetime.now(datetime.timezone.utc)
     out = args.out or os.path.join("/root/antweb-extracts", now.strftime("%Y-%m-%d") + "-" + slug(countries))
     os.makedirs(out, exist_ok=True)
+    # The files of an earlier run in this folder go first: no stale bioregion_list.csv, no old manifest beside new data.
+    for name in OUTPUT_FILES + ("specimens.csv.gz.part", "specimens_no_country.csv.gz.part", "manifest.json.part"):
+        if os.path.isfile(os.path.join(out, name)):
+            os.remove(os.path.join(out, name))
 
     places = run_query(project, places_sql(countries), args.container)
-    found = {p[0] for p in places if p[1] == "country"}
+    found = {p[0] for p in places if p[1] == "country" and p[2] == "1"}
+    outdated = {p[0]: p[8] for p in places if p[1] == "country" and p[2] != "1"}
     unknown = [c for c in countries if c not in found]
     if unknown:
-        sys.exit("no country row in AntWeb for: " + ", ".join(unknown) + " (names as on AntWeb's country pages)")
+        # a name AntWeb keeps only as an old name (is_valid = 0) holds no specimens: say the valid one
+        sys.exit("no valid country in AntWeb named: " + ", ".join(
+            c + (" (use " + outdated[c] + ")" if outdated.get(c) else "") for c in unknown)
+            + " (names as on AntWeb's country pages)")
     islands = [] if args.no_islands else sorted({p[0] for p in places if p[3] == "1" and p[0] not in countries})
     print("Countries: " + ", ".join(countries))
     for p in places:
         print("  %-28s %-8s valid=%s island=%s parent=%s bioregion=%s alt=%s" % (p[0], p[1], p[2], p[3], p[4] or "-", p[6] or "-", p[7] or "-"))
     print("Islands included: " + (", ".join(islands) or "none"))
+    # Specimens still filed under an old name of a requested country are part of the extract.
+    outdated = outdated_names(countries, run_query(project, outdated_sql(countries), args.container))
+    old_names = [o["name"] for o in outdated]
+    print("Outdated country names included: " + (", ".join("%s (now %s)" % (o["name"], o["valid_name"]) for o in outdated) or "none"))
 
-    stats = Stats(args.bioregion)
+    stats = Stats(args.bioregion, old_names)
     spec_path = os.path.join(out, "specimens.csv.gz")
     print("Exporting (read-only) ...", flush=True)
-    header = write_specimens(stream_query(project, export_sql(countries, islands), args.container), spec_path, stats)
-    verified, diffs = compare_counts(stats, run_query(project, count_sql(countries, islands), args.container))
+    header = write_specimens(stream_query(project, export_sql(countries + old_names, islands), args.container), spec_path, stats)
+    verified, diffs = compare_counts(stats, run_query(project, count_sql(countries + old_names, islands), args.container))
+    per_country = {int(r[0]): int(r[1]) for r in run_query(project, per_country_sql(countries, outdated), args.container)}
+    empty = [c for i, c in enumerate(countries) if per_country.get(i, 0) == 0]
+
+    no_country = None
+    extra_files = []
+    if args.with_no_country:
+        nc_stats = Stats("")
+        nc_path = os.path.join(out, "specimens_no_country.csv.gz")
+        write_specimens(stream_query(project, no_country_export_sql(), args.container), nc_path, nc_stats)
+        nc_db = int(run_query(project, "select count(*) from specimen s where " + NO_COUNTRY, args.container)[0][0])
+        groups = collections.Counter()
+        with gzip.open(nc_path, "rt", encoding="utf-8", newline="") as f:
+            for row in csv.DictReader(f):
+                groups[row.get("group_name", "")] += 1
+        no_country = {"specimens": nc_stats.rows, "in_database": nc_db, "with_coordinates": nc_stats.rows - nc_stats.no_coordinates,
+                      "names": len(nc_stats.name_specimens),
+                      "names_not_in_the_countries_file": len(set(nc_stats.name_specimens) - set(stats.name_specimens)),
+                      "by_group": dict(groups.most_common())}
+        if nc_stats.rows != nc_db:
+            verified = False
+            diffs.append({"file": "specimens_no_country.csv.gz", "in_file": nc_stats.rows, "in_database": nc_db})
+        extra_files.append(nc_path)
 
     genus_path = os.path.join(out, "genus_summary.csv")
     write_genus_summary(genus_path, stats)
-    files = [spec_path, genus_path]
+    files = [spec_path] + extra_files + [genus_path]
     bio = None
     if args.bioregion:
         list_path = os.path.join(out, "bioregion_list.csv")
@@ -392,20 +523,23 @@ def main(argv=None):
         "tool_version": VERSION, "made_utc": now.strftime("%Y-%m-%d %H:%M:%S"),
         "antweb_commit": read_first_line(os.path.join(project, "etc", "git-commit")) or "unknown",
         "antweb_version": read_first_line(os.path.join(project, ".version")),
-        "countries": countries, "islands": islands, "bioregion": args.bioregion,
+        "countries": countries, "islands": islands, "outdated_names": outdated, "bioregion": args.bioregion,
         "columns": header + ["has_coordinates"], "specimens": stats.rows, "verified": verified, "differences": diffs,
         "by_place": [{"country": k[0], "island_country": k[1], "specimens": n} for k, n in sorted(stats.by_place.items())],
         "by_bioregion": dict(sorted(stats.by_bioregion.items())), "by_taxon_status": dict(sorted(stats.by_status.items())),
         "without_coordinates": stats.no_coordinates, "no_taxon_row": stats.no_taxon_row, "flagged": stats.flagged,
-        "not_ants": stats.not_ants, "genera": len(stats.genus), "names": len(stats.name_specimens),
-        "bioregion_list": bio,
+        "not_ants": stats.not_ants, "filed_under_outdated_name": stats.filed_outdated, "countries_without_specimens": empty,
+        "genera": len(stats.genus), "names": len(stats.name_specimens),
+        "bioregion_list": bio, "no_country": no_country,
         "files": {os.path.basename(p): {"sha256": sha256(p), "bytes": os.path.getsize(p)} for p in files},
     }
-    with open(os.path.join(out, "manifest.json"), "w", encoding="utf-8") as f:
-        json.dump(manifest, f, indent=1, ensure_ascii=False)
     text = manifest_text(manifest)
     with open(os.path.join(out, "manifest.txt"), "w", encoding="utf-8") as f:
         f.write(text)
+    # manifest.json last and in one step: it is the mark of a finished extract.
+    with open(os.path.join(out, "manifest.json.part"), "w", encoding="utf-8") as f:
+        json.dump(manifest, f, indent=1, ensure_ascii=False)
+    os.replace(os.path.join(out, "manifest.json.part"), os.path.join(out, "manifest.json"))
     print()
     print(text)
     print("Folder: " + out)
