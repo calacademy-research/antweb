@@ -1259,7 +1259,10 @@ jobs:
           # only reads and comes back as it was; 12,000 rows streamed. After the review: every country row that is not
           # valid refused; specimens under an old name of a country included and counted; a country without specimens a
           # warning; two spellings of a country counted apart and verified; read in pages by code, the table free
-          # between pages (ALTER TABLE during the extract does not wait); a four-byte character whole.
+          # between pages (ALTER TABLE during the extract does not wait); a four-byte character whole. Formats 5 and 6
+          # (ants only by default, Brian Fisher 2026-11-10): the file, the check and the bioregion list use the same
+          # filter, what is left out is counted by family, no family is kept, all families on request, a row that is
+          # not an ant in an ants-only file is not verified; the specimens without a country in their own file.
           # Last: it makes its own small tables and drops them.
           docker run --rm --network tzcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
@@ -1294,7 +1297,7 @@ jobs:
               /t/org/calacademy/antweb/home/PlaceViewTotalDbTest.java \
               /t/org/calacademy/antweb/home/ApiKeyDbTest.java \
               /t/org/calacademy/antweb/util/DataExtractDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:13 util.NumberChecksTest:22 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:8 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 util.DataExtractDbTest:14; do
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:13 util.NumberChecksTest:22 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:8 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 util.DataExtractDbTest:18; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

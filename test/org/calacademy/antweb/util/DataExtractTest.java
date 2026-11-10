@@ -70,20 +70,22 @@ public class DataExtractTest extends TestCase {
     /** The manifest the Python reference texts were made from. */
     private static Map<String, Object> manifest() {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("tool_version", "4");
+        m.put("tool_version", "6");
         m.put("made_utc", "2026-11-10 14:49:21");
         m.put("antweb_commit", "abc1234");
         m.put("antweb_version", "");
         m.put("countries", Arrays.asList("United States", "Côte d'Ivoire"));
         m.put("islands", new ArrayList<String>());
         m.put("outdated_names", Arrays.asList(map("name", "U.S.A.", "valid_name", "United States"), map("name", "USA", "valid_name", "United States")));
-        m.put("bioregion", "");
+        m.put("bioregion", "Nearctic");
         m.put("columns", Arrays.asList("code", "has_coordinates"));
         m.put("specimens", 1234567L);
         m.put("verified", false);
         m.put("differences", Arrays.asList(
             map("country", "Côte d'Ivoire", "island_country", "", "in_file", 2L, "in_database", 3L),
-            map("country", "United States", "island_country", "Ha\"waii\\", "in_file", 0L, "in_database", 1L)));
+            map("country", "United States", "island_country", "Ha\"waii\\", "in_file", 0L, "in_database", 1L),
+            map("file", "specimens.csv.gz", "not_formicidae_in_an_ants_only_file", 3L),
+            map("file", "specimens_no_country.csv.gz", "in_file", 1623L, "in_database", 1624L)));
         m.put("by_place", Arrays.asList(
             map("country", "Côte d'Ivoire", "island_country", "", "specimens", 2L),
             map("country", "Etats Unis", "island_country", "", "specimens", 1L),
@@ -94,13 +96,18 @@ public class DataExtractTest extends TestCase {
         m.put("without_coordinates", 1000L);
         m.put("no_taxon_row", 0L);
         m.put("flagged", 12L);
+        m.put("ants_only", true);
+        m.put("left_out_not_formicidae", map("specimens", 1289L, "families", 7L, "by_family", map("(coleoptera)", 564L, "curculionidae", 353L,
+            "vespidae", 224L, "staphylinidae", 100L, "apidae", 30L, "salticidae", 17L, "carabidae", 1L)));
+        m.put("blank_family", 4L);
         m.put("not_ants", 3L);
         m.put("filed_under_outdated_name", 7L);
         m.put("countries_without_specimens", Arrays.asList("Côte d'Ivoire"));
         m.put("genera", 80L);
         m.put("names", 2345L);
-        m.put("bioregion_list", null);
-        m.put("no_country", null);
+        m.put("bioregion_list", map("names", 1200L, "names_without_specimen_in_extract", 34L, "names_left_out_not_formicidae", 130L));
+        m.put("no_country", map("specimens", 1623L, "in_database", 1624L, "with_coordinates", 400L, "names", 310L,
+            "names_not_in_the_countries_file", 45L, "by_group", map("California Academy of Sciences", 710L, " UTEP", 167L, "", 3L)));
         m.put("files", map("specimens.csv.gz", map("sha256", "ab".repeat(32), "bytes", 99L),
             "genus_summary.csv", map("sha256", "cd".repeat(32), "bytes", 7L)));
         return m;
@@ -110,7 +117,7 @@ public class DataExtractTest extends TestCase {
     private static final String PYTHON_TEXT =
         "AntWeb specimen extract\n"
         + "\n"
-        + "Made: 2026-11-10 14:49:21 (UTC)   AntWeb commit: abc1234   tool version 4\n"
+        + "Made: 2026-11-10 14:49:21 (UTC)   AntWeb commit: abc1234   tool version 6\n"
         + "Countries: United States, Côte d'Ivoire\n"
         + "Islands included: none\n"
         + "Outdated country names included: U.S.A. (now United States), USA (now United States)\n"
@@ -134,9 +141,15 @@ public class DataExtractTest extends TestCase {
         + "Without usable coordinates: 1,000 (in the file, has_coordinates = 0; a cut by a shape file loses them)\n"
         + "Name has no taxon row: 0 (in the file, no_taxon_row = 1; the API's specimen view leaves these out)\n"
         + "Red-flagged at upload: 12 (column flag)\n"
-        + "Family not Formicidae: 3\n"
+        + "Ants only (family Formicidae): 1,289 specimens of other families are left out ((coleoptera) 564, curculionidae 353, vespidae 224, staphylinidae 100, apidae 30, salticidae 17, ...); --all-families includes them\n"
+        + "No family given: 4 (in the file)\n"
         + "Filed under an outdated country name: 7\n"
         + "Genera: 80   distinct names: 2,345\n"
+        + "\n"
+        + "AntWeb's Nearctic species list: 1,200 names of ants (130 names of other families left out); 34 of them have no specimen in this extract (literature, or other countries)\n"
+        + "\n"
+        + "Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them): 1,623; with coordinates 400; 310 names, 45 of them not in the countries file\n"
+        + "  by upload group: California Academy of Sciences 710, UTEP 167, (none) 3\n"
         + "\n"
         + "Files (sha256):\n"
         + "  abababababababababababababababababababababababababababababababab  specimens.csv.gz\n"
@@ -145,6 +158,8 @@ public class DataExtractTest extends TestCase {
         + "Differences:\n"
         + "  {\"country\": \"C\\u00f4te d'Ivoire\", \"island_country\": \"\", \"in_file\": 2, \"in_database\": 3}\n"
         + "  {\"country\": \"United States\", \"island_country\": \"Ha\\\"waii\\\\\", \"in_file\": 0, \"in_database\": 1}\n"
+        + "  {\"file\": \"specimens.csv.gz\", \"not_formicidae_in_an_ants_only_file\": 3}\n"
+        + "  {\"file\": \"specimens_no_country.csv.gz\", \"in_file\": 1623, \"in_database\": 1624}\n"
         + "\n"
         + "Spreadsheets: import the columns of specimens.csv as text. Values are written as they are in the database,\n"
         + "also when they start with =, +, - or @.\n"
@@ -156,7 +171,7 @@ public class DataExtractTest extends TestCase {
     private static final String PYTHON_TEXT_VERIFIED =
         "AntWeb specimen extract\n"
         + "\n"
-        + "Made: 2026-11-10 14:49:21 (UTC)   AntWeb commit: abc1234   tool version 4\n"
+        + "Made: 2026-11-10 14:49:21 (UTC)   AntWeb commit: abc1234   tool version 6\n"
         + "Countries: United States, Côte d'Ivoire\n"
         + "Islands included: Hawaii, Guam\n"
         + "Outdated country names included: none\n"
@@ -175,11 +190,12 @@ public class DataExtractTest extends TestCase {
         + "Without usable coordinates: 1,000 (in the file, has_coordinates = 0; a cut by a shape file loses them)\n"
         + "Name has no taxon row: 0 (in the file, no_taxon_row = 1; the API's specimen view leaves these out)\n"
         + "Red-flagged at upload: 12 (column flag)\n"
-        + "Family not Formicidae: 3\n"
+        + "All families (--all-families): 3 specimens in the file are not Formicidae\n"
+        + "No family given: 4 (in the file)\n"
         + "Filed under an outdated country name: 0\n"
         + "Genera: 80   distinct names: 2,345\n"
         + "\n"
-        + "AntWeb's Nearctic species list: 1,200 names; 34 of them have no specimen in this extract (literature, or other countries)\n"
+        + "AntWeb's Nearctic species list: 1,330 names; 34 of them have no specimen in this extract (literature, or other countries)\n"
         + "\n"
         + "Files (sha256):\n"
         + "  abababababababababababababababababababababababababababababababab  specimens.csv.gz\n"
@@ -194,7 +210,7 @@ public class DataExtractTest extends TestCase {
     // Written by Python's json.dump(manifest, indent=1, ensure_ascii=False).
     private static final String PYTHON_JSON =
         "{\n"
-        + " \"tool_version\": \"4\",\n"
+        + " \"tool_version\": \"6\",\n"
         + " \"made_utc\": \"2026-11-10 14:49:21\",\n"
         + " \"antweb_commit\": \"abc1234\",\n"
         + " \"antweb_version\": \"\",\n"
@@ -213,7 +229,7 @@ public class DataExtractTest extends TestCase {
         + "   \"valid_name\": \"United States\"\n"
         + "  }\n"
         + " ],\n"
-        + " \"bioregion\": \"\",\n"
+        + " \"bioregion\": \"Nearctic\",\n"
         + " \"columns\": [\n"
         + "  \"code\",\n"
         + "  \"has_coordinates\"\n"
@@ -232,6 +248,15 @@ public class DataExtractTest extends TestCase {
         + "   \"island_country\": \"Ha\\\"waii\\\\\",\n"
         + "   \"in_file\": 0,\n"
         + "   \"in_database\": 1\n"
+        + "  },\n"
+        + "  {\n"
+        + "   \"file\": \"specimens.csv.gz\",\n"
+        + "   \"not_formicidae_in_an_ants_only_file\": 3\n"
+        + "  },\n"
+        + "  {\n"
+        + "   \"file\": \"specimens_no_country.csv.gz\",\n"
+        + "   \"in_file\": 1623,\n"
+        + "   \"in_database\": 1624\n"
         + "  }\n"
         + " ],\n"
         + " \"by_place\": [\n"
@@ -266,6 +291,21 @@ public class DataExtractTest extends TestCase {
         + " \"without_coordinates\": 1000,\n"
         + " \"no_taxon_row\": 0,\n"
         + " \"flagged\": 12,\n"
+        + " \"ants_only\": true,\n"
+        + " \"left_out_not_formicidae\": {\n"
+        + "  \"specimens\": 1289,\n"
+        + "  \"families\": 7,\n"
+        + "  \"by_family\": {\n"
+        + "   \"(coleoptera)\": 564,\n"
+        + "   \"curculionidae\": 353,\n"
+        + "   \"vespidae\": 224,\n"
+        + "   \"staphylinidae\": 100,\n"
+        + "   \"apidae\": 30,\n"
+        + "   \"salticidae\": 17,\n"
+        + "   \"carabidae\": 1\n"
+        + "  }\n"
+        + " },\n"
+        + " \"blank_family\": 4,\n"
         + " \"not_ants\": 3,\n"
         + " \"filed_under_outdated_name\": 7,\n"
         + " \"countries_without_specimens\": [\n"
@@ -273,8 +313,23 @@ public class DataExtractTest extends TestCase {
         + " ],\n"
         + " \"genera\": 80,\n"
         + " \"names\": 2345,\n"
-        + " \"bioregion_list\": null,\n"
-        + " \"no_country\": null,\n"
+        + " \"bioregion_list\": {\n"
+        + "  \"names\": 1200,\n"
+        + "  \"names_without_specimen_in_extract\": 34,\n"
+        + "  \"names_left_out_not_formicidae\": 130\n"
+        + " },\n"
+        + " \"no_country\": {\n"
+        + "  \"specimens\": 1623,\n"
+        + "  \"in_database\": 1624,\n"
+        + "  \"with_coordinates\": 400,\n"
+        + "  \"names\": 310,\n"
+        + "  \"names_not_in_the_countries_file\": 45,\n"
+        + "  \"by_group\": {\n"
+        + "   \"California Academy of Sciences\": 710,\n"
+        + "   \" UTEP\": 167,\n"
+        + "   \"\": 3\n"
+        + "  }\n"
+        + " },\n"
         + " \"files\": {\n"
         + "  \"specimens.csv.gz\": {\n"
         + "   \"sha256\": \"abababababababababababababababababababababababababababababababab\",\n"
@@ -303,12 +358,15 @@ public class DataExtractTest extends TestCase {
         m.put("outdated_names", new ArrayList<Object>());
         m.put("countries_without_specimens", new ArrayList<String>());
         m.put("filed_under_outdated_name", 0L);
+        m.put("ants_only", false);
+        m.put("left_out_not_formicidae", null);
+        m.put("no_country", null);
         m.put("by_place", Arrays.asList(
             map("country", "Côte d'Ivoire", "island_country", "", "specimens", 2L),
             map("country", "United States", "island_country", "Hawaii", "specimens", 1234565L)));
         m.put("bioregion", "Nearctic");
         m.put("antweb_version", "9.4.0");
-        m.put("bioregion_list", map("names", 1200L, "names_without_specimen_in_extract", 34L));
+        m.put("bioregion_list", map("names", 1330L, "names_without_specimen_in_extract", 34L, "names_left_out_not_formicidae", null));
         assertEquals(PYTHON_TEXT_VERIFIED, DataExtract.manifestText(m));
         // what the reference texts hold: the old names, the warning, the other spelling, the count, the spreadsheet line
         assertTrue(PYTHON_TEXT.contains("Outdated country names included: U.S.A. (now United States), USA (now United States)\n"));
@@ -317,6 +375,22 @@ public class DataExtractTest extends TestCase {
         assertTrue(PYTHON_TEXT.contains("Filed under an outdated country name: 7\n"));
         assertTrue(PYTHON_TEXT.contains("Spreadsheets: import the columns of specimens.csv as text."));
         assertTrue(PYTHON_TEXT_VERIFIED.contains("Outdated country names included: none\n") && !PYTHON_TEXT_VERIFIED.contains("WARNING"));
+        // format 5 (Brian Fisher, 2026-11-10: ants only by default): what is left out, the six largest families and "..."
+        assertTrue(PYTHON_TEXT, PYTHON_TEXT.contains("Ants only (family Formicidae): 1,289 specimens of other families are left out ((coleoptera) 564,"
+            + " curculionidae 353, vespidae 224, staphylinidae 100, apidae 30, salticidae 17, ...); --all-families includes them\nNo family given: 4 (in the file)\n"));
+        assertTrue(PYTHON_TEXT_VERIFIED, PYTHON_TEXT_VERIFIED.contains("All families (--all-families): 3 specimens in the file are not Formicidae\n"));
+        assertTrue(PYTHON_TEXT.contains("{\"file\": \"specimens.csv.gz\", \"not_formicidae_in_an_ants_only_file\": 3}\n"));
+        // format 6: the bioregion's species list is of ants only too, and says how many names it leaves out
+        assertTrue(PYTHON_TEXT, PYTHON_TEXT.contains("AntWeb's Nearctic species list: 1,200 names of ants (130 names of other families left out); 34 of them have no specimen in this extract (literature, or other countries)\n"));
+        assertTrue(PYTHON_TEXT_VERIFIED, PYTHON_TEXT_VERIFIED.contains("AntWeb's Nearctic species list: 1,330 names; 34 of them have no specimen in this extract (literature, or other countries)\n"));
+        // the file of the specimens without a country: its line, groups largest first, a group without a name
+        assertTrue(PYTHON_TEXT, PYTHON_TEXT.contains("Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them): "
+            + "1,623; with coordinates 400; 310 names, 45 of them not in the countries file\n  by upload group: California Academy of Sciences 710, UTEP 167, (none) 3\n"));
+        assertFalse(PYTHON_TEXT_VERIFIED.contains("Specimens with no country"));
+        // ants only with nothing left out: no list of families
+        Map<String, Object> none = manifest();
+        none.put("left_out_not_formicidae", map("specimens", 0L, "families", 0L, "by_family", new LinkedHashMap<String, Object>()));
+        assertTrue(DataExtract.manifestText(none).contains("Ants only (family Formicidae): 0 specimens of other families are left out; --all-families includes them\n"));
     }
 
     public void testManifestJsonAsPythonWritesIt() {
@@ -400,7 +474,7 @@ public class DataExtractTest extends TestCase {
         for (String name : DataExtractFiles.DOWNLOADS) {
             assertEquals(new File(folder, name), DataExtractFiles.file(root, 123, name));
         }
-        assertEquals(5, DataExtractFiles.files(root, 123).size());
+        assertEquals(6, DataExtractFiles.files(root, 123).size());
         // not on the list: the private request, paths, other spellings
         for (String name : new String[] {"request.json", "../2026-11-10-123/manifest.txt", "/etc/passwd", "..", "", "MANIFEST.TXT",
             "manifest.txt/", "2026-11-10-123/manifest.txt", "manifest.txt\u0000", "all.zip", null}) {
@@ -438,7 +512,7 @@ public class DataExtractTest extends TestCase {
         linked.delete();
         Files.createSymbolicLink(linked.toPath(), secret.toPath());
         assertNull(DataExtractFiles.file(root, 201, DataExtract.GENUS_SUMMARY));
-        assertEquals(4, DataExtractFiles.files(root, 201).size());
+        assertEquals(5, DataExtractFiles.files(root, 201).size());
         // a link named like an extract folder is not an extract
         File elsewhere = Files.createTempDirectory("extract-elsewhere").toFile();
         try {
@@ -494,7 +568,7 @@ public class DataExtractTest extends TestCase {
         finished(LocalDate.of(2026, 11, 9), 41, true);
         finished(LocalDate.of(2026, 11, 10), 42, false);
         File running = DataExtractFiles.create(root, LocalDate.of(2026, 11, 10), 43);
-        DataExtractFiles.writeRequest(running, 43, 7, "bfisher", "", new DataExtract.Request(Arrays.asList("Mexico"), false, ""));
+        DataExtractFiles.writeRequest(running, 43, 7, "bfisher", "", new DataExtract.Request(Arrays.asList("Mexico"), false, "", true, true));
         File broken = DataExtractFiles.create(root, LocalDate.of(2026, 11, 10), 44);
         Files.write(new File(broken, DataExtractFiles.REQUEST).toPath(), "not json".getBytes(StandardCharsets.UTF_8));
         List<DataExtractFiles.Entry> list = DataExtractFiles.list(root);
@@ -504,6 +578,7 @@ public class DataExtractTest extends TestCase {
         DataExtractFiles.Entry e43 = list.get(1), e42 = list.get(2), e41 = list.get(3);
         assertEquals("bfisher Mexico false", e43.loginName + " " + String.join(",", e43.countries) + " " + e43.islands);
         assertFalse(e43.isFinished());
+        assertTrue("all families and the no-country file, as asked", e43.allFamilies && e43.noCountry);
         assertTrue(e43.files.isEmpty());
         assertNull(e43.specimens);
         assertEquals(Boolean.FALSE, e42.verified);
@@ -514,6 +589,7 @@ public class DataExtractTest extends TestCase {
         assertEquals("Nearctic", e41.bioregion);
         assertTrue(e41.islands);
         assertEquals(7, e41.loginId);
+        assertFalse("ants only, no file of the specimens without a country, unless asked", e41.allFamilies || e41.noCountry);
         assertEquals(LocalDate.of(2026, 11, 9), e41.day);
         assertEquals(DataExtractFiles.DOWNLOADS, e41.files);
         assertTrue(e41.bytes > 0);
@@ -586,7 +662,7 @@ public class DataExtractTest extends TestCase {
         assertEquals("antweb-extract-NOT-VERIFIED-2026-11-10-99-manifest.txt", DataExtractFiles.downloadName(folder, DataExtract.MANIFEST_TXT, false));
         String links = DataExtractJob.downloadLinks(99, DataExtractFiles.DOWNLOADS, false, "https://x.org");
         assertFalse(links, links.contains("all.zip") || links.contains("the file to send"));
-        assertEquals(5, links.split("NOT VERIFIED, do not send", -1).length - 1);
+        assertEquals(6, links.split("NOT VERIFIED, do not send", -1).length - 1);
         String ok = DataExtractJob.downloadLinks(99, DataExtractFiles.DOWNLOADS, true, "https://x.org");
         assertTrue(ok, ok.startsWith("<li><a class=\"extract-file\" href=\"https://x.org/dataExtractFile.do?job=99&amp;file=all.zip\">Everything in one zip file</a> (the file to send)</li>"));
         assertFalse(ok, ok.contains("NOT VERIFIED"));
@@ -605,7 +681,7 @@ public class DataExtractTest extends TestCase {
         assertEquals(1, DataExtractFiles.removeUnfinished(root, id -> id == 52));
         assertEquals("[request.json]", Arrays.toString(stopped.list()));
         assertEquals("the running extract keeps its file", "[specimens.csv.gz.part]", Arrays.toString(running.list()));
-        assertEquals(6, done.list().length);
+        assertEquals(7, done.list().length);
         assertEquals(0, DataExtractFiles.removeUnfinished(root, id -> id == 52));
         // an extract that finishes between the list and the check (its job is no longer active): read again, kept
         File racing = DataExtractFiles.create(root, LocalDate.of(2026, 11, 10), 54);
@@ -693,7 +769,7 @@ public class DataExtractTest extends TestCase {
 
     public void testTheFormKeepsAndEscapesWhatWasTyped() {
         String form = DataExtractAction.formHtml("<input type=\"hidden\" name=\"_csrf\" value=\"t\">", "Mexico, \"><script>x</script>", Arrays.asList("Canada"),
-            "nearctic", true, "for <Jack>", Arrays.asList("Canada", "Cote d'Ivoire", "Mexico"), Arrays.asList("Nearctic", "Neotropical"), "https://x.org");
+            "nearctic", true, false, false, "for <Jack>", Arrays.asList("Canada", "Cote d'Ivoire", "Mexico"), Arrays.asList("Nearctic", "Neotropical"), "https://x.org");
         assertTrue(form, form.contains("<form class=\"aw-form\" method=\"post\" action=\"https://x.org/dataExtract.do\" id=\"data-extract-form\"><input type=\"hidden\" name=\"_csrf\" value=\"t\">"));
         assertTrue(form, form.contains("value=\"Mexico, &quot;&gt;&lt;script&gt;x&lt;/script&gt;\""));
         assertFalse(form, form.contains("<script>"));
@@ -703,7 +779,12 @@ public class DataExtractTest extends TestCase {
         assertTrue(form, form.contains("name=\"islands\" value=\"on\" checked>"));
         assertTrue(form, form.contains("value=\"for &lt;Jack&gt;\""));
         assertTrue(form, form.contains("<details id=\"extract-country-list\" open>"));
-        String empty = DataExtractAction.formHtml("", "", new ArrayList<String>(), "", false, "", Arrays.asList("Canada"), Arrays.asList("Nearctic"), "");
+        // ants only unless the box is ticked; the file of the specimens without a country only when asked for
+        assertTrue(form, form.contains("<input type=\"checkbox\" name=\"allFamilies\" value=\"on\"> Include specimens that are not ants</label>"));
+        assertTrue(form, form.contains("<input type=\"checkbox\" name=\"noCountry\" value=\"on\"> Also a file of the specimens that have no country</label>"));
+        String ticked = DataExtractAction.formHtml("", "", new ArrayList<String>(), "", true, true, true, "", Arrays.asList("Canada"), Arrays.asList("Nearctic"), "");
+        assertTrue(ticked, ticked.contains("name=\"allFamilies\" value=\"on\" checked>") && ticked.contains("name=\"noCountry\" value=\"on\" checked>"));
+        String empty = DataExtractAction.formHtml("", "", new ArrayList<String>(), "", false, false, false, "", Arrays.asList("Canada"), Arrays.asList("Nearctic"), "");
         assertTrue(empty, empty.contains("name=\"islands\" value=\"on\">"));
         assertTrue(empty, empty.contains("<details id=\"extract-country-list\">"));
         assertFalse(empty, empty.contains(" selected"));
@@ -717,17 +798,17 @@ public class DataExtractTest extends TestCase {
         finished(LocalDate.of(2026, 11, 9), 41, true);
         finished(LocalDate.of(2026, 11, 10), 42, false);
         File running = DataExtractFiles.create(root, LocalDate.of(2026, 11, 10), 43);
-        DataExtractFiles.writeRequest(running, 43, 7, "bfisher", "", new DataExtract.Request(Arrays.asList("Mexico"), false, ""));
+        DataExtractFiles.writeRequest(running, 43, 7, "bfisher", "", new DataExtract.Request(Arrays.asList("Mexico"), false, "", true, true));
         File failed = DataExtractFiles.create(root, LocalDate.of(2026, 11, 10), 44);
         DataExtractFiles.writeRequest(failed, 44, 7, "bfisher", "", new DataExtract.Request(Arrays.asList("Canada"), true, ""));
         String html = DataExtractAction.listHtml(DataExtractFiles.list(root), 43, "<input type=\"hidden\" name=\"_csrf\" value=\"t\">", "https://x.org");
         assertTrue(html, html.contains("<h2>Extracts on the server (4)</h2>"));
-        assertTrue(html, html.contains("<tr id=\"extract-41\"><td>2026-11-09</td><td>bfisher</td><td>United States, Canada; with islands; species list of Nearctic</td>"
+        assertTrue(html, html.contains("<tr id=\"extract-41\"><td>2026-11-09</td><td>bfisher</td><td>United States, Canada; with islands; ants only; species list of Nearctic</td>"
             + "<td>for the &quot;Nearctic&quot; &lt;team&gt;</td><td class=\"aw-num\">1,234</td><td><span class=\"aw-ok\">VERIFIED</span></td>"));
         assertTrue(html, html.contains("dataExtractFile.do?job=41&amp;file=all.zip"));
         assertTrue(html, html.contains("<tr id=\"extract-42\">") && html.contains("<span class=\"aw-bad\">NOT VERIFIED</span> do not send"));
-        assertTrue(html, html.contains("<td>Mexico; without islands</td><td></td><td class=\"aw-num\"></td><td>in progress</td><td></td>"));
-        assertTrue(html, html.contains("<td>Canada; with islands</td><td></td><td class=\"aw-num\"></td><td><span class=\"aw-bad\">did not finish</span></td><td></td>"));
+        assertTrue(html, html.contains("<td>Mexico; without islands; all families; with the no-country file</td><td></td><td class=\"aw-num\"></td><td>in progress</td><td></td>"));
+        assertTrue(html, html.contains("<td>Canada; with islands; ants only</td><td></td><td class=\"aw-num\"></td><td><span class=\"aw-bad\">did not finish</span></td><td></td>"));
         assertFalse(html, html.contains("job=43&amp;file") || html.contains("job=44&amp;file"));
         assertTrue(html, html.contains("href=\"https://x.org/jobStatus.do?id=44\">44</a>"));
         assertTrue(DataExtractAction.listHtml(new ArrayList<DataExtractFiles.Entry>(), 0, "", "").contains("None yet."));

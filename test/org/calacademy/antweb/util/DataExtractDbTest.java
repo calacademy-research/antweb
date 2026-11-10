@@ -43,6 +43,12 @@ import org.calacademy.antweb.util.DataExtract;
  * file whatever the page size) and a change of the table during the extract does not wait for it; a four-byte
  * character comes out whole through a connection set up as the application's; no file is left half-written.
  *
+ * Format 5 (Brian Fisher, 2026-11-10: "why did you include non ants for an ant study?"): ants only is the default,
+ * with the same filter for the file and the check; what is left out is counted by family; a specimen with no
+ * family is kept and counted; all families on request; a row that is not an ant in an ants-only file is not
+ * verified. The specimens without a country go in a file of their own on request, with the same choice of families.
+ * Format 6: the bioregion's species list is of ants only too and says how many names of other families it leaves out.
+ *
  * Makes its own small tables (specimen, taxon, ant_group, geolocale, bioregion, bioregion_taxon) and drops them
  * at the end: last in the list of the database tests. Runs in CI against MySQL 8.4 (host "mysql");
  * ANTWEB_TEST_DB_URL overrides.
@@ -81,7 +87,7 @@ public class DataExtractDbTest extends TestCase {
             + " weight decimal(8, 3), other longtext) default charset=utf8mb4");
         exec("create table taxon (taxon_name varchar(128) primary key, status varchar(40), fossil tinyint default 0, taxarank varchar(20),"
             + " current_valid_name varchar(128), author_date varchar(128), subfamily varchar(64), genus varchar(64), species varchar(64),"
-            + " subspecies varchar(64)) default charset=utf8mb4");
+            + " subspecies varchar(64), family varchar(40) default 'formicidae') default charset=utf8mb4");
         exec("create table ant_group (id int primary key, name varchar(128)) default charset=utf8mb4");
         exec("create table geolocale (id int primary key, name varchar(128), georank varchar(20), is_valid tinyint, valid_name varchar(128),"
             + " is_island tinyint default 0, parent varchar(128), country varchar(250), bioregion varchar(64), alt_bioregion varchar(64))"
@@ -105,7 +111,7 @@ public class DataExtractDbTest extends TestCase {
             + " (10, 'Zaire', 'country', 0, null, 0, null, null, null, null),"
             + " (11, 'Etats-Unis', 'country', 0, 'United States', 0, null, null, null, null),"
             + " (12, 'Mexique', 'country', null, 'Mexico', 0, null, null, null, null)");
-        exec("insert into taxon values"
+        exec("insert into taxon (taxon_name, status, fossil, taxarank, current_valid_name, author_date, subfamily, genus, species, subspecies) values"
             + " ('myrmicinaestenamma diecki', 'valid', 0, 'species', null, 'Emery, 1895', 'myrmicinae', 'stenamma', 'diecki', null),"
             + " ('myrmicinaestenamma ca01', 'morphotaxon', 0, 'species', null, null, 'myrmicinae', 'stenamma', 'ca01', null),"
             + " ('myrmicinaeveromessor andrei', 'valid', 0, 'species', null, '(Mayr, 1886)', 'myrmicinae', 'veromessor', 'andrei', null),"
@@ -236,7 +242,10 @@ public class DataExtractDbTest extends TestCase {
             m.get("outdated_names").toString());
         assertEquals(0L, m.get("filed_under_outdated_name"));
         assertEquals(new ArrayList<>(), m.get("countries_without_specimens"));
-        assertEquals("4", m.get("tool_version"));
+        assertEquals("6", m.get("tool_version"));
+        assertEquals(Boolean.TRUE, m.get("ants_only"));
+        assertEquals("{specimens=0, families=0, by_family={}}", m.get("left_out_not_formicidae").toString());
+        assertEquals(0L, m.get("blank_family"));
         assertTrue(m.containsKey("no_country"));
         assertNull(m.get("no_country"));
         assertEquals(Arrays.asList("United States", "Canada", "Mexico"), m.get("countries"));
@@ -246,7 +255,7 @@ public class DataExtractDbTest extends TestCase {
         assertEquals("{(no taxon row)=1, morphotaxon=1, valid=3}", m.get("by_taxon_status").toString());
         assertEquals("[{country=Canada, island_country=, specimens=1}, {country=Hawaii, island_country=Hawaii, specimens=1},"
             + " {country=Mexico, island_country=, specimens=1}, {country=United States, island_country=, specimens=2}]", m.get("by_place").toString());
-        assertEquals("{names=2, names_without_specimen_in_extract=1}", m.get("bioregion_list").toString());
+        assertEquals("{names=2, names_without_specimen_in_extract=1, names_left_out_not_formicidae=0}", m.get("bioregion_list").toString());
         assertEquals(3L, m.get("genera"));
         assertEquals(4L, m.get("names"));
         @SuppressWarnings("unchecked")
@@ -279,7 +288,8 @@ public class DataExtractDbTest extends TestCase {
         assertEquals(result.text, text);
         assertTrue(text, text.contains("Specimens in the file: 5\n"));
         assertTrue(text, text.contains("Islands included: Hawaii\nOutdated country names included: Etats-Unis (now United States), Mexique (now Mexico), USA (now United States)\n"));
-        assertTrue(text, text.contains("Family not Formicidae: 0\nFiled under an outdated country name: 0\nGenera: 3   distinct names: 4\n"));
+        assertTrue(text, text.contains("Ants only (family Formicidae): 0 specimens of other families are left out; --all-families includes them\n"
+            + "No family given: 0 (in the file)\nFiled under an outdated country name: 0\nGenera: 3   distinct names: 4\n"));
         assertTrue(text, text.contains("Spreadsheets: import the columns of specimens.csv as text. Values are written as they are in the database,\nalso when they start with =, +, - or @.\n"));
         assertFalse(text, text.contains("WARNING"));
         assertFalse(text, text.contains("Country spellings"));
@@ -289,11 +299,11 @@ public class DataExtractDbTest extends TestCase {
         assertEquals("[bioregion_list.csv, genus_summary.csv, manifest.json, manifest.txt, specimens.csv.gz]", left.toString());
         assertTrue(text, text.contains("  Hawaii / Hawaii                                   1\n"));   // as Python's "  {:<40} {:>10,}"
         assertTrue(text, text.contains("Without usable coordinates: 2 (in the file, has_coordinates = 0"));
-        assertTrue(text, text.contains("AntWeb's Nearctic species list: 2 names; 1 of them have no specimen in this extract"));
+        assertTrue(text, text.contains("AntWeb's Nearctic species list: 2 names of ants (0 names of other families left out); 1 of them have no specimen in this extract"));
         assertTrue(text, text.contains("Cite: AntWeb. Version 9.9.9. California Academy of Sciences, online at https://www.antweb.org. Extract of 2026-11-10."));
         assertFalse(text, text.contains("Differences:"));
         String json = new String(Files.readAllBytes(new File(dir, DataExtract.MANIFEST_JSON).toPath()), StandardCharsets.UTF_8);
-        assertTrue(json, json.startsWith("{\n \"tool_version\": \"4\",\n \"made_utc\": \"2026-11-10 14:49:21\",\n \"antweb_commit\": \"abc1234\","));
+        assertTrue(json, json.startsWith("{\n \"tool_version\": \"6\",\n \"made_utc\": \"2026-11-10 14:49:21\",\n \"antweb_commit\": \"abc1234\","));
         assertTrue(json, json.contains("\n \"specimens\": 5,\n \"verified\": true,\n \"differences\": [],\n"));
     }
 
@@ -396,6 +406,156 @@ public class DataExtractDbTest extends TestCase {
             assertEquals("AntWeb has no bioregion named: Atlantic.", e.getMessage());
         }
         assertEquals(0, dir.list().length);
+    }
+
+    private void others() throws SQLException {
+        exec("insert into specimen (code, taxon_name, family, subfamily, genus, country, island_country, bioregion, access_group) values"
+            + " ('beetle1', 'curculionidaex a', 'curculionidae', null, 'x', 'United States', null, 'Nearctic', 1),"
+            + " ('beetle2', 'curculionidaex a', 'curculionidae', null, 'x', 'Canada', null, 'Nearctic', 1),"
+            + " ('beetle3', 'curculionidaex b', 'Curculionidae', null, 'x', 'Mexico', null, 'Nearctic', 2),"
+            + " ('wasp1', 'vespidaey a', 'vespidae', null, 'y', 'Hawaii', 'Hawaii', 'Oceania', 1),"
+            + " ('spider1', 'salticidaez a', 'salticidae', null, 'z', 'United States', null, 'Nearctic', 2),"
+            + " ('order1', '(coleoptera)', '(coleoptera)', null, null, 'USA', null, 'Nearctic', 1),"
+            + " ('ant1', 'myrmicinaestenamma diecki', 'FORMICIDAE', 'myrmicinae', 'stenamma', 'Canada', null, 'Nearctic', 1),"
+            + " ('blank1', 'myrmicinaestenamma diecki', '', 'myrmicinae', 'stenamma', 'Mexico', null, 'Nearctic', 1),"
+            + " ('blank2', 'x', null, null, null, 'United States', null, null, 2),"
+            + " ('beetle9', 'curculionidaex a', 'curculionidae', null, 'x', 'Brazil', null, 'Neotropical', 1)");
+        // the bioregion's species list also holds names that are not ants, and one whose family is not given
+        exec("insert into taxon (taxon_name, status, taxarank, subfamily, genus, species, family) values"
+            + " ('curculionidaex a', 'valid', 'species', null, 'x', 'a', 'curculionidae'),"
+            + " ('vespidaey a', 'valid', 'species', null, 'y', 'a', 'Vespidae'),"
+            + " ('curculionidaex', 'valid', 'genus', null, 'x', null, 'curculionidae'),"
+            + " ('myrmicinaestenamma nofamily', 'valid', 'species', 'myrmicinae', 'stenamma', 'nofamily', null)");
+        exec("insert into bioregion_taxon values ('Nearctic', 'curculionidaex a', 'specimen', 0, 0), ('Nearctic', 'vespidaey a', 'specimen', 0, 0),"
+            + " ('Nearctic', 'curculionidaex', 'specimen', 0, 0), ('Nearctic', 'myrmicinaestenamma nofamily', 'antcat', 0, 0),"
+            + " ('Nearctic', 'not a taxon row', 'curator', 0, 0)");
+    }
+
+    /** Format 6: the bioregion's species list follows the same choice, and says how many names it leaves out. */
+    public void testTheBioregionListIsOfAntsOnlyToo() throws Exception {
+        others();
+        DataExtract.Result result = DataExtract.run(connection, dir, three(true, "Nearctic"), SITE, null);
+        assertTrue(result.text, result.verified);
+        List<Map<String, String>> list = csv(DataExtract.BIOREGION_LIST);
+        // the ants, the name without a family and the name without a taxon row; not the beetle or the wasp (species), nor genus rows
+        assertEquals(Arrays.asList("not a taxon row", "myrmicinaestenamma diecki", "myrmicinaestenamma lit", "myrmicinaestenamma nofamily"), column(list, "taxon_name"));
+        assertEquals("{names=4, names_without_specimen_in_extract=3, names_left_out_not_formicidae=2}", result.manifest.get("bioregion_list").toString());
+        assertTrue(result.text, result.text.contains("AntWeb's Nearctic species list: 4 names of ants (2 names of other families left out); 3 of them have no specimen in this extract (literature, or other countries)\n"));
+        // all families: the whole list, and nothing said to be left out
+        delete(dir);
+        DataExtract.Result all = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("United States", "Canada", "Mexico"), true, "Nearctic", true, false), SITE, null);
+        assertTrue(all.text, all.verified);
+        assertEquals(Arrays.asList("not a taxon row", "curculionidaex a", "vespidaey a", "myrmicinaestenamma diecki", "myrmicinaestenamma lit", "myrmicinaestenamma nofamily"),
+            column(csv(DataExtract.BIOREGION_LIST), "taxon_name"));
+        assertEquals("{names=6, names_without_specimen_in_extract=3, names_left_out_not_formicidae=null}", all.manifest.get("bioregion_list").toString());
+        assertTrue(all.text, all.text.contains("AntWeb's Nearctic species list: 6 names; 3 of them have no specimen in this extract (literature, or other countries)\n"));
+    }
+
+    /**
+     * Format 5 (Brian Fisher, 2026-11-10: "why did you include non ants for an ant study?"): AntWeb also holds beetles,
+     * wasps and spiders found with ants (production: 1,289 of the 200,075 specimens of United States, Canada and Mexico).
+     */
+    public void testAntsOnlyIsTheDefaultAndSaysWhatItLeftOut() throws Exception {
+        others();
+        DataExtract.Result result = DataExtract.run(connection, dir, three(true, ""), SITE, null);
+        assertTrue(result.text, result.verified);
+        // the ants (also written FORMICIDAE) and the two specimens with no family; no beetle, wasp or spider
+        assertEquals(Arrays.asList("ant1", "blank1", "blank2", "casent1", "casent2", "casent3", "casent4", "casent5"), column(csv(DataExtract.SPECIMENS), "code"));
+        Map<String, Object> m = result.manifest;
+        assertEquals(Boolean.TRUE, m.get("ants_only"));
+        // by family, the largest first, then by name; the old country name USA and the island are part of the filter
+        assertEquals("{specimens=6, families=4, by_family={curculionidae=3, (coleoptera)=1, salticidae=1, vespidae=1}}", m.get("left_out_not_formicidae").toString());
+        assertEquals(2L, m.get("blank_family"));
+        assertEquals(0L, m.get("not_ants"));
+        assertEquals(8L, m.get("specimens"));
+        assertTrue(result.text, result.text.contains("Red-flagged at upload: 1 (column flag)\n"
+            + "Ants only (family Formicidae): 6 specimens of other families are left out (curculionidae 3, (coleoptera) 1, salticidae 1, vespidae 1); --all-families includes them\n"
+            + "No family given: 2 (in the file)\n"));
+        // the check counted with the same filter: the six others are not a difference
+        assertEquals(new ArrayList<>(), m.get("differences"));
+        String json = new String(Files.readAllBytes(new File(dir, DataExtract.MANIFEST_JSON).toPath()), StandardCharsets.UTF_8);
+        assertTrue(json, json.contains("\n \"flagged\": 1,\n \"ants_only\": true,\n \"left_out_not_formicidae\": {\n  \"specimens\": 6,\n  \"families\": 4,\n  \"by_family\": {\n   \"curculionidae\": 3,"));
+        assertTrue(json, json.contains("\n \"blank_family\": 2,\n \"not_ants\": 0,\n"));
+
+        // all families on request: every specimen of the places, and how many are not ants
+        delete(dir);
+        DataExtract.Result all = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("United States", "Canada", "Mexico"), true, "", true, false), SITE, null);
+        assertTrue(all.text, all.verified);
+        assertEquals(Arrays.asList("ant1", "beetle1", "beetle2", "beetle3", "blank1", "blank2", "casent1", "casent2", "casent3", "casent4", "casent5",
+            "order1", "spider1", "wasp1"), column(csv(DataExtract.SPECIMENS), "code"));
+        assertEquals(Boolean.FALSE, all.manifest.get("ants_only"));
+        assertNull(all.manifest.get("left_out_not_formicidae"));
+        assertEquals(6L, all.manifest.get("not_ants"));
+        assertEquals(2L, all.manifest.get("blank_family"));
+        assertTrue(all.text, all.text.contains("All families (--all-families): 6 specimens in the file are not Formicidae\nNo family given: 2 (in the file)\n"));
+        assertFalse(all.text, all.text.contains("Ants only"));
+    }
+
+    /** The database takes a family written with an accent for Formicidae; the file then holds a row that is not an ant. */
+    public void testARowThatIsNotAnAntInAnAntsOnlyFileIsNotVerified() throws Exception {
+        exec("insert into specimen (code, taxon_name, family, country) values ('odd1', 'x', 'formicida" + (char) 0xe9 + "', 'Canada')");
+        DataExtract.Result result = DataExtract.run(connection, dir, three(true, ""), SITE, null);
+        assertFalse(result.verified);
+        assertEquals(1L, result.manifest.get("not_ants"));
+        assertEquals("[{file=specimens.csv.gz, not_formicidae_in_an_ants_only_file=1}]", result.manifest.get("differences").toString());
+        assertTrue(result.text, result.text.contains("Check against the database: DIFFERENT, see differences; run again\n"));
+        assertTrue(result.text, result.text.contains("Differences:\n  {\"file\": \"specimens.csv.gz\", \"not_formicidae_in_an_ants_only_file\": 1}\n"));
+        // with all families it is one more specimen that is not an ant, and the file is verified
+        delete(dir);
+        DataExtract.Result all = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("United States", "Canada", "Mexico"), true, "", true, false), SITE, null);
+        assertTrue(all.verified);
+        assertEquals(1L, all.manifest.get("not_ants"));
+    }
+
+    /**
+     * The specimens that have no country at all (production 2026-11-10: 1,623): no choice of countries finds them,
+     * and some belong to the countries asked for. On request they come in a file of their own.
+     */
+    public void testTheSpecimensWithoutACountryGoInTheirOwnFile() throws Exception {
+        others();
+        exec("insert into specimen (code, taxon_name, family, subfamily, genus, country, localityname, decimal_latitude, decimal_longitude, access_group) values"
+            + " ('none1', 'myrmicinaestenamma utah01', 'formicidae', 'myrmicinae', 'stenamma', '', 'somewhere in Utah', 40.2, -111.6, 2),"
+            + " ('none2', 'myrmicinaestenamma diecki', 'formicidae', 'myrmicinae', 'stenamma', null, 'El Paso', null, null, 2),"
+            + " ('none3', 'myrmicinaestenamma utah02', null, 'myrmicinae', 'stenamma', null, 'no group', null, null, null),"
+            + " ('none4', 'curculionidaex a', 'curculionidae', null, 'x', null, 'a beetle', null, null, 1)");
+        DataExtract.Request request = new DataExtract.Request(Arrays.asList("United States", "Canada", "Mexico"), true, "Nearctic", false, true);
+        DataExtract.Result result = DataExtract.run(connection, dir, request, SITE, null);
+        assertTrue(result.text, result.verified);
+        assertEquals(8, result.specimens);      // the main file is as without the option
+        List<Map<String, String>> rows = csv(DataExtract.SPECIMENS_NO_COUNTRY);
+        // casent8 is the fixture's specimen without a country; the beetle is left out as in the main file
+        assertEquals(Arrays.asList("casent8", "none1", "none2", "none3"), column(rows, "code"));
+        assertEquals(Arrays.asList("", "", "", ""), column(rows, "country"));
+        assertEquals(Arrays.asList("0", "1", "0", "0"), column(rows, "has_coordinates"));
+        assertEquals(new ArrayList<>(csv(DataExtract.SPECIMENS).get(0).keySet()), new ArrayList<>(rows.get(0).keySet()));
+        // groups largest first; of the same size in the order they first appear (CAS, then the one without a name)
+        assertEquals("{specimens=4, in_database=4, with_coordinates=1, names=3, names_not_in_the_countries_file=2,"
+            + " by_group={Utah, \"Longino\" lab=2, CAS=1, =1}}", result.manifest.get("no_country").toString());
+        assertTrue(result.text, result.text.contains("\nSpecimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them): "
+            + "4; with coordinates 1; 3 names, 2 of them not in the countries file\n  by upload group: Utah, \"Longino\" lab 2, CAS 1, (none) 1\n\nFiles (sha256):\n"));
+        @SuppressWarnings("unchecked")
+        Map<String, Map<String, Object>> files = (Map<String, Map<String, Object>>) result.manifest.get("files");
+        assertEquals("[specimens.csv.gz, specimens_no_country.csv.gz, genus_summary.csv, bioregion_list.csv]", files.keySet().toString());
+        assertEquals(DataExtract.sha256(new File(dir, DataExtract.SPECIMENS_NO_COUNTRY)), files.get(DataExtract.SPECIMENS_NO_COUNTRY).get("sha256"));
+        assertEquals(Arrays.asList("specimens.csv.gz", "specimens_no_country.csv.gz", "genus_summary.csv", "bioregion_list.csv", "manifest.json", "manifest.txt"), result.files);
+        List<String> left = new ArrayList<>(Arrays.asList(dir.list()));
+        java.util.Collections.sort(left);
+        assertEquals("[bioregion_list.csv, genus_summary.csv, manifest.json, manifest.txt, specimens.csv.gz, specimens_no_country.csv.gz]", left.toString());
+        // the genus summary and the bioregion list are of the main file only
+        assertEquals(Arrays.asList("", "notintaxon", "stenamma", "veromessor"), column(csv(DataExtract.GENUS_SUMMARY), "genus"));
+
+        // with all families the beetle without a country is in its file too, and pages do not change the file
+        delete(dir);
+        DataExtract.Result all = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada"), true, "", true, true), SITE, null, null, 2);
+        assertTrue(all.verified);
+        assertEquals(Arrays.asList("casent8", "none1", "none2", "none3", "none4"), column(csv(DataExtract.SPECIMENS_NO_COUNTRY), "code"));
+        assertEquals(5L, ((Map<?, ?>) all.manifest.get("no_country")).get("specimens"));
+        // without the option: no file, and the manifest says so
+        delete(dir);
+        DataExtract.Result without = DataExtract.run(connection, dir, three(true, ""), SITE, null);
+        assertFalse(new File(dir, DataExtract.SPECIMENS_NO_COUNTRY).exists());
+        assertNull(without.manifest.get("no_country"));
+        assertFalse(without.text, without.text.contains("Specimens with no country"));
     }
 
     /** Review M3: VERIFIED proved the file equals the filter, not that the filter is complete. */

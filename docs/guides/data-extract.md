@@ -20,10 +20,21 @@ database.
 2. **Include islands filed under these countries** (ticked unless you clear it). AntWeb treats some islands as
    countries of their own, Hawaii under the United States for example. With the box ticked their specimens are in
    the file, and the manifest names the islands that were included.
-3. **Species list of a bioregion** (optional). Choose Nearctic, for example, to also get AntWeb's species list of
-   that bioregion, each name with its number of specimens in the extract.
-4. **Note** (optional): who the extract is for. It is for your own records; it is not written into the files.
-5. Press **Start the extract**. You are taken to the job's page, which updates itself. A small country takes
+3. **Include specimens that are not ants** (not ticked unless you tick it). An extract holds **ants only**: family
+   Formicidae, and the few records with no family given. AntWeb also holds beetles, wasps, spiders and other
+   animals found with ants (about 1,300 of the 200,000 specimens of the United States, Canada and Mexico); they
+   are left out, and the manifest says how many, by family. Tick the box only when the collaborator wants those
+   too.
+4. **Also a file of the specimens that have no country** (not ticked unless you tick it). About 1,600 specimen
+   records on AntWeb have no country at all, so no choice of countries finds them, and some of them belong to
+   the countries you ask for. With the box ticked they come in a file of their own
+   (`specimens_no_country.csv.gz`: all of AntWeb's, the same columns, ants only unless the box above is ticked),
+   for you or the collaborator to look through. The manifest counts them by upload group.
+5. **Species list of a bioregion** (optional). Choose Nearctic, for example, to also get AntWeb's species list of
+   that bioregion, each name with its number of specimens in the extract. The list follows the same choice: ants
+   only unless you ticked the box, and the manifest says how many names of other families it leaves out.
+6. **Note** (optional): who the extract is for. It is for your own records; it is not written into the files.
+7. Press **Start the extract**. You are taken to the job's page, which updates itself. A small country takes
    seconds, a large one may take several minutes. You may close the page: the job continues, and you find it again
    under **Uploads and data jobs** or in the list at the bottom of the Data extract page.
 
@@ -56,13 +67,16 @@ in the file.
 | File | What it holds |
 |---|---|
 | **Everything in one zip file** | all the files below in one download: the file to send |
-| `specimens.csv.gz` | one line per specimen: every column of AntWeb's specimen record, then the status, fossil mark, rank, current valid name and author of its name, the name of its upload group, `no_taxon_row` and `has_coordinates` |
+| `specimens.csv.gz` | one line per ant specimen (or per specimen of any family, if you ticked the box): every column of AntWeb's specimen record, then the status, fossil mark, rank, current valid name and author of its name, the name of its upload group, `no_taxon_row` and `has_coordinates` |
+| `specimens_no_country.csv.gz` | only when asked for: every specimen of AntWeb that has no country (same columns) |
 | `genus_summary.csv` | per genus: specimens, names, names with at least one specimen with coordinates (and the same for the chosen bioregion) |
 | `bioregion_list.csv` | only with a bioregion: AntWeb's species list of it, each name with its specimens in the extract. A name with 0 comes from the literature or from a country outside the extract |
 | `manifest.txt` | what was asked for, the counts and the check, to read |
 | `manifest.json` | the same for a program, with the checksum (sha256) of each file |
 
-Nothing is left out of `specimens.csv.gz`:
+Of the ants of the countries, nothing is left out of `specimens.csv.gz` (the manifest's line "Ants only (family
+Formicidae): N specimens of other families are left out" says what the choice of families left out; the words
+"--all-families" in it are the name of the same choice in the command-line tool):
 
 - specimens **without coordinates** are in the file, with `has_coordinates` = 0 (a cut by a map shape would lose
   them);

@@ -144,6 +144,7 @@ public final class DataExtractJob {
         }
         LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " data extract (job " + job.getId() + ") by " + cleanNote(job.getLoginName())
             + ": " + String.join(", ", request.countries) + (request.islands ? ", with islands" : ", without islands")
+            + (request.allFamilies ? ", all families" : ", ants only") + (request.noCountry ? ", with the no-country file" : "")
             + (request.bioregion.isEmpty() ? "" : ", bioregion " + request.bioregion) + "; " + result.specimens + " specimens; "
             + (result.verified ? "verified" : "DIFFERENT from the database's count") + (note == null || note.isEmpty() ? "" : "; note: " + cleanNote(note)));
         String html = resultHtml(job.getId(), result, note, domainApp);
@@ -173,6 +174,7 @@ public final class DataExtractJob {
     static String describe(String file) {
         switch (file) {
             case DataExtract.SPECIMENS: return "every specimen, one line each (unzip it, then open it in R or Python, or import it into a spreadsheet as text)";
+            case DataExtract.SPECIMENS_NO_COUNTRY: return "every specimen of AntWeb that has no country at all (some may belong to these countries)";
             case DataExtract.GENUS_SUMMARY: return "specimens and names per genus";
             case DataExtract.BIOREGION_LIST: return "AntWeb's species list of the bioregion, with each name's specimens in this extract";
             case DataExtract.MANIFEST_TXT: return "what is in the extract and the check, to read";

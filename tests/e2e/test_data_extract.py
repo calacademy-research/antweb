@@ -14,7 +14,11 @@ checked against the database), as a background job; the files are downloaded thr
   many rows as the manifest says and its sha256 is the manifest's, manifest.json agrees, the zip holds the files,
   the extract is listed on the page; a curator gets none of its files; the extract's real folder cannot be
   reached by any address (plain, upper case, doubled slash, encoded slash, dot segments); a GET does not delete
-  it; the Delete button removes it.
+  it; the Delete button removes it;
+- format 6 (Brian Fisher, 2026-11-10: ants only by default): the form has the two boxes, both clear; the extract
+  holds no specimen of another family, its manifest counts what was left out, and a second extract of the same
+  country with "Include specimens that are not ants" holds exactly that many more; the file of the specimens that
+  have no country has as many rows as the manifest and the database say, none with a country.
 
 The extract only reads the database; it writes its files to the server's extract folder and the test deletes them
 at its end. Skips when staging is busy (the daily update or another extract is running).
@@ -40,7 +44,8 @@ FILE = "/dataExtractFile.do"
 # Small countries, tried in this order until AntWeb knows one (names as on AntWeb's country pages).
 SMALL_COUNTRIES = ["Luxembourg", "Liechtenstein", "Andorra", "Malta", "Iceland"]
 BUSY = ("The daily update (or another data job) is running", "Another extract is")
-FILES = ["specimens.csv.gz", "genus_summary.csv", "manifest.txt", "manifest.json"]
+# The files of the test's extract (ants only, with the file of the specimens that have no country), as the zip lists them.
+FILES = ["specimens.csv.gz", "specimens_no_country.csv.gz", "genus_summary.csv", "manifest.txt", "manifest.json"]
 
 
 def _text(html):
@@ -160,6 +165,8 @@ def test_admin_page_and_refusals(admin):
     assert r.status_code == 200 and classify(r).category == "ok", classify(r)
     for part in ("<h1>Data extract</h1>", 'id="data-extract-page"', 'id="data-extract-form"', 'name="_csrf"', 'name="countries"',
                  'name="islands" value="on" checked', 'name="bioregion"', 'name="note"', "Start the extract", 'id="data-extract-list"',
+                 # ants only, and no file of the specimens without a country, unless ticked
+                 'name="allFamilies" value="on"> Include specimens that are not ants', 'name="noCountry" value="on"> Also a file of the specimens',
                  "has_coordinates = 0", "VERIFIED"):
         assert part in r.text, part
     own = r.text.split('id="data-extract-page"', 1)[1].split('id="data-extract-list"', 1)[0]
@@ -197,10 +204,11 @@ def _latest_job(s):
     return max([int(n) for n in re.findall(r"jobStatus\.do\?id=(\d+)", listing)] or [0])
 
 
-def _start(s, token):
-    """Starts an extract of the first small country AntWeb knows; (country, job url). Skips when staging is busy."""
-    for country in SMALL_COUNTRIES:
-        r = s.post(BASE_URL + PAGE, data={"_csrf": token, "countries": country, "islands": "on", "note": "e2e test <b>"},
+def _start(s, token, countries=None, **options):
+    """Starts an extract of the first small country AntWeb knows (or of the country given), with the form's other
+    fields as options; (country, job url). Skips when staging is busy."""
+    for country in countries or SMALL_COUNTRIES:
+        r = s.post(BASE_URL + PAGE, data={"_csrf": token, "countries": country, "islands": "on", "note": "e2e test <b>", **options},
                    timeout=TIMEOUT, allow_redirects=False)
         url = job_url(r)
         if url:
@@ -208,14 +216,19 @@ def _start(s, token):
         assert r.status_code == 200, (country, r.status_code)
         if any(b in r.text for b in BUSY):
             pytest.skip("staging is busy: " + _text(r.text.split('id="data-extract-message"', 1)[1])[:200])
-        assert "AntWeb has no country named" in r.text or "Not a current country name" in r.text, _text(r.text)[:600]
-    pytest.fail("AntWeb knows none of " + ", ".join(SMALL_COUNTRIES))
+        assert "AntWeb has no country named" in r.text or "Not a valid country name" in r.text, _text(r.text)[:600]
+    pytest.fail("AntWeb knows none of " + ", ".join(countries or SMALL_COUNTRIES))
+
+
+def _csv_rows(gz):
+    rows = list(csv.reader(io.StringIO(gzip.decompress(gz).decode("utf-8"), newline="")))
+    return rows[0], rows[1:]
 
 
 @needs("admin")
 def test_small_extract_end_to_end(admin):
     s, token, _id = admin
-    country, url = _start(s, token)
+    country, url = _start(s, token, noCountry="on")
     job = re.search(r"id=(\d+)", url).group(1)
     assert "already=1" not in url, "another extract was already waiting or running"
 
@@ -251,17 +264,22 @@ def test_small_extract_end_to_end(admin):
     gz = download("specimens.csv.gz")
     assert hashlib.sha256(gz).hexdigest() == manifest["files"]["specimens.csv.gz"]["sha256"]
     assert len(gz) == manifest["files"]["specimens.csv.gz"]["bytes"]
-    rows = list(csv.reader(io.StringIO(gzip.decompress(gz).decode("utf-8"), newline="")))
-    header, rows = rows[0], rows[1:]
+    header, rows = _csv_rows(gz)
     assert len(rows) == n, f"{len(rows)} rows in specimens.csv.gz, the manifest says {n}"
     assert header == manifest["columns"]
     assert header[0] == "code" and header[-8:] == ["taxon_status", "taxon_fossil", "taxon_rank", "taxon_current_valid_name",
                                                   "taxon_author_date", "group_name", "no_taxon_row", "has_coordinates"]
     assert all(len(r) == len(header) for r in rows)
     col = {name: i for i, name in enumerate(header)}
-    places = set(manifest["countries"]) | set(manifest["islands"])
+    # by country and island country, as the manifest counts them (an old name or another spelling of the country has
+    # its own line there)
+    by_place = {}
     for r in rows:
-        assert r[col["country"]] in places or r[col["island_country"]] in places, r[col["code"]]
+        key = (r[col["country"]], r[col["island_country"]])
+        by_place[key] = by_place.get(key, 0) + 1
+    assert by_place == {(p["country"], p["island_country"]): p["specimens"] for p in manifest["by_place"]}
+    old_names = {o["name"] for o in manifest["outdated_names"]}
+    assert sum(1 for r in rows if r[col["country"]] in old_names) == manifest["filed_under_outdated_name"]
     assert sum(1 for r in rows if r[col["has_coordinates"]] == "0") == manifest["without_coordinates"]
     assert sum(1 for r in rows if r[col["no_taxon_row"]] == "1") == manifest["no_taxon_row"]
     codes = [r[col["code"]] for r in rows]
@@ -272,16 +290,40 @@ def test_small_extract_end_to_end(admin):
     genus = list(csv.DictReader(io.StringIO(download("genus_summary.csv").decode("utf-8"), newline="")))
     assert sum(int(g["specimens"]) for g in genus) == n
 
+    # Ants only (the default): no specimen of another family in the file; what was left out is counted by family
+    assert manifest["ants_only"] is True and manifest["not_ants"] == 0
+    families = {r[col["family"]].strip().lower() for r in rows}
+    assert families <= {"formicidae", ""}, f"other families in an ants-only file: {families}"
+    assert sum(1 for r in rows if not r[col["family"]].strip()) == manifest["blank_family"]
+    left_out = manifest["left_out_not_formicidae"]
+    assert left_out["specimens"] == sum(left_out["by_family"].values()) and left_out["families"] == len(left_out["by_family"])
+    assert f"Ants only (family Formicidae): {left_out['specimens']:,} specimens of other families are left out" in text
+    assert f"No family given: {manifest['blank_family']:,} (in the file)\n" in text
+
+    # The specimens that have no country, in their own file: as many as the manifest and the database say
+    nc = manifest["no_country"]
+    nc_gz = download("specimens_no_country.csv.gz")
+    assert hashlib.sha256(nc_gz).hexdigest() == manifest["files"]["specimens_no_country.csv.gz"]["sha256"]
+    nc_header, nc_rows = _csv_rows(nc_gz)
+    assert nc_header == header
+    assert len(nc_rows) == nc["specimens"] == nc["in_database"], (len(nc_rows), nc)
+    assert all(r[col["country"]] == "" for r in nc_rows), "a specimen with a country in the no-country file"
+    assert {r[col["family"]].strip().lower() for r in nc_rows} <= {"formicidae", ""}, "the no-country file follows ants only"
+    assert sum(nc["by_group"].values()) == nc["specimens"]
+    assert sum(1 for r in nc_rows if r[col["has_coordinates"]] == "1") == nc["with_coordinates"]
+    assert f"Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them): {nc['specimens']:,};" in text
+    assert list(manifest["files"]) == FILES[:3]
+
     with zipfile.ZipFile(io.BytesIO(download("all.zip"))) as z:
-        assert z.namelist() == FILES[:2] + ["manifest.txt", "manifest.json"]
-        assert z.read("specimens.csv.gz") == gz
+        assert z.namelist() == FILES
+        assert z.read("specimens.csv.gz") == gz and z.read("specimens_no_country.csv.gz") == nc_gz
     # no bioregion was asked for: no list file
     assert s.get(BASE_URL + FILE + f"?job={job}&file=bioregion_list.csv", timeout=TIMEOUT).status_code == 404
 
     # listed on the page, with who started it and the links
     page = s.get(BASE_URL + PAGE, timeout=TIMEOUT).text
     row = page.split(f'<tr id="extract-{job}">', 1)[1].split("</tr>", 1)[0]
-    assert f"{country}; with islands" in row and "e2e test &lt;b&gt;" in row and ">VERIFIED</span>" in row
+    assert f"{country}; with islands; ants only; with the no-country file" in row and "e2e test &lt;b&gt;" in row and ">VERIFIED</span>" in row
     assert f"{n:,}</td>" in row and f"dataExtractFile.do?job={job}&amp;file=all.zip" in row
 
     # Review M1: the extract's real folder (its name is in the download's file name) cannot be reached by any address
@@ -313,3 +355,21 @@ def test_small_extract_end_to_end(admin):
     for name in FILES + ["all.zip"]:
         assert s.get(BASE_URL + FILE + f"?job={job}&file={name}", timeout=TIMEOUT).status_code == 404, name
     assert job_status(s.get(url, timeout=TIMEOUT).text) == "finished", "the job's record is gone with its files"
+
+    # "Include specimens that are not ants": the same country again holds exactly the specimens ants only left out more
+    _country, url2 = _start(s, token, countries=[country], allFamilies="on")
+    job2 = re.search(r"id=(\d+)", url2).group(1)
+    page2 = wait_for_job(s, url2).text
+    assert job_status(page2) == "finished" and 'data-verified="true"' in page2, _text(page2.split('id="job-status-card"', 1)[-1])[:800]
+    r = s.get(BASE_URL + FILE + f"?job={job2}&file=manifest.json", timeout=TIMEOUT)
+    assert _is_file(r), r.status_code
+    all_families = json.loads(r.content.decode("utf-8"))
+    assert all_families["ants_only"] is False and all_families["left_out_not_formicidae"] is None and all_families["no_country"] is None
+    assert all_families["specimens"] == n + left_out["specimens"], (all_families["specimens"], n, left_out)
+    assert all_families["not_ants"] == left_out["specimens"] and all_families["blank_family"] == manifest["blank_family"]
+    assert f"All families (--all-families): {left_out['specimens']:,} specimens in the file are not Formicidae" in page2
+    assert s.get(BASE_URL + FILE + f"?job={job2}&file=specimens_no_country.csv.gz", timeout=TIMEOUT).status_code == 404
+    row2 = s.get(BASE_URL + PAGE, timeout=TIMEOUT).text.split(f'<tr id="extract-{job2}">', 1)[1].split("</tr>", 1)[0]
+    assert f"{country}; with islands; all families" in row2 and "no-country" not in row2
+    r = s.post(BASE_URL + PAGE, data={"_csrf": token, "op": "delete", "job": job2}, timeout=TIMEOUT)
+    assert f"The files of extract {job2} were removed from the server." in r.text

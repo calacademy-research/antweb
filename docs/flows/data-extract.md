@@ -11,7 +11,7 @@ Added 2026-11-10 (Brian Fisher: the Ants of the Nearctic extract of March 2026 w
 
 | Step | Code | What happens |
 |---|---|---|
-| 1. The form | `curate/DataExtractAction` (GET), `web/curate/dataExtract.jsp` + `dataExtract-body.jsp` | `Check.initLogin`, `Check.admin` (and `adminCheck.jsp` in the page). Shows the form, the country pick list (`geolocale`, `georank = 'country'`, valid rows), the bioregions (`bioregion`), and the extracts on the server (`DataExtractFiles.list`) with a Delete button each. Removes extracts older than 30 days and the half-written files of unfinished ones first. A GET never starts or deletes anything, whatever its parameters. |
+| 1. The form | `curate/DataExtractAction` (GET), `web/curate/dataExtract.jsp` + `dataExtract-body.jsp` | `Check.initLogin`, `Check.admin` (and `adminCheck.jsp` in the page). Shows the form, the country pick list (`geolocale`, `georank = 'country'`, valid rows), the bioregions (`bioregion`), and the extracts on the server (`DataExtractFiles.list`) with a Delete button each. Removes extracts older than 30 days and the half-written files of unfinished ones first. The form's two boxes: "Include specimens that are not ants" and "Also a file of the specimens that have no country", both clear unless ticked. A GET never starts or deletes anything, whatever its parameters. |
 | 2. Start | `DataExtractAction` (POST, form token checked by `SessionRequestFilter`) | `check()`: `DataExtract.parseCountries`, `resolve` (each name must have a **valid** country row; the name is taken as the table spells it; a row that is not valid is refused, with its valid name when it has one), `resolveBioregion`. `cannotStartNow()`: refused while `UtilDataAction.isInComputeProcess()` or `Scheduler.isRunning()` (the daily update or another data job, the same check `utilData.do` makes), while another extract waits or runs, with less than 1 GB of free disk, or when the extracts kept use more than 5 GB (`DataExtractJob.diskRefusal`). A refusal shows the form again with one sentence; nothing is started. Otherwise `DataExtractJob.submit` and a redirect to `jobStatus.do?id=N`. `op=delete` with `job=N` removes that extract's folder (not a running one). |
 | 3. The job | `util/DataExtractJob.run` on the one background thread (`BackgroundJobs`, kind `extract`, action `dataExtract`) | Waits at the application gate like every background job (daily update, another data job, an upload). Checks the disk again, makes the folder (a folder that already has the job number is removed first), writes `request.json` (who, note, filters), takes a connection from `longConPool` and runs `DataExtract.run`. Step text: "Writing specimens: N so far." Every 5,000 rows it stops the run if less than 512 MB of disk is free or 50 minutes have passed (the long pool takes back a connection held for an hour). |
 | 4. The engine | `util/DataExtract` | Connection read-only, READ COMMITTED, autocommit, results as utf8mb4, given back as it was (a setting that cannot be put back is logged). Islands: `geolocale` rows with `is_island = 1` whose `parent` or `country` is one of the countries. Old names: country rows that are not valid and whose `valid_name` is one of the countries; their specimens are part of the filter. The specimens are read **in pages by primary key** (`pageSql`: the filter, `s.code > ?`, `order by s.code limit 10000`), each page streamed (`setFetchSize(Integer.MIN_VALUE)`) and its statement closed before the next: one row in memory at a time, and no statement or transaction open between pages. Each row is counted (`Stats`) and written to `specimens.csv.gz.part`, renamed when complete. Then a `count(*)` per (country, island country), grouped by the bytes of the names (`hex(convert(... using utf8mb4))`), is compared with the rows written (`compareCounts`): equal = verified. Then the count per requested country (0 = warning), `genus_summary.csv`, `bioregion_list.csv` (with a bioregion), `manifest.txt`, and last `manifest.json` (written under another name and moved in one step) with the sha256 of each file. |
@@ -53,11 +53,35 @@ tidies Tomcat's logs every night, skips `extracts/`.
   an extract (one background job at a time); the daily TaxonWorks upload can, if an extract is started just
   before 05:00.
 
+## Ants only, and the specimens without a country (formats 5 and 6)
+
+Brian Fisher, 2026-11-10: "why did you include non ants for an ant study?" AntWeb also holds beetles, wasps,
+spiders and other animals found with ants (production: 1,289 of the 200,075 specimens of United States, Canada and
+Mexico).
+
+- **Ants only is the default** (the form's box "Include specimens that are not ants" is clear; the tool's
+  `--all-families`). The filter is `DataExtract.ANTS`: `s.family = 'formicidae'`, or no family given (those are
+  kept and counted: "No family given"). The pages of the export, the count the file is checked against and the
+  no-country file all use it, so the check compares like with like.
+- What is left out is counted by family (`leftOutSql`; manifest `left_out_not_formicidae`, the line "Ants only
+  (family Formicidae): N specimens of other families are left out (the six largest ...)").
+- A row in an ants-only file whose family does not read as Formicidae (the database compares without accents or
+  case, the file's text does not) makes the extract **not verified**
+  (`not_formicidae_in_an_ants_only_file` among the differences).
+- The bioregion's species list follows the same choice on the taxon table (`T_ANTS`), and
+  `bioregion_list.names_left_out_not_formicidae` says how many names of other families it leaves out.
+- **The specimens without a country** (production: 1,623; no country filter finds them, and some belong to the
+  countries asked for): on request (the form's box, the tool's `--with-no-country`) every one of them goes to
+  `specimens_no_country.csv.gz`, read in pages like the main file, with the same columns and the same choice of
+  families; the manifest's `no_country` counts them (in the file, in the database, with coordinates, names, names
+  not in the countries file, by upload group) and a different count makes the extract not verified. The genus
+  summary and the bioregion list are of the main file only.
+
 ## Who ran which extract
 
 - `background_job`: one row per extract (kind `extract`, `login_id`, `login_name`, the countries in `title`, the
   result with the note, the times). Kept.
-- `request.json` in the extract's folder: job, login, note, countries, islands, bioregion. Kept as long as the
+- `request.json` in the extract's folder: job, login, note, countries, islands, all families, the no-country file, bioregion. Kept as long as the
   files (30 days). Never downloadable.
 - `admin.log`: one line per extract, one per download, one per Delete. The note is put on one line first
   (`DataExtractJob.cleanNote`), so it cannot start a line of its own in the log.
@@ -67,20 +91,19 @@ No new table.
 ## The same files as the command-line tool
 
 `tools/export/specimen_extract.py` (run on a server by an administrator) and `DataExtract` write the same files
-(format 4): the same columns, the same CSV quoting (Python's `csv` default: a field is quoted only when it holds a
+(format 6): the same columns, the same CSV quoting (Python's `csv` default: a field is quoted only when it holds a
 comma, a quote or a line break), NULL as an empty field, numbers and dates as the database prints them (the Java
 code takes their text from the raw answer, not through Java's number formatting), the same filter (old country
 names included), the same manifest keys and text. Checked on 2026-11-10 by running both against the same database
-(old names, three spellings of a country, a country without specimens, a four-byte character): the CSV files were
+(old names, three spellings of a country, a country without specimens, a four-byte character, specimens of eight
+other families, specimens with no family and with no country, a species list with names of other families), for
+the four combinations of the two boxes: the CSV files were
 identical byte for byte after unzipping, and the manifests identical except for the time and the checksum of the
 gzip file. Keep the two in step: a change of the columns or the manifest goes into both, with `VERSION` raised in
 both.
 
 Differences on purpose:
 
-- The tool can also write every specimen that has no country at all to a file of its own (`--with-no-country`,
-  `specimens_no_country.csv.gz`, described under `no_country` in the manifest). The page does not offer that file
-  yet; its manifest has `"no_country": null`, as the tool's has without the option.
 
 - The page takes a country name as the database compares it (so `united states` finds United States); the
   command-line tool needs the exact spelling. Both refuse a name that is not a valid country row.

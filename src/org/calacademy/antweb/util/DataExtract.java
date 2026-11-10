@@ -44,10 +44,15 @@ import java.util.zip.GZIPOutputStream;
  * was short, Stenamma 14 of 42 species, and nothing in it said so).
  *
  * Files written into one folder:
- *   specimens.csv.gz    every specimen whose country (or island country) is in the list: every column of the
- *                       specimen table, then taxon_status, taxon_fossil, taxon_rank, taxon_current_valid_name,
- *                       taxon_author_date, group_name, no_taxon_row and has_coordinates. Specimens without
- *                       coordinates and specimens whose name has no taxon row are in the file, marked.
+ *   specimens.csv.gz    every ant specimen (family Formicidae, or no family given; with "all families" also the
+ *                       beetles, wasps and other animals AntWeb holds) whose country (or island country) is in the
+ *                       list: every column of the specimen table, then taxon_status, taxon_fossil, taxon_rank,
+ *                       taxon_current_valid_name, taxon_author_date, group_name, no_taxon_row and has_coordinates.
+ *                       Specimens without coordinates and specimens whose name has no taxon row are in the file,
+ *                       marked.
+ *   specimens_no_country.csv.gz   on request: every specimen of AntWeb that has no country at all (same columns,
+ *                       same choice of families). No country filter can find these; some belong to the countries
+ *                       asked for.
  *   genus_summary.csv   per genus: specimens, names, names with a specimen with coordinates (and the same for the
  *                       chosen bioregion).
  *   bioregion_list.csv  with a bioregion: AntWeb's species list of it, each name with its specimens in the extract.
@@ -56,6 +61,12 @@ import java.util.zip.GZIPOutputStream;
  *
  * The check ("verified"): the rows written per (country, island country), by the exact spelling of the names, are
  * compared with a separate count(*) taken after the export. They must be equal.
+ *
+ * Ants only is the default since format 5 (Brian Fisher, 2026-11-10: "why did you include non ants for an ant
+ * study?"): the file, the check against the database and the no-country file use the same filter (ANTS), the
+ * manifest lists by family what is left out, and a row that is not an ant in an ants-only file makes the extract
+ * not verified. Format 6: the bioregion's species list is of ants only too (T_ANTS, the same choice on the taxon
+ * table), and the manifest says how many names of other families it leaves out.
  *
  * Which specimens: a requested name must be a valid country row (an old name is refused, with the valid one). The
  * specimens still filed under an old name of a requested country (a country row that is not valid and names the
@@ -86,7 +97,7 @@ public final class DataExtract {
     private static final org.apache.commons.logging.Log s_log = org.apache.commons.logging.LogFactory.getLog(DataExtract.class);
 
     /** The format of the files; the same number as tools/export/specimen_extract.py while they write the same. */
-    public static final String VERSION = "4";
+    public static final String VERSION = "6";
 
     /** Rows read by one statement (one page). */
     public static final int PAGE_ROWS = 10000;
@@ -95,6 +106,7 @@ public final class DataExtract {
     public static final String PART = ".part";
 
     public static final String SPECIMENS = "specimens.csv.gz";
+    public static final String SPECIMENS_NO_COUNTRY = "specimens_no_country.csv.gz";
     public static final String GENUS_SUMMARY = "genus_summary.csv";
     public static final String BIOREGION_LIST = "bioregion_list.csv";
     public static final String MANIFEST_JSON = "manifest.json";
@@ -113,11 +125,22 @@ public final class DataExtract {
         public final List<String> countries;
         public final boolean islands;
         public final String bioregion;
+        /** False (the default): ants only. True: also the specimens of other families. */
+        public final boolean allFamilies;
+        /** True: also write specimens_no_country.csv.gz, every specimen of AntWeb that has no country. */
+        public final boolean noCountry;
 
+        /** Ants only, no file of the specimens without a country. */
         public Request(List<String> countries, boolean islands, String bioregion) {
+            this(countries, islands, bioregion, false, false);
+        }
+
+        public Request(List<String> countries, boolean islands, String bioregion, boolean allFamilies, boolean noCountry) {
             this.countries = new ArrayList<>(countries);
             this.islands = islands;
             this.bioregion = bioregion == null ? "" : bioregion.trim();
+            this.allFamilies = allFamilies;
+            this.noCountry = noCountry;
         }
     }
 
@@ -301,23 +324,43 @@ public final class DataExtract {
         return b.append(")").toString();
     }
 
+    /**
+     * Ants only: family Formicidae, or no family given (kept and counted). AntWeb also holds beetles, wasps,
+     * spiders and other animals found with ants (production: 1,289 of the 200,075 specimens of United States,
+     * Canada and Mexico).
+     */
+    public static final String ANTS = "(s.family = 'formicidae' or s.family is null or s.family = '')";
+
+    /** Specimens with no country at all: no country filter can find them. */
+    public static final String NO_COUNTRY = "(s.country is null or s.country = '')";
+
     public static String whereSql(List<String> countries, List<String> islands) {
+        return whereSql(countries, islands, false);
+    }
+
+    public static String whereSql(List<String> countries, List<String> islands, boolean antsOnly) {
         String w = "s.country in " + sqlList(countries);
         if (!islands.isEmpty()) w += " or s.island_country in " + sqlList(islands);
-        return "(" + w + ")";
+        return "(" + w + ")" + (antsOnly ? " and " + ANTS : "");
+    }
+
+    /** Specimens of the countries that are not ants, by family: what the default leaves out. */
+    static String leftOutSql(List<String> countries, List<String> islands) {
+        return "select ifnull(nullif(s.family, ''), '(blank)'), count(*) from specimen s where " + whereSql(countries, islands)
+            + " and not " + ANTS + " group by 1 order by 2 desc, 1 /* left out */";
     }
 
     /**
-     * One page of the export: the specimens of the filter in code order, PAGE_ROWS at most; after the first page
-     * only those whose code is greater than the last one written (the "?" of the statement).
+     * One page of the export: the specimens of the filter (where) in code order, PAGE_ROWS at most; after the
+     * first page only those whose code is greater than the last one written (the "?" of the statement).
      */
-    static String pageSql(List<String> countries, List<String> islands, boolean first, int pageRows) {
+    static String pageSql(String where, boolean first, int pageRows) {
         return "select s.*, t.status as taxon_status, t.fossil as taxon_fossil, t.taxarank as taxon_rank, "
             + "t.current_valid_name as taxon_current_valid_name, t.author_date as taxon_author_date, g.name as group_name, "
             + "case when t.taxon_name is null then 1 else 0 end as no_taxon_row "
             + "from specimen s left join taxon t on t.taxon_name = s.taxon_name "
             + "left join ant_group g on g.id = s.access_group "
-            + "where " + whereSql(countries, islands) + (first ? "" : " and s.code > ?") + " order by s.code limit " + pageRows;
+            + "where " + where + (first ? "" : " and s.code > ?") + " order by s.code limit " + pageRows;
     }
 
     /**
@@ -325,9 +368,9 @@ public final class DataExtract {
      * without accents or case ("México" = "Mexico"), so a plain GROUP BY adds two spellings up while the file has
      * them apart. hex(convert(... using utf8mb4)): the bytes are UTF-8 whatever the column's character set.
      */
-    static String countSql(List<String> countries, List<String> islands) {
+    static String countSql(List<String> countries, List<String> islands, boolean antsOnly) {
         return "select hex(convert(ifnull(s.country, '') using utf8mb4)), hex(convert(ifnull(s.island_country, '') using utf8mb4)), "
-            + "count(*) from specimen s where " + whereSql(countries, islands) + " group by 1, 2 order by 1, 2";
+            + "count(*) from specimen s where " + whereSql(countries, islands, antsOnly) + " group by 1, 2 order by 1, 2";
     }
 
     /** (index of the country, its specimens in the database, also under its old names): 0 is worth a warning. */
@@ -351,12 +394,21 @@ public final class DataExtract {
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
-    static String bioregionListSql(String bioregion) {
+    /** The same choice as ANTS, on the taxon table (the bioregion's species list). */
+    public static final String T_ANTS = "(t.family = 'formicidae' or t.family is null or t.family = '')";
+
+    /** How many names of the bioregion's list are not ants (production: the Nearctic list holds about 130). */
+    static String listLeftOutSql(String bioregion) {
+        return "select count(*) from bioregion_taxon bt join taxon t on t.taxon_name = bt.taxon_name where bt.bioregion_name = "
+            + sqlString(bioregion) + " and t.taxarank in ('species', 'subspecies') and not " + T_ANTS + " /* list left out */";
+    }
+
+    static String bioregionListSql(String bioregion, boolean antsOnly) {
         return "select bt.taxon_name, ifnull(t.subfamily, ''), ifnull(t.genus, ''), ifnull(t.species, ''), ifnull(t.subspecies, ''), "
             + "ifnull(t.taxarank, ''), ifnull(t.status, ''), ifnull(t.fossil, ''), ifnull(bt.source, ''), ifnull(bt.is_endemic, ''), "
             + "ifnull(bt.is_introduced, '') from bioregion_taxon bt left join taxon t on t.taxon_name = bt.taxon_name "
             + "where bt.bioregion_name = " + sqlString(bioregion) + " and (t.taxarank in ('species', 'subspecies') or t.taxon_name is null) "
-            + "order by t.subfamily, t.genus, bt.taxon_name";
+            + (antsOnly ? "and " + T_ANTS + " " : "") + "order by t.subfamily, t.genus, bt.taxon_name";
     }
 
     // ------------------------------------------------------------------ the counts
@@ -395,6 +447,9 @@ public final class DataExtract {
         long noTaxonRow;
         long flagged;
         long notAnts;
+        long blankFamily;
+        /** Specimens per upload group name, in the order the groups first appear (the no-country file's summary). */
+        final Map<String, Long> byGroup = new LinkedHashMap<>();
         final Map<List<String>, Genus> genus = new TreeMap<>(DataExtract::compareLists);    // (subfamily, genus)
         final Map<String, Long> nameSpecimens = new HashMap<>();
         final Map<String, Long> nameSpecimensBio = new HashMap<>();
@@ -416,7 +471,10 @@ public final class DataExtract {
             if (!coords) noCoordinates++;
             if ("1".equals(get(row, "no_taxon_row"))) noTaxonRow++;
             if (!get(row, "flag").isEmpty()) flagged++;
-            if (!"formicidae".equals(get(row, "family").toLowerCase(Locale.ROOT))) notAnts++;
+            String family = get(row, "family").strip().toLowerCase(Locale.ROOT);
+            if (family.isEmpty()) blankFamily++;
+            else if (!"formicidae".equals(family)) notAnts++;
+            byGroup.merge(get(row, "group_name"), 1L, Long::sum);
             String name = get(row, "taxon_name");
             Genus g = genus.computeIfAbsent(List.of(get(row, "subfamily").toLowerCase(Locale.ROOT),
                 get(row, "genus").toLowerCase(Locale.ROOT)), k -> new Genus());
@@ -621,18 +679,44 @@ public final class DataExtract {
 
         Stats stats = new Stats(bioregion);
         for (Map<String, Object> o : outdated) stats.outdated.add((String) o.get("name"));
+        boolean antsOnly = !request.allFamilies;
         File specimens = new File(dir, SPECIMENS);
         File part = new File(dir, SPECIMENS + PART);
-        List<String> header = writeSpecimens(c, filter, islands, part, stats, progress, pageRows);
+        List<String> header = writeSpecimens(c, whereSql(filter, islands, antsOnly), part, stats, progress, pageRows);
         Files.move(part.toPath(), specimens.toPath(), StandardCopyOption.ATOMIC_MOVE);
         if (afterExport != null) afterExport.run();
 
+        // The check uses the same filter as the file (ants only or all families).
         Map<List<String>, Long> database = new TreeMap<>(DataExtract::compareLists);
-        try (Statement stmt = c.createStatement(); ResultSet rset = stmt.executeQuery(countSql(filter, islands))) {
+        try (Statement stmt = c.createStatement(); ResultSet rset = stmt.executeQuery(countSql(filter, islands, antsOnly))) {
             while (rset.next()) database.merge(List.of(unhex(rset.getString(1)), unhex(rset.getString(2))), rset.getLong(3), Long::sum);
         }
         List<Map<String, Object>> diffs = compareCounts(stats.byPlace, database);
         boolean verified = diffs.isEmpty();
+
+        // Ants only: what is left out, by family (largest first); and the file must hold no other family.
+        Map<String, Object> leftOut = null;
+        if (antsOnly) {
+            Map<String, Object> byFamily = new LinkedHashMap<>();
+            long total = 0;
+            try (Statement stmt = c.createStatement(); ResultSet rset = stmt.executeQuery(leftOutSql(filter, islands))) {
+                while (rset.next()) {
+                    byFamily.put(rset.getString(1), rset.getLong(2));
+                    total += rset.getLong(2);
+                }
+            }
+            leftOut = new LinkedHashMap<>();
+            leftOut.put("specimens", total);
+            leftOut.put("families", (long) byFamily.size());
+            leftOut.put("by_family", byFamily);
+            if (stats.notAnts > 0) {      // the filter and the file disagree
+                verified = false;
+                Map<String, Object> d = new LinkedHashMap<>();
+                d.put("file", SPECIMENS);
+                d.put("not_formicidae_in_an_ants_only_file", stats.notAnts);
+                diffs.add(d);
+            }
+        }
 
         // A requested country without a single specimen (also under its old names) is worth a warning.
         List<String> empty = new ArrayList<>();
@@ -644,13 +728,52 @@ public final class DataExtract {
 
         List<File> files = new ArrayList<>();
         files.add(specimens);
+
+        // On request: every specimen of AntWeb with no country, in a file of its own, with the same choice of families.
+        Map<String, Object> noCountry = null;
+        if (request.noCountry) {
+            String where = NO_COUNTRY + (antsOnly ? " and " + ANTS : "");
+            Stats none = new Stats("");
+            File noCountryFile = new File(dir, SPECIMENS_NO_COUNTRY);
+            File noCountryPart = new File(dir, SPECIMENS_NO_COUNTRY + PART);
+            writeSpecimens(c, where, noCountryPart, none, null, pageRows);
+            Files.move(noCountryPart.toPath(), noCountryFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+            long inDatabase = 0;
+            try (Statement stmt = c.createStatement(); ResultSet rset = stmt.executeQuery("select count(*) from specimen s where " + where)) {
+                if (rset.next()) inDatabase = rset.getLong(1);
+            }
+            Set<String> onlyHere = new java.util.HashSet<>(none.nameSpecimens.keySet());
+            onlyHere.removeAll(stats.nameSpecimens.keySet());
+            // by upload group, largest first; groups of the same size in the order they first appear in the file
+            List<Map.Entry<String, Long>> groups = new ArrayList<>(none.byGroup.entrySet());
+            groups.sort((a, b) -> Long.compare(b.getValue(), a.getValue()));
+            Map<String, Object> byGroup = new LinkedHashMap<>();
+            for (Map.Entry<String, Long> g : groups) byGroup.put(g.getKey(), g.getValue());
+            noCountry = new LinkedHashMap<>();
+            noCountry.put("specimens", none.rows);
+            noCountry.put("in_database", inDatabase);
+            noCountry.put("with_coordinates", none.rows - none.noCoordinates);
+            noCountry.put("names", (long) none.nameSpecimens.size());
+            noCountry.put("names_not_in_the_countries_file", (long) onlyHere.size());
+            noCountry.put("by_group", byGroup);
+            if (none.rows != inDatabase) {
+                verified = false;
+                Map<String, Object> d = new LinkedHashMap<>();
+                d.put("file", SPECIMENS_NO_COUNTRY);
+                d.put("in_file", none.rows);
+                d.put("in_database", inDatabase);
+                diffs.add(d);
+            }
+            files.add(noCountryFile);
+        }
+
         File genusFile = new File(dir, GENUS_SUMMARY);
         writeGenusSummary(genusFile, stats);
         files.add(genusFile);
         Map<String, Object> bio = null;
         if (!bioregion.isEmpty()) {
             List<List<String>> rows = new ArrayList<>();
-            try (Statement stmt = c.createStatement(); ResultSet rset = stmt.executeQuery(bioregionListSql(bioregion))) {
+            try (Statement stmt = c.createStatement(); ResultSet rset = stmt.executeQuery(bioregionListSql(bioregion, antsOnly))) {
                 while (rset.next()) {
                     List<String> r = new ArrayList<>();
                     for (int i = 1; i <= 11; i++) {
@@ -665,6 +788,13 @@ public final class DataExtract {
             bio = new LinkedHashMap<>();
             bio.put("names", (long) rows.size());
             bio.put("names_without_specimen_in_extract", missing);
+            Long namesLeftOut = null;
+            if (antsOnly) {
+                try (Statement stmt = c.createStatement(); ResultSet rset = stmt.executeQuery(listLeftOutSql(bioregion))) {
+                    namesLeftOut = rset.next() ? rset.getLong(1) : 0L;
+                }
+            }
+            bio.put("names_left_out_not_formicidae", namesLeftOut);
             files.add(listFile);
         }
 
@@ -699,15 +829,16 @@ public final class DataExtract {
         m.put("without_coordinates", stats.noCoordinates);
         m.put("no_taxon_row", stats.noTaxonRow);
         m.put("flagged", stats.flagged);
+        m.put("ants_only", antsOnly);
+        m.put("left_out_not_formicidae", leftOut);
+        m.put("blank_family", stats.blankFamily);
         m.put("not_ants", stats.notAnts);
         m.put("filed_under_outdated_name", stats.filedOutdated);
         m.put("countries_without_specimens", empty);
         m.put("genera", (long) stats.genus.size());
         m.put("names", (long) stats.nameSpecimens.size());
         m.put("bioregion_list", bio);
-        // The command-line tool can also write the specimens that have no country at all to a file of their own
-        // (--with-no-country) and describes it here; the page does not offer that file, so the key is always null.
-        m.put("no_country", null);
+        m.put("no_country", noCountry);
         Map<String, Object> fileInfo = new LinkedHashMap<>();
         List<String> names = new ArrayList<>();
         for (File f : files) {
@@ -739,7 +870,7 @@ public final class DataExtract {
      * Reads the specimens page by page (pageSql) and writes them to file as gzip CSV; returns the column names
      * (without has_coordinates). Each page is one statement, streamed and closed before the next one starts.
      */
-    static List<String> writeSpecimens(Connection c, List<String> countries, List<String> islands, File file, Stats stats,
+    static List<String> writeSpecimens(Connection c, String where, File file, Stats stats,
                                        LongConsumer progress, int pageRows) throws SQLException, IOException {
         List<String> header = new ArrayList<>();
         try (Writer w = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(
@@ -751,7 +882,7 @@ public final class DataExtract {
             List<String> values = new ArrayList<>();
             while (true) {
                 int inPage = 0;
-                try (PreparedStatement stmt = c.prepareStatement(pageSql(countries, islands, last == null, pageRows),
+                try (PreparedStatement stmt = c.prepareStatement(pageSql(where, last == null, pageRows),
                          ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
                     // MySQL's driver sends the rows one at a time only with this fetch size; any other value loads
                     // the whole page into memory first.
@@ -907,15 +1038,30 @@ public final class DataExtract {
         lines.add("Name has no taxon row: " + n(m.get("no_taxon_row"))
             + " (in the file, no_taxon_row = 1; the API's specimen view leaves these out)");
         lines.add("Red-flagged at upload: " + n(m.get("flagged")) + " (column flag)");
-        lines.add("Family not Formicidae: " + n(m.get("not_ants")));
+        lines.add(antsLine(m));
+        lines.add("No family given: " + n(m.get("blank_family") == null ? 0L : m.get("blank_family")) + " (in the file)");
         lines.add("Filed under an outdated country name: " + n(m.get("filed_under_outdated_name") == null ? 0L : m.get("filed_under_outdated_name")));
         lines.add("Genera: " + n(m.get("genera")) + "   distinct names: " + n(m.get("names")));
         String bioregion = (String) m.get("bioregion");
         if (bioregion != null && !bioregion.isEmpty()) {
             Map<String, Object> b = (Map<String, Object>) m.get("bioregion_list");
             lines.add("");
-            lines.add("AntWeb's " + bioregion + " species list: " + n(b.get("names")) + " names; "
+            Object namesLeftOut = b.get("names_left_out_not_formicidae");
+            lines.add("AntWeb's " + bioregion + " species list: " + n(b.get("names")) + " names"
+                + (namesLeftOut == null ? "" : " of ants (" + n(namesLeftOut) + " names of other families left out)") + "; "
                 + n(b.get("names_without_specimen_in_extract")) + " of them have no specimen in this extract (literature, or other countries)");
+        }
+        Map<String, Object> nc = (Map<String, Object>) m.get("no_country");
+        if (nc != null && !nc.isEmpty()) {
+            List<String> groups = new ArrayList<>();
+            for (Map.Entry<String, Object> g : ((Map<String, Object>) nc.get("by_group")).entrySet()) {
+                groups.add((g.getKey().strip().isEmpty() ? "(none)" : g.getKey().strip()) + " " + n(g.getValue()));
+            }
+            lines.add("");
+            lines.add("Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them): "
+                + n(nc.get("specimens")) + "; with coordinates " + n(nc.get("with_coordinates")) + "; " + n(nc.get("names")) + " names, "
+                + n(nc.get("names_not_in_the_countries_file")) + " of them not in the countries file");
+            lines.add("  by upload group: " + String.join(", ", groups));
         }
         lines.add("");
         lines.add("Files (sha256):");
@@ -938,6 +1084,26 @@ public final class DataExtract {
             + String.valueOf(m.get("made_utc")).substring(0, 10) + ".");
         lines.add("Images and data on AntWeb are licensed CC BY 4.0.");
         return String.join("\n", lines) + "\n";
+    }
+
+    /** The manifest's line on families: what ants only leaves out (the six largest families), or how many are not ants. */
+    @SuppressWarnings("unchecked")
+    static String antsLine(Map<String, Object> m) {
+        if (!Boolean.TRUE.equals(m.get("ants_only"))) {
+            return "All families (--all-families): " + n(m.get("not_ants")) + " specimens in the file are not Formicidae";
+        }
+        Map<String, Object> left = (Map<String, Object>) m.get("left_out_not_formicidae");
+        Map<String, Object> byFamily = left == null ? new LinkedHashMap<>() : (Map<String, Object>) left.get("by_family");
+        String line = "Ants only (family Formicidae): " + n(left == null ? 0L : left.get("specimens")) + " specimens of other families are left out";
+        if (!byFamily.isEmpty()) {
+            List<String> top = new ArrayList<>();
+            for (Map.Entry<String, Object> e : byFamily.entrySet()) {
+                if (top.size() == 6) break;
+                top.add(e.getKey() + " " + n(e.getValue()));
+            }
+            line += " (" + String.join(", ", top) + (byFamily.size() > 6 ? ", ..." : "") + ")";
+        }
+        return line + "; --all-families includes them";
     }
 
     // ------------------------------------------------------------------ JSON (as Python's json module writes it)

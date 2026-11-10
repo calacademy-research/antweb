@@ -69,7 +69,7 @@ public final class DataExtractFiles {
     public static final String ZIP = "all.zip";
 
     /** The only file names a download may name (ZIP besides), in the order the page lists them. */
-    public static final List<String> DOWNLOADS = List.of(DataExtract.SPECIMENS, DataExtract.GENUS_SUMMARY,
+    public static final List<String> DOWNLOADS = List.of(DataExtract.SPECIMENS, DataExtract.SPECIMENS_NO_COUNTRY, DataExtract.GENUS_SUMMARY,
         DataExtract.BIOREGION_LIST, DataExtract.MANIFEST_TXT, DataExtract.MANIFEST_JSON);
 
     static final Pattern FOLDER = Pattern.compile("(\\d{4}-\\d{2}-\\d{2})-(\\d{1,9})");
@@ -89,6 +89,10 @@ public final class DataExtractFiles {
         public String note = "";
         public List<String> countries = new ArrayList<>();
         public boolean islands;
+        /** True: also the specimens that are not ants. */
+        public boolean allFamilies;
+        /** True: with the file of the specimens that have no country. */
+        public boolean noCountry;
         public String bioregion = "";
         /** From manifest.json; null while the extract has not finished (or did not). */
         public Long specimens;
@@ -221,6 +225,8 @@ public final class DataExtractFiles {
         m.put("note", note == null ? "" : note);
         m.put("countries", request.countries);
         m.put("islands", request.islands);
+        m.put("all_families", request.allFamilies);
+        m.put("no_country", request.noCountry);
         m.put("bioregion", request.bioregion);
         try (Writer w = Files.newBufferedWriter(new File(folder, REQUEST).toPath(), StandardCharsets.UTF_8)) {
             w.write(DataExtract.json(m));
@@ -272,6 +278,8 @@ public final class DataExtractFiles {
                 e.note = string(request, "note");
                 e.countries = strings(request, "countries");
                 e.islands = request.has("islands") && request.get("islands").getAsBoolean();
+                e.allFamilies = request.has("all_families") && request.get("all_families").getAsBoolean();
+                e.noCountry = request.has("no_country") && request.get("no_country").getAsBoolean();
                 e.bioregion = string(request, "bioregion");
             } catch (RuntimeException x) {
                 s_log.warn("read() " + folder + " request.json e:" + x);
