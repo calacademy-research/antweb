@@ -34,7 +34,7 @@ Your uploads, Names and checks and Your account list one link per line, each wit
 - **Specimen upload reports**: the list of your group's specimen uploads, newest first. Each line opens the upload report (how many specimens were loaded, which names were changed to the current valid name, which lines had problems). Check it after every upload. Line numbers in a report open that line of your upload as AntWeb stored it (your own group's uploads only). Each report also links the file you uploaded (**Uploaded File**), and the list has a **Download** column for each upload's file while it is kept on the server, so you can get a copy of what you sent. Only your group's curators and admins can download a group's files. (This replaces "Your past upload files" and the admins' "Past upload files of" menu, removed on 20 October 2026.)
 - **Image upload reports**: the same for image uploads: one line per upload batch, with its report.
 - Who sees these lists and the curator pages' emails: the lists (`listSpecimenUploads.do`, `listUploads.do`, `listImageUploads.do`) open for curators and admins only (since 2026-10-27, decided by Brian Fisher; before, any logged-in account could list them, the page itself then sent non-curators to the log-in page); a visitor's link to them opens the log-in page. The individual upload reports stay public. A curator's page (`curator.do`) shows the curator's email address and admin flag to curators and admins only (before: to any logged-in account).
-- **Upload status**: uploads waiting or in progress, and the result of each.
+- **Uploads and data jobs** (`jobStatus.do`): follow an upload or data job and read its result. Curators see their group's uploads; admins also see the data jobs started from AntWeb pages (nightly sets started by hand, Check the counts, the AntCat import). Called "Upload status" until 9 November 2026.
 
 **Names and checks**
 
@@ -57,7 +57,7 @@ This is how you send your specimen data to AntWeb.
 
 1. Put your specimen file (the tab-delimited AntWeb specimen file) in a ZIP file. Only ZIP files are accepted. Files must be UTF-8 (Excel: Save As, CSV UTF-8). A file that is not is refused before anything changes, and the message names the first line that is not UTF-8.
 2. Click **Choose File** next to **ZIP file**, pick the ZIP, then click **Upload**.
-3. Wait while the file is sent. A large file can take several minutes; the next page shows the progress of your upload (later also under **Upload status**), and you get an email when the upload is finished.
+3. Wait while the file is sent. A large file can take several minutes; the next page shows the progress of your upload (later also under **Uploads and data jobs**), and you get an email when the upload is finished.
 4. Open the upload report and check it.
 
 Your upload replaces your group's specimen records on AntWeb. Names are matched to the current valid names in AntCat. Counts on country, region and museum pages are brought up to date in the nightly run (from 5 AM Pacific), so new specimens can take until the next morning to show in those counts.
@@ -124,7 +124,7 @@ Login Manager, click a login. The page has plain sections, each with a one-line 
 ### Administrator functions
 
 - **Antweb Statistics**: statistics tables by project, museum, bioregion and upload.
-- **Server Status**: what the server is doing now: database connections, running jobs, the switch that pauses uploads ("down time") and the pages being served. It links Database Status (connection pools) and Restart Status (whether the application has asked for a restart).
+- **Server Status**: what the server is doing now: database connections, the running job and the last finished job (each linked to its page under **Uploads and data jobs**), whether an image upload is in progress, the switch that pauses uploads ("down time") and the pages being served. Restarts and deploys wait automatically while an upload or data job runs. It links Database Status (connection pools) and Restart Status (whether the application has asked for a restart).
 - **Technical page**: see below.
 - **Site Warning**: the banner shown at the top of every page (for example before maintenance). Type the text in the box and click **Save**; **Clear the warning** removes it. Simple formatting (bold, colour, line breaks, links) is kept; anything else, such as scripts, is removed.
 - **Restart server now**: asks for a restart of the AntWeb application. It happens within 5 minutes (never during an upload), and the site shows an error page for 2 to 4 minutes while it starts again. You are asked to confirm first. The link appears only when the server has been up for at least 10 minutes.

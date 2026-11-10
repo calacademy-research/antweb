@@ -19,7 +19,8 @@ import org.calacademy.antweb.Login;
 
 /**
  * The status page of a job started from a page and run in the background (BackgroundJobs):
- * jobStatus.do?id=N. Without id: the recent jobs ("Upload status" on the Curate page).
+ * jobStatus.do?id=N. Without id: the recent jobs, the page "Uploads and data jobs" (linked from the Curate page and
+ * from Server Status; called "Upload status" until 2026-11-09).
  *
  * Curators see the uploads of their own group (and their own uploads); administrators see every
  * job, admin data jobs included. While a job is waiting or running the page reloads itself every
@@ -29,7 +30,13 @@ public final class JobStatusAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(JobStatusAction.class);
 
+    /** The page's name wherever a person sees it (Brian Fisher, 2026-11-09). The URL stays jobStatus.do. */
+    public static final String PAGE_TITLE = "Uploads and data jobs";
+
     public static final int REFRESH_SECONDS = 5;
+
+    /** Server Status, "Last finished job": the result line is cut after this many characters. */
+    public static final int SERVER_STATUS_RESULT_CHARS = 200;
     static final int LIST_LIMIT = 30;
 
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response) {
@@ -50,7 +57,7 @@ public final class JobStatusAction extends AntwebAction {
             List<BackgroundJobs.Job> jobs = BackgroundJobs.get().recent(isAdmin ? 0 : groupId, LIST_LIMIT);
             boolean anyActive = false;
             html.append(navigation(domainApp));
-            html.append("<h1>Upload status</h1>");
+            html.append("<h1>").append(PAGE_TITLE).append("</h1>");
             html.append("<div class=\"aw-intro\"><p>").append(isAdmin ? "Uploads and data jobs started from AntWeb pages, newest first."
                 : "The specimen uploads of your group, newest first.")
              .append(" Open a job to follow it or to read its result; a job that is waiting or running updates itself.</p></div>");
@@ -89,7 +96,32 @@ public final class JobStatusAction extends AntwebAction {
 
     static String navigation(String domainApp) {
         return "<p class=\"aw-crumbs\"><a href=\"" + domainApp + "\">Home</a> | <a href=\"" + domainApp + "/curate.do\">Curator Tools</a>"
-            + " | <a href=\"" + domainApp + "/jobStatus.do\">Upload status</a></p>";
+            + " | <a href=\"" + domainApp + "/jobStatus.do\">" + PAGE_TITLE + "</a></p>";
+    }
+
+    /** Server Status, "Background job running": the running job linked to its page, or "none". */
+    public static String runningJobHtml(BackgroundJobs.Job job, String domainApp) {
+        if (job == null) return "<span class=\"aw-ok\">none</span>";
+        return "<a id=\"server-running-job\" class=\"aw-bad\" href=\"" + domainApp + "/jobStatus.do?id=" + job.getId() + "\">"
+            + Html.esc(job.getTitle() + " (job " + job.getId() + ", " + job.getLoginName() + ")") + "</a>";
+    }
+
+    /**
+     * Server Status, "Last finished job": its title linked to its page, how it ended and when, and its result as one
+     * short escaped line. "None yet." when no job has ended.
+     */
+    public static String lastJobHtml(BackgroundJobs.Job job, String domainApp) {
+        if (job == null) return "None yet.";
+        boolean isUpload = BackgroundJobs.UPLOAD.equals(job.getKind());
+        StringBuilder h = new StringBuilder();
+        h.append("<a id=\"server-last-job\" href=\"").append(domainApp).append("/jobStatus.do?id=").append(job.getId()).append("\">")
+         .append(Html.esc(job.getTitle())).append(" (job ").append(job.getId()).append(")</a>: ")
+         .append(statusWord(job.getStatus()));
+        if (job.getFinished() != null) h.append(", ended ").append(time(job.getFinished()));
+        h.append(".");
+        String line = JobSummary.shortLine(job.getResult(), isUpload, SERVER_STATUS_RESULT_CHARS);
+        if (!line.isEmpty()) h.append("<br><span id=\"server-last-job-result\">").append(line).append("</span>");
+        return h.toString();
     }
 
     /** The word shown for a status. */
@@ -162,7 +194,7 @@ public final class JobStatusAction extends AntwebAction {
             h.append("<p>This page updates itself every ").append(REFRESH_SECONDS).append(" seconds (<a href=\"")
              .append(domainApp).append("/jobStatus.do?id=").append(job.getId()).append("\">update now</a>). ")
              .append("You may close it: the ").append(isUpload ? "upload" : "job")
-             .append(" continues on the server, and you can come back to it from the Curate page (Upload status).</p>");
+             .append(" continues on the server, and you can come back to it from the Curate page (").append(PAGE_TITLE).append(").</p>");
         }
 
         String result = job.getResult();
@@ -213,7 +245,7 @@ public final class JobStatusAction extends AntwebAction {
              .append(time(j.getCreated())).append("</td><td>").append(time(j.getFinished())).append("</td></tr>");
         }
         h.append("</table>");
-        if (shown == 0) return "<p>No uploads yet.</p>";
+        if (shown == 0) return isAdmin ? "<p>No uploads or data jobs yet.</p>" : "<p>No uploads yet.</p>";
         return h.toString();
     }
 }

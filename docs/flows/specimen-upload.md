@@ -161,9 +161,9 @@ stores them plain (CAS every night through the TaxonWorks upload); the one-off r
 
 ## 3a. The status page (`jobStatus.do`)
 
-`util/JobStatusAction`, `web/curate/jobStatus.jsp`. Needs a curator login. Curators see the uploads of their own group (and their own uploads to another group); admins see every job, including the admin data jobs. Another group's job, or a number that does not exist, answers "Not available.". Without `id`: "Upload status", the recent jobs, newest first (linked from the Curate page and from the upload form).
+`util/JobStatusAction`, `web/curate/jobStatus.jsp`. Needs a curator login. Curators see the uploads of their own group (and their own uploads to another group); admins see every job, including the admin data jobs. Another group's job, or a number that does not exist, answers "Not available.". Without `id`: "Uploads and data jobs" (called "Upload status" until 2026-11-09), the recent jobs, newest first (linked from the Curate page, the upload form and Server Status).
 
-The page shows "Status: Waiting / Running / Finished / Did not complete / Interrupted" and, while the upload waits or runs, "Now: <step>", the sentence "This page updates itself every 5 seconds (update now). You may close it: the upload continues on the server, and you can come back to it from the Curate page (Upload status)." (an HTTP `Refresh: 5` header; no script). Per status:
+The page shows "Status: Waiting / Running / Finished / Did not complete / Interrupted" and, while the upload waits or runs, "Now: <step>", the sentence "This page updates itself every 5 seconds (update now). You may close it: the upload continues on the server, and you can come back to it from the Curate page (Uploads and data jobs)." (an HTTP `Refresh: 5` header; no script). Per status:
 
 | Status | Text |
 |---|---|

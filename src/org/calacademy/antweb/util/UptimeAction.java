@@ -16,61 +16,37 @@ import org.apache.commons.logging.LogFactory;
 /**
  * /uptime.do: health check for the uptime monitors. Public. Checks the database (a query on table image, then
  * AntwebMgr.populate) and the data directory (data/uptime.txt must contain "success"); answers util/uptime.jsp
- * (OK), or the message page when one fails. Admins can force failures with fail=1 (and stop with fail=0), POST
- * only; the answer is then util/uptimeFail.jsp. Docs: docs/catalog/actions.csv. Tests:
- * tests/e2e/test_curate_cleanup.py.
+ * (OK), or the message page when one fails. Read-only. The admin switch that made it fail on purpose (fail=1,
+ * util/uptimeFail.jsp, toggled from Server Status) was removed on 2026-11-09 (Brian Fisher). AntwebMgr.webPopulate()
+ * calls this page on the local server to load AntWeb's data. Docs: docs/catalog/actions.csv. Tests:
+ * tests/e2e/test_curate_cleanup.py, tests/e2e/test_tool_pages_style.py.
  */
 public final class UptimeAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(UptimeAction.class);
 
-    private static boolean isFailOnPurpose = false;
-    public static boolean isFailOnPurpose() {
-      return isFailOnPurpose;
-    }
-
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
 		throws IOException, ServletException {
 
-        ActionForward returnVal = null;
+        ActionForward returnVal;
         String message = null;
 
-        // The fail= test switch changes the answer for every caller: administrators only, by POST.
-        String fail = request.getParameter("fail");
-        if (fail != null && LoginMgr.isAdmin(request)) {
-            ActionForward confirm = PostOnly.confirm(request, mapping, "Set uptime fail-on-purpose: " + fail);
-            if (confirm != null) return confirm;
-            if ("1".equals(fail) || "true".equals(fail)) isFailOnPurpose = true;
-            if ("0".equals(fail) || "false".equals(fail)) isFailOnPurpose = false;
+        boolean successDB = isDatabaseUp(request);
+        if (!successDB) {
+            message = "Database is down.  " + Html.esc(AntwebUtil.getRequestInfo(request));
         }
 
-        if (isFailOnPurpose()) {
-            message = "fail on purpuse";
-            returnVal = mapping.findForward("fail");
+        boolean successDisk = isWebDirAccessible();
+        if (!successDisk) {
+            message = "/data/uptime.txt inaccessible.  " + Html.esc(AntwebUtil.getRequestInfo(request));
         }
 
-        if (returnVal == null) {
-            HttpSession session = request.getSession();
-            boolean successDB = false;
-            boolean successDisk = false;
-
-            successDB = isDatabaseUp(request);
-            if (!successDB) {
-                message = "Database is down.  " + Html.esc(AntwebUtil.getRequestInfo(request));
-            }
-
-            successDisk = isWebDirAccessible();
-            if (!successDisk) {
-                message = "/data/uptime.txt inaccessible.  " + Html.esc(AntwebUtil.getRequestInfo(request));
-            }
-
-            if (!successDB || !successDisk) {
-                request.setAttribute("message", message);
-                returnVal = mapping.findForward("message");
-            } else {
-                returnVal = mapping.findForward("success");
-            }
+        if (!successDB || !successDisk) {
+            request.setAttribute("message", message);
+            returnVal = mapping.findForward("message");
+        } else {
+            returnVal = mapping.findForward("success");
         }
 
         String logMsg = "UptimeAction.execute() returnVal:" + returnVal;
