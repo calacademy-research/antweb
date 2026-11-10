@@ -22,6 +22,7 @@ While a set runs, specimen uploads are refused ("re-computation process"). Since
 |---|---|---|
 | Timer | `util/SessionRequestFilter.runTask()` (line 325), `nextLaunchTime()` (line 338), `scheduleNextRun()`, `CustomTask` (line 358) | At startup (filter `init`), a `java.util.Timer` is set for the next 05:00:00 in the JVM's time zone (Pacific). Each run schedules the next one, also after a failure. Not in dev mode. |
 | Launch hour | `Scheduler.LAUNCHTIME = 5` (line 33) | |
+| TaxonWorks early request (2026-11-10) | `TaxonWorksNightly.scheduleEarlyRequest` (from `runTask()`), `earlyRequest()` | 04:35, 25 minutes before the run: the CAS archive's download link is requested once so that TaxonWorks builds a fresh archive before set 1 reaches the upload (a request only; one line "TaxonWorks early request: ..." in compute.log; off without `etc/taxonworks.properties`). See [specimen-upload.md](specimen-upload.md) section 5, step 5 (it only helps once the TaxonWorks project's maximum archive age is under one day). |
 | Admin, by hand | `schedule.do?action=run` (`WEB-INF/struts-config.xml` line 603), optionally `&num=1..5` for one set | `Scheduler.execute()` (line 84): admin only, POST confirmation (`PostOnly.confirm`), then the same `doAction()`; the browser waits for the whole run. |
 | One set, by hand | `utilData.do?action=set1` ... `set5` (struts line 588) | `UtilDataAction` directly: admin, POST confirmation (line 109). `utilData.do?action=<step>` runs one step of a set (the list in `UtilDataAction.ACTIONS`, line 46). |
 
@@ -60,7 +61,7 @@ Times are from comments in `UtilDataAction.doAction()` (production unless stated
 |---|---|---|
 | `worldantsFetchAndReload` | `SpeciesListUploader.worldantsFetchAndReload()`, then `ProjTaxonCountDb.childrenCountCrawl("worldants")` | see [antcat-to-antweb.md](antcat-to-antweb.md): `taxon`, `homonym`, taxonomic history, `proj_taxon`, `geolocale_taxon`, `bioregion_taxon`, `museum_taxon`, `worldants_upload` |
 | `taxonFinish` | `TaxonDb.setSubfamilyChartColor()` (35 s) | `taxon` chart colours |
-| TaxonWorks | `TaxonWorksNightly.run(connection, 90)` | CAS specimens, see [specimen-upload.md](specimen-upload.md) section 5 |
+| TaxonWorks | `TaxonWorksNightly.run(connection, 30)` | CAS specimens, see [specimen-upload.md](specimen-upload.md) section 5 |
 | name update | `UtilDataAction.nightlyNameUpdate()` -> `SpecimenNameUpdate.runLocked()`; setting `etc/name-update.properties` (no file = off); skipped if the AntCat import failed or an upload is running; commits on its own | `specimen` (apply mode), `specimen_name_update`, `taxon_set_parked`, `taxon` (apply mode: rows for morphospecies/indets moved with a synonym genus, since 2026-11-03); a second pass moves morphospecies and indets of synonym genera and names filed without a subfamily (`GenusSynonymRule`); a third pass moves a bioregion's morphospecies and indets by an approved old genus concept (table `genus_concept_rule`, approved on genusConceptRules.do from proposals made from AntCat's data; e.g. Mesoponera in the Afrotropical and Malagasy regions is Xiphopelta); see [antcat-to-antweb.md](antcat-to-antweb.md) section 7 |
 | taxon parents (since 2026-10-22, B36 in [numbers.md](../numbers.md)) | `UtilDataAction.nightlyTaxonParents()` -> `TaxonParentDb.repair()`: every ant species and subspecies of a counted status that is its own current valid name and is identified to genus gets its genus row as parent, where that row exists; no genus row is ever made (names not identified to genus are left alone; names whose genus row is missing are listed in the log line, valid ones also in an admin alert at most weekly: an AntCat import problem); when it changed a row, recounts the worldants list and rebuilds Global (allantwebants); commits on its own; compute.log "taxon parents (B36): ..." | `taxon`, `proj_taxon` (worldants, allantwebants) |
 | cache | `TaxonMgr.populate(connection, true, false)` | in-memory taxon cache |
@@ -112,13 +113,28 @@ compute.log: "Place list totals counted: N places in S s (M recounted, K unchang
   `island_country_idx` and `bioregion_idx` come with `db/upgrade/9.3.1/2026-11-09-specimen-place-indexes.sql`, until
   then those parts scan); only the places whose data changed are counted again: a fingerprint per place
   (`place_view_total_state`: its list rows with their taxon rows, tonight's stored specimen names with their
-  specimens, its disputes, AntWeb's curated morphospecies, the rules `PlaceViewTotalDb.RULES`). Specimen dates are no
+  specimens, its disputes, the curated morphospecies among its names (until 2026-11-10: all of AntWeb's), the rules
+  `PlaceViewTotalDb.RULES`). Specimen dates are no
   signal: every upload, the nightly CAS TaxonWorks upload among them, deletes its group's specimens and loads them
   again. Counted again: a changed fingerprint, specimen names not stored again since the last comparison (the Not
   curated count failed), a count older than 7 days, new rules, missing totals; every place on Sundays and with
   `utilData.do?action=placeViewTotals&param=all`. Each place is committed on its own (autocommit).
 - Bump `PlaceViewTotalDb.RULES` when what a list shows changes (ListView, StatusSet, TaxaPage, PlaceTotals), so the next
   run counts every place.
+- Production 2026-11-10 (a Tuesday, the first daily update with the fingerprints): "1987 recounted, 0 unchanged", 584 s.
+  Cause: the curated morphospecies were in every place's fingerprint as one checksum of all of AntWeb's
+  (`globalFingerprint`), so one curator's entry for a morphospecies anywhere, or one curated morphospecies whose
+  specimens were renamed or lost, changed every fingerprint. What the daily update rewrites every day (specimens of CAS
+  deleted and loaded again, list rows deleted and inserted again, counts, the stored specimen names) changes no
+  fingerprint: `PlaceViewTotalDbTest#testTheDailySequenceRecountsOnlyThePlacesThatChanged`. Since 2026-11-10 each place
+  takes the curated morphospecies among its own names (list rows and stored specimen names; `curatedPart`, the rule of
+  `ListView.vettedCondition` read once per run): a curated morphospecies counts again the places that have the name.
+  The first run after the change counts every place once more (the stored fingerprints have the old form).
+- The line also says why places were counted again and what took the time: "...(12 recounted, 1975 unchanged);
+  recounted because: data changed 12 (list rows 3, specimen names 10, curated morphospecies 1); comparing 20 s,
+  counting 4 s". Reasons: data changed (with the parts: list rows, specimen names, removed names, curated
+  morphospecies, or "fingerprint of an earlier version"), new place, totals missing, rules changed, counted over 7 days
+  ago, specimen names not stored again since the last count, full count.
 
 ### Set 5 (line 262): maps and checks, about 51 minutes; skipped on staging
 
@@ -129,6 +145,23 @@ compute.log: "Place list totals counted: N places in S s (M recounted, K unchang
 | `cleanupSpeciesListProxyRecords` | `ProjTaxonDb.cleanupSpeciesListProxyRecords()` (line 398) | deletes `proj_taxon` rows with source `proxyspeciesListTool` that have no children in that project |
 | `verifyProjTaxon` | `ProjTaxonDb.verifyProjTaxon()` (line 472) | deletes genus rows from project lists (not `worldants`) that have no species in that project |
 | caches | `AntwebMgr.populate(connection, true)` | reloads every in-memory manager (taxa, geolocales, projects, museums, groups, ...); pages show "initializing" meanwhile; also increments the specimen upload id |
+
+### Where the time goes (lines with times, 2026-11-10)
+
+Three compute.log lines say how long their parts took, so a slow step can be read from the log (Brian Fisher,
+2026-11-10: a faster daily update; production that day: museums 5 minutes, image counts 8, place image counts 13.6):
+
+- "Museums populated (N museums, specimen.museum S s, museum numbers S s, species rows S s, synonym rows S s, higher
+  taxa S s, counts S s, totals S s)": the parts of `MuseumDb.populate(code)` over all museums. `specimen.museum` is, per
+  museum, `update specimen set museum = null where museum = X` and `update specimen set museum = X where ownedBy regexp
+  ...` (no index serves the regexp: the specimen table is read once per museum).
+- "Image Count Crawl completed (specimens S s, taxa S s, roll-up S s, geolocale lists S s, project lists S s, bioregion
+  lists S s, museum lists S s)": `ImageCountDb.imageCountCrawls`. The list parts run one query per place and one UPDATE
+  per list row with images.
+- "Place image counts: geolocale N places with images in S s (islands S s, countries S s, adm1s S s, regions and
+  subregions S s); ...": the four sources of the geolocale kind (`PlaceImageCountDb.sources`), two grouped queries each.
+
+The lines still begin with the same words (the tests and the morning check look for the beginning).
 
 ## 5. Restart logic
 

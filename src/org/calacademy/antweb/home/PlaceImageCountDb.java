@@ -137,7 +137,9 @@ public class PlaceImageCountDb {
     static final class Source {
         final String sql;
         final boolean keyIsInt;
-        Source(String sql, boolean keyIsInt) { this.sql = sql; this.keyIsInt = keyIsInt; }
+        /** For the log line's times: "islands", "countries", "adm1s", "regions and subregions", or the kind. */
+        final String name;
+        Source(String sql, boolean keyIsInt, String name) { this.sql = sql; this.keyIsInt = keyIsInt; this.name = name; }
     }
 
     /**
@@ -170,9 +172,9 @@ public class PlaceImageCountDb {
         List<Source> list = new ArrayList<>();
         switch (type) {
             case GEOLOCALE:
-                list.add(new Source(geolocaleColumnSource("island_country", "coalesce(g.is_island, 0) = 1", one), true));
-                list.add(new Source(geolocaleColumnSource("country", "g.georank = 'country' and coalesce(g.is_island, 0) = 0", one), true));
-                list.add(new Source(geolocaleColumnSource("adm1", "g.georank = 'adm1' and coalesce(g.is_island, 0) = 0", one), true));
+                list.add(new Source(geolocaleColumnSource("island_country", "coalesce(g.is_island, 0) = 1", one), true, "islands"));
+                list.add(new Source(geolocaleColumnSource("country", "g.georank = 'country' and coalesce(g.is_island, 0) = 0", one), true, "countries"));
+                list.add(new Source(geolocaleColumnSource("adm1", "g.georank = 'adm1' and coalesce(g.is_island, 0) = 0", one), true, "adm1s"));
                 // Regions and subregions (since 2026-10-20): the specimens of their countries, each once.
                 list.add(new Source("select d.k k, s.code code, i.id id, " + SHOT + " shot"
                     + " from (select distinct rs.k, rs.code from (" + Geolocale.regionSpecimensSql(one ? " and r.id = ?" : "") + ") rs) d"
@@ -180,12 +182,12 @@ public class PlaceImageCountDb {
                     + " join geolocale_taxon gt on gt.geolocale_id = d.k and gt.taxon_name = s.taxon_name"
                     + " join taxon t on t.taxon_name = s.taxon_name"
                     + " join image i on i.image_of_id = s.code"
-                    + " where t.taxarank in " + SPECIES + ANTS + NOT_RED_FLAGGED, true));
+                    + " where t.taxarank in " + SPECIES + ANTS + NOT_RED_FLAGGED, true, "regions and subregions"));
                 break;
             case BIOREGION:
             case MUSEUM:
             case PROJECT:
-                list.add(new Source(listSource(type, one), false));
+                list.add(new Source(listSource(type, one), false, type));
                 break;
             default:
                 throw new IllegalArgumentException("place type " + type);
@@ -250,11 +252,16 @@ public class PlaceImageCountDb {
         }
     }
 
+    /** The time of each source of the last count() (two grouped queries each), for the log line of a kind with several. */
+    private StringBuilder lastTimes = new StringBuilder();
+
     /** Counts the places of one kind (key null: all of them; else that one place). */
     Map<String, PlaceImages> count(String type, String key) throws SQLException {
         Map<String, PlaceImages> places = new HashMap<>();
         boolean one = key != null;
+        lastTimes = new StringBuilder();
         for (Source source : sources(type, one)) {
+            long sourceStart = System.currentTimeMillis();
             String perShot = "select x.k, x.shot, count(distinct x.id), count(distinct x.code)"
                 + " from (" + source.sql + ") x group by x.k, x.shot";
             try (PreparedStatement stmt = connection.prepareStatement(perShot)) {
@@ -284,6 +291,8 @@ public class PlaceImageCountDb {
                     }
                 }
             }
+            if (lastTimes.length() > 0) lastTimes.append(", ");
+            lastTimes.append(source.name).append(" ").append(String.format(Locale.US, "%.1f", (System.currentTimeMillis() - sourceStart) / 1000.0)).append(" s");
         }
         for (PlaceImages p : places.values()) p.totals();
         return places;
@@ -307,9 +316,12 @@ public class PlaceImageCountDb {
         for (String type : TYPES) {
             long start = System.currentTimeMillis();
             Map<String, PlaceImages> places = count(type, null);
+            // the time of each source of a kind that has several (geolocale: islands, countries, adm1s, regions and
+            // subregions; 2026-11-10: 639 s on production, and the line did not say which)
+            String sources = lastTimes.indexOf(",") > 0 ? " (" + lastTimes + ")" : "";
             write(type, null, places);
             b.append(" ").append(type).append(" ").append(places.size()).append(" places with images in ")
-             .append(String.format(Locale.US, "%.1f", (System.currentTimeMillis() - start) / 1000.0)).append(" s;");
+             .append(String.format(Locale.US, "%.1f", (System.currentTimeMillis() - start) / 1000.0)).append(" s").append(sources).append(";");
         }
         return b.toString();
     }

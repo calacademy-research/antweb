@@ -30,19 +30,38 @@ public class ImageCountDb extends AntwebDb {
      public void imageCountCrawls() throws SQLException {
 
          s_log.info("imageCountCrawl()");
+         // The time of each part, on the "completed" line (2026-11-10, Brian Fisher: a faster daily update; production
+         // 11-10: about 8 minutes, and the line said only that it was done).
+         StringBuilder times = new StringBuilder();
+         long t = System.currentTimeMillis();
          countSpecimenImages();
+         t = lap(times, "specimens", t);
          s_log.info("done countSpecimenImages()");
          countSpeciesImages();
+         t = lap(times, "taxa", t);
          s_log.info("done countSpeciesImages()");
          rollUpTaxonImageCounts();
+         t = lap(times, "roll-up", t);
          s_log.info("done rollUpTaxonImageCounts()");
 
          new GeolocaleTaxonCountDb(getConnection()).imageCountCrawl();
+         t = lap(times, "geolocale lists", t);
          new ProjTaxonCountDb(getConnection()).imageCountCrawl();
+         t = lap(times, "project lists", t);
          new BioregionTaxonCountDb(getConnection()).imageCountCrawl();
+         t = lap(times, "bioregion lists", t);
          new MuseumTaxonCountDb(getConnection()).imageCountCrawl();
+         lap(times, "museum lists", t);
 
-  	      LogMgr.appendLog("compute.log", "  Image Count Crawl completed", true);
+  	      LogMgr.appendLog("compute.log", "  Image Count Crawl completed (" + times + ")", true);
+     }
+
+     /** Adds "name N s" to times; returns now. */
+     static long lap(StringBuilder times, String name, long since) {
+         long now = System.currentTimeMillis();
+         if (times.length() > 0) times.append(", ");
+         times.append(name).append(" ").append((now - since) / 1000).append(" s");
+         return now;
      }
 
     /** Sets the image count for each specimen
