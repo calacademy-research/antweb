@@ -26,8 +26,8 @@ The rule, the same as the upload's (SpecimenUploadParse.parseLine, GeolocaleMgr.
              stored value stays as it is (United States or Mexico with no state: the tool cannot know).
              "none", "null" and blank count as no bioregion, as in Geolocale.noBioregion. The valid countries
              and states are AntWeb's definition (bioregionCountryList.do); a row for an old state name that
-             points to no valid state defines nothing (version 3; the upload still reads such a row, to be
-             changed with this tool).
+             points to no valid state defines nothing, in the upload (GeolocaleMgr.getAdm1 returns valid rows
+             only) and, since version 3, here.
   never      the state is not changed (the upload stores the state as the curator wrote it); a specimen filed
              under an island country (island_country) is not touched; nothing is guessed from locality text
              or coordinates.
