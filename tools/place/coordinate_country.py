@@ -138,6 +138,7 @@ import math
 import os
 import re
 import resource
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -1634,22 +1635,28 @@ def db_login(project):
 
 
 def rows_sql(project, sql, container):
-    """The rows of one select, one at a time as the database sends them (tab separated, no header)."""
+    """The rows of one select (tab separated, no header). The whole answer is first copied to a temporary file and
+    only then handed out row by row: a caller that is slow between rows (it fetches a shape file, it tests points)
+    must not keep the database waiting. Staging 2026-11-10: the first run fetched boundary files while the database
+    was still sending rows; after its write timeout (60 s by default) the database dropped the connection and the run
+    ended with "Lost connection to MySQL server during query"."""
     user, password = db_login(project)
     cmd = ["docker", "exec", "-i", "-e", "MYSQL_PWD", container, "mysql", "-u", user, "ant",
            "--default-character-set=utf8mb4", "--batch", "--quick", "-N"]
-    with tempfile.TemporaryFile() as errors:
+    with tempfile.TemporaryFile() as errors, tempfile.TemporaryFile() as answer:
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=errors, env=dict(os.environ, MYSQL_PWD=password))
         p.stdin.write(read_only(sql).encode("utf-8"))
         p.stdin.close()
-        for line in p.stdout:
-            line = line.decode("utf-8", "replace").rstrip("\n")
-            if line:
-                yield line.split("\t")
+        shutil.copyfileobj(p.stdout, answer, 1 << 20)
         p.stdout.close()
         if p.wait() != 0:
             errors.seek(0)
             sys.exit("mysql failed: " + errors.read().decode("utf-8", "replace").strip())
+        answer.seek(0)
+        for line in answer:
+            line = line.decode("utf-8", "replace").rstrip("\n")
+            if line:
+                yield line.split("\t")
 
 
 def run_sql(project, sql, container):

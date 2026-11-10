@@ -879,6 +879,31 @@ def test_shape_file_checksum():
     assert cc.SHAPES_URL.startswith("https://raw.githubusercontent.com/nvkelso/natural-earth-vector/")
 
 
+def test_the_database_answer_is_complete_before_the_slow_work_starts():
+    """Staging 2026-11-10: the tool fetched boundary files between two rows while the database was still sending;
+    the database gave up waiting and the run ended with "Lost connection to MySQL server during query". The whole
+    answer is read first: when the first row is handed out, the database client has already ended."""
+    import stat
+    d = tempfile.mkdtemp(prefix="rows-test-")
+    os.makedirs(os.path.join(d, "proj", "etc"))
+    with open(os.path.join(d, "proj", "etc", "db.properties"), "w") as f:
+        f.write("user=tester\npassword=not-a-real-password\n")
+    shim = os.path.join(d, "docker")
+    with open(shim, "w") as f:
+        f.write("#!/bin/sh\ncat > /dev/null\nprintf 'a\\t1\\nb\\t2\\nc\\t3\\n'\nsleep 0.3\ntouch " + os.path.join(d, "ended") + "\n")
+    os.chmod(shim, os.stat(shim).st_mode | stat.S_IXUSR)
+    old_path = os.environ["PATH"]
+    os.environ["PATH"] = d + os.pathsep + old_path
+    try:
+        rows = cc.rows_sql(os.path.join(d, "proj"), "select 1", "antweb_mysql_1")
+        first = next(rows)
+        assert first == ["a", "1"], first
+        assert os.path.exists(os.path.join(d, "ended")), "the first row came before the database client had ended"
+        assert list(rows) == [["b", "2"], ["c", "3"]]
+    finally:
+        os.environ["PATH"] = old_path
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:
