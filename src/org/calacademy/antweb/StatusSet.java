@@ -92,8 +92,18 @@ public class StatusSet extends Status {
     /** The rows of the view Not curated (LIST_NOT_CURATED). */
     public final static String NOT_CURATED = "not curated";
 
-    /** The choices of the AntCat list (worldants) and Fossil Ants, which keep their own sets (default VALID_WITH_FOSSIL). */
-    public final static String[] OWN_SET_CHOICES = {VALID_WITH_FOSSIL, VALID_EXTANT, VALID_FOSSIL};
+    /**
+     * The views of the AntCat list (worldants) and Fossil Ants (Brian Fisher, 2026-11-11). Their names are fossils or
+     * include fossils, so their Valid and Curated count the fossil names too:
+     *   valid         Valid: the names of status valid, fossil or not (criteria: Status.VALID). Fossil Ants 856.
+     *   curated       Curated, the default: valid names and the morphotaxa on the list (criteria: VALID_WITH_FOSSIL).
+     *                 Fossil Ants 868 = 856 valid + 12 morphospecies.
+     *   valid extant  Valid extant, valid fossil: as before.
+     * Until 2026-11-11 the default was labelled "Valid (with fossils)" and listed the morphotaxa too (since 2026-11-03),
+     * and there was no view of the valid names alone: the Fossil Ants page could not show its valid species. A view that
+     * lists morphospecies is not called Valid. The address value "Valid (with fossils)" still opens it (ownChoice).
+     */
+    public final static String[] OWN_SET_CHOICES = {LIST_VALID, LIST_VETTED, VALID_EXTANT, VALID_FOSSIL};
 
     /**
      * Request attribute (Boolean; since the views of 2026-11-02 no longer set or read for the wording) on a list of subfamilies: whether the place's
@@ -380,23 +390,31 @@ public class StatusSet extends Status {
         return defaultChoice(overview);
     }
 
-    /** The AntCat list (worldants) and Fossil Ants keep their own status sets (default valid names with fossils). */
+    /** The AntCat list (worldants) and Fossil Ants have their own views (OWN_SET_CHOICES: the fossil names count). */
     public static boolean hasOwnStatusSets(String overviewName) {
         return Project.WORLDANTS.equals(overviewName) || Project.FOSSILANTS.equals(overviewName);
     }
 
     /**
-     * The choice of the AntCat list (worldants) or Fossil Ants for an address value: one of OWN_SET_CHOICES (case and
-     * spaces do not matter), any other value (none, "valid", "validmorpho" or "fossil" from another list, a single
-     * status) their default, Valid (with fossils). Until 2026-10-30 the value was used as it was, so "validmorpho" listed
-     * the five counted statuses and "fossil" a single status, under labels such as "Validmorpho" (review of #307).
+     * The view of the AntCat list (worldants) or Fossil Ants for an address value: one of OWN_SET_CHOICES (case and
+     * spaces do not matter), any other value (none, the old "Valid (with fossils)", "validmorpho", "all" or "fossil"
+     * from another list, a single status) their default, Curated. Until 2026-10-30 the value was used as it was, so
+     * "validmorpho" listed the five counted statuses and "fossil" a single status, under labels such as "Validmorpho"
+     * (review of #307). Until 2026-11-11 "valid" opened the default too (there was no view of the valid names alone).
      */
     public static String ownChoice(String value) {
         if (value != null) {
             String v = value.trim().replaceAll("\\s+", " ");
             for (String c : OWN_SET_CHOICES) if (c.equalsIgnoreCase(v)) return c;
         }
-        return VALID_WITH_FOSSIL;
+        return LIST_VETTED;
+    }
+
+    /** The StatusSet (criteria) of a view of the AntCat list or Fossil Ants (OWN_SET_CHOICES): the fossil names count. */
+    static StatusSet ownStatusSet(String ownChoice) {
+        if (LIST_VALID.equals(ownChoice)) return new StatusSet(Status.VALID);
+        if (LIST_VETTED.equals(ownChoice)) return new StatusSet(VALID_WITH_FOSSIL);
+        return new StatusSet(ownChoice);
     }
 
     /**
@@ -451,10 +469,10 @@ public class StatusSet extends Status {
     /**
      * The view a list opens with when the address names none: Curated, on every kind of list (Brian Fisher, 2026-11-02;
      * replaces the defaults of 2026-10-30, Valid species on geolocales and curated projects, Valid species +
-     * morphospecies elsewhere). The AntCat list (worldants) and Fossil Ants: Valid (with fossils), their own set.
+     * morphospecies elsewhere). The AntCat list (worldants) and Fossil Ants too (2026-11-11; their Curated counts the
+     * fossil names, OWN_SET_CHOICES; until then their default was labelled "Valid (with fossils)").
      */
     public static String defaultChoice(String placeType, String overviewName) {
-        if (hasOwnStatusSets(overviewName)) return VALID_WITH_FOSSIL;
         return LIST_VETTED;
     }
 
@@ -463,7 +481,7 @@ public class StatusSet extends Status {
      * and Fossil Ants the set of their choice (ownChoice), elsewhere the choice's.
      */
     public static StatusSet listStatusSet(String choice, String overviewName) {
-        if (hasOwnStatusSets(overviewName)) return new StatusSet(ownChoice(choice));
+        if (hasOwnStatusSets(overviewName)) return ownStatusSet(ownChoice(choice));
         return listStatusSet(choice);
     }
 
@@ -506,7 +524,8 @@ public class StatusSet extends Status {
     }
 
     public static String choiceLabel(String choice, String rank, String overviewName, boolean fossilSubfamilies) {
-        if (hasOwnStatusSets(overviewName)) return ownLabel(ownChoice(choice));
+        // the AntCat list and Fossil Ants: Valid, Curated (as every list), Valid extant, Valid fossil
+        if (hasOwnStatusSets(overviewName)) return choiceLabel(ownChoice(choice), rank, fossilSubfamilies);
         return choiceLabel(choice, rank, fossilSubfamilies);
     }
 
@@ -547,9 +566,15 @@ public class StatusSet extends Status {
     /** fossilSubfamilies: kept for the callers; since the views of 2026-11-02 no heading depends on it. */
     public static String listHeading(String choice, int count, String pluralRank, String singularRank, int speciesTotal,
             String overviewName, boolean fossilSubfamilies) {
-        // the AntCat list and Fossil Ants: their own choice (ownChoice), in the old form ("N Valid (with fossils) Species")
-        // (choice null: a species' specimens, no status words)
-        if (hasOwnStatusSets(overviewName) && choice != null) return listHeading("own:" + ownChoice(choice), count, pluralRank, singularRank, -1);
+        // the AntCat list and Fossil Ants (choice null: a species' specimens, no status words): Valid and Curated in the
+        // words of every list ("856 Valid species (of 868 species, valid and curated)", "868 Species (valid and curated)";
+        // 2026-11-11, until then "868 Valid (with fossils) Species"); Valid extant and Valid fossil in the old form
+        // ("3 Valid extant Species")
+        if (hasOwnStatusSets(overviewName) && choice != null) {
+            String own = ownChoice(choice);
+            if (LIST_VALID.equals(own) || LIST_VETTED.equals(own)) return listHeading(own, count, pluralRank, singularRank, speciesTotal, fossilSubfamilies);
+            return listHeading("own:" + own, count, pluralRank, singularRank, -1);
+        }
         return listHeading(choice, count, pluralRank, singularRank, speciesTotal, fossilSubfamilies);
     }
 
@@ -601,7 +626,11 @@ public class StatusSet extends Status {
     /** fossilSubfamilies: as listHeading's (no effect). choice null (a species' specimens): "N Specimens imaged (out of M specimens)". */
     public static String imagedHeading(String choice, int imaged, int total, String pluralRank, String singularRank,
             String overviewName, boolean fossilSubfamilies) {
-        if (hasOwnStatusSets(overviewName) && choice != null) choice = "own:" + ownChoice(choice);
+        // the AntCat list and Fossil Ants: Valid and Curated as every list, Valid extant and Valid fossil in the old form
+        if (hasOwnStatusSets(overviewName) && choice != null) {
+            String own = ownChoice(choice);
+            choice = LIST_VALID.equals(own) || LIST_VETTED.equals(own) ? own : "own:" + own;
+        }
         return imagedHeading(choice, imaged, total, pluralRank, singularRank, fossilSubfamilies);
     }
 

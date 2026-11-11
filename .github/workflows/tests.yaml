@@ -1105,8 +1105,10 @@ jobs:
       - name: Java unit tests of the views of lists (2026-11-02; views and labels, old values mapped, Curated the default, criteria, headers; StatusChoiceTest)
         # StatusChoiceTest: four views (valid, curated, all, fossil) labelled Valid, Curated, All specimen names, Fossil on
         # every list and rank; validmorpho (Valid + morphospecies of 2026-10-30), all determined, all indetermined,
-        # complete, type -> all; every list opens with Curated, the AntCat list and Fossil Ants with their own set; the
-        # session is never read; the view Not curated (notcurated, 2026-11-02): not a button, its criteria, label, headers.
+        # complete, type -> all; every list opens with Curated; the AntCat list and Fossil Ants have Valid, Curated, Valid
+        # extant, Valid fossil, counted with their fossil names, and the old value "Valid (with fossils)" opens their
+        # Curated (2026-11-11); the session is never read; the view Not curated (notcurated, 2026-11-02): not a button,
+        # its criteria, label, headers.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
@@ -1120,7 +1122,7 @@ jobs:
             # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.StatusChoiceTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             grep -v "LogMgr" /tmp/out.txt | tail -3
-            grep -q "^OK (11 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+            grep -q "^OK (12 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
       - name: Java unit tests of the views' rules (2026-11-02; curated morphospecies, specimen names of geolocale lists, genus rows, Not curated, species imaged, source icons; ListViewTest)
@@ -1285,9 +1287,10 @@ jobs:
           # the place's stored totals the rows of its lists, for every kind of place by its own key, every row of every
           # other place stays as it was, the AntWeb-wide list is not counted, a count that fails leaves no totals.
           # 2026-11-11 (production: Fossil Ants Genera 259, its list 258; "Valid species 3" opening a list of 868): the
-          # site-wide lists (scope GLOBAL: the AntCat list, Fossil Ants) are counted too, in their own default view; a
-          # project whose list loses a genus without species in set 5's list check is counted again; the
-          # two species lines of the page show the species total of the list's own view (never valid_species_count).
+          # site-wide lists (scope GLOBAL: the AntCat list, Fossil Ants) are counted too, in their default view Curated; a
+          # project whose list loses a genus without species in set 5's list check is counted again; for the AntCat list
+          # and Fossil Ants the species rows of their view Valid are stored too (valid < curated when the list has
+          # morphospecies, equal without; never valid_species_count), and the old address value opens Curated.
           # ImagingProgressDbTest (2026-11-08): the imaging progress page's table (a label-only name is unimaged; a name
           # imaged elsewhere is imaged but not imaged from here; all of AntWeb = the home page numbers; the unimaged list
           # and CSV; the count check finds a wrong row; photos of red-flagged specimens do not count, 2026-11-09; the

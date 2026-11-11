@@ -29,8 +29,11 @@ import org.apache.commons.logging.LogFactory;
 
 /**
  * The Genera and Species of a place page equal the header of the place's list in its default view (Brian Fisher,
- * 2026-11-04; claude/antweb-list-design-rules.md, "Place page numbers and the views"): Curated on every kind of list,
- * Valid (with fossils) on the AntCat list and Fossil Ants (StatusSet.defaultChoice). Production 11-04: the place pages
+ * 2026-11-04; claude/antweb-list-design-rules.md, "Place page numbers and the views"): Curated on every kind of list
+ * (StatusSet.defaultChoice; on the AntCat list and Fossil Ants their Curated, which counts the fossil names). For those
+ * two lists the species rows of their view Valid are stored too (taxarank VALID_SPECIES, 2026-11-11): the page's "Valid
+ * species / subspecies" there (Fossil Ants: 856 valid names beside 868 with its morphospecies); every other place's
+ * Valid species stays its stored valid_species_count (valid names that are not fossils). Production 11-04: the place pages
  * counted every genus row and every morphospecies (Afrotropical Species 6,951, its Curated list 2,891; Mozambique
  * Genera 83, list 76), so the numbers and the lists they open disagreed.
  *
@@ -182,9 +185,24 @@ public class PlaceViewTotalDb {
         return overview != null && !Project.ALLANTWEBANTS.equals(overview.getName());
     }
 
+    /**
+     * The taxarank value of the row with a list's species rows in its view Valid (view_name "valid"), stored for the
+     * AntCat list and Fossil Ants only (storesValidSpecies).
+     */
+    public static final String VALID_SPECIES = "validspecies";
+
+    /** Whether the Valid species of the place's page is a stored list total (the AntCat list and Fossil Ants). */
+    public static boolean storesValidSpecies(Overview overview) {
+        return overview != null && StatusSet.hasOwnStatusSets(overview.getName());
+    }
+
     /** The rows the place's list of this rank shows in its default view, counted by the list page's own code. */
     public int listRows(Overview overview, String rank) throws SQLException {
-        String choice = StatusSet.defaultChoice(overview);
+        return listRows(overview, rank, StatusSet.defaultChoice(overview));
+    }
+
+    /** The rows the place's list of this rank shows in a view (the address value: StatusSet.LIST_VALID, ...). */
+    public int listRows(Overview overview, String rank, String choice) throws SQLException {
         TaxaPage page = new TaxaPage();
         if ((Rank.GENUS.equals(rank) && ListView.readsPlaceSpecimens(overview))
                 || (Rank.SPECIES.equals(rank) && ListView.addsSpecimenNames(overview))) {
@@ -197,9 +215,12 @@ public class PlaceViewTotalDb {
         return page.getChildrenCount();
     }
 
-    /** The stored rows of a place: {genera, species, subfamilies}, -1 where not counted. */
+    /**
+     * The stored rows of a place: {genera, species, subfamilies}, -1 where not counted; for the AntCat list and Fossil
+     * Ants a fourth, the species of their view Valid (storesValidSpecies), -1 when not counted.
+     */
     public int[] read(Overview overview) throws SQLException {
-        int[] out = {-1, -1, -1};
+        int[] out = storesValidSpecies(overview) ? new int[] {-1, -1, -1, -1} : new int[] {-1, -1, -1};
         String[] tk = typeAndKey(overview);
         if (tk == null || !tableExists()) return out;
         try (PreparedStatement stmt = connection.prepareStatement(
@@ -211,6 +232,7 @@ public class PlaceViewTotalDb {
                     if (Rank.GENUS.equals(r.getString(1))) out[0] = r.getInt(2);
                     if (Rank.SPECIES.equals(r.getString(1))) out[1] = r.getInt(2);
                     if (Rank.SUBFAMILY.equals(r.getString(1))) out[2] = r.getInt(2);
+                    if (out.length > 3 && VALID_SPECIES.equals(r.getString(1))) out[3] = r.getInt(2);
                 }
             }
         }
@@ -239,17 +261,25 @@ public class PlaceViewTotalDb {
 
     /** Stores one place's totals (replaces its rows). */
     void store(Overview overview, int genera, int species, int subfamilies) throws SQLException {
+        store(overview, genera, species, subfamilies, -1);
+    }
+
+    /** The same, with the species rows of the view Valid (validSpecies; negative: not stored, every other place). */
+    void store(Overview overview, int genera, int species, int subfamilies, int validSpecies) throws SQLException {
         String[] tk = typeAndKey(overview);
         if (tk == null) return;
         String view = StatusSet.defaultChoice(overview);
+        List<Object[]> rows = new ArrayList<>(java.util.Arrays.asList(new Object[][] {
+            {Rank.GENUS, view, genera}, {Rank.SPECIES, view, species}, {Rank.SUBFAMILY, view, subfamilies}}));
+        if (validSpecies >= 0) rows.add(new Object[] {VALID_SPECIES, StatusSet.LIST_VALID, validSpecies});
         try (PreparedStatement stmt = connection.prepareStatement("replace into place_view_total"
                 + " (list_type, list_key, taxarank, view_name, n, counted) values (?, ?, ?, ?, ?, now())")) {
-            for (Object[] row : new Object[][] {{Rank.GENUS, genera}, {Rank.SPECIES, species}, {Rank.SUBFAMILY, subfamilies}}) {
+            for (Object[] row : rows) {
                 stmt.setString(1, tk[0]);
                 stmt.setString(2, tk[1]);
                 stmt.setString(3, (String) row[0]);
-                stmt.setString(4, view);
-                stmt.setInt(5, (Integer) row[1]);
+                stmt.setString(4, (String) row[1]);
+                stmt.setInt(5, (Integer) row[2]);
                 stmt.addBatch();
             }
             stmt.executeBatch();
@@ -284,8 +314,8 @@ public class PlaceViewTotalDb {
      * site-wide lists of scope GLOBAL (ProjectMgr.getGlobalProjects: the AntCat list worldants, Fossil Ants, ...), each
      * once, without the AntWeb-wide list (counts()). Until 2026-11-11 only the projects of scope PROJECT were counted, so
      * the pages of the site-wide lists showed the project's stored counts, which follow another rule than their lists
-     * (production 2026-11-11, Brian Fisher: Fossil Ants Genera 259, its list "258 Valid (with fossils) Genera"). Their
-     * lists open in their own view, Valid (with fossils) (StatusSet.defaultChoice), and are counted in it.
+     * (production 2026-11-11, Brian Fisher: Fossil Ants Genera 259, its list 258 genera). Their lists are counted in
+     * their default view, Curated (which counts their fossil names), and their species in their view Valid too.
      */
     public static List<Project> countedProjects(List<Project> antProjects, List<Project> globalProjects) {
         List<Project> out = new ArrayList<>();
@@ -560,9 +590,15 @@ public class PlaceViewTotalDb {
     /** The count check: list totals older than this many days are missing (a place is counted at least every 7 days). */
     public static final int FRESH_DAYS = 8;
 
+    /** How many list totals a place has: Subfamilies, Genera, Species, and Valid species where it is stored. */
+    public static int expectedTotals(Overview overview) {
+        return storesValidSpecies(overview) ? 4 : 3;
+    }
+
     /**
-     * For the count check (NumberChecks.placeListTotals, 2026-11-11): per place (placeKey) how many of the three list
-     * totals (subfamily, genus, species) are stored, and how many of them were counted in the last days days. A place
+     * For the count check (NumberChecks.placeListTotals, 2026-11-11): per place (placeKey) how many of its list totals
+     * (subfamily, genus, species; and VALID_SPECIES, which the AntCat list and Fossil Ants have: expectedTotals) are
+     * stored, and how many of them were counted in the last days days. A place
      * with a list whose totals are missing or old shows its stored counts, not the headers of its lists; nobody was told
      * (Fossil Ants and the AntCat list were never counted). One read-only query; an empty map without the table.
      */
@@ -571,7 +607,7 @@ public class PlaceViewTotalDb {
         if (!tableExists()) return out;
         try (PreparedStatement stmt = connection.prepareStatement("select list_type, list_key, count(distinct taxarank),"
                 + " count(distinct case when counted >= now() - interval ? day then taxarank end) from place_view_total"
-                + " where taxarank in ('subfamily', 'genus', 'species') group by list_type, list_key")) {
+                + " where taxarank in ('subfamily', 'genus', 'species', '" + VALID_SPECIES + "') group by list_type, list_key")) {
             stmt.setInt(1, days);
             try (ResultSet r = stmt.executeQuery()) {
                 while (r.next()) out.put(key(r.getString(1), r.getString(2)), new int[] {r.getInt(3), r.getInt(4)});
@@ -597,11 +633,11 @@ public class PlaceViewTotalDb {
     }
 
     /** The places with totals (list_type, list_key). */
-    private Set<String> placesWithTotals() throws SQLException {
-        Set<String> out = new HashSet<>();
+    private java.util.Map<String, Integer> placesWithTotals() throws SQLException {
+        java.util.Map<String, Integer> out = new java.util.HashMap<>();
         try (Statement stmt = connection.createStatement();
              ResultSet r = stmt.executeQuery("select list_type, list_key, count(*) from place_view_total group by list_type, list_key")) {
-            while (r.next()) if (r.getInt(3) >= 3) out.add(key(r.getString(1), r.getString(2)));
+            while (r.next()) out.put(key(r.getString(1), r.getString(2)), r.getInt(3));
         }
         return out;
     }
@@ -639,7 +675,8 @@ public class PlaceViewTotalDb {
      */
     private void countAndStore(Overview place, String[] tk, String fingerprint) throws SQLException {
         // subfamilies too (2026-11-04: North America showed 15 stored, its Curated list 11)
-        store(place, listRows(place, Rank.GENUS), listRows(place, Rank.SPECIES), listRows(place, Rank.SUBFAMILY));
+        store(place, listRows(place, Rank.GENUS), listRows(place, Rank.SPECIES), listRows(place, Rank.SUBFAMILY),
+            storesValidSpecies(place) ? listRows(place, Rank.SPECIES, StatusSet.LIST_VALID) : -1);
         writeState(tk, fingerprint, true);
     }
 
@@ -791,7 +828,7 @@ public class PlaceViewTotalDb {
             Curated curated = loadCurated();
             java.sql.Timestamp now = dbNow();
             java.util.Map<String, State> states = readStates();
-            Set<String> withTotals = placesWithTotals();
+            java.util.Map<String, Integer> withTotals = placesWithTotals();
             java.util.Map<String, java.sql.Timestamp> filled = namesFilled();
             for (Overview place : placeList) {
                 String[] tk = typeAndKey(place);
@@ -802,7 +839,7 @@ public class PlaceViewTotalDb {
                     String fingerprint = fingerprint(place, curated);
                     String[] names = PlaceGenusCurationDb.typeAndKey(place);
                     State st = states.get(k);
-                    String reason = all ? "full count" : recountReason(st, fingerprint, withTotals.contains(k),
+                    String reason = all ? "full count" : recountReason(st, fingerprint, withTotals.getOrDefault(k, 0) >= expectedTotals(place),
                         names == null ? null : filled.get(names[0]), names != null, now);
                     comparing += System.currentTimeMillis() - t0;
                     if (reason == null) {

@@ -422,19 +422,27 @@ public class NumberChecksTest extends TestCase {
             assertEquals(org.calacademy.antweb.Project.FOSSILANTS, m.place.key);
             assertTrue(m.taxonName, m.taxonName.contains("none stored; the page shows the place's stored counts"));
             assertEquals(0, m.stored);
-            assertEquals(3, m.recount);
+            assertEquals("Fossil Ants has four list totals: its Valid species is one too", 4, m.recount);
+            assertTrue(m.taxonName, m.taxonName.contains("(Subfamilies, Genera, Species, Valid species)"));
             assertEquals("a real difference that is no known finding: the daily update's alert counts it", 1,
                 r.realOutside(org.calacademy.antweb.util.CountInvariants.KNOWN_FINDINGS) - before(r));
+            // the three totals of the default view without the Valid species (2026-11-11: 856 beside 868): still a difference
+            exec(totals + "('project', 'fossilants', 'subfamily', 'curated', 19, now()), ('project', 'fossilants', 'genus',"
+                + " 'curated', 258, now()), ('project', 'fossilants', 'species', 'curated', 868, now())");
+            r = check();
+            assertEquals(list(r), 1, real(r, "place.view.totals"));
+            assertTrue(first(r, "place.view.totals").taxonName, first(r, "place.view.totals").taxonName.contains("only 3 of 4 stored"));
             // counted: none
-            exec(totals + "('project', 'fossilants', 'subfamily', 'Valid (with fossils)', 19, now()), ('project', 'fossilants', 'genus',"
-                + " 'Valid (with fossils)', 258, now()), ('project', 'fossilants', 'species', 'Valid (with fossils)', 868, now())");
+            exec(totals + "('project', 'fossilants', 'validspecies', 'valid', 856, now())");
             assertEquals(0, real(check(), "place.view.totals"));
-            // only two of the three
+            // only three of the four
             exec("delete from place_view_total where list_key = 'fossilants' and taxarank = 'genus'");
             r = check();
             assertEquals(1, real(r, "place.view.totals"));
-            assertTrue(first(r, "place.view.totals").taxonName.contains("only 2 of 3 stored"));
-            exec(totals + "('project', 'fossilants', 'genus', 'Valid (with fossils)', 258, now())");
+            assertTrue(first(r, "place.view.totals").taxonName.contains("only 3 of 4 stored"));
+            exec(totals + "('project', 'fossilants', 'genus', 'curated', 258, now())");
+            // another place has three: a Valid species row there is not asked for
+            assertEquals(3, org.calacademy.antweb.home.PlaceViewTotalDb.expectedTotals(madagascar));
             // counted nine days ago: the daily update has not counted the place for over a week
             exec("update place_view_total set counted = now() - interval 9 day where list_type = 'geolocale'");
             r = check();

@@ -70,7 +70,9 @@ def stats_of(p):
     return _STATS[key]
 
 
-# The two lists with their own views (StatusSet.hasOwnStatusSets): checked on every run, besides the day's places.
+# The two lists whose views count the fossil names (StatusSet.hasOwnStatusSets): checked on every run, besides the day's
+# places. Their Valid species is a stored list total too (PlaceViewTotalDb.VALID_SPECIES; Fossil Ants 2026-11-11: Valid
+# 856, Species / subspecies / morphospecies 868).
 OWN_VIEW_LISTS = ("fossilants", "worldants")
 OWN_ROW = re.compile(r'<tr data-stat="(subfamilies|genera|species|valid)" data-n="(\d+)"><td class="ps_name">[^<]*</td>'
                      r'<td class="ps_num"><a href="([^"]+)"')
@@ -96,11 +98,13 @@ def _own_view_list(project, wrong, slow, checked):
     lists = {}
     for stat in ("subfamilies", "genera", "valid", "species"):
         if stat not in rows:
-            if stat != "valid":
-                wrong.append(f"project {project}: no {stat} line with a link to its list")
+            wrong.append(f"project {project}: no {stat} line with a link to its list")
             continue
         shown, link = rows[stat]
         query = urlparse(link).query
+        view = "statusSet=valid" if stat == "valid" else "statusSet=curated"
+        if not query.endswith(view):
+            wrong.append(f"project {project} {stat}: the number opens {query!r}, not the view {view}")
         if query not in lists:
             lists[query] = ns.fetch("/taxonomicPage.do?" + query)
         html = lists[query]
@@ -116,6 +120,9 @@ def _own_view_list(project, wrong, slow, checked):
             wrong.append(f"project {project} {stat}: header {text!r}, {listed} rows listed")
         if n != shown:
             wrong.append(f"project {project} {stat}: {shown} on the page, the list it opens says {text!r}")
+    # every valid name is in Curated (Fossil Ants has morphospecies besides)
+    if "valid" in rows and "species" in rows and rows["valid"][0] > rows["species"][0]:
+        wrong.append(f"project {project}: Valid species {rows['valid'][0]} > Species / subspecies / morphospecies {rows['species'][0]}")
     checked.append(f"project {project}")
 
 
@@ -125,8 +132,8 @@ def test_list_headers_equal_place_numbers_of_every_kind():
     headers in the default view (Curated; "/utilData.do?action=placeViewTotals" counts them nightly), Valid species = the
     header in the view Valid (0 when the page shows no Valid row); Valid <= Curated <= All specimen names; every header =
     the rows its page lists. And on every run the two lists with their own views, Fossil Ants and the AntCat list
-    (2026-11-11): each number against the header of the list its own link opens (their Valid view is Valid (with
-    fossils)); uncounted there is a failure."""
+    (2026-11-11): each of the four numbers against the header of the list its own link opens (Valid: statusSet=valid, the
+    others their default view Curated), Valid <= Species; uncounted there is a failure."""
     wrong, pending, checked, slow = [], [], [], []
     for project in OWN_VIEW_LISTS:
         _own_view_list(project, wrong, slow, checked)

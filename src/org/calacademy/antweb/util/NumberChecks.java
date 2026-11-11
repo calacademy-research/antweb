@@ -1074,7 +1074,8 @@ public final class NumberChecks {
      * Ants and AntCat list pages were never counted (Genera 259 beside a list of 258) and no check looked. This check:
      * every place page with a list (PlaceViewTotalDb.places(), the daily update's own list, so the two cannot drift: valid
      * geolocales with list rows, bioregions, museums, projects including the site-wide ones, not the AntWeb-wide list) has
-     * its three list totals, counted in the last PlaceViewTotalDb.FRESH_DAYS days. A place without them is a real
+     * its list totals (three; four on the AntCat list and Fossil Ants, whose Valid species is a list total too), counted
+     * in the last PlaceViewTotalDb.FRESH_DAYS days. A place without them is a real
      * difference, never pending: the daily update counts every place it lists, each at least every 7 days.
      */
     void placeListTotals() {
@@ -1092,13 +1093,16 @@ public final class NumberChecks {
                 if (tk == null) continue;
                 inv.places.computeIfAbsent(tk[0], x -> CountInvariants.keyMap()).putIfAbsent(tk[1], place.getName());
                 int[] ranks = stored.get(org.calacademy.antweb.home.PlaceViewTotalDb.placeKey(place));
+                // Subfamilies, Genera, Species; the AntCat list and Fossil Ants also their Valid species (2026-11-11)
+                int expected = org.calacademy.antweb.home.PlaceViewTotalDb.expectedTotals(place);
+                String totals = "list totals of the place page (Subfamilies, Genera, Species" + (expected > 3 ? ", Valid species" : "") + ")";
                 String what = ranks == null || ranks[0] == 0
-                    ? "list totals of the place page (Subfamilies, Genera, Species): none stored; the page shows the place's stored counts, not the headers of its lists (the daily update counts them; an administrator counts them now with utilData.do?action=placeViewTotals)"
-                    : ranks[0] < 3
-                        ? "list totals of the place page (Subfamilies, Genera, Species): only " + ranks[0] + " of 3 stored"
-                        : "list totals of the place page (Subfamilies, Genera, Species) counted in the last "
-                            + org.calacademy.antweb.home.PlaceViewTotalDb.FRESH_DAYS + " days";
-                inv.compare(c, tk[0], tk[1], what, ranks == null ? 0 : ranks[1], 3, "=", null);
+                    ? totals + ": none stored; the page shows the place's stored counts, not the headers of its lists"
+                        + " (the daily update counts them; an administrator counts them now with utilData.do?action=placeViewTotals)"
+                    : ranks[0] < expected
+                        ? totals + ": only " + ranks[0] + " of " + expected + " stored"
+                        : totals + " counted in the last " + org.calacademy.antweb.home.PlaceViewTotalDb.FRESH_DAYS + " days";
+                inv.compare(c, tk[0], tk[1], what, ranks == null ? 0 : Math.min(ranks[1], expected), expected, "=", null);
             }
         });
     }

@@ -42,7 +42,9 @@ def test_the_check_is_run_and_listed():
     assert "s_placeListForTests != null ? s_placeListForTests : db.places()" in body
     assert "db.storedRanks(org.calacademy.antweb.home.PlaceViewTotalDb.FRESH_DAYS)" in body
     # a real difference, never pending: the last argument of compare is the pending reason
-    assert re.search(r'inv\.compare\(c, tk\[0\], tk\[1\], what, ranks == null \? 0 : ranks\[1\], 3, "=", null\);', body), body
+    # (expected: three list totals; four on the AntCat list and Fossil Ants, whose Valid species is one too)
+    assert "int expected = org.calacademy.antweb.home.PlaceViewTotalDb.expectedTotals(place);" in body
+    assert 'inv.compare(c, tk[0], tk[1], what, ranks == null ? 0 : Math.min(ranks[1], expected), expected, "=", null);' in body, body
     ids = re.search(r"public static final String\[\] IDS = \{(.*?)\};", read("src/org/calacademy/antweb/util/CountInvariants.java"), re.S).group(1)
     assert '"place.view.totals"' in ids
     assert "public static final int FRESH_DAYS = 8;" in read("src/org/calacademy/antweb/home/PlaceViewTotalDb.java")
