@@ -1250,7 +1250,12 @@ jobs:
           # CountCheckTest: list counts against a recount from specimens (real and pending differences).
           # PlaceImageCountDbTest: Images, images per view and Imaged specimens of places (labels apart),
           # per-taxon image counts of a place, and the count check of those numbers; red-flagged specimens'
-          # images not counted (2026-11-09).
+          # images not counted (2026-11-09). Since 2026-11-11 the daily update counts from a working set of the imaged
+          # specimens (session tables): the new statements are the old ones with another table name, both give the
+          # same rows on a fixture with every rule, the tables written are identical, a run without the working set
+          # uses the old statements, nothing is committed inside the caller's transaction, and the comparison job
+          # (utilData.do?action=placeImageCountCompare) finds a difference and writes nothing. On MySQL here, where a
+          # temporary table cannot be read twice in one statement.
           # RegionCountDbTest: region and subregion numbers count the specimens of their countries only.
           # BackgroundJobDbTest: the background_job table (status pages of uploads and admin jobs; interrupted at start-up).
           # DailyUpdateDbTest (2026-11-07): the daily_update_step table of the Daily update page (start, end, read back in
@@ -1365,7 +1370,7 @@ jobs:
               /t/org/calacademy/antweb/home/ApiKeyDbTest.java \
               /t/org/calacademy/antweb/home/ImagingProgressDbTest.java \
               /t/org/calacademy/antweb/util/OnePlaceJobDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:8 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3; do
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
@@ -1642,6 +1647,11 @@ jobs:
       - name: The nightly counts the place list totals after set 4, on their own connection (tests/unit/test_place_totals_connection.py)
         # 2026-11-06: inside set 4 they kept its connection past the long pool's 60 minutes; set 4 failed.
         run: python3 tests/unit/test_place_totals_connection.py
+
+      - name: The place image counts read the imaged specimens; the morning check reads their line (tests/unit/test_place_image_working_set.py)
+        # 2026-11-11: the step read every specimen of every place twice (13.6 minutes on production). The working set is
+        # made of temporary tables only, with no statement that commits set 4's transaction or locks specimen rows.
+        run: python3 tests/unit/test_place_image_working_set.py
 
       - name: The e2e link reader reads links as a browser does (tests/unit/test_e2e_link_reader.py, finding F27)
         run: python3 tests/unit/test_e2e_link_reader.py
