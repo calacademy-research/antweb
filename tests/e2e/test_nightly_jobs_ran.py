@@ -202,7 +202,11 @@ def test_each_job_wrote_its_line(run_lines):
 def test_place_list_totals_counted_every_place(run_lines):
     """The nightly count of the place pages' Subfamilies, Genera and Species ("/utilData.do?action=placeViewTotals",
     PlaceViewTotalDb) counted places and none failed. 2026-11-05: every place failed with the same error and the line
-    read "Place list totals counted: 0 places ...; not counted: Aargau (...)", which the presence check let through."""
+    read "Place list totals counted: 0 places ...; not counted: Aargau (...)", which the presence check let through.
+    Since 2026-11-10 the line goes on after the counts: "(M recounted, K unchanged); recounted because: data changed 12
+    (list rows 3, ...), new place 1; comparing 20 s, counting 4 s" (the reason "not counted yet" is now "new place"); a
+    place that fails adds "; FAILED for N places ...". Only the number of places and the word FAILED are read here;
+    tests/unit/test_place_totals_connection.py runs these patterns against the line as the Java code builds it."""
     i = _find(run_lines, "Place list totals counted:")
     assert i is not None, "no 'Place list totals counted:' line in the nightly run:\n" + _quote(run_lines)
     line = run_lines[i][1]

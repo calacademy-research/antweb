@@ -38,8 +38,10 @@ listed in the manifest; leave them out with --no-islands.
 Country names: only a valid country row is accepted (an old name is refused, with the valid one). Specimens
 still filed under an old name of a requested country (a geolocale country row that is not valid and whose
 valid_name is the country, USA for United States) are included; the manifest names those old names and counts
-the specimens ("Filed under an outdated country name"). A requested country with no specimen at all is named
-in a WARNING line of the manifest.
+the specimens ("Filed under an outdated country name"). A requested country with no specimen that the file
+could hold is named in a WARNING line of the manifest: in the default mode that is a country with no ant
+specimen (it may have beetles; the file has none of its rows either way), with --all-families a country with no
+specimen at all.
 
 A run starts by removing the files of an earlier run in the same folder; specimens.csv.gz is written as
 specimens.csv.gz.part and renamed when it is complete (a failed run leaves no file that looks finished), and
@@ -50,8 +52,9 @@ keeps it).
 The password is read from <project>/etc/db.properties and goes to docker through the environment, never on
 a command line. Tests: tests/unit/test_specimen_extract.py.
 
-The admin page dataExtract.do writes the same files from the website (src/.../util/DataExtract.java, a port of
-this tool; docs/flows/data-extract.md). Keep the two in step: a change of the columns or the manifest goes into
+An admin page that writes the same files from the website (dataExtract.do, a port of this tool to Java) is not
+part of this change: it comes in a pull request of its own (branch feat/data-extract). It must write the same
+columns and the same manifest and carry the same VERSION as this tool; from then on a change of either goes into
 both, with VERSION raised in both.
 """
 import argparse
@@ -67,7 +70,7 @@ import re
 import subprocess
 import sys
 
-VERSION = "6"
+VERSION = "7"
 TAXON_COLUMNS = ("taxon_status", "taxon_fossil", "taxon_rank", "taxon_current_valid_name", "taxon_author_date",
                  "group_name", "no_taxon_row")
 PLACE_NAME = re.compile(r"^[^\x00-\x1f;\\]{1,64}$")
@@ -165,12 +168,15 @@ def outdated_names(countries, rows):
     return [{"name": n, "valid_name": found[n]} for n in sorted(found)]
 
 
-def per_country_sql(countries, outdated):
-    """(index of the country, its specimens in the database, also under its old names): 0 is worth a warning."""
+def per_country_sql(countries, outdated, ants_only=False):
+    """(index of the country, its specimens in the database, also under its old names): 0 is worth a warning.
+    ants_only: the specimens the file can hold, the filter of the export (ANTS). Without it a country that has only
+    beetles or wasps in AntWeb counted as having specimens and got no warning, while the file had none of its rows
+    (review of PR #341, 2026-11-10)."""
     parts = []
     for i, c in enumerate(countries):
         names = [c] + [o["name"] for o in outdated if o["valid_name"] == c]
-        parts.append("select %d, count(*) from specimen s where s.country in %s" % (i, sql_list(names)))
+        parts.append("select %d, count(*) from specimen s where s.country in %s%s" % (i, sql_list(names), " and " + ANTS if ants_only else ""))
     return " union all ".join(parts) + " /* per country */"
 
 
@@ -412,7 +418,7 @@ def manifest_text(m):
              "", "Specimens in the file: {:,}".format(m["specimens"]),
              "Check against the database: " + ("VERIFIED, every count equal" if m["verified"] else "DIFFERENT, see differences; run again")]
     if m.get("countries_without_specimens"):
-        lines.append("WARNING: AntWeb has no specimen for: " + ", ".join(m["countries_without_specimens"])
+        lines.append("WARNING: AntWeb has no " + ("ant " if m.get("ants_only") else "") + "specimen for: " + ", ".join(m["countries_without_specimens"])
                      + " (check that these are the countries meant)")
     lines += ["", "By country (country / island country):"]
     for p in m["by_place"]:
@@ -542,7 +548,7 @@ def main(argv=None):
         if stats.not_ants:      # the file must hold none: the filter and the file disagree
             verified = False
             diffs.append({"file": "specimens.csv.gz", "not_formicidae_in_an_ants_only_file": stats.not_ants})
-    per_country = {int(r[0]): int(r[1]) for r in run_query(project, per_country_sql(countries, outdated), args.container)}
+    per_country = {int(r[0]): int(r[1]) for r in run_query(project, per_country_sql(countries, outdated, ants_only), args.container)}
     empty = [c for i, c in enumerate(countries) if per_country.get(i, 0) == 0]
 
     no_country = None

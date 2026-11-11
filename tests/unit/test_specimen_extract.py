@@ -214,7 +214,7 @@ def test_specimens_under_an_outdated_name_are_in_the_file_and_counted():
     count = [c["sql"] for c in calls(d) if "group by 1, 2" in c["sql"]][0]
     assert "'USA'" in count
     m = json.load(open(os.path.join(d, "out", "manifest.json")))
-    assert m["tool_version"] == "6"
+    assert m["tool_version"] == "7"
     assert m["outdated_names"] == [{"name": "USA", "valid_name": "United States"}]
     assert m["filed_under_outdated_name"] == 1 and m["specimens"] == 6 and m["verified"] is True
     assert m["countries_without_specimens"] == []
@@ -237,10 +237,42 @@ def test_a_country_without_specimens_is_a_warning():
     m = json.load(open(os.path.join(d, "out", "manifest.json")))
     assert m["countries_without_specimens"] == ["Canada"] and m["outdated_names"] == []
     text = open(os.path.join(d, "out", "manifest.txt"), encoding="utf-8").read()
-    assert "WARNING: AntWeb has no specimen for: Canada (check that these are the countries meant)\n" in text
+    assert "WARNING: AntWeb has no ant specimen for: Canada (check that these are the countries meant)\n" in text
     assert "Outdated country names included: none\n" in text and "Filed under an outdated country name: 0\n" in text
-    assert "WARNING: AntWeb has no specimen for: Canada" in r.stdout
+    assert "WARNING: AntWeb has no ant specimen for: Canada" in r.stdout
     print("ok   test_a_country_without_specimens_is_a_warning")
+
+
+def test_a_country_with_only_other_animals_is_a_warning_in_an_ants_only_extract():
+    """Review of PR #341 (2026-11-10): the count per country had no ants filter. In the default ants-only mode a
+    country whose only specimens in AntWeb are beetles or wasps counted as having specimens and got no warning,
+    while the file held none of its rows."""
+    # the statement: the filter of the export in the default mode, none with --all-families; old names counted with their country
+    plain = se.per_country_sql(["Canada", "United States"], [{"name": "USA", "valid_name": "United States"}])
+    ants = se.per_country_sql(["Canada", "United States"], [{"name": "USA", "valid_name": "United States"}], True)
+    assert plain == ("select 0, count(*) from specimen s where s.country in ('Canada') union all "
+                     "select 1, count(*) from specimen s where s.country in ('United States', 'USA') /* per country */"), plain
+    assert ants == ("select 0, count(*) from specimen s where s.country in ('Canada') and " + se.ANTS + " union all "
+                    "select 1, count(*) from specimen s where s.country in ('United States', 'USA') and " + se.ANTS + " /* per country */"), ants
+    # Canada has specimens in AntWeb, none of them an ant: the file has no Canadian row, the ants-only count is 0, the manifest warns
+    rows = [r for r in ROWS if r[HEADER.index("country")] != "Canada"]
+    counts = [["Hawaii", "Hawaii", "1"], ["Mexico", "", "1"], ["United States", "", "2"]]
+    d = setup(rows=rows, counts=counts, outdated=[], per_country=[["0", "2"], ["1", "0"], ["2", "1"]], left_out=[["curculionidae", "7"]])
+    r = run(d, "--countries", "United States,Canada,Mexico")
+    assert r.returncode == 0, r.stdout + r.stderr
+    per = [c["sql"] for c in calls(d) if "/* per country */" in c["sql"]]
+    assert len(per) == 1 and per[0].count(se.ANTS) == 3, per
+    m = json.load(open(os.path.join(d, "out", "manifest.json")))
+    assert m["ants_only"] is True and m["countries_without_specimens"] == ["Canada"] and m["verified"] is True
+    text = open(os.path.join(d, "out", "manifest.txt"), encoding="utf-8").read()
+    assert "WARNING: AntWeb has no ant specimen for: Canada (check that these are the countries meant)\n" in text, text
+    # --all-families: every specimen counts, the statement has no filter, and the warning speaks of specimens
+    d = setup(outdated=[], per_country=[["0", "2"], ["1", "0"], ["2", "1"]])
+    r = run(d, "--countries", "United States,Canada,Mexico", "--all-families")
+    per = [c["sql"] for c in calls(d) if "/* per country */" in c["sql"]]
+    assert len(per) == 1 and se.ANTS not in per[0], per
+    assert "WARNING: AntWeb has no specimen for: Canada (check that these are the countries meant)" in r.stdout, r.stdout
+    print("ok   test_a_country_with_only_other_animals_is_a_warning_in_an_ants_only_extract")
 
 
 def test_a_second_run_and_a_failed_run_leave_no_stale_or_partial_file():
@@ -330,7 +362,7 @@ def test_ants_only_is_the_default_and_says_what_it_left_out():
     assert se.ANTS in export and se.ANTS in count, "the file and the check must use the same filter"
     assert any("/* left out */" in q and "not " + se.ANTS in q for q in sqls)
     m = json.load(open(os.path.join(d, "out", "manifest.json")))
-    assert m["ants_only"] is True and m["tool_version"] == "6"
+    assert m["ants_only"] is True and m["tool_version"] == "7"
     assert m["left_out_not_formicidae"] == {"specimens": 341, "families": 3,
                                             "by_family": {"(coleoptera)": 164, "curculionidae": 153, "vespidae": 24}}
     assert "Ants only (family Formicidae): 341 specimens of other families are left out ((coleoptera) 164, curculionidae 153, vespidae 24)" in r.stdout
@@ -386,6 +418,7 @@ if __name__ == "__main__":
     test_the_database_count_is_grouped_by_the_exact_spelling()
     test_specimens_under_an_outdated_name_are_in_the_file_and_counted()
     test_a_country_without_specimens_is_a_warning()
+    test_a_country_with_only_other_animals_is_a_warning_in_an_ants_only_extract()
     test_a_second_run_and_a_failed_run_leave_no_stale_or_partial_file()
     test_specimens_with_no_country_go_in_their_own_file()
     test_ants_only_is_the_default_and_says_what_it_left_out()

@@ -101,7 +101,12 @@ Times are from comments in `UtilDataAction.doAction()` (production unless stated
 `Scheduler.runPlaceListTotals` -> `PlaceViewTotalDb.fillAll()` on a direct connection (not the long pool): the place
 pages' Subfamilies, Genera and Species, the rows each place's lists show in their default view, counted with the list
 page's own code (`place_view_total`). After `placeGenusCuration`, whose stored specimen names the lists read.
-compute.log: "Place list totals counted: N places in S s (M recounted, K unchanged)".
+compute.log: "Place list totals counted: N places in S s (M recounted, K unchanged); recounted because: <reason> <places>,
+...; comparing S s, counting S s" (the reasons are listed below; "; recounted because" is left out when no place was
+counted again). A place that fails adds "; FAILED for N places (their stored totals are shown), e.g. ...", and a run
+that counted none starts "Place list totals counted: FAILED, 0 places". The morning check reads the number of places
+and the word FAILED (`tests/e2e/test_nightly_jobs_ran.py`, `test_place_list_totals_counted_every_place`); the release
+gate does not read this line (its check 8 asks `dailyUpdate.do` whether the daily update is running).
 
 - Production 2026-11-09: 60 minutes on 11-07 and 11-08, about 4 hours on 11-09. Causes: an adm1's specimens were read
   by `specimen.adm1 = X` alone, which no index serves (the index is `country_adm1_idx` (country, adm1)), so MySQL walked

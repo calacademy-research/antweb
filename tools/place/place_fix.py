@@ -14,7 +14,7 @@ What it does: it reads every (country, state, bioregion) combination of the spec
   python3 place_fix.py                    report only (the default; nothing is changed)
   python3 place_fix.py --apply            make the changes (a backup table is written first)
   python3 place_fix.py --countries "United States,Canada,Mexico" [--apply]    only specimens of these countries
-  python3 place_fix.py --rollback place_fix_20261110_0915     put the old values back
+  python3 place_fix.py --rollback place_fix_20261110_0915     put the old values back, where nothing newer is there
 
 The rule, the same as the upload's (SpecimenUploadParse.parseLine, GeolocaleMgr.getGeolocaleBioregion):
 
@@ -49,9 +49,27 @@ changing anything, when the number of specimens in the backup differs from the n
 upload ran in between: run it again); (4) updates the specimens from the backup table; (5) runs the report
 again and expects no change left. Do not run it while an upload or the daily update is running. The counts on
 place and bioregion pages follow with the next daily update.
+  Nothing half-made: when a step before the update fails (the tables cannot be made or filled, the counts differ),
+  the tables of this run are dropped and no specimen has been touched.
+  Only rows that are still as the backup has them (since version 4): the update changes a specimen only when its
+  country, state and bioregion are still, byte for byte, what the backup table recorded. A specimen that an upload
+  loaded again between the backup and the update (the CAS TaxonWorks upload does every day) is left as it is,
+  marked applied = 0 in the backup table and counted in the report ("N changed since the backup, left as they
+  are"); specimens.csv says which.
 
-Rollback: --rollback <table> sets country and bioregion of every specimen in that backup table back to the old
-values. The tables stay until an administrator drops them.
+Rollback: --rollback <table> sets country and bioregion back to the old values for the specimens that still hold
+the values this run gave them. A specimen that has other values by now (a later upload, a curator) is left alone:
+newer data is never overwritten. The run counts the specimens restored and those left, and lists the latter in
+rollback_skipped.csv (code, the old values, the values the run applied, the values there now, why) next to its
+report.txt, in a folder of its own. The values the run applied are read from the backup table (its columns
+set_country, new_country, set_bioregion, new_bioregion: every version of this tool wrote them); a backup table
+without those columns is joined to its _map table by the old country, state and bioregion. The tables of
+versions 1 to 3 have no column applied: every row of them was updated. The tables stay until an administrator
+drops them.
+
+Bytes: stored place text is compared and carried as hex of its UTF-8 form, hex(convert(column using utf8mb4)),
+whatever the column's character set and collation ("México" is not "Mexico"; a latin1 column gives the same bytes
+as a utf8mb4 one), as tools/export/specimen_extract.py does.
 
 The password is read from <project>/etc/db.properties and goes to docker through the environment, never on a
 command line. Tests: tests/unit/test_place_fix.py.
@@ -66,8 +84,13 @@ import subprocess
 import sys
 import unicodedata
 
-VERSION = "3"
+VERSION = "4"
 TABLE_NAME = re.compile(r"^place_fix_\d{8}_\d{4}$")
+Db = collections.namedtuple("Db", "project container database")
+
+
+class SqlFailed(Exception):
+    """mysql refused a statement; the message is its error text."""
 
 
 # ---------------------------------------------------------------- the rule (no database)
@@ -255,7 +278,7 @@ def totals(changes, not_fixed):
     return by_reason, by_country, by_problem
 
 
-def report_text(when, commit, changes, not_fixed, after=None, table=None, only=None):
+def report_text(when, commit, changes, not_fixed, after=None, table=None, only=None, left=None):
     by_reason, by_country, by_problem = totals(changes, not_fixed)
     changed = sum(c.specimens for c, _ in changes)
     lines = ["AntWeb place fix, " + when + " (tool version " + VERSION + ", AntWeb commit " + (commit or "unknown") + ")", ""]
@@ -273,6 +296,10 @@ def report_text(when, commit, changes, not_fixed, after=None, table=None, only=N
     if table:
         lines += ["", "Applied. Backup table: " + table + " (every changed specimen with its old values; specimens.csv).",
                   "Put the old values back with:  python3 place_fix.py --rollback " + table]
+        if left is not None:
+            lines += ["Specimens changed: " + format(changed - left, ",") + ". " + format(left, ",") + " changed since the backup, left as they are"
+                      + ("." if not left else " (an upload loaded them again between the backup and the update; specimens.csv says which, column applied). "
+                         "Run the tool again for them.")]
     if after is not None:
         lines += ["", "Check after the change: specimens that still differ from the rule: " + format(after, ",")
                   + (" (as expected)" if after == 0 else "  <-- NOT ZERO: read changes_after.csv")]
@@ -293,12 +320,17 @@ def unhex(value):
     return bytes.fromhex(value).decode("utf-8", "replace") if value and value != "NULL" else ""
 
 
-PLACES_SQL = ("select hex(name), georank, hex(ifnull(parent, '')), is_valid, hex(ifnull(valid_name, '')), "
-              "hex(ifnull(bioregion, '')), hex(ifnull(alt_bioregion, '')), ifnull(is_island, 0) "
+def hx(column):
+    """The bytes of a text column as hex of its UTF-8 form, whatever the column's character set and collation; null as ''."""
+    return "hex(convert(ifnull(" + column + ", '') using utf8mb4))"
+
+
+PLACES_SQL = ("select " + hx("name") + ", georank, " + hx("parent") + ", is_valid, " + hx("valid_name") + ", "
+              + hx("bioregion") + ", " + hx("alt_bioregion") + ", ifnull(is_island, 0) "
               "from geolocale where georank in ('country', 'adm1') or is_island = 1")
 
 ISLAND = "(s.island_country is not null and s.island_country <> '')"
-COMBINATIONS_SQL = ("select hex(ifnull(s.country, '')), hex(ifnull(s.adm1, '')), hex(ifnull(s.bioregion, '')), " + ISLAND + ", count(*) "
+COMBINATIONS_SQL = ("select " + hx("s.country") + ", " + hx("s.adm1") + ", " + hx("s.bioregion") + ", " + ISLAND + ", count(*) "
                     "from specimen s group by 1, 2, 3, 4")
 
 
@@ -311,10 +343,12 @@ def read_combinations(rows):
 
 
 def map_sql(table, changes):
-    """The work table of combinations: the stored values as hex (exact, accents and capitals included)."""
-    out = ["create table " + table + "_map (hc varchar(400) not null, ha varchar(800) not null, hb varchar(300) not null, "
-           "set_country tinyint not null, new_country varchar(128), set_bioregion tinyint not null, new_bioregion varchar(128), "
-           "reason varchar(300), specimens int not null, key (hc(100), ha(100))) default charset = utf8mb4"]
+    """The work table of combinations: the stored values as hex of their UTF-8 bytes (exact, accents and capitals
+    included). The hex columns are text: a country of 64 letters is up to 512 hex digits, a state of 128 up to
+    1,024, and a column too short made --apply fail half way through the inserts. The key is on their beginnings."""
+    out = ["create table " + table + "_map (hc text not null, ha text not null, hb text not null, "
+           "set_country tinyint not null, new_country varchar(250), set_bioregion tinyint not null, new_bioregion varchar(250), "
+           "reason text, specimens int not null, key (hc(100), ha(100))) default charset = utf8mb4"]
     for c, d in changes:
         out.append("insert into " + table + "_map values ('" + hexed(c.country) + "', '" + hexed(c.adm1) + "', '" + hexed(c.bioregion) + "', "
                    + ("0, null" if d.new_country is KEEP else "1, " + sql_string(d.new_country)) + ", "
@@ -326,19 +360,88 @@ def map_sql(table, changes):
 def backup_sql(table):
     return ("create table " + table + " as select s.code, s.country as old_country, s.adm1, s.bioregion as old_bioregion, "
             "m.set_country, m.new_country, m.set_bioregion, m.new_bioregion, m.reason "
-            "from specimen s join " + table + "_map m on m.hc = hex(ifnull(s.country, '')) and m.ha = hex(ifnull(s.adm1, '')) "
-            "and m.hb = hex(ifnull(s.bioregion, '')) where not " + ISLAND)
+            "from specimen s join " + table + "_map m on m.hc = " + hx("s.country") + " and m.ha = " + hx("s.adm1") + " "
+            "and m.hb = " + hx("s.bioregion") + " where not " + ISLAND)
+
+
+def backup_key_sql(table):
+    """The backup's key, and applied: 1 once the update has changed the specimen, 0 for a row it left alone."""
+    return "alter table " + table + " add primary key (code), add column applied tinyint not null default 0"
+
+
+def same(column, value):
+    """The specimen's column holds, byte for byte, this value (a column of the backup table)."""
+    return hx(column) + " = " + hx(value)
 
 
 def update_sql(table):
+    """The update: only the specimens that are still as the backup recorded them (country, state, bioregion, and not
+    filed under an island since). A row that an upload loaded again in between keeps what it has; applied stays 0.
+    Both sides of each if() are converted to utf8mb4: the new value comes from the work table and the old one from
+    the specimen table, whose collations may differ."""
     return ("update specimen s join " + table + " f on f.code = s.code "
-            "set s.country = if(f.set_country = 1, f.new_country, s.country), "
-            "s.bioregion = if(f.set_bioregion = 1, f.new_bioregion, s.bioregion)")
+            "set s.country = if(f.set_country = 1, convert(f.new_country using utf8mb4), convert(s.country using utf8mb4)), "
+            "s.bioregion = if(f.set_bioregion = 1, convert(f.new_bioregion using utf8mb4), convert(s.bioregion using utf8mb4)), f.applied = 1 "
+            "where " + same("s.country", "f.old_country") + " and " + same("s.adm1", "f.adm1") + " and "
+            + same("s.bioregion", "f.old_bioregion") + " and not " + ISLAND)
 
 
-def rollback_sql(table):
-    return ("update specimen s join " + table + " f on f.code = s.code "
-            "set s.country = f.old_country, s.bioregion = f.old_bioregion")
+NEW_COLUMNS = ("set_country", "new_country", "set_bioregion", "new_bioregion")
+
+
+def applied_values(table, columns):
+    """(more of the from clause, the country the run gave a row, the bioregion it gave: both as hex) for a backup
+    table with these columns. The backup table has the new values itself (every version so far); one that has not
+    is joined to its _map table by the old country, state and bioregion as hex. The choice between the new and the
+    old value is made between their hex forms: the two columns can have different collations (the new values come
+    from the work table, the old ones from the specimen table), and hex text has none to disagree about."""
+    if all(c in columns for c in NEW_COLUMNS):
+        join, m = "", "f"
+    else:
+        join = (" join " + table + "_map m on m.hc = " + hx("f.old_country") + " and m.ha = " + hx("f.adm1")
+                + " and m.hb = " + hx("f.old_bioregion"))
+        m = "m"
+    return (join, "if(" + m + ".set_country = 1, " + hx(m + ".new_country") + ", " + hx("f.old_country") + ")",
+            "if(" + m + ".set_bioregion = 1, " + hx(m + ".new_bioregion") + ", " + hx("f.old_bioregion") + ")")
+
+
+def still_applied(table, columns):
+    """(from clause after the specimen, condition): the specimen still holds the country and bioregion the run gave it
+    (and the run did change it: applied = 1, where the table has that column)."""
+    join, country, bioregion = applied_values(table, columns)
+    condition = hx("s.country") + " = " + country + " and " + hx("s.bioregion") + " = " + bioregion
+    return join, condition + (" and f.applied = 1" if "applied" in columns else "")
+
+
+def rollback_sql(table, columns=NEW_COLUMNS):
+    """The rollback: the old values back, only where the specimen still holds what the run gave it. Then the number
+    of specimens restored."""
+    join, condition = still_applied(table, columns)
+    return ("update specimen s join " + table + " f on f.code = s.code" + join + " "
+            "set s.country = f.old_country, s.bioregion = f.old_bioregion where " + condition + "; select row_count()")
+
+
+def rollback_skipped_sql(table, columns=NEW_COLUMNS):
+    """The rows a rollback leaves alone, read before it: code, the old values, the values the run applied, whether the
+    specimen is gone, the values there now, whether the run ever changed the row."""
+    join, country, bioregion = applied_values(table, columns)
+    _, condition = still_applied(table, columns)
+    return ("select f.code, " + hx("f.old_country") + ", " + hx("f.old_bioregion") + ", " + country + ", " + bioregion + ", "
+            "s.code is null, " + hx("s.country") + ", " + hx("s.bioregion") + ", " + ("f.applied" if "applied" in columns else "1") + " "
+            "from " + table + " f" + join + " left join specimen s on s.code = f.code "
+            "where s.code is null or not (" + condition + ") order by f.code")
+
+
+def skipped_reason(row):
+    """Why a rollback leaves a row of rollback_skipped_sql alone."""
+    code, old_country, old_bioregion, new_country, new_bioregion, gone, country, bioregion, applied = row
+    if gone == "1":
+        return "the specimen is no longer in AntWeb"
+    if applied != "1":
+        return "never changed by this run (it had changed between the backup and the update)"
+    if (country, bioregion) == (old_country, old_bioregion):
+        return "holds the old values already"
+    return "has other values now than the run gave it: a later upload or a curator; left as it is"
 
 
 def db_login(project):
@@ -351,14 +454,14 @@ def db_login(project):
     return props.get("user", ""), props.get("password", "")
 
 
-def run_sql(project, sql, container):
-    """Rows of one statement or of the last of several (tab separated, no header)."""
-    user, password = db_login(project)
-    cmd = ["docker", "exec", "-i", "-e", "MYSQL_PWD", container, "mysql", "-u", user, "ant",
+def run_sql(db, sql):
+    """Rows of one statement or of the last of several (tab separated, no header). Raises SqlFailed."""
+    user, password = db_login(db.project)
+    cmd = ["docker", "exec", "-i", "-e", "MYSQL_PWD", db.container, "mysql", "-u", user, db.database,
            "--default-character-set=utf8mb4", "--batch", "--quick", "-N"]
     r = subprocess.run(cmd, input=sql.encode("utf-8"), capture_output=True, env=dict(os.environ, MYSQL_PWD=password), timeout=3600)
     if r.returncode != 0:
-        sys.exit("mysql failed: " + r.stderr.decode("utf-8", "replace").strip())
+        raise SqlFailed(r.stderr.decode("utf-8", "replace").strip())
     return [line.split("\t") for line in r.stdout.decode("utf-8", "replace").split("\n") if line]
 
 
@@ -396,38 +499,89 @@ def write_lists(folder, changes, not_fixed, name="changes.csv"):
             w.writerow([c.country, c.adm1, c.bioregion, c.specimens, d.problem])
 
 
-def load(project, container):
-    places = read_places(run_sql(project, PLACES_SQL, container))
-    combinations = read_combinations(run_sql(project, COMBINATIONS_SQL, container))
+def load(db):
+    places = read_places(run_sql(db, PLACES_SQL))
+    combinations = read_combinations(run_sql(db, COMBINATIONS_SQL))
     return places, combinations
 
 
+def drop_tables(db, table):
+    """The tables of a run that did not get as far as the update: dropped, whatever state they are in."""
+    try:
+        run_sql(db, "drop table if exists " + table + "; drop table if exists " + table + "_map")
+        return "The tables of this run were dropped."
+    except SqlFailed as e:
+        return "The tables of this run could NOT be dropped (" + str(e) + "): drop " + table + " and " + table + "_map by hand."
+
+
+def rollback(db, table, folder, when):
+    """Puts the old values back where the specimen still holds what the run gave it; the report text."""
+    columns = {r[0] for r in run_sql(db, "show columns from " + table)}
+    if not all(c in columns for c in NEW_COLUMNS) and not run_sql(db, "show tables like '" + table + "\\_map'"):
+        sys.exit("--rollback: table " + table + " does not say what the run applied (no columns " + ", ".join(NEW_COLUMNS)
+                 + ") and there is no table " + table + "_map: nothing was changed.")
+    total = int(run_sql(db, "select count(*) from " + table)[0][0])
+    skipped = run_sql(db, rollback_skipped_sql(table, columns))
+    restored = int(run_sql(db, rollback_sql(table, columns))[0][0])
+    reasons = collections.Counter(skipped_reason(r) for r in skipped)
+    os.makedirs(folder, exist_ok=True)
+    with open(os.path.join(folder, "rollback_skipped.csv"), "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["code", "old_country", "old_bioregion", "applied_country", "applied_bioregion", "country_now", "bioregion_now", "why"])
+        for r in skipped:
+            w.writerow([r[0]] + [unhex(x) for x in r[1:5]] + ["" if r[5] == "1" else unhex(r[6]), "" if r[5] == "1" else unhex(r[7]), skipped_reason(r)])
+    lines = ["AntWeb place fix, rollback of " + table + ", " + when + " (tool version " + VERSION + ")", "",
+             "Specimens in the backup table: " + format(total, ","),
+             "Restored (country and bioregion as they were before the fix): " + format(restored, ","),
+             "Left as they are, because they no longer hold the values the fix gave them (rollback_skipped.csv): " + format(len(skipped), ",")]
+    lines += ["  " + format(n, ",").rjust(9) + "  " + reason for reason, n in reasons.most_common()]
+    if restored + len(skipped) != total:
+        lines += ["", "NOTE: restored and left do not add up to the table (" + format(restored + len(skipped), ",") + " of " + format(total, ",")
+                  + "): specimens changed while the rollback ran. Run it again; it restores only what still holds the fix's values."]
+    lines += ["", "Table " + table + " kept."]
+    text = "\n".join(lines) + "\n"
+    with open(os.path.join(folder, "report.txt"), "w", encoding="utf-8") as f:
+        f.write(text)
+    return text
+
+
 def main(argv=None):
+    try:
+        return run(argv)
+    except SqlFailed as e:
+        sys.exit("mysql failed: " + str(e))
+
+
+def run(argv=None):
     a = argparse.ArgumentParser(description="Bring each specimen's country and bioregion up to today's upload rule.")
     a.add_argument("--apply", action="store_true", help="make the changes (default: report only)")
-    a.add_argument("--rollback", metavar="TABLE", help="put back the old values kept in this backup table")
+    a.add_argument("--rollback", metavar="TABLE", help="put back the old values kept in this backup table, where the specimen "
+                   "still holds what the run gave it")
     a.add_argument("--countries", default=None, help="change only specimens of these valid countries, comma separated "
                    "(for example \"United States,Canada,Mexico\"); default: all countries")
     a.add_argument("--project", default=None, help="AntWeb project folder (default /root/antweb or /root/antweb-next)")
     a.add_argument("--container", default="antweb_mysql_1")
-    a.add_argument("--out", default=None, help="output folder (default /root/antweb-place-fix/<date>-<time>)")
+    a.add_argument("--database", default="ant", help="the database (default ant; the tests use their own)")
+    a.add_argument("--out", default=None, help="output folder (default /root/antweb-place-fix/<date>-<time>, for a rollback ...-rollback)")
     args = a.parse_args(argv)
-    project = args.project or default_project()
+    if not re.match(r"^[A-Za-z0-9_]+$", args.database):
+        sys.exit("--database: not a database name: " + repr(args.database))
+    db = Db(args.project or default_project(), args.container, args.database)
     now = datetime.datetime.now()
     stamp = now.strftime("%Y%m%d_%H%M")
 
     if args.rollback:
         if not TABLE_NAME.match(args.rollback):
             sys.exit("--rollback: not a backup table name: " + repr(args.rollback))
-        n = run_sql(project, "select count(*) from " + args.rollback, args.container)[0][0]
-        run_sql(project, rollback_sql(args.rollback), args.container)
-        print("Rolled back: country and bioregion of " + format(int(n), ",") + " specimens are as they were (table " + args.rollback + " kept).")
+        folder = args.out or os.path.join("/root/antweb-place-fix", now.strftime("%Y-%m-%d-%H%M") + "-rollback")
+        print(rollback(db, args.rollback, folder, now.strftime("%Y-%m-%d %H:%M")))
+        print("Files: " + folder)
         return 0
 
     folder = args.out or os.path.join("/root/antweb-place-fix", now.strftime("%Y-%m-%d-%H%M"))
     os.makedirs(folder, exist_ok=True)
-    commit = read_first_line(os.path.join(project, "etc", "git-commit"))
-    places, combinations = load(project, args.container)
+    commit = read_first_line(os.path.join(db.project, "etc", "git-commit"))
+    places, combinations = load(db)
     only = None
     if args.countries:
         only = {n.strip() for n in args.countries.split(",") if n.strip()}
@@ -437,36 +591,42 @@ def main(argv=None):
     changes, not_fixed = plan(places, combinations, only)
     write_lists(folder, changes, not_fixed)
     expected = sum(c.specimens for c, _ in changes)
-    table, after = None, None
+    table, after, left = None, None, None
 
     if args.apply and changes:
         table = "place_fix_" + stamp
-        if run_sql(project, "show tables like '" + table + "%'", args.container):
+        if run_sql(db, "show tables like '" + table + "%'"):
             sys.exit("Table " + table + " exists already: wait a minute and run it again.")
-        run_sql(project, ";\n".join(map_sql(table, changes)), args.container)
-        run_sql(project, backup_sql(table), args.container)
-        kept = int(run_sql(project, "select count(*) from " + table, args.container)[0][0])
+        # Up to the update nothing is changed in the specimens: a step that fails here leaves no table behind.
+        try:
+            run_sql(db, ";\n".join(map_sql(table, changes)))
+            run_sql(db, backup_sql(table))
+            kept = int(run_sql(db, "select count(*) from " + table)[0][0])
+            if kept == expected:
+                run_sql(db, backup_key_sql(table))
+        except SqlFailed as e:
+            sys.exit("Nothing changed: the backup could not be made (" + str(e) + "). " + drop_tables(db, table))
         if kept != expected:
-            run_sql(project, "drop table " + table + "; drop table " + table + "_map", args.container)
             sys.exit("Nothing changed: the backup holds " + format(kept, ",") + " specimens, the report counted " + format(expected, ",")
-                     + " (an upload ran in between?). Run it again.")
-        run_sql(project, "alter table " + table + " add primary key (code)", args.container)
-        run_sql(project, update_sql(table), args.container)
-        rows = run_sql(project, "select code, hex(ifnull(old_country, '')), hex(ifnull(new_country, '')), set_country, hex(ifnull(old_bioregion, '')), "
-                       "hex(ifnull(new_bioregion, '')), set_bioregion, hex(ifnull(reason, '')) from " + table + " order by code", args.container)
+                     + " (an upload ran in between?). Run it again. " + drop_tables(db, table))
+        run_sql(db, update_sql(table))
+        left = int(run_sql(db, "select count(*) from " + table + " where applied = 0")[0][0])
+        rows = run_sql(db, "select code, " + hx("old_country") + ", " + hx("new_country") + ", set_country, " + hx("old_bioregion") + ", "
+                       + hx("new_bioregion") + ", set_bioregion, " + hx("reason") + ", applied from " + table + " order by code")
         with open(os.path.join(folder, "specimens.csv"), "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
-            w.writerow(["code", "old_country", "new_country", "old_bioregion", "new_bioregion", "reason"])
+            w.writerow(["code", "old_country", "new_country", "old_bioregion", "new_bioregion", "reason", "applied"])
             for r in rows:
                 w.writerow([r[0], unhex(r[1]), unhex(r[2]) if r[3] == "1" else unhex(r[1]), unhex(r[4]),
-                            unhex(r[5]) if r[6] == "1" else unhex(r[4]), unhex(r[7])])
-        places2, combinations2 = load(project, args.container)
+                            unhex(r[5]) if r[6] == "1" else unhex(r[4]), unhex(r[7]),
+                            "yes" if r[8] == "1" else "no: changed since the backup, left as it is"])
+        places2, combinations2 = load(db)
         changes2, _ = plan(places2, combinations2, only)
         after = sum(c.specimens for c, _ in changes2)
         if after:
             write_lists(folder, changes2, None, name="changes_after.csv")
 
-    text = report_text(now.strftime("%Y-%m-%d %H:%M"), commit, changes, not_fixed, after=after, table=table, only=only)
+    text = report_text(now.strftime("%Y-%m-%d %H:%M"), commit, changes, not_fixed, after=after, table=table, only=only, left=left)
     if not args.apply:
         text += "\nReport only: nothing was changed. Run with --apply to make the changes.\n"
     if places.twice:

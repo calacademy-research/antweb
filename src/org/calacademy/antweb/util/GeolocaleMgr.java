@@ -867,8 +867,14 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
      * curator's file when that is a bioregion name). A row for an old state name that points to no valid state
      * gives nothing, whatever bioregion it holds: such rows were filled with the country's first bioregion when
      * they were made. The same rule as decide() in tools/place/place_fix.py, which corrects the specimens already
-     * stored. The country's own row is read by its exact name, as before (the upload has replaced an old name with
-     * the valid one by then).
+     * stored.
+     * The country too is the valid country: the row itself when it is valid, the valid row an old name points to
+     * otherwise (USA: United States), and its bioregion is read from that row, whoever calls (review of PR #341,
+     * 2026-11-10; until then the row was read by the name as written, so an old name gave its own row's bioregion,
+     * often blank, and the function was right only because the upload replaces an old name before it asks:
+     * SpecimenUploadParse.parseLine, the one caller, which the TaxonWorks upload goes through as well). A country row
+     * that is not valid and points to no valid country gives nothing, like such a state's row. The cases are pinned on
+     * both sides: PlaceBioregionTest and tests/unit/test_place_fix.py.
      */
     public static String getGeolocaleBioregion(String countryName, String adm1Name) {
         return geolocaleBioregion(countryNameMap, adm1CountryMap, countryName, adm1Name);
@@ -881,15 +887,13 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         String useBioregion = null;
 
         Country validCountry = validCountry(countryNames, countryName);
+        if (validCountry != null && !validCountry.isValid()) validCountry = null;   // an old name that points to a row that is not valid
         Adm1 adm1 = validCountry == null || adm1Name == null ? null : validAdm1(adm1s, adm1Name, validCountry.getName());
         if (adm1 != null) {
             useBioregion = adm1.getTheOneBioregion();
         }
-        if (useBioregion == null) {
-            Geolocale country = countryNames.get(countryName);
-            if (country != null) {
-                useBioregion = country.getTheOneBioregion();
-            }
+        if (useBioregion == null && validCountry != null) {
+            useBioregion = validCountry.getTheOneBioregion();
         }
         return useBioregion;
     }

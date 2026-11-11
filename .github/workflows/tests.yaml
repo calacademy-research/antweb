@@ -700,7 +700,8 @@ jobs:
         # report section counts as corrected; the TaxonWorks upload passes such a spelling on instead of dropping it.
         # PlaceBioregionTest (2026-11-10): the bioregion an upload stores comes from the valid state (the state itself or
         # the valid state an old name points to) when it has one, else from the country when it has one, else none; an old
-        # state name that points nowhere gives nothing. The cases of tests/unit/test_place_fix.py.
+        # state name that points nowhere gives nothing; an old country name takes the valid country's bioregion, whoever
+        # calls (review of PR #341). The cases of tests/unit/test_place_fix.py.
         # See docs/flows/test-gaps-uploads-nightly.md.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" -v "$PWD/web:/web:ro" \
@@ -742,7 +743,7 @@ jobs:
                      util.BackgroundJobsTest:16 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
                      util.JobSummaryTest:8 upload.SubfamilyFromGenusTest:9 upload.LocalityCodePlainTest:6 \
-                     util.CountrySpellingTest:8 util.PlaceBioregionTest:8; do
+                     util.CountrySpellingTest:8 util.PlaceBioregionTest:9; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
@@ -849,6 +850,23 @@ jobs:
 
       - name: Place fix, the stored country and bioregion against today's upload rule (tests/unit/test_place_fix.py)
         run: python3 tests/unit/test_place_fix.py
+
+      - name: Place fix against MySQL 8.4, apply and rollback never overwrite newer values (tests/unit/test_place_fix_db.py)
+        # Review of PR #341 (2026-11-10): the tool runs against a database of its own, through the docker exec it uses
+        # on the servers: a specimen changed between the backup and the update is left as it is and counted; a rollback
+        # leaves alone and lists what has other values by now, also from a backup table as versions 1 to 3 wrote it;
+        # a latin1 table (the bytes compared as UTF-8); values as long as the columns allow; a failed apply leaves no table.
+        run: |
+          docker run -d --name pfmysql -e MYSQL_ROOT_PASSWORD=ci-root mysql:8.4
+          ok=0
+          for i in $(seq 1 90); do
+            if docker exec pfmysql mysql -uroot -pci-root -h127.0.0.1 -e "select 1" >/dev/null 2>&1; then ok=1; break; fi
+            sleep 2
+          done
+          [ "$ok" = 1 ] || { docker logs pfmysql 2>&1 | tail -30; echo "::error::MySQL did not start"; exit 1; }
+          PLACE_FIX_TEST_CONTAINER=pfmysql PLACE_FIX_TEST_PASSWORD=ci-root python3 tests/unit/test_place_fix_db.py | tee /tmp/place_fix_db.txt
+          grep -q "^4 tests passed (MySQL 8.4" /tmp/place_fix_db.txt
+          docker rm -f pfmysql
 
       - name: Pheidole head export, plan and contact sheets without a database (tests/unit/test_pheidole_export.py)
         run: python3 tests/unit/test_pheidole_export.py

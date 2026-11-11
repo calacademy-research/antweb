@@ -59,6 +59,10 @@ public class PlaceBioregionTest extends TestCase {
         country("United States", true, "", "Nearctic", "Oceania");
         country("USA", false, "United States", "", "");
         country("Panama", true, "", "Neotropical", "");
+        country("Kanada", false, "Canada", "", "");
+        country("Old Panama", false, "Panama", "Nearctic", "");
+        country("Zaire", false, "", "Afrotropical", "");
+        country("Lost Name", false, "Zaire", "Nearctic", "");
         adm1("Chihuahua", "Mexico", true, "", "Nearctic", "none");
         adm1("Jalisco", "Mexico", true, "", "Neotropical", "Nearctic");
         adm1("Nuevo León", "Mexico", true, "", "Nearctic", "none");
@@ -112,6 +116,28 @@ public class PlaceBioregionTest extends TestCase {
         assertNull(bioregion("Mexico", "Cancun"));
         assertNull(bioregion("United States", null));
         assertNull("a state of another country", bioregion("Mexico", "California"));
+    }
+
+    /**
+     * The country's bioregion is the VALID country's, whatever name the record has (review of PR #341, 2026-11-10: the
+     * row was read by the name as written, so "Kanada" gave its own row's blank). The same cases, with the same
+     * answers, as test_old_country_name_takes_the_valid_countrys_bioregion in tests/unit/test_place_fix.py, where the
+     * country itself becomes the valid name as well.
+     */
+    public void testOldCountryNameTakesTheValidCountrysBioregion() {
+        // an old name whose own row has no bioregion: the valid country's one bioregion
+        assertEquals("Nearctic", bioregion("Kanada", null));
+        assertEquals("Nearctic", bioregion("Kanada", ""));
+        assertEquals("a state without a bioregion of its own", "Nearctic", bioregion("Kanada", "Ontario"));
+        assertEquals("a state AntWeb does not know", "Nearctic", bioregion("Kanada", "Nowhere"));
+        // an old name whose own row holds another bioregion than the valid country: the valid country's
+        assertEquals("the valid country's, not the old row's Nearctic", "Neotropical", bioregion("Old Panama", null));
+        // an old name of a country with two bioregions: nothing without a state, the state's with one
+        assertNull(bioregion("USA", null));
+        assertEquals("Nearctic", bioregion("USA", "California"));
+        // a row that is not valid and points to no valid country defines nothing, whatever bioregion it holds
+        assertNull("not the old row's Afrotropical", bioregion("Zaire", null));
+        assertNull("an old name of a row that is not valid", bioregion("Lost Name", null));
     }
 
     /** An old country name finds the states of its valid country; an unknown country gives nothing. */
