@@ -185,6 +185,8 @@ def test_curate_page_layout_as_curator():
     assert r.status_code == 200 and classify(r).category == "ok", classify(r)
     page = _layout_ok(r.text)
     assert not [c for c in _cards(page) if c in ADMIN_CARDS], "admin cards shown to a curator"
+    # The Daily update link is an admin report (Brian Fisher, 2026-11-11): not on a curator's page.
+    assert "dailyUpdate.do\">Daily update</a>" not in r.text, "the Daily update link is shown to a curator"
     assert "/common/tools.css?v=" in r.text and "/common/tools.js?v=" in r.text
     css = s.get(BASE_URL + "/common/tools.css", timeout=TIMEOUT)
     assert css.status_code == 200 and ".aw-tools .aw-card" in css.text, css.status_code
@@ -202,4 +204,12 @@ def test_curate_page_layout_as_admin():
     cards = _cards(page)
     for card in ("curate-uploads", "curate-names", "curate-account") + tuple(ADMIN_CARDS):
         assert card in cards, f"{card} missing: {cards}"
+    # The Daily update page: first line of the admins' Reports (2026-11-11: it had no link on this page), and it opens.
+    reports = r.text.split('id="curate-reports"', 1)[1].split("</div>", 1)[0]
+    assert re.match(r'<a href="[^"]*/dailyUpdate\.do">Daily update</a>', reports.split("<li>", 2)[1]), reports[:300]
+    daily = s.get(BASE_URL + "/dailyUpdate.do", timeout=TIMEOUT)
+    assert daily.status_code == 200 and "<h1>Daily update</h1>" in daily.text, classify(daily)
+    # The Login Manager links the password reset campaign (it had no link anywhere).
+    logins = s.get(BASE_URL + "/viewLogins.do", timeout=TIMEOUT)
+    assert logins.status_code == 200 and re.search(r'<a href="[^"]*/passwordResetCampaign\.do">Password reset campaign</a>', logins.text), classify(logins)
     _antcat_import_ok(page)

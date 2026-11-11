@@ -62,6 +62,7 @@ Every link that runs a job first shows a confirmation page with a <b>Run it</b> 
   <li><a href="<%= domainApp %>/schedule.do?action=run&num=4">Set 4</a>: image counts (about 15 minutes)</li>
   <li><a href="<%= domainApp %>/schedule.do?action=run&num=5">Set 5</a>: maps and checks (about 50 minutes)</li>
   <li><a href="<%= domainApp %>/schedule.do?action=run">All five sets</a> (several hours)</li>
+  <li><a href="<%= domainApp %>/dailyUpdate.do">Daily update</a>: where the run is, step by step, with the duration of each step and the earlier days</li>
 </ul>
 </div>
 
@@ -70,6 +71,7 @@ Every link that runs a job first shows a confirmation page with a <b>Run it</b> 
 <ul class="aw-links">
   <li><a href="<%= domainApp %>/serverDebug.do">Server Debug</a>: show or set the server debug flag</li>
   <li><a href="<%= domainApp %>/sessionProps.do">Session Properties</a>: what is stored in your own session</li>
+  <li><a href="<%= domainApp %>/pageTracker.do">Page Tracker</a>: the pages being served right now</li>
 </ul>
 </div>
 </div>
