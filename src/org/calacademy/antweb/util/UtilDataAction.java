@@ -556,6 +556,12 @@ public class UtilDataAction extends AntwebAction {
                 // not in its Species number). Each list is now renamed right before it is counted (ProjTaxonCountDb.recount,
                 // MuseumDb.populate, BioregionDb.populate; geolocales in set 2); only the source column is updated here.
                 message += " " + TaxonSetDb.updateTaxonSetSources(connection);
+                // Every group's stored specimen count (ant_group.upload_specimens), before the group counts, which list the
+                // groups that have one. Until 2026-11-11 only a group's own upload wrote it, so any other change of a
+                // group's specimens left it stale and the count check reported it every day (GroupDb.recountUploadSpecimens).
+                String groupSpecimens = new GroupDb(connection).recountUploadSpecimens();
+                LogMgr.appendLog("compute.log", "  " + groupSpecimens, true);
+                message += " " + groupSpecimens;
                 // Upload groups: today's numbers of each group's specimens (Brian Fisher, 2026-10-22, Q13).
                 message += " " + new GroupCountDb(connection).recountAll();
                 message += " " + doAction("crawlForType", form, accessLogin, accessGroup, connection, request, mapping);
