@@ -89,6 +89,9 @@ jobs:
       - name: Keys from the registration page fit the pattern the API accepts (tests/unit/test_api_key_format.py)
         run: python3 tests/unit/test_api_key_format.py
 
+      - name: An old place name in a link is redirected before the page runs; place names in JavaScript strings are escaped (tests/unit/test_old_place_names.py)
+        run: python3 tests/unit/test_old_place_names.py
+
       - name: A recount of one bioregion or museum makes the statistics page count again (tests/unit/test_statspage_forget.py)
         run: python3 tests/unit/test_statspage_forget.py
 
@@ -1065,6 +1068,27 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.UploadReportPageTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             grep -v "LogMgr" /tmp/out.txt | tail -3
             grep -q "^OK (13 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+          '
+
+      - name: Java unit tests of old place names in links (OldPlaceNamesTest)
+        # 2026-11-10: an old country or adm1 name with a valid name (USA: United States; MA: Massachusetts; Ivory Coast:
+        # Côte d'Ivoire after its rename) resolves to the current name; a valid name, an unknown name and an old name without
+        # a valid name do not. The address a request moves to: the parameters looked at on each page, the new name
+        # URL-encoded, every other parameter as written, the place tools left alone.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/OldPlaceNamesTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.OldPlaceNamesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            grep -v "LogMgr" /tmp/out.txt | tail -3
+            grep -q "^OK (8 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
       - name: Java unit tests of the upload and nightly decisions of 2026-10-27 (strict upload dates, day 00 is the 1st, unknown genus without subfamily, TaxonWorks collection notes, failed nightly set stops the run)
