@@ -70,13 +70,66 @@ def stats_of(p):
     return _STATS[key]
 
 
+# The two lists with their own views (StatusSet.hasOwnStatusSets): checked on every run, besides the day's places.
+OWN_VIEW_LISTS = ("fossilants", "worldants")
+OWN_ROW = re.compile(r'<tr data-stat="(subfamilies|genera|species|valid)" data-n="(\d+)"><td class="ps_name">[^<]*</td>'
+                     r'<td class="ps_num"><a href="([^"]+)"')
+
+
+def _own_view_list(project, wrong, slow, checked):
+    """Fossil Ants and the AntCat list (Brian Fisher, 2026-11-11: Fossil Ants said Genera 259 beside a list of 258 and
+    "Valid species / subspecies 3" beside a list of 868, and no test looked: the sample leaves these two out, and a
+    place whose list totals were never counted was "pending"). Each of the four numbers = the header of the list its own
+    link opens = the rows that list shows. For these two an uncounted page is a failure, not pending: the daily update
+    counts them, and the count check says so when it did not (inv:place.view.totals)."""
+    from public_pages import attr_unescape
+    from urllib.parse import urlparse
+    page = ns.fetch(f"/project.do?name={project}")
+    if page is None:
+        wrong.append(f"project {project}: the page could not be read")
+        return
+    rows = {stat: (int(n), attr_unescape(href)) for stat, n, href in OWN_ROW.findall(page)}
+    if 'data-view-counted="true"' not in page:
+        wrong.append(f"project {project}: its list totals are not counted (data-view-counted is not true): the page shows the "
+                     "project's stored counts, not the headers of its lists (the daily update counts the site-wide lists since "
+                     "2026-11-11; on the day of the change an administrator runs /utilData.do?action=placeViewTotals once)")
+    lists = {}
+    for stat in ("subfamilies", "genera", "valid", "species"):
+        if stat not in rows:
+            if stat != "valid":
+                wrong.append(f"project {project}: no {stat} line with a link to its list")
+            continue
+        shown, link = rows[stat]
+        query = urlparse(link).query
+        if query not in lists:
+            lists[query] = ns.fetch("/taxonomicPage.do?" + query)
+        html = lists[query]
+        if html is None:
+            slow.append(f"project {project} {stat} ({query})")
+            continue
+        n, text = ns.header(html)
+        if n is None:
+            wrong.append(f"project {project} {stat}: the list it opens has no header ({text!r})")
+            continue
+        listed = len(ns.list_rows(html))
+        if listed != n:
+            wrong.append(f"project {project} {stat}: header {text!r}, {listed} rows listed")
+        if n != shown:
+            wrong.append(f"project {project} {stat}: {shown} on the page, the list it opens says {text!r}")
+    checked.append(f"project {project}")
+
+
 def test_list_headers_equal_place_numbers_of_every_kind():
     """Row 38 (Brian Fisher, 2026-11-04: each place page number is the header of the list it opens): for the day's
     place of every kind, Subfamilies, Genera and Species / subspecies / morphospecies of the place page = the list
     headers in the default view (Curated; "/utilData.do?action=placeViewTotals" counts them nightly), Valid species = the
     header in the view Valid (0 when the page shows no Valid row); Valid <= Curated <= All specimen names; every header =
-    the rows its page lists."""
+    the rows its page lists. And on every run the two lists with their own views, Fossil Ants and the AntCat list
+    (2026-11-11): each number against the header of the list its own link opens (their Valid view is Valid (with
+    fossils)); uncounted there is a failure."""
     wrong, pending, checked, slow = [], [], [], []
+    for project in OWN_VIEW_LISTS:
+        _own_view_list(project, wrong, slow, checked)
     for p in places():
         stats = stats_of(p)
         if "species" not in stats:
@@ -108,7 +161,7 @@ def test_list_headers_equal_place_numbers_of_every_kind():
         if len(headers) == 3 and not (headers["valid"] <= headers["curated"] <= headers["all"]):
             wrong.append(f"{p}: species headers Valid {headers['valid']}, Curated {headers['curated']}, All {headers['all']}: not nested")
         checked.append(repr(p))
-    if not checked:
+    if not checked and not wrong:
         pytest.skip("no place page with data-stat numbers " + ns.day_note())
     assert not wrong, (f"{len(checked)} places {ns.day_note()} ({PENDING}); not read: {slow}:\n" + "\n".join(wrong))
     if pending:

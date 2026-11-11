@@ -864,8 +864,11 @@ public class PlaceViewTotalDbTest extends TestCase {
 
     /**
      * Fossil Ants is counted in its own default view, Valid (with fossils), with the list's code: the stored totals are
-     * the rows its lists show. The line of living species opens the view Valid extant (StatusSet.placePageValidView),
-     * whose rows are the valid names that are not fossils.
+     * the rows its lists show. The rule of the page's lines (Brian Fisher, 2026-11-11): "Valid species / subspecies" is the
+     * rows of the list's Valid view, and on the two lists with their own views the Valid view is Valid (with fossils)
+     * (StatusSet.ownChoice("valid")), the default view: both species lines of the page show the species total of that
+     * view (web/overview-body.jsp), never valid_species_count (valid names that are not fossils: 1 here, 3 on production
+     * beside a list of 868).
      *
      * Genera 259 beside a list of 258: every day the AntCat import puts each fossil name on the list, a fossil genus with
      * no species there among them; set 3 and set 4 count it; set 5's list check (ProjTaxonDb.verifyProjTaxon) then takes a
@@ -932,18 +935,27 @@ public class PlaceViewTotalDbTest extends TestCase {
         again.verifyProjTaxon();
         assertFalse("" + again.getProjectsWithRowsRemoved(), again.getProjectsWithRowsRemoved().contains(fossil));
 
-        // the line of living species: the view Valid extant, one row, and not the list's default view (four rows)
-        String validView = org.calacademy.antweb.StatusSet.placePageValidView(fossil);
-        assertEquals("valid extant", validView);
-        assertEquals("valid", org.calacademy.antweb.StatusSet.placePageValidView("madants"));
-        assertEquals("valid", org.calacademy.antweb.StatusSet.placePageValidView(null));
-        assertEquals("the list reads the value as its own view", "valid extant", org.calacademy.antweb.StatusSet.ownChoice(validView));
-        assertEquals("statusSet=valid is read there as the default view (the old link)", "Valid (with fossils)",
-            org.calacademy.antweb.StatusSet.ownChoice(org.calacademy.antweb.StatusSet.LIST_VALID));
-        org.calacademy.antweb.TaxaPage living = new org.calacademy.antweb.TaxaPage();
-        living.fetchChildren(connection, p, "species", false, true, false, true, null, org.calacademy.antweb.StatusSet.listStatusSet(validView, fossil));
-        assertEquals("Valid extant: the living valid species", 1, living.getChildrenCount());
-        assertEquals("1 Valid extant Species", org.calacademy.antweb.StatusSet.listHeading(validView, 1, "Species", "Species", -1, fossil));
+        // the page's two species lines: the Valid view of this list is its default view, so both show its species total
+        String validView = org.calacademy.antweb.StatusSet.ownChoice(org.calacademy.antweb.StatusSet.LIST_VALID);
+        assertEquals("the Valid view of a list with its own views", "Valid (with fossils)", validView);
+        assertEquals("and that is its default view", org.calacademy.antweb.StatusSet.defaultChoice(p), validView);
+        assertTrue(org.calacademy.antweb.StatusSet.hasOwnStatusSets(fossil));
+        assertTrue(org.calacademy.antweb.StatusSet.hasOwnStatusSets(org.calacademy.antweb.Project.WORLDANTS));
+        assertFalse("every other list: the view Valid, and the number valid_species_count", org.calacademy.antweb.StatusSet.hasOwnStatusSets("madants"));
+        org.calacademy.antweb.TaxaPage valid = new org.calacademy.antweb.TaxaPage();
+        valid.fetchChildren(connection, p, "species", false, true, false, true, null, org.calacademy.antweb.StatusSet.listStatusSet(validView, fossil));
+        assertEquals("the list the Valid line opens has the rows of the Species line", stored("project", fossil, "species"), valid.getChildrenCount());
+        assertEquals("4 Valid (with fossils) Species", org.calacademy.antweb.StatusSet.listHeading(validView, 4, "Species", "Species", -1, fossil));
+        assertEquals("the label the page's texts name", "Valid (with fossils)", org.calacademy.antweb.StatusSet.choiceLabel(validView, null, fossil));
+        // valid_species_count's rule (valid, not fossil) finds one name here: not what the page shows
+        try (PreparedStatement s = connection.prepareStatement("select count(*) from proj_taxon l join taxon t on t.taxon_name = l.taxon_name"
+                + " where l.project_name = ? and t.taxarank in ('species', 'subspecies') and t.status = 'valid' and t.fossil = 0")) {
+            s.setString(1, fossil);
+            try (ResultSet r = s.executeQuery()) {
+                r.next();
+                assertEquals(1, r.getInt(1));
+            }
+        }
         // the next daily update keeps the site-wide list's totals (it removes the rows of the places it is not given)
         db.fill(Arrays.<Overview>asList(p), false);
         assertEquals(3, stored("project", fossil, "genus"));

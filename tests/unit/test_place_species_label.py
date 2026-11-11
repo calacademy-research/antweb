@@ -7,10 +7,18 @@ morphospecies" (the number counts valid names and morphospecies, the counting ru
 data-stat="valid" keeps "Valid species / subspecies", and every place page uses that file. The admin check number
 under a genus list names the same label (web/taxonReportBody.jsp).
 
-2026-11-11 (Brian Fisher, the Fossil Ants page): the row data-stat="valid" counts valid living species. On the AntCat
-list and Fossil Ants, whose lists have their own views, it is named "Valid living species / subspecies", opens their
-view Valid extant (StatusSet.placePageValidView) and stands after the Species row; the three list numbers name the
-list's own default view (StatusSet.defaultChoice: Curated, there Valid (with fossils)) and open it.
+The rule of the list numbers (Brian Fisher, 2026-11-11, after the Fossil Ants page said "Valid species / subspecies 3"
+beside a list of 868 and named the view Curated on a list that has none):
+ 1. Every number on a place page is the header of the list its link opens.
+ 2. The species lines are in the same order on every place page: first "Valid species / subspecies", then
+    "Species / subspecies / morphospecies".
+ 3. "Valid species / subspecies" = the rows of the list's Valid view. On the two lists with their own views (Fossil
+    Ants, AntCat list) the Valid view is Valid (with fossils) (StatusSet.ownChoice("valid")), so the number is the
+    species total of that view, the link opens that view, and the text names it.
+ 4. "Species / subspecies / morphospecies" = the rows of the list's default view (Curated; Valid (with fossils) on the
+    two own-view lists, so there both lines show the same number, and the text says so).
+The texts of the Fossil Ants and AntCat list lines say nothing of living, extant or non-fossil names; every other
+place page's texts are as they were.
 
 Run: python3 tests/unit/test_place_species_label.py   (also in .github/workflows/tests.yaml)
 """
@@ -28,25 +36,47 @@ def read(name):
         return f.read()
 
 
+def list_rule(body):
+    # rule 2: one Valid row, before the Species row, on every page (no second place for it)
+    assert body.count('<tr data-stat="valid"') == 1 and body.count('<tr data-stat="species"') == 1
+    assert body.index('<tr data-stat="valid"') < body.index('<tr data-stat="species"'), "the Valid line is not before the Species line"
+    # rules 3 and 4: the views come from the list (its default view; its Valid view), never a fixed name
+    assert 'boolean ownViews = org.calacademy.antweb.StatusSet.hasOwnStatusSets(overview.getName());' in body
+    assert 'String defaultView = org.calacademy.antweb.StatusSet.defaultChoice(overview);' in body
+    assert ('String validView = ownViews ? org.calacademy.antweb.StatusSet.ownChoice(org.calacademy.antweb.StatusSet.LIST_VALID)'
+            ' : org.calacademy.antweb.StatusSet.LIST_VALID;') in body
+    assert 'String curatedView = "&statusSet=" + Html.url(defaultView);' in body
+    assert '"species&statusSet=" + Html.url(validView)' in body
+    # rule 3: on the lists with their own views the Valid number is the species total of that view, on the row and its link
+    assert 'int validShown = ownViews ? speciesShown : overview.getValidSpeciesCount();' in body
+    assert '<% if (validShown > 0) { %>\n<tr data-stat="valid" data-n="<%= validShown %>">' in body
+    assert 'Formatter.commaFormat(validShown)' in body
+    assert body.count("overview.getValidSpeciesCount()") == 1, "valid_species_count is shown somewhere besides the Valid line of the other lists"
+    # the texts: the own-view lists' four lines say nothing of living, extant or non-fossil names; rule 4 in plain words
+    texts = re.findall(r'String (subfamiliesDef|generaDef|validDef|speciesDef) = (.*?);\n', body, re.S)
+    assert [name for name, _ in texts] == ["subfamiliesDef", "generaDef", "validDef", "speciesDef"], texts
+    for name, code in texts:
+        own = code.split("\n      ? ", 1)[1].split("\n      : ", 1)[0]
+        other = code.split("\n      : ", 1)[1]
+        for word in ("living", "extant", "non-fossil", "extinct", "Curated", "curated"):
+            assert word not in own, f"{name}: the text of the lists with their own views says {word!r}: {own}"
+        if name == "validDef":
+            assert '"Currently valid, formally named species and subspecies on " + listName + ": its view " + Html.esc(validViewName)' in own, own
+            assert "Currently valid, formally named, living (non-fossil) species and subspecies on" in other and "its view Valid (the number opens it)" in other
+        if name == "speciesDef":
+            assert "so this number equals Valid species / subspecies." in own, own
+    assert 'String inDefaultView = " on " + listName + " in its default view, " + Html.esc(defaultViewName) + " (the number opens it)";' in body
+    for old in ("placePageValidView", "Valid living species"):
+        assert old not in body, old
+
+
 def main():
     body = read("overview-body.jsp")
     rows = dict(re.findall(r'<tr data-stat="(\w+)"[^\n]*?><td class="ps_name">([^<]*)</td>', body))
     assert rows.get("species") == "Species / subspecies / morphospecies", rows.get("species")
-    # the Valid row is built once (validRow) and placed before the Species row, on the lists with their own views after it
-    assert 'String validName = ownViews ? "Valid living species / subspecies" : "Valid species / subspecies";' in body
-    assert '"<tr data-stat=\\"valid\\" data-n=\\"" + overview.getValidSpeciesCount() + "\\"><td class=\\"ps_name\\">" + validName + "</td>' in body
-    before, after = body.split('<tr data-stat="species" data-n="<%= speciesShown %>">', 1)
-    assert before.rstrip().endswith('<%= ownViews ? "" : validRow %>'), before[-120:]
-    assert after.split("\n", 2)[1].strip() == '<%= ownViews ? validRow : "" %>', after.split("\n", 2)[1]
-    # the views the numbers open and name: the list's default view, and the view of valid living species
-    assert 'boolean ownViews = org.calacademy.antweb.StatusSet.hasOwnStatusSets(overview.getName());' in body
-    assert 'String curatedView = "&statusSet=" + Html.url(defaultView);' in body
-    assert 'String defaultView = org.calacademy.antweb.StatusSet.defaultChoice(overview);' in body
-    assert 'String validView = org.calacademy.antweb.StatusSet.placePageValidView(overview.getName());' in body
-    assert '"species&statusSet=" + Html.url(validView)' in body
-    assert "in its default view, Curated" not in body, "a line still says Curated whatever the list's default view is"
-    assert 'in its default view, " + Html.esc(defaultViewName) + " (the number opens it): "' in body
+    assert rows.get("valid") == "Valid species / subspecies", rows.get("valid")
     assert ">Species / subspecies<" not in body, "the old label is still on the place pages"
+    list_rule(body)
     for page in PLACE_PAGES:
         assert 'value="/overview-body.jsp"' in read(page), page + " does not use overview-body.jsp"
     assert "it should equal Species / subspecies / morphospecies on the" in read("taxonReportBody.jsp")

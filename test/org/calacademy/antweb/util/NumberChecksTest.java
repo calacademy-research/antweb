@@ -389,4 +389,100 @@ public class NumberChecksTest extends TestCase {
         assertTrue(r.unlisted.toString(), r.unlisted.containsKey("api.taxa"));
         assertTrue(r.real() >= 320);
     }
+
+    /**
+     * place.view.totals (row 129; Brian Fisher, 2026-11-11: "how did we not get an alert that the counts were not
+     * true"): a place page with a list and no list totals (the Fossil Ants and AntCat list pages were never counted, so
+     * they showed the project's stored counts beside lists that said otherwise), or with totals older than
+     * PlaceViewTotalDb.FRESH_DAYS days, or with fewer than the three, is a real difference, never pending. The places
+     * are the daily update's own (PlaceViewTotalDb.places(); given here, the place managers are not loaded in a test).
+     */
+    public void testAPlacePageWithoutFreshListTotalsIsARealDifference() throws Exception {
+        org.calacademy.antweb.geolocale.Country madagascar = new org.calacademy.antweb.geolocale.Country();
+        madagascar.setId(MADAGASCAR);
+        madagascar.setName("Madagascar");
+        madagascar.setGeorank("country");
+        org.calacademy.antweb.Project fossil = new org.calacademy.antweb.Project();
+        fossil.setName(org.calacademy.antweb.Project.FOSSILANTS);
+        exec("drop table if exists place_view_total");
+        try {
+            // without the table nothing was ever counted: both places are differences (the check is not left out)
+            NumberChecks.setPlaceListForTests(java.util.Arrays.<org.calacademy.antweb.Overview>asList(madagascar, fossil));
+            assertEquals(2, real(check(), "place.view.totals"));
+            exec(org.calacademy.antweb.home.PlaceViewTotalDb.createTable(null, null));
+            String totals = "insert into place_view_total (list_type, list_key, taxarank, view_name, n, counted) values ";
+            exec(totals + "('geolocale', '" + MADAGASCAR + "', 'subfamily', 'curated', 2, now()), ('geolocale', '" + MADAGASCAR
+                + "', 'genus', 'curated', 2, now()), ('geolocale', '" + MADAGASCAR + "', 'species', 'curated', 4, now())");
+            // Fossil Ants was never counted: one real difference, at that place, with what the page then shows
+            CountCheck.Result r = check();
+            assertEquals(list(r), 1, real(r, "place.view.totals"));
+            CountCheck.Mismatch m = first(r, "place.view.totals");
+            assertTrue(m.isReal());
+            assertEquals("project", m.place.type);
+            assertEquals(org.calacademy.antweb.Project.FOSSILANTS, m.place.key);
+            assertTrue(m.taxonName, m.taxonName.contains("none stored; the page shows the place's stored counts"));
+            assertEquals(0, m.stored);
+            assertEquals(3, m.recount);
+            assertEquals("a real difference that is no known finding: the daily update's alert counts it", 1,
+                r.realOutside(org.calacademy.antweb.util.CountInvariants.KNOWN_FINDINGS) - before(r));
+            // counted: none
+            exec(totals + "('project', 'fossilants', 'subfamily', 'Valid (with fossils)', 19, now()), ('project', 'fossilants', 'genus',"
+                + " 'Valid (with fossils)', 258, now()), ('project', 'fossilants', 'species', 'Valid (with fossils)', 868, now())");
+            assertEquals(0, real(check(), "place.view.totals"));
+            // only two of the three
+            exec("delete from place_view_total where list_key = 'fossilants' and taxarank = 'genus'");
+            r = check();
+            assertEquals(1, real(r, "place.view.totals"));
+            assertTrue(first(r, "place.view.totals").taxonName.contains("only 2 of 3 stored"));
+            exec(totals + "('project', 'fossilants', 'genus', 'Valid (with fossils)', 258, now())");
+            // counted nine days ago: the daily update has not counted the place for over a week
+            exec("update place_view_total set counted = now() - interval 9 day where list_type = 'geolocale'");
+            r = check();
+            assertEquals(1, real(r, "place.view.totals"));
+            assertEquals("geolocale", first(r, "place.view.totals").place.type);
+            assertTrue(first(r, "place.view.totals").taxonName.contains("counted in the last 8 days"));
+            exec("update place_view_total set counted = now() - interval 7 day where list_type = 'geolocale'");
+            assertEquals("a week is the daily update's own limit", 0, real(check(), "place.view.totals"));
+            // no place given and no place manager loaded: nothing to compare
+            NumberChecks.setPlaceListForTests(null);
+            r = check();
+            assertEquals(list(r), 0, real(r, "place.view.totals"));
+        } finally {
+            NumberChecks.setPlaceListForTests(null);
+            exec("drop table if exists place_view_total");
+        }
+    }
+
+    /** The real differences of the other checks that are no known finding (the fixture has its own). */
+    private static int before(CountCheck.Result r) {
+        int n = 0;
+        for (CountCheck.Mismatch m : r.mismatches) {
+            if (m.isReal() && !"place.view.totals".equals(m.check) && !org.calacademy.antweb.util.CountInvariants.KNOWN_FINDINGS.contains(m.check)) ++n;
+        }
+        return n;
+    }
+
+    /** The alert counts the real differences outside the known findings, listed and unlisted; pending ones never. */
+    public void testRealDifferencesOutsideTheKnownFindings() throws Exception {
+        exec("update geolocale set specimen_count = specimen_count + 1 where id = " + MADAGASCAR);   // a place total that is wrong
+        CountCheck.Result r = check();
+        int all = r.real();
+        int outside = r.realOutside(org.calacademy.antweb.util.CountInvariants.KNOWN_FINDINGS);
+        assertTrue(list(r), outside >= 1 && outside <= all);
+        int known = 0;
+        for (CountCheck.Mismatch m : r.mismatches) if (m.isReal() && org.calacademy.antweb.util.CountInvariants.KNOWN_FINDINGS.contains(m.check)) ++known;
+        assertEquals(all - known, outside);
+        assertEquals("every check a known finding: nothing left", 0, r.realOutside(checks(r)));
+        r.unlisted.put("api.taxa", 20);
+        r.unlisted.put("place.totals.genus", 5);
+        r.unlisted.put("place.totals.species (pending)", 7);
+        assertEquals("unlisted ones by their check; pending ones never", outside + 5, r.realOutside(org.calacademy.antweb.util.CountInvariants.KNOWN_FINDINGS));
+        assertEquals(java.util.Arrays.asList("api.taxa", "stats.nonants", "taxon.parents"), org.calacademy.antweb.util.CountInvariants.KNOWN_FINDINGS);
+    }
+
+    private static java.util.Set<String> checks(CountCheck.Result r) {
+        java.util.Set<String> out = new java.util.HashSet<>();
+        for (CountCheck.Mismatch m : r.mismatches) out.add(m.check);
+        return out;
+    }
 }

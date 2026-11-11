@@ -60,6 +60,7 @@ public final class NumberChecks {
         taxonParents();
         adm1ByCountry();
         imagingProgress();
+        placeListTotals();
     }
 
     // ------------------------------------------------------------------ helpers
@@ -1053,6 +1054,52 @@ public final class NumberChecks {
                     "the check stopped at its time limit; the next run counts them");
             }
             expected("b26").put("adm1sDiffering", differ);
+        });
+    }
+
+    // ------------------------------------------------------------------ place page list totals (2026-11-11)
+
+    /** Tests: the places to check (the place managers are not loaded there); null: PlaceViewTotalDb.places(). */
+    private static volatile java.util.List<org.calacademy.antweb.Overview> s_placeListForTests;
+
+    public static void setPlaceListForTests(java.util.List<org.calacademy.antweb.Overview> places) {
+        s_placeListForTests = places;
+    }
+
+    /**
+     * place.view.totals (row 129; Brian Fisher, 2026-11-11: "how did we not get an alert that the counts were not
+     * true"). Every number on a place page is the header of the list its link opens: Subfamilies, Genera and Species are
+     * the list totals the daily update counts with the list's own code (place_view_total, PlaceViewTotalDb). A place page
+     * without them falls back to the place's stored counts, which another rule counts, and nothing said so: the Fossil
+     * Ants and AntCat list pages were never counted (Genera 259 beside a list of 258) and no check looked. This check:
+     * every place page with a list (PlaceViewTotalDb.places(), the daily update's own list, so the two cannot drift: valid
+     * geolocales with list rows, bioregions, museums, projects including the site-wide ones, not the AntWeb-wide list) has
+     * its three list totals, counted in the last PlaceViewTotalDb.FRESH_DAYS days. A place without them is a real
+     * difference, never pending: the daily update counts every place it lists, each at least every 7 days.
+     */
+    void placeListTotals() {
+        CountInvariants.Check check = new CountInvariants.Check("place.view.totals",
+            "every place page with a list has its list totals (Subfamilies, Genera, Species: the headers of its lists), counted in the last "
+            + org.calacademy.antweb.home.PlaceViewTotalDb.FRESH_DAYS + " days", "129");
+        inv.check(check, c -> {
+            org.calacademy.antweb.home.PlaceViewTotalDb db = new org.calacademy.antweb.home.PlaceViewTotalDb(inv.connection);
+            java.util.List<org.calacademy.antweb.Overview> places = s_placeListForTests != null ? s_placeListForTests : db.places();
+            // no table: nothing was ever counted, so every place with a list is a difference (not a check left out)
+            Map<String, int[]> stored = has("place_view_total")
+                ? db.storedRanks(org.calacademy.antweb.home.PlaceViewTotalDb.FRESH_DAYS) : new java.util.HashMap<>();
+            for (org.calacademy.antweb.Overview place : places) {
+                String[] tk = org.calacademy.antweb.home.PlaceViewTotalDb.typeAndKey(place);
+                if (tk == null) continue;
+                inv.places.computeIfAbsent(tk[0], x -> CountInvariants.keyMap()).putIfAbsent(tk[1], place.getName());
+                int[] ranks = stored.get(org.calacademy.antweb.home.PlaceViewTotalDb.placeKey(place));
+                String what = ranks == null || ranks[0] == 0
+                    ? "list totals of the place page (Subfamilies, Genera, Species): none stored; the page shows the place's stored counts, not the headers of its lists (the daily update counts them; an administrator counts them now with utilData.do?action=placeViewTotals)"
+                    : ranks[0] < 3
+                        ? "list totals of the place page (Subfamilies, Genera, Species): only " + ranks[0] + " of 3 stored"
+                        : "list totals of the place page (Subfamilies, Genera, Species) counted in the last "
+                            + org.calacademy.antweb.home.PlaceViewTotalDb.FRESH_DAYS + " days";
+                inv.compare(c, tk[0], tk[1], what, ranks == null ? 0 : ranks[1], 3, "=", null);
+            }
         });
     }
 

@@ -124,7 +124,24 @@ public class CountInvariantsTest extends TestCase {
     }
 
     public void testRightNumbersGiveNoDifference() throws Exception {
-        CountCheck.Result r = run(true);
+        // place.view.totals (2026-11-11): Madagascar's page has its three list totals, counted today
+        org.calacademy.antweb.geolocale.Country madagascar = new org.calacademy.antweb.geolocale.Country();
+        madagascar.setId(MADAGASCAR);
+        madagascar.setName("Madagascar");
+        madagascar.setGeorank("country");
+        exec("drop table if exists place_view_total");
+        exec(org.calacademy.antweb.home.PlaceViewTotalDb.createTable(null, null));
+        exec("insert into place_view_total (list_type, list_key, taxarank, view_name, n, counted) values ('geolocale', '" + MADAGASCAR
+            + "', 'subfamily', 'curated', 2, now()), ('geolocale', '" + MADAGASCAR + "', 'genus', 'curated', 2, now()), ('geolocale', '"
+            + MADAGASCAR + "', 'species', 'curated', 4, now())");
+        org.calacademy.antweb.util.NumberChecks.setPlaceListForTests(java.util.Arrays.<org.calacademy.antweb.Overview>asList(madagascar));
+        CountCheck.Result r;
+        try {
+            r = run(true);
+        } finally {
+            org.calacademy.antweb.util.NumberChecks.setPlaceListForTests(null);
+            exec("drop table if exists place_view_total");
+        }
         assertEquals(list(r), 0, r.mismatches.size());
         Map<String, int[]> summary = r.invariants.summary();
         assertEquals("every check id of CountInvariants.IDS ran, no other", new java.util.TreeSet<>(java.util.Arrays.asList(CountInvariants.IDS)),

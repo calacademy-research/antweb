@@ -274,7 +274,8 @@ public class PlaceViewTotalDb {
         if (geolocales != null) for (Geolocale g : geolocales) if (withList.contains(g.getId())) out.add(g);
         if (BioregionMgr.getBioregions() != null) out.addAll(BioregionMgr.getBioregions());
         if (MuseumMgr.getMuseums() != null) out.addAll(MuseumMgr.getMuseums());
-        out.addAll(countedProjects(ProjectMgr.getAntProjects(), ProjectMgr.getGlobalProjects()));
+        // the projects are loaded at start-up; before that (and in tests) there are none to list
+        if (ProjectMgr.getAllProjectsHash() != null) out.addAll(countedProjects(ProjectMgr.getAntProjects(), ProjectMgr.getGlobalProjects()));
         return out;
     }
 
@@ -548,6 +549,35 @@ public class PlaceViewTotalDb {
 
     private static String key(String type, String key) {
         return type + "\u0000" + key;
+    }
+
+    /** The key of a place in storedRanks (typeAndKey's two values), or null for an overview that is not a place. */
+    public static String placeKey(Overview overview) {
+        String[] tk = typeAndKey(overview);
+        return tk == null ? null : key(tk[0], tk[1]);
+    }
+
+    /** The count check: list totals older than this many days are missing (a place is counted at least every 7 days). */
+    public static final int FRESH_DAYS = 8;
+
+    /**
+     * For the count check (NumberChecks.placeListTotals, 2026-11-11): per place (placeKey) how many of the three list
+     * totals (subfamily, genus, species) are stored, and how many of them were counted in the last days days. A place
+     * with a list whose totals are missing or old shows its stored counts, not the headers of its lists; nobody was told
+     * (Fossil Ants and the AntCat list were never counted). One read-only query; an empty map without the table.
+     */
+    public java.util.Map<String, int[]> storedRanks(int days) throws SQLException {
+        java.util.Map<String, int[]> out = new java.util.HashMap<>();
+        if (!tableExists()) return out;
+        try (PreparedStatement stmt = connection.prepareStatement("select list_type, list_key, count(distinct taxarank),"
+                + " count(distinct case when counted >= now() - interval ? day then taxarank end) from place_view_total"
+                + " where taxarank in ('subfamily', 'genus', 'species') group by list_type, list_key")) {
+            stmt.setInt(1, days);
+            try (ResultSet r = stmt.executeQuery()) {
+                while (r.next()) out.put(key(r.getString(1), r.getString(2)), new int[] {r.getInt(3), r.getInt(4)});
+            }
+        }
+        return out;
     }
 
     private java.util.Map<String, State> readStates() throws SQLException {

@@ -51,6 +51,25 @@ public final class CountCheckJob {
     }
 
     static BackgroundJobs.Outcome run(BackgroundJobs.Job job, DataSource dataSource, int seconds) throws Exception {
+        return run(job, dataSource, seconds, new int[3]);
+    }
+
+    /**
+     * The alert of the count check that runs after the daily update (Brian Fisher, 2026-11-11: "how did we not get an
+     * alert that the counts were not true"): the text for the Daily update page's Count check step and the email, or
+     * null when there is nothing to tell. real: the real differences; outsideKnown: those of them that are not known
+     * findings (CountInvariants.KNOWN_FINDINGS). An alert only when outsideKnown is above 0: pending differences (a change
+     * since the daily update explains them) and the known findings alone send nothing.
+     */
+    public static String warning(int real, int outsideKnown) {
+        if (outsideKnown <= 0) return null;
+        int known = Math.max(0, real - outsideKnown);
+        return outsideKnown + " real difference" + (outsideKnown == 1 ? "" : "s") + ": see Check the counts (countCheck.do)"
+            + (known > 0 ? "; " + known + " more are known findings" : "");
+    }
+
+    /** counts (length 3) receives the result's real differences, those outside the known findings, and the pending ones. */
+    static BackgroundJobs.Outcome run(BackgroundJobs.Job job, DataSource dataSource, int seconds, int[] counts) throws Exception {
         BackgroundJobs.step("Counting: every place, then the sample places (up to " + seconds + " seconds).");
         String name = DBUtil.getDbMethodName("CountCheckJob.run()");
         Connection connection = DBUtil.getConnection(dataSource, name);
@@ -71,6 +90,9 @@ public final class CountCheckJob {
             CountCheck.Result result = countCheck.run(places, rotating, seconds, CountCheck.lastCompletedRun(log),
                 CountCheck.regionRuleCounted(log), CountInvariants.rulesCounted(log), true, statsPage);
             result.notes.addAll(notes);
+            counts[0] = result.real();
+            counts[1] = result.realOutside(CountInvariants.KNOWN_FINDINGS);
+            counts[2] = result.pending();
             String domainApp = AntwebProps.getDomainApp();
             String html = CountCheckAction.html(result, domainApp);
             keep(job.getId(), html);
@@ -118,8 +140,11 @@ public final class CountCheckJob {
             BackgroundJobs.Job job = new BackgroundJobs.Job(BackgroundJobs.DATA, ACTION, "Count check (after the nightly run)", 0, "nightly", 0);
             BackgroundJobs.Submitted s = BackgroundJobs.get().submit(job, j -> {
                 try {
-                    BackgroundJobs.Outcome outcome = run(j, source, SECONDS);
-                    DailyUpdate.countCheckFinished(runStart.get(), outcome.ok ? null : "the count check failed: " + outcome.result);
+                    int[] counts = new int[3];
+                    BackgroundJobs.Outcome outcome = run(j, source, SECONDS, counts);
+                    // real differences outside the known findings: the step ends yellow and the administrators get one email
+                    DailyUpdate.countCheckFinished(runStart.get(), outcome.ok ? null : "the count check failed: " + outcome.result,
+                        outcome.ok ? warning(counts[0], counts[1]) : null);
                     return outcome;
                 } catch (Exception e) {
                     DailyUpdate.countCheckFinished(runStart.get(), "the count check failed: " + e);
