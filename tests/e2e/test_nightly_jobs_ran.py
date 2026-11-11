@@ -20,8 +20,10 @@ Which line proves which job (checked in the Java source, 2026-11-04):
   (GeolocaleDb.updateCounts, then "Adm1s populated:", "Countries populated", "Subregions populated",
   "Regions populated"), follows the AntCat list line; "Set 2 done" ends the set;
 - set 3: projectCountCrawl "Project species-list counts crawled:" and "Projects counts computed",
-  populateMuseum "Museums populated", populateBioregion "Bioregions populated", the group counts
-  "Group counts:", crawlForType "Types Crawl completed", then "Set 3 done";
+  populateMuseum "Museums populated", populateBioregion "Bioregions populated", the group specimen counts
+  "Group specimen counts:" (since 2026-11-11, GroupDb.recountUploadSpecimens; see
+  test_group_specimen_counts_line), the group counts "Group counts:", crawlForType "Types Crawl completed", then
+  "Set 3 done";
 - set 4: imageCountCrawl "AntWeb-wide list Images counted" (ProjTaxonCountDb) and "Image Count Crawl
   completed" (ImageCountDb), placeImageCounts "Place image counts:" (since 2026-11-11 it goes on "imaged specimens N
   in S s (read ...", test_place_image_counts_used_the_working_set), placeGenusCuration "Not curated
@@ -186,6 +188,25 @@ def test_set5_skipped_on_staging(run_lines):
     skipped = _find(run_lines, SET5_SKIPPED, set4)
     assert skipped is not None and skipped < after, (
         f"no '{SET5_SKIPPED}' between 'Set 4 done' and the steps after the sets:\n" + _quote(run_lines[set4:after + 1]))
+
+
+def test_group_specimen_counts_line(run_lines):
+    """Set 3 recounts every group's stored specimen count (ant_group.upload_specimens, GroupDb.recountUploadSpecimens,
+    2026-11-11: a stale number was a real difference of the count check every day, production group 52) and writes
+    "Group specimen counts: N groups recounted, M numbers changed (...) in S s", after the bioregions and before the
+    group counts, which list the groups by that number. A run from before the change has no such line: skipped then.
+    Once staging's daily update has written it, the line can join RUN_LINES (before "Group counts:")."""
+    i = _find(run_lines, "Group specimen counts:")
+    if i is None:
+        pytest.skip(f"the nightly run that began {run_lines[0][0]} has no 'Group specimen counts:' line: it ran before "
+                    "the change of 2026-11-11 was deployed")
+    line = run_lines[i][1]
+    assert not FAILED.search(line), line[:300]
+    m = re.match(r"Group specimen counts: (\d+) groups recounted, (\d+) numbers changed", line)
+    assert m and int(m.group(1)) > 0 and int(m.group(2)) <= int(m.group(1)), line[:300]
+    before, after = _find(run_lines, "Bioregions populated"), _find(run_lines, "Group counts:")
+    assert before is not None and after is not None and before < i < after, (
+        "the line is not between 'Bioregions populated' and 'Group counts:':\n" + _quote(run_lines[max(0, i - 3):i + 4]))
 
 
 def test_each_job_wrote_its_line(run_lines):

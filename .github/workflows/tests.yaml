@@ -95,6 +95,9 @@ jobs:
       - name: A recount of one bioregion or museum makes the statistics page count again (tests/unit/test_statspage_forget.py)
         run: python3 tests/unit/test_statspage_forget.py
 
+      - name: The daily update recounts every group's stored specimen count before the group counts (tests/unit/test_group_specimen_count_daily.py)
+        run: python3 tests/unit/test_group_specimen_count_daily.py
+
       - name: Rebuilding one place's list counts its stored list totals again (tests/unit/test_recalc_view_totals.py)
         run: python3 tests/unit/test_recalc_view_totals.py
 
@@ -1339,6 +1342,11 @@ jobs:
           # (GET) changes nothing, the button makes the key once (only its SHA-256 and prefix stored); expired, used,
           # cancelled links; 3 a day per email, 100 confirmed and 300 pending a day in all; times in UTC whatever the
           # session's time zone; the admin list (newest first, filters, usage, no-key row) and its changes.
+          # GroupSpecimenCountDbTest (2026-11-11): the daily update writes every group's stored specimen count
+          # (ant_group.upload_specimens; production: group 52, no upload for months, stored 21,099, 21,102 specimens, a real
+          # difference of the count check every day): stale numbers corrected, the others and every other column unchanged,
+          # a group without specimens gets 0, the count check's differences gone, in the set's transaction with no lock
+          # left on the specimen table, a failure said in the line and not thrown.
           # LicenseUpdateDbTest (2026-10-29): the start-up update of stored licence texts to CC BY 4.0 backs up first,
           # is a no-op on a second run and skips a missing license table. Last: it makes its own small tables.
           docker run --rm --network tzcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
@@ -1374,8 +1382,9 @@ jobs:
               /t/org/calacademy/antweb/home/PlaceViewTotalDbTest.java \
               /t/org/calacademy/antweb/home/ApiKeyDbTest.java \
               /t/org/calacademy/antweb/home/ImagingProgressDbTest.java \
-              /t/org/calacademy/antweb/util/OnePlaceJobDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3; do
+              /t/org/calacademy/antweb/util/OnePlaceJobDbTest.java \
+              /t/org/calacademy/antweb/home/GroupSpecimenCountDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3 home.GroupSpecimenCountDbTest:5; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

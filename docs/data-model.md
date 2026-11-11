@@ -1254,15 +1254,22 @@ pages (`ObjectMapDb.getMap`: `BigMapAction`, `OverviewAction`, `AdvancedSearchAc
 **Purpose.** Curator groups (institutions or teams that upload specimens and images). Renamed from `groups` in
 `db/upgrade/8.0/2020-02-12.sql`.
 
-**Key columns.** `id`, `name`, `abbrev`, `admin_login_id`, `upload_specimens`, `first_specimen_upload`,
+**Key columns.** `id`, `name`, `abbrev`, `admin_login_id`, `upload_specimens` (the group's specimen records:
+`specimen.access_group` = its id; a group counts as one with specimens when it is above 0), `first_specimen_upload`,
 `last_specimen_upload`, `upload_count`.
 
 **Written by.** The Groups manager (`GroupDb.saveGroup`, `updateGroup`, `deleteById`), uploads
-(`SpecimenUploadDb.updateSpecimenUploadDate`, `UploadDb.updateGroup`), `UploaderOnboarding`.
+(`SpecimenUploadDb.updateSpecimenUploadDate`, `UploadDb.updateGroup`; `upload_specimens` of the uploading group,
+`GroupDb.updateUploadSpecimens`), `UploaderOnboarding`, and since 2026-11-11 the daily update, set 3
+(`GroupDb.recountUploadSpecimens`: `upload_specimens` of every group; until then a change of a group's specimens
+outside its own upload left the number stale until its next upload).
 
 **Read by.** Group pages (`groups.do`, `group.do`), searches and admin queries that show the group name, the upload.
+`upload_specimens > 0`: the upload groups in memory (`GroupMgr`, the group menu of the advanced search), the groups
+`groups.do` lists and the group counts count (`GroupDb.getUploadGroups`, `GroupCountDb.LISTED_GROUPS_SQL`), and the
+count check (`admin.statistics`: each such group's number = its specimens).
 
-**Numbers.** #85.
+**Numbers.** #85, #98.
 
 **Status.** In use. Created in the repository only by `db/upgrade/8.115` (from production's columns). `name` is
 varchar(100) on production; `upload.group_name` was varchar(64) until 2026-10-23, when it was widened to
