@@ -185,6 +185,10 @@ def test_curate_page_layout_as_curator():
     assert r.status_code == 200 and classify(r).category == "ok", classify(r)
     page = _layout_ok(r.text)
     assert not [c for c in _cards(page) if c in ADMIN_CARDS], "admin cards shown to a curator"
+    # The Daily update page has a link here for every curator (2026-11-11: it had none), and the link opens the page.
+    assert re.search(r'<a href="[^"]*/dailyUpdate\.do">Daily update</a>', r.text), "no Daily update link on Curator Tools"
+    daily = s.get(BASE_URL + "/dailyUpdate.do", timeout=TIMEOUT)
+    assert daily.status_code == 200 and "<h1>Daily update</h1>" in daily.text, classify(daily)
     assert "/common/tools.css?v=" in r.text and "/common/tools.js?v=" in r.text
     css = s.get(BASE_URL + "/common/tools.css", timeout=TIMEOUT)
     assert css.status_code == 200 and ".aw-tools .aw-card" in css.text, css.status_code
