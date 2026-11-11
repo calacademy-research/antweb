@@ -182,4 +182,20 @@ public class OldPlaceNamesTest extends TestCase {
         assertNull(moved("/geolocaleMgr.do", "georank=adm1&countryName=USA"));
         assertNull(moved("/adm1Mgr.do", "adm1Name=MA&countryName=USA&groupId=1"));
     }
+
+    /** The redirect's path is the server's own path of this page; anything else gives no redirect (review of #342). */
+    public void testTheRedirectStaysOnThisSite() {
+        assertEquals("/country.do", OldPlaceNames.localPath("", "/country.do", null));
+        assertEquals("/antweb/taxonomicPage.do", OldPlaceNames.localPath("/antweb", "/taxonomicPage.do", null));
+        assertEquals("/a/b.do/x", OldPlaceNames.localPath(null, "/a/b.do", "/x"));
+        assertNull("two slashes would name another host", OldPlaceNames.localPath("", "//other.example/country.do", null));
+        assertNull(OldPlaceNames.localPath("", "country.do", null));
+        assertNull(OldPlaceNames.localPath("", "", null));
+        assertNull(OldPlaceNames.localPath(null, null, null));
+        assertNull("a backslash", OldPlaceNames.localPath("", "/\\other.example/country.do", null));
+        assertNull("a colon", OldPlaceNames.localPath("", "/http://other.example/country.do", null));
+        assertNull("a blank or a line break", OldPlaceNames.localPath("", "/country.do\r\nSet-Cookie: x", null));
+        assertNull(OldPlaceNames.localPath("", "/country.do?x", null));
+        assertNull(OldPlaceNames.localPath("", "/pays\u00e9.do", null));
+    }
 }

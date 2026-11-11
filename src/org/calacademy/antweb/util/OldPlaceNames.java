@@ -52,7 +52,26 @@ public final class OldPlaceNames {
         if (!"GET".equals(method) && !"HEAD".equals(method)) return null;
         if (!AntwebMgr.isPopulated()) return null;      // the places are not loaded yet
         String query = movedQuery(request.getServletPath(), request.getQueryString(), PLACES);
-        return query == null ? null : request.getRequestURI() + "?" + query;
+        if (query == null) return null;
+        String path = localPath(request.getContextPath(), request.getServletPath(), request.getPathInfo());
+        return path == null ? null : path + "?" + query;
+    }
+
+    /**
+     * The path of a redirect to this same page: the context path and the path the server matched to the page (both as
+     * the server normalised them), never the request line as the client wrote it (review of #342, 2026-11-11). Null,
+     * and so no redirect, unless the result starts with exactly one "/" and holds only letters, digits and "/._-":
+     * a redirect then always stays on this site.
+     */
+    public static String localPath(String contextPath, String servletPath, String pathInfo) {
+        String path = (contextPath == null ? "" : contextPath) + (servletPath == null ? "" : servletPath) + (pathInfo == null ? "" : pathInfo);
+        if (!path.startsWith("/") || path.startsWith("//")) return null;
+        for (int i = 0; i < path.length(); i++) {
+            char c = path.charAt(i);
+            boolean plain = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '/' || c == '.' || c == '_' || c == '-';
+            if (!plain) return null;
+        }
+        return path;
     }
 
     /**
