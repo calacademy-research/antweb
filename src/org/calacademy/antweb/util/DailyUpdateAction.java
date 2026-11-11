@@ -133,7 +133,10 @@ public final class DailyUpdateAction extends AntwebAction {
         + "<p>This page shows each step in the order it runs, which one is running, and how long each usually takes "
         + "(the median of the last " + DailyUpdate.USUAL_RUNS + " daily updates). A step taking more than 1.5 times its usual time "
         + "is yellow, a failed step red; the administrators get an email when a step fails or runs over twice its usual time. "
-        + "Nothing to do here unless a step is red: then see compute.log (Log Manager). All times are Pacific time.</p>"
+        + "The Count check step is also yellow when it found real differences (numbers on the site that do not equal their "
+        + "recount): it says how many, the administrators get an email, and Check the counts lists them. "
+        + "Nothing to do here unless a step is red (then see compute.log in the Log Manager) or the Count check is yellow. "
+        + "All times are Pacific time.</p>"
         + "</div>";
 
     static String statusClass(String state) {
@@ -197,9 +200,9 @@ public final class DailyUpdateAction extends AntwebAction {
             + "<th>Started (Pacific)</th><th>Ended (Pacific)</th><th>Duration</th><th>Usual</th></tr>");
         for (DailyUpdate.StepView v : r.steps) {
             String style = DailyUpdate.FAILED.equals(v.state) ? " style=\"background:#fdecea\""
-                : v.slow ? " style=\"background:#fff3cd\"" : "";
+                : v.slow || v.warning ? " style=\"background:#fff3cd\"" : "";
             b.append("<tr data-step=\"").append(v.step.key).append("\" data-state=\"").append(v.state).append("\"")
-             .append(v.slow ? " data-slow=\"1\"" : "").append(style).append(">");
+             .append(v.slow ? " data-slow=\"1\"" : "").append(v.warning ? " data-warning=\"1\"" : "").append(style).append(">");
             b.append("<td>").append(v.number).append("</td>");
             b.append("<td><b>").append(Html.esc(v.step.label)).append("</b><br><span class=\"aw-note\">").append(Html.esc(v.step.what)).append("</span>");
             if (v.message != null && !v.message.isEmpty()) b.append("<br>").append(Html.esc(v.message));

@@ -47,7 +47,9 @@ def body(src, signature):
 def test_one_place_is_counted_by_the_daily_fills_own_step():
     src = read("src/org/calacademy/antweb/home/PlaceViewTotalDb.java")
     step = body(src, "private void countAndStore(Overview place, String[] tk, String fingerprint)")
-    assert "store(place, listRows(place, Rank.GENUS), listRows(place, Rank.SPECIES), listRows(place, Rank.SUBFAMILY));" in step
+    # (2026-11-11: with the species rows of the view Valid for the AntCat list and Fossil Ants, -1 for every other place)
+    assert ("store(place, listRows(place, Rank.GENUS), listRows(place, Rank.SPECIES), listRows(place, Rank.SUBFAMILY),\n"
+            "            storesValidSpecies(place) ? listRows(place, Rank.SPECIES, StatusSet.LIST_VALID) : -1);") in step
     assert "writeState(tk, fingerprint, true);" in step
     # counted and stored in one method only: the daily fill and the single place both go through it
     assert src.count("store(place, listRows(") == 1
