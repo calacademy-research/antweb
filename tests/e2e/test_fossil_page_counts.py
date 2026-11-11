@@ -133,7 +133,10 @@ def test_the_lists_have_the_views_valid_and_curated(project):
             assert text == text_default, f"{project}: the old address value shows {text!r}, the default view {text_default!r}"
     assert counts["curated"] == n_default == counts["Valid (with fossils)"], counts
     assert counts["valid"] <= counts["curated"], counts
-    assert counts["valid extant"] + counts["valid fossil"] <= counts["valid"], f"{project}: extant and fossil are valid names: {counts}"
+    # Each of the two is part of Valid. They are not disjoint at genus rank: the view Valid fossil also lists the living
+    # genera with valid fossil species on the list (Brian Fisher, 2026-11-06, TaxaPage.genusAwareCriteria), and Valid
+    # extant lists the living genera (staging 2026-11-11, AntCat list: 348 extant + 251 fossil of 525 valid genera).
+    assert counts["valid extant"] <= counts["valid"] and counts["valid fossil"] <= counts["valid"], f"{project}: extant and fossil are valid names: {counts}"
 
 
 def test_other_project_pages_read_as_before():
