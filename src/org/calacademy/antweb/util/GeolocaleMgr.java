@@ -23,7 +23,8 @@ import java.util.stream.Stream;
  * as a tree (deep) and as a flat list (shallow), plus the place names for the search box. Loaded by AntwebMgr
  * at start-up (about 12 seconds) and on util.do?action=reloadAntwebMgr. Lookups by name or id, validity of a
  * country or adm1 for uploads, a place's bioregion, and the adm1 lists of countryAdm1List.do. Docs:
- * docs/flows/places.md. Tests: PreviousDeterminationsTest, tests/unit/test_small_fixes.py.
+ * docs/flows/places.md. Tests: PreviousDeterminationsTest, tests/unit/test_small_fixes.py, OldPlaceNamesTest
+ * (an old name in a link).
  */
 public class GeolocaleMgr extends Manager {
 
@@ -882,6 +883,52 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         }
         //A.log("getValidIsland() name:" + name + " island:" + validIsland);
         return validIsland;
+    }
+
+    /**
+     * The current name of a country that a link names by an old name (2026-11-10, OldPlaceNames): when AntWeb has
+     * the name as a not-valid country whose valid name is a valid country, that country's name ("USA": "United
+     * States"). Null when the name is a valid country, is not known, or is an old name without a valid name: such a
+     * link is left as it is. Names are compared exactly, as everywhere in the places.
+     */
+    public static @Nullable String currentCountryName(String name) {
+        return currentCountryName(countryNameMap, name);
+    }
+
+    /** currentCountryName on a given map of country names (all names, not just valid ones); the tests call it without a database. */
+    public static @Nullable String currentCountryName(Map<String, Country> countryNames, String name) {
+        if (countryNames == null || name == null) return null;
+        Country old = countryNames.get(name);
+        if (old == null || old.isValid() || noValidName(old.getValidName())) return null;
+        Country current = countryNames.get(old.getValidName());
+        if (current == null || !current.isValid() || name.equals(current.getName())) return null;
+        return current.getName();
+    }
+
+    /**
+     * The current name of an adm1 (state) of a valid country that a link names by an old name: when the country has
+     * the name as a not-valid adm1 whose valid name is a valid adm1 of the same country, that adm1's name ("MA" in
+     * United States: "Massachusetts"). Null otherwise, as currentCountryName.
+     */
+    public static @Nullable String currentAdm1Name(String adm1Name, String countryName) {
+        return currentAdm1Name(adm1CountryMap, adm1Name, countryName);
+    }
+
+    /** currentAdm1Name on a given map (key: adm1 name, country name); the tests call it without a database. */
+    public static @Nullable String currentAdm1Name(MultiKeyMap<String, Adm1> adm1s, String adm1Name, String countryName) {
+        if (adm1s == null || adm1Name == null || countryName == null) return null;
+        Adm1 old = adm1s.get(adm1Name, countryName);
+        if (old == null || old.isValid() || noValidName(old.getValidName())) return null;
+        Adm1 current = adm1s.get(old.getValidName(), countryName);
+        if (current == null || !current.isValid() || adm1Name.equals(current.getName())) return null;
+        return current.getName();
+    }
+
+    /** The valid name column also holds the text "none" (and "null") for no valid name. */
+    private static boolean noValidName(String validName) {
+        if (validName == null) return true;
+        String v = validName.trim();
+        return v.isEmpty() || "none".equalsIgnoreCase(v) || "null".equals(v);
     }
 
 

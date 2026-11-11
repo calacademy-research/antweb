@@ -434,6 +434,7 @@ paths = [
   "src/org/calacademy/antweb/TaxaPageAction.java",
   "src/org/calacademy/antweb/TaxaPage.java",
   "src/org/calacademy/antweb/util/OverviewMgr.java",
+  "src/org/calacademy/antweb/util/OldPlaceNames.java",
   "web/subregion*",
   "web/museum*",
   "web/project*",
@@ -457,6 +458,7 @@ tests = [
   "test_genus_indet_places.py",        # genus rows of specimens identified only to genus on country lists (2026-10-29)
   "test_status_choice.py",             # views of lists (2026-11-02)
   "test_list_sources.py",              # views, genus rows (Species, Not curated, species imaged), the view Not curated, source icons, About this list (2026-11-02)
+  "test_old_place_names.py",           # an old country or adm1 name in a link moves (301) to the current name (2026-11-10)
 ]
 
 [areas.downloads]

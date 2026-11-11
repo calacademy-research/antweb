@@ -489,6 +489,12 @@ def jsonify(*args, **kwargs):
             for key in ('metaData', '_metaData'):
                 if isinstance(kwargs.get(key), dict):
                     kwargs[key]['limitNotice'] = notice
+        # country= given as an old name (currentCountry): the reply says which country its records are of
+        used = getattr(g, 'countryName', None)
+        if used:
+            for key in ('metaData', '_metaData'):
+                if isinstance(kwargs.get(key), dict):
+                    kwargs[key]['countryName'] = used
     response = flaskJsonify(*args, **kwargs)
     if notice:
         response.headers[LIMIT_HEADER] = notice
@@ -675,6 +681,38 @@ def countryIs(column, name):
     return func.lower(column) == name.lower()
 
 
+# country= given as an old name of a country (2026-11-10, Brian Fisher: AntWeb takes the current country names, and
+# programs keep asking with the old ones): AntWeb keeps an old name as a not-valid country whose valid name is the
+# current country (USA: United States; after a rename, Turkey: Türkiye). The request is answered with the current
+# country's records, and metaData.countryName says so: {"requested": "USA", "used": "United States"} (v4 passes it
+# on). A valid name, a name AntWeb does not have and an old name without a valid name are used as given, as before.
+# Used by every route that takes country= (/specimens, /distinctTaxa, /measurements, /geolocaleTaxa).
+def currentCountry(name):
+    if name is None or name in ('', '*'):
+        return name
+    try:
+        rows = session.query(Geolocale).filter(Geolocale.georank == 'country').filter(countryIs(Geolocale.name, name)) \
+            .order_by(Geolocale.id).all()
+        if not rows or any(isValidPlace(row) for row in rows):
+            return name
+        for old in rows:
+            validName = (old.validName or '').strip()
+            if validName == '' or validName.lower() in ('none', 'null'):
+                continue
+            for current in session.query(Geolocale).filter(Geolocale.georank == 'country') \
+                    .filter(Geolocale.name == validName).order_by(Geolocale.id).all():
+                if isValidPlace(current):
+                    g.countryName = {'requested': name, 'used': current.name}
+                    return current.name
+    except Exception as error:
+        print("currentCountry error:" + str(error))
+    return name
+
+
+def isValidPlace(geolocale):
+    return str(geolocale.isValid) in ('1', 'True', 'true')
+
+
 def addExtraGeolocaleListCriteria(query, geolocaleName):
     # Because we don't want all specimen from all species on the species list.
     # Just all the specimen from all of the species on the species list that are in the Geolocale.
@@ -777,7 +815,7 @@ def getSpecimen():
     code = request.args.get('specimenCode', default='*', type=str)
     region = request.args.get('region', default='*', type=str)
     subregion = request.args.get('subregion', default='*', type=str)
-    country = request.args.get('country', default='*', type=str)
+    country = currentCountry(request.args.get('country', default='*', type=str))
     adm1 = request.args.get('adm1', default='*', type=str)
     bioregion = request.args.get('bioregion', default='*', type=str)
     habitat = request.args.get('habitat', default='*', type=str)
@@ -1315,7 +1353,7 @@ def identifiedToGenus(genus):
 @application.route('/distinctTaxa', methods=['GET'])
 def getDistinctTaxa():
     taxarank = request.args.get('taxarank', default='*', type=str)
-    country = request.args.get('country', default='*', type=str)
+    country = currentCountry(request.args.get('country', default='*', type=str))
     habitat = request.args.get('habitat', default='*', type=str)
     minDate = request.args.get('minDate', default='*', type=str)
     maxDate = request.args.get('maxDate', default='*', type=str)
@@ -1692,7 +1730,7 @@ def getMeasurements():
     subfamily = request.args.get('subfamily', default='*', type=str)
     genus = request.args.get('genus', default='*', type=str)
     species = request.args.get('species', default='*', type=str)
-    country = request.args.get('country', default='*', type=str)
+    country = currentCountry(request.args.get('country', default='*', type=str))
     adm1 = request.args.get('adm1', default='*', type=str)
     bioregion = request.args.get('bioregion', default='*', type=str)
     caste = request.args.get('caste', default='*', type=str)
@@ -1962,6 +2000,7 @@ class Geolocale(Base):
     parent = Column(String)
     georank = Column(String)
     isValid = Column('is_valid', String)
+    validName = Column('valid_name', String)   # of a not-valid place: the place it now is (currentCountry)
     region = Column(String)
     subregion = Column(String)
     country = Column(String)
@@ -2134,7 +2173,7 @@ def getGeolocaleTaxa():
     georank = request.args.get('georank', default='*', type=str)
     region = request.args.get('region', default='*', type=str)
     subregion = request.args.get('subregion', default='*', type=str)
-    country = request.args.get('country', default='*', type=str)
+    country = currentCountry(request.args.get('country', default='*', type=str))
     island = request.args.get('island', default='*', type=str)
     adm1 = request.args.get('adm1', default='*', type=str)
     taxonName = request.args.get('taxonName', default='*', type=str)

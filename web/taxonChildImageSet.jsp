@@ -235,7 +235,7 @@ Examples of species with images that don't have h1 images:
 %>
 
                 <div class="slide medium<% if (position == first) { %> first<% } %><% if (position == fourth) { %> last<% } %>" style="background-image: url('<%= AntwebProps.getImgDomainApp() %><%= img.getThumbview() %>');" id="<%= index %>">
-                <div class="hover medium" onclick="window.location='<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.js(org.calacademy.antweb.util.Html.url(thisChild.getCode()))) %><%= overviewParams %>';"></div>
+                <div class="hover medium" onclick="window.location='<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.js(org.calacademy.antweb.util.Html.url(thisChild.getCode()))) %><%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.js(overviewParams)) %>';"></div>
                 <div class="top_gradient medium"></div>
                 <div class="name"><a href="<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.url(thisChild.getCode())) %><%= overviewParams %>"><%= org.calacademy.antweb.util.Html.esc(thisChild.getPrettyName()) %></a><%= fromPlaceMark %></div>
 <%
@@ -247,7 +247,7 @@ Examples of species with images that don't have h1 images:
 
 <% // AntwebUtil.log("DEBUG params:" + thisChild.getBrowserParams() + " string:" + thisChild.toString() + " class:" + thisChild.getClass()); %>
 
-                <div class="hover medium" onclick="window.location='images.do?<%= thisChild.getBrowserParams() %>';"></div>
+                <div class="hover medium" onclick="window.location='images.do?<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.js(thisChild.getBrowserParams())) %>';"></div>
                 <div class="top_gradient medium"></div>
                 <div class="name"><% if (thisChild.getIsValid()) { %><span class="is_valid"></span><% } %><a href="images.do?<%= thisChild.getBrowserParams() %>"><%= thisChild.getPrettyName() %></a></div>
 <%                } %>
