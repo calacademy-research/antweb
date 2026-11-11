@@ -1030,14 +1030,16 @@ public class UtilDataAction extends AntwebAction {
 
         // If a species list proxy record is created for a species list species that is then removed... cleanup.
         if (action.equals("cleanupSpeciesListProxyRecords")) {
-            String result = new ProjTaxonDb(connection).cleanupSpeciesListProxyRecords();
-            message = "Cleanup Species List Proxy Records:" + result;
+            ProjTaxonDb projTaxonDb = new ProjTaxonDb(connection);
+            String result = projTaxonDb.cleanupSpeciesListProxyRecords();
+            message = "Cleanup Species List Proxy Records:" + result + listTotalsAfterRowsRemoved(connection, projTaxonDb);
         }
 
         // If a species list proxy record is created for a species list species that is then removed... cleanup.
         if (action.equals("verifyProjTaxon")) {
-            String result = new ProjTaxonDb(connection).verifyProjTaxon();
-            message = "verifyProjTaxon Records:" + result;
+            ProjTaxonDb projTaxonDb = new ProjTaxonDb(connection);
+            String result = projTaxonDb.verifyProjTaxon();
+            message = "verifyProjTaxon Records:" + result + listTotalsAfterRowsRemoved(connection, projTaxonDb);
         }
 
      // --- Map functions
@@ -1194,6 +1196,20 @@ public class UtilDataAction extends AntwebAction {
       return m_inComputeProcessSince;
     }
   
+
+    /**
+     * After a clean-up took rows off project lists (set 5: cleanupSpeciesListProxyRecords, verifyProjTaxon; also run by
+     * hand): the list totals of those projects, counted earlier in the daily update (set 4), are counted again, so the
+     * project page's Genera equal its list (Brian Fisher, 2026-11-11: Fossil Ants Genera 259, its list 258). The text for
+     * the job's message: "" when no list lost a row.
+     */
+    static String listTotalsAfterRowsRemoved(Connection connection, ProjTaxonDb projTaxonDb) {
+        java.util.Set<String> projects = projTaxonDb.getProjectsWithRowsRemoved();
+        if (projects.isEmpty()) return "";
+        java.util.List<String> counted = new org.calacademy.antweb.home.PlaceViewTotalDb(connection).recountProjects(projects);
+        return "; rows removed from the lists of " + projects.size() + " project" + (projects.size() == 1 ? "" : "s")
+            + ", list totals counted again for " + counted.size() + (counted.isEmpty() ? "" : " (" + String.join(", ", counted) + ")");
+    }
 
     /** Preview page of fixGeolocaleTaxonParentage: what the check found, and a button that applies the fix. */
     static String parentagePreviewHtml(String preview, HttpServletRequest request) {

@@ -41,7 +41,9 @@ import org.apache.commons.logging.LogFactory;
  * yet keeps its stored total. Nightly set 4, after the Not curated count (the lists read place_specimen_name);
  * admins: utilData.do?action=placeViewTotals. Writes "Place list totals counted: ..." to compute.log.
  * Places: valid geolocales whose list has rows, bioregions, museums, projects; not the AntWeb-wide list (allantwebants,
- * its species list is refused as too expensive), which keeps its stored totals.
+ * its species list is refused as too expensive), which keeps its stored totals. Projects: those of scope PROJECT and,
+ * since 2026-11-11, the site-wide lists of scope GLOBAL with a page of their own (the AntCat list, Fossil Ants;
+ * countedProjects): until then their pages showed the project's stored counts beside lists counted by another rule.
  *
  * Only the places whose data changed are counted again (Brian Fisher, 2026-11-09: the step took 60 minutes on 11-07 and
  * 11-08 and about 4 hours on 11-09, production). Every place has a fingerprint (fingerprint(): counts and checksums of
@@ -264,7 +266,7 @@ public class PlaceViewTotalDb {
         return out;
     }
 
-    /** Every place with a list: valid geolocales with list rows, bioregions, museums, projects. */
+    /** Every place with a list: valid geolocales with list rows, bioregions, museums, projects (countedProjects). */
     public List<Overview> places() throws SQLException {
         List<Overview> out = new ArrayList<>();
         Set<Integer> withList = geolocalesWithList();
@@ -272,7 +274,28 @@ public class PlaceViewTotalDb {
         if (geolocales != null) for (Geolocale g : geolocales) if (withList.contains(g.getId())) out.add(g);
         if (BioregionMgr.getBioregions() != null) out.addAll(BioregionMgr.getBioregions());
         if (MuseumMgr.getMuseums() != null) out.addAll(MuseumMgr.getMuseums());
-        if (ProjectMgr.getAntProjects() != null) for (Project p : ProjectMgr.getAntProjects()) if (counts(p)) out.add(p);
+        out.addAll(countedProjects(ProjectMgr.getAntProjects(), ProjectMgr.getGlobalProjects()));
+        return out;
+    }
+
+    /**
+     * The projects whose list totals are counted: the projects of scope PROJECT (ProjectMgr.getAntProjects) and the
+     * site-wide lists of scope GLOBAL (ProjectMgr.getGlobalProjects: the AntCat list worldants, Fossil Ants, ...), each
+     * once, without the AntWeb-wide list (counts()). Until 2026-11-11 only the projects of scope PROJECT were counted, so
+     * the pages of the site-wide lists showed the project's stored counts, which follow another rule than their lists
+     * (production 2026-11-11, Brian Fisher: Fossil Ants Genera 259, its list "258 Valid (with fossils) Genera"). Their
+     * lists open in their own view, Valid (with fossils) (StatusSet.defaultChoice), and are counted in it.
+     */
+    public static List<Project> countedProjects(List<Project> antProjects, List<Project> globalProjects) {
+        List<Project> out = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (List<Project> projects : java.util.Arrays.asList(antProjects, globalProjects)) {
+            if (projects == null) continue;
+            for (Project p : projects) {
+                if (p == null || p.getName() == null || !counts(p) || !seen.add(p.getName())) continue;
+                out.add(p);
+            }
+        }
         return out;
     }
 
@@ -641,6 +664,28 @@ public class PlaceViewTotalDb {
             }
             return false;
         }
+    }
+
+    /**
+     * Counts the list totals of the named projects again (recountPlace each) and returns the names counted. For the
+     * clean-ups of set 5 that take rows off project lists after the daily update counted the totals
+     * (ProjTaxonDb.getProjectsWithRowsRemoved): without it the project page keeps, until the next daily update, the
+     * number of a list that has since lost a row. A project the daily update does not count (the AntWeb-wide list) or
+     * whose count fails is not in the answer.
+     */
+    public List<String> recountProjects(java.util.Collection<String> projectNames) {
+        List<String> counted = new ArrayList<>();
+        if (projectNames == null) return counted;
+        for (String name : projectNames) {
+            if (name == null) continue;
+            Project project = ProjectMgr.getProject(name, false);
+            if (project == null) {      // the projects are not loaded (tests): the name is all the lists' queries need
+                project = new Project();
+                project.setName(name);
+            }
+            if (recountPlace(project)) counted.add(name);
+        }
+        return counted;
     }
 
     private String lastFailure = null;

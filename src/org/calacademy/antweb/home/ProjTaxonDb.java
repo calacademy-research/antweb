@@ -469,6 +469,19 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
     }
 
 
+    /**
+     * The projects whose list lost a row in this object's clean-ups (cleanupSpeciesListProxyRecords, verifyProjTaxon), in
+     * the order found. Set 5 runs these after the daily update has counted the lists' totals (PlaceViewTotalDb, set 4), so
+     * the caller counts these projects' totals again (UtilDataAction; 2026-11-11: Fossil Ants said Genera 259 all day
+     * beside a list of 258: every day the AntCat import puts a fossil genus on the list that has no species there, the
+     * totals count it, and verifyProjTaxon then takes it off the list).
+     */
+    private final Set<String> projectsWithRowsRemoved = new LinkedHashSet<>();
+
+    public Set<String> getProjectsWithRowsRemoved() {
+        return projectsWithRowsRemoved;
+    }
+
     private String deleteProjTaxon(String taxonName, String projectName) throws SQLException {
       return deleteProjTaxon(taxonName, projectName, null);
     }
@@ -482,6 +495,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "deleteProjTaxon()");
             c = stmt.executeUpdate(dml);
+            if (c > 0 && projectName != null) projectsWithRowsRemoved.add(projectName);
         } catch (SQLException e) {
             s_log.error("deleteProjTaxon() e:" + e + " dml:" + dml);
             throw e;

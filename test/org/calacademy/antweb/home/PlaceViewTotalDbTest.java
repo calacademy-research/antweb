@@ -834,4 +834,118 @@ public class PlaceViewTotalDbTest extends TestCase {
         }
         assertEquals("another connection sees each place right after it", Arrays.asList("geolocale " + MADAGASCAR, "museum CASC"), seen);
     }
+
+    // ------------------------------------------------------------------ the site-wide lists (2026-11-11)
+
+    private static org.calacademy.antweb.Project project(String name, String scope) {
+        org.calacademy.antweb.Project p = new org.calacademy.antweb.Project();
+        p.setName(name);
+        p.setScope(scope);
+        return p;
+    }
+
+    /**
+     * Production 2026-11-11 (Brian Fisher): the Fossil Ants page said Genera 259 and its list "258 Valid (with fossils)
+     * Genera". The daily update counted the list totals of the projects of scope PROJECT only (ProjectMgr.getAntProjects);
+     * Fossil Ants and the AntCat list have scope GLOBAL, so their pages showed the project's stored counts, which another
+     * rule counts. They are counted now; the AntWeb-wide list still is not; no project is counted twice.
+     */
+    public void testTheSiteWideListsAreCountedToo() throws Exception {
+        List<org.calacademy.antweb.Project> ant = Arrays.asList(project("madants", "PROJECT"));
+        List<org.calacademy.antweb.Project> global = Arrays.asList(project(org.calacademy.antweb.Project.ALLANTWEBANTS, "GLOBAL"),
+            project(org.calacademy.antweb.Project.WORLDANTS, "GLOBAL"), project(org.calacademy.antweb.Project.FOSSILANTS, "GLOBAL"),
+            project("madants", "PROJECT"), null);
+        List<String> names = new ArrayList<>();
+        for (org.calacademy.antweb.Project p : PlaceViewTotalDb.countedProjects(ant, global)) names.add(p.getName());
+        assertEquals(Arrays.asList("madants", "worldants", "fossilants"), names);
+        assertTrue(PlaceViewTotalDb.countedProjects(null, null).isEmpty());
+        assertEquals(1, PlaceViewTotalDb.countedProjects(ant, null).size());
+    }
+
+    /**
+     * Fossil Ants is counted in its own default view, Valid (with fossils), with the list's code: the stored totals are
+     * the rows its lists show. The line of living species opens the view Valid extant (StatusSet.placePageValidView),
+     * whose rows are the valid names that are not fossils.
+     *
+     * Genera 259 beside a list of 258: every day the AntCat import puts each fossil name on the list, a fossil genus with
+     * no species there among them; set 3 and set 4 count it; set 5's list check (ProjTaxonDb.verifyProjTaxon) then takes a
+     * genus without species off the list. The check now names the projects that lost a row, and their totals are counted
+     * again (PlaceViewTotalDb.recountProjects), so the page's Genera are the list's rows after the check too.
+     */
+    public void testFossilAntsNumbersAreTheRowsOfItsOwnViews() throws Exception {
+        exec("alter table proj_taxon add column rev int default 0");   // read by the project list's query
+        String fossil = org.calacademy.antweb.Project.FOSSILANTS;
+        String genus = "myrmicinaeeocenomyrma";
+        String childless = "myrmicinaeagroecomyrmex";
+        String morphoGenus = "ponerinaeponerine_genus2";
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus, species, fossil) values"
+            + " ('" + genus + "', 'genus', 'valid', '" + MYRM + "', 'formicidae', '" + MYRM + "', 'eocenomyrma', null, 1),"
+            + " ('" + genus + " electrina', 'species', 'valid', '" + genus + "', 'formicidae', '" + MYRM + "', 'eocenomyrma', 'electrina', 1),"
+            + " ('" + genus + " rugosostriata', 'species', 'valid', '" + genus + "', 'formicidae', '" + MYRM + "', 'eocenomyrma', 'rugosostriata', 1),"
+            + " ('" + childless + "', 'genus', 'valid', '" + MYRM + "', 'formicidae', '" + MYRM + "', 'agroecomyrmex', null, 1),"
+            + " ('" + morphoGenus + "', 'genus', 'morphotaxon', '" + PON + "', 'formicidae', '" + PON + "', 'ponerine_genus2', null, 1),"
+            + " ('" + morphoGenus + " sp1', 'species', 'morphotaxon', '" + morphoGenus + "', 'formicidae', '" + PON + "', 'ponerine_genus2', 'sp1', 1)");
+        exec("insert into project (project_name, is_live, scope) values ('" + fossil + "', 1, 'GLOBAL')");
+        // the list: two subfamilies, the fossil genus with two species, the morphogenus with its morphospecies, a living
+        // genus with one living valid species, and a fossil genus with no species on the list
+        for (String name : new String[] {FAMILY, MYRM, PON, genus, genus + " electrina", genus + " rugosostriata", childless, morphoGenus,
+                morphoGenus + " sp1", PHEIDOLE, PA}) {
+            exec("insert into proj_taxon (project_name, taxon_name, source) values ('" + fossil + "', '" + name + "', 'antcat')");
+        }
+        org.calacademy.antweb.Project p = project(fossil, "GLOBAL");
+        assertEquals("Valid (with fossils)", org.calacademy.antweb.StatusSet.defaultChoice(p));
+        PlaceViewTotalDb db = new PlaceViewTotalDb(connection);
+        new PlaceGenusCurationDb(connection).fillAll();
+        db.fill(Arrays.<Overview>asList(p), false);
+        assertEquals("Genera as the daily update counts them: the genus without species is still on the list", 4, stored("project", fossil, "genus"));
+        assertEquals("Species: two fossil species, the morphospecies and the living one", 4, stored("project", fossil, "species"));
+        assertEquals("Subfamilies", 2, stored("project", fossil, "subfamily"));
+        try (PreparedStatement s = connection.prepareStatement("select distinct view_name from place_view_total where list_key = ?")) {
+            s.setString(1, fossil);
+            try (ResultSet r = s.executeQuery()) {
+                assertTrue(r.next());
+                assertEquals("counted in the list's own default view", "Valid (with fossils)", r.getString(1));
+                assertFalse(r.next());
+            }
+        }
+        assertEquals("the page's Genera, Species, Subfamilies", "[4, 4, 2]", Arrays.toString(db.read(p)));
+
+        // set 5: the list check takes the genus without species off the list, and says which projects lost a row
+        org.calacademy.antweb.home.ProjTaxonDb lists = new org.calacademy.antweb.home.ProjTaxonDb(connection);
+        assertTrue(lists.getProjectsWithRowsRemoved().isEmpty());
+        lists.verifyProjTaxon();
+        assertTrue("" + lists.getProjectsWithRowsRemoved(), lists.getProjectsWithRowsRemoved().contains(fossil));
+        org.calacademy.antweb.TaxaPage genera = new org.calacademy.antweb.TaxaPage();
+        genera.fetchChildren(connection, p, "genus", false, true, false, true, null,
+            org.calacademy.antweb.StatusSet.listStatusSet(org.calacademy.antweb.StatusSet.defaultChoice(p), fossil));
+        assertEquals("the genus list after the check", 3, genera.getChildrenCount());
+        assertEquals("until 2026-11-11 the page kept the number of before the check", 4, stored("project", fossil, "genus"));
+        List<String> counted = db.recountProjects(lists.getProjectsWithRowsRemoved());
+        assertTrue("" + counted, counted.contains(fossil));
+        assertFalse("the AntWeb-wide list is not counted", counted.contains(org.calacademy.antweb.Project.ALLANTWEBANTS));
+        assertEquals("the page's Genera are the list's rows", 3, stored("project", fossil, "genus"));
+        assertEquals("3 Valid (with fossils) Genera", org.calacademy.antweb.StatusSet.listHeading(org.calacademy.antweb.StatusSet.defaultChoice(p),
+            3, "Genera", "Genera", -1, fossil));
+        assertTrue(db.recountProjects(null).isEmpty());
+        // a check that removes nothing names no project
+        org.calacademy.antweb.home.ProjTaxonDb again = new org.calacademy.antweb.home.ProjTaxonDb(connection);
+        again.verifyProjTaxon();
+        assertFalse("" + again.getProjectsWithRowsRemoved(), again.getProjectsWithRowsRemoved().contains(fossil));
+
+        // the line of living species: the view Valid extant, one row, and not the list's default view (four rows)
+        String validView = org.calacademy.antweb.StatusSet.placePageValidView(fossil);
+        assertEquals("valid extant", validView);
+        assertEquals("valid", org.calacademy.antweb.StatusSet.placePageValidView("madants"));
+        assertEquals("valid", org.calacademy.antweb.StatusSet.placePageValidView(null));
+        assertEquals("the list reads the value as its own view", "valid extant", org.calacademy.antweb.StatusSet.ownChoice(validView));
+        assertEquals("statusSet=valid is read there as the default view (the old link)", "Valid (with fossils)",
+            org.calacademy.antweb.StatusSet.ownChoice(org.calacademy.antweb.StatusSet.LIST_VALID));
+        org.calacademy.antweb.TaxaPage living = new org.calacademy.antweb.TaxaPage();
+        living.fetchChildren(connection, p, "species", false, true, false, true, null, org.calacademy.antweb.StatusSet.listStatusSet(validView, fossil));
+        assertEquals("Valid extant: the living valid species", 1, living.getChildrenCount());
+        assertEquals("1 Valid extant Species", org.calacademy.antweb.StatusSet.listHeading(validView, 1, "Species", "Species", -1, fossil));
+        // the next daily update keeps the site-wide list's totals (it removes the rows of the places it is not given)
+        db.fill(Arrays.<Overview>asList(p), false);
+        assertEquals(3, stored("project", fossil, "genus"));
+    }
 }

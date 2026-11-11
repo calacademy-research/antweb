@@ -449,6 +449,16 @@ public class StatusSet extends Status {
     }
 
     /**
+     * The view the place page's line of valid, living species and subspecies opens (overview-body.jsp, the number
+     * valid_species_count: valid names, not fossils): Valid; on the AntCat list and Fossil Ants their own Valid extant.
+     * Until 2026-11-11 the line linked statusSet=valid everywhere, which those two lists read as their default, Valid
+     * (with fossils) (ownChoice): Fossil Ants said "Valid species / subspecies 3" and opened a list of 868.
+     */
+    public static String placePageValidView(String overviewName) {
+        return hasOwnStatusSets(overviewName) ? VALID_EXTANT : LIST_VALID;
+    }
+
+    /**
      * The view a list opens with when the address names none: Curated, on every kind of list (Brian Fisher, 2026-11-02;
      * replaces the defaults of 2026-10-30, Valid species on geolocales and curated projects, Valid species +
      * morphospecies elsewhere). The AntCat list (worldants) and Fossil Ants: Valid (with fossils), their own set.

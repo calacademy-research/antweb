@@ -728,6 +728,29 @@ Found while doing this (2026-10-26, end-to-end tests of rows 24 to 53; each has 
   Code left as it is until the cause is confirmed (cause 2). Seen in the code on the way: `ProjTaxonCountDb.fixExceptions` gives
   fossilants rows that are not valid the source `curator`, a source that makes a morphospecies curated everywhere in the
   Curated view (`ListView.vettedCondition` leaves out worldants and allantwebants only), to look at with Brian.
+  2026-11-11 (Brian Fisher, production: Fossil Ants Genera 259, its list "258 Valid (with fossils) Genera"; "Valid
+  species / subspecies 3" opening a list of 868). From the code: (a) the page's Subfamilies, Genera and Species were not
+  the list totals of `PlaceViewTotalDb`: it counted the projects of scope PROJECT only (`ProjectMgr.getAntProjects`), and
+  Fossil Ants and the AntCat list are GLOBAL, so their pages showed `project.genus_count` and `species_count` (set 3);
+  (b) Genera one over is cause 2 after all: the stored rule's rows are a subset of the list's rows at any one moment
+  (same statuses, the list has no placeholder condition), so a stored number above the list means the list lost a row
+  after the count. Every day the AntCat import puts each fossil name on the list (`SpeciesListUpload`, "IF FOSSIL"), a
+  fossil genus with no species on the list among them; set 3 counts it; set 5's `verifyProjTaxon` deletes it. The query
+  of 2026-11-03 for cause 2 was run in the afternoon, after set 5, so it found nothing; (c) the Valid line links
+  `statusSet=valid`, which the two lists with their own views read as their default, Valid (with fossils)
+  (`StatusSet.ownChoice`), while the number is `valid_species_count` (valid, not fossil). Fixed 2026-11-11: the daily
+  update counts the site-wide lists' totals too (`PlaceViewTotalDb.countedProjects`; not allantwebants), in their own
+  default view; set 5's `verifyProjTaxon` and `cleanupSpeciesListProxyRecords` count a project's totals again when they
+  take a row off its list (`ProjTaxonDb.getProjectsWithRowsRemoved`, `PlaceViewTotalDb.recountProjects`); on those two
+  pages the lines name the view Valid (with fossils) and open it, and the line of living species is "Valid living
+  species / subspecies", after the Species line, opening Valid extant (`StatusSet.placePageValidView`). Tests:
+  `PlaceViewTotalDbTest.testTheSiteWideListsAreCountedToo`, `testFossilAntsNumbersAreTheRowsOfItsOwnViews`,
+  `tests/unit/test_place_species_label.py`, `e2e:test_fossil_page_counts.py`. Still as before: `project.genus_count` of
+  Fossil Ants (and its subfamily rows' stored genus_count) is one over from set 3 to the next daily update; no page
+  shows it once the list totals are counted. To confirm on production (read-only), the genus the import adds and set 5
+  removes: `select t.taxon_name from taxon t where t.taxarank = 'genus' and t.fossil = 1 and t.status = 'valid' and
+  t.family = 'formicidae' and not exists (select 1 from proj_taxon l where l.project_name = 'fossilants' and
+  l.taxon_name = t.taxon_name)`.
 
 Found while testing the admin and upload report numbers (2026-10-27, rows 83, 94 to 96, 98; all fixed the same day).
 Upload reports are files written once, so a report written before the fix keeps its old numbers; reports of the new

@@ -194,7 +194,15 @@
   // and Species / subspecies / morphospecies open the default view Curated (valid names and curated morphospecies;
   // California 2026-11-04: Species 340 = "340 Species (valid and curated)"); Valid species opens the view Valid.
   String listBase = AntwebProps.getDomainApp() + "/taxonomicPage.do?" + overview.getParams() + "&rank=";
-  String curatedView = "&statusSet=" + org.calacademy.antweb.StatusSet.LIST_VETTED;
+  // The view the numbers are counted in and open: the list's default, Curated; on the AntCat list and Fossil Ants their
+  // own Valid (with fossils) (StatusSet.defaultChoice, the view PlaceViewTotalDb counts). Brian Fisher, 2026-11-11: the
+  // Fossil Ants page named the view Curated on every line, and "Valid species / subspecies 3" opened a list of 868 (the
+  // link statusSet=valid is read there as Valid (with fossils)); that line now opens their view Valid extant.
+  boolean ownViews = org.calacademy.antweb.StatusSet.hasOwnStatusSets(overview.getName());
+  String defaultView = org.calacademy.antweb.StatusSet.defaultChoice(overview);
+  String defaultViewName = org.calacademy.antweb.StatusSet.choiceLabel(defaultView, null, overview.getName());
+  String curatedView = "&statusSet=" + Html.url(defaultView);
+  String validView = org.calacademy.antweb.StatusSet.placePageValidView(overview.getName());
   // Subfamilies, Genera and Species: the rows of the lists in the default view, counted nightly with the list's own code
   // (PlaceViewTotalDb, 2026-11-04); a place not counted yet shows its stored total.
   int[] viewTotals = (int[]) request.getAttribute("placeViewTotals");
@@ -203,7 +211,26 @@
   int subfamiliesShown = viewTotals != null && viewTotals.length > 2 && viewTotals[2] >= 0 ? viewTotals[2] : overview.getSubfamilyCount();
   String subfamilyCell = "<a href=\"" + Html.escAttr(listBase + "subfamily" + curatedView) + "\">" + Formatter.commaFormat(subfamiliesShown) + "</a>";
   String genusCell = "<a href=\"" + Html.escAttr(listBase + "genus" + curatedView) + "\">" + Formatter.commaFormat(generaShown) + "</a>";
-  String validCell = "<a href=\"" + Html.escAttr(listBase + "species&statusSet=" + org.calacademy.antweb.StatusSet.LIST_VALID) + "\">" + Formatter.commaFormat(overview.getValidSpeciesCount()) + "</a>";
+  String validCell = "<a href=\"" + Html.escAttr(listBase + "species&statusSet=" + Html.url(validView)) + "\">" + Formatter.commaFormat(overview.getValidSpeciesCount()) + "</a>";
+  // What each line counts, in the words of its view.
+  String inDefaultView = " on " + listName + " in its default view, " + Html.esc(defaultViewName) + " (the number opens it): ";
+  String subfamiliesDef = "Subfamilies" + inDefaultView + (ownViews
+      ? "valid subfamilies, living and extinct."
+      : "valid subfamilies only. Specimens identified only to family and subfamily names not in AntCat are not counted.");
+  String generaDef = "Genera" + inDefaultView + (ownViews
+      ? "valid genera, living and extinct, and morphogenera."
+      : "valid genera, and morphogenera with a curated morphospecies here. Genera known here only from specimens identified to genus are listed under All specimen names and not counted.");
+  String speciesDef = "Species and subspecies" + inDefaultView + (ownViews
+      ? "valid names, living and fossil, and morphospecies."
+      : "valid names and curated morphospecies (morphospecies a curator has added to a list). Other morphospecies, names identified only to genus and names not in AntCat are listed under All specimen names and not counted here; their specimens are counted under Specimens.");
+  String validName = ownViews ? "Valid living species / subspecies" : "Valid species / subspecies";
+  String validDef = "Currently valid, formally named, living (non-fossil) species and subspecies on " + listName + ": its view "
+      + (ownViews ? "Valid extant (the number opens it). Fossil species are counted in the line above." : "Valid (the number opens it). Excludes morphospecies and unidentified taxa.");
+  // One line, placed before Species / subspecies / morphospecies; on the AntCat list and Fossil Ants after it (the living
+  // species are a part of that line there).
+  String validRow = overview.getValidSpeciesCount() > 0
+      ? "<tr data-stat=\"valid\" data-n=\"" + overview.getValidSpeciesCount() + "\"><td class=\"ps_name\">" + validName + "</td><td class=\"ps_num\">" + validCell + "</td><td class=\"ps_def\">" + validDef + "</td></tr>"
+      : "";
   String speciesCount = Formatter.commaFormat(speciesShown);
   String speciesCell = "<a href=\"" + Html.escAttr(listBase + "species" + curatedView) + "\">" + speciesCount + "</a>";
   String introducedListLink = "<a href='" + AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=species&project=introducedants'>introduced-species list</a>";
@@ -263,12 +290,11 @@
 <div id="place-stats" data-view-counted="<%= viewTotals != null && viewTotals[0] >= 0 %>"<% if (placeImages != null && !isSpeciesListOnly) { %> data-images="<%= placeImages.allImages %>" data-ant="<%= placeImages.antImages %>" data-labels="<%= placeImages.labelImages() %>" data-imaged="<%= placeImages.imagedSpecimens %>" data-label-only="<%= placeImages.labelOnlySpecimens %>"<% } %>>
 <table class="place_stats">
 <tr class="ps_head"><th colspan="3">Taxonomic diversity</th></tr>
-<tr data-stat="subfamilies" data-n="<%= subfamiliesShown %>"><td class="ps_name">Subfamilies</td><td class="ps_num"><%= subfamilyCell %></td><td class="ps_def">Subfamilies on <%= listName %> in its default view, Curated (the number opens it): valid subfamilies only. Specimens identified only to family and subfamily names not in AntCat are not counted.</td></tr>
-<tr data-stat="genera" data-n="<%= generaShown %>"><td class="ps_name">Genera</td><td class="ps_num"><%= genusCell %></td><td class="ps_def">Genera on <%= listName %> in its default view, Curated (the number opens it): valid genera, and morphogenera with a curated morphospecies here. Genera known here only from specimens identified to genus are listed under All specimen names and not counted.</td></tr>
-<% if (overview.getValidSpeciesCount() > 0) { %>
-<tr data-stat="valid" data-n="<%= overview.getValidSpeciesCount() %>"><td class="ps_name">Valid species / subspecies</td><td class="ps_num"><%= validCell %></td><td class="ps_def">Currently valid, formally named, living (non-fossil) species and subspecies on <%= listName %>: its view Valid (the number opens it). Excludes morphospecies and unidentified taxa.</td></tr>
-<% } %>
-<tr data-stat="species" data-n="<%= speciesShown %>"><td class="ps_name">Species / subspecies / morphospecies</td><td class="ps_num"><%= speciesCell %></td><td class="ps_def">Species and subspecies on <%= listName %> in its default view, Curated (the number opens it): valid names and curated morphospecies (morphospecies a curator has added to a list). Other morphospecies, names identified only to genus and names not in AntCat are listed under All specimen names and not counted here; their specimens are counted under Specimens.</td></tr>
+<tr data-stat="subfamilies" data-n="<%= subfamiliesShown %>"><td class="ps_name">Subfamilies</td><td class="ps_num"><%= subfamilyCell %></td><td class="ps_def"><%= subfamiliesDef %></td></tr>
+<tr data-stat="genera" data-n="<%= generaShown %>"><td class="ps_name">Genera</td><td class="ps_num"><%= genusCell %></td><td class="ps_def"><%= generaDef %></td></tr>
+<%= ownViews ? "" : validRow %>
+<tr data-stat="species" data-n="<%= speciesShown %>"><td class="ps_name">Species / subspecies / morphospecies</td><td class="ps_num"><%= speciesCell %></td><td class="ps_def"><%= speciesDef %></td></tr>
+<%= ownViews ? validRow : "" %>
 <% if (showEndemism) { %>
 <tr class="ps_head"><th colspan="3">Endemism and introduced species</th></tr>
 <tr data-stat="endemic" data-n="<%= overview.getEndemicSpeciesCount() %>"><td class="ps_name">Endemic</td><td class="ps_num"><%= endemicCell %></td><td class="ps_def"><%= endemicDef %></td></tr>

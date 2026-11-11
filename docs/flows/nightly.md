@@ -183,7 +183,7 @@ gate does not read this line (its check 8 asks `dailyUpdate.do` whether the dail
 | `deleteConflictedDefaultImages` | `TaxonPropDb.deleteConflictedDefaultImages()` (line 302) | deletes `taxon_prop` default-specimen choices (`...Specimen` properties) whose specimen is now filed under another name |
 | `genObjectMaps` (49 min) | `ObjectMapDb.genObjectMaps()` (line 27) | map data for every country, museum and adm1 (group maps are made at upload time) |
 | `cleanupSpeciesListProxyRecords` | `ProjTaxonDb.cleanupSpeciesListProxyRecords()` (line 398) | deletes `proj_taxon` rows with source `proxyspeciesListTool` that have no children in that project |
-| `verifyProjTaxon` | `ProjTaxonDb.verifyProjTaxon()` (line 472) | deletes genus rows from project lists (not `worldants`) that have no species in that project |
+| `verifyProjTaxon` | `ProjTaxonDb.verifyProjTaxon()` (line 472) | deletes genus rows from project lists (not `worldants`) that have no species in that project; since 2026-11-11 the list totals of a project that lost a row here or in `cleanupSpeciesListProxyRecords` are counted again (`PlaceViewTotalDb.recountProjects`), because set 4 counted them before the row went (Fossil Ants: Genera 259 beside a list of 258) |
 | caches | `AntwebMgr.populate(connection, true)` | reloads every in-memory manager (taxa, geolocales, projects, museums, groups, ...); pages show "initializing" meanwhile; also increments the specimen upload id |
 
 ### Where the time goes (lines with times, 2026-11-10)
