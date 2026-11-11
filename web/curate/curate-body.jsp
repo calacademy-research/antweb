@@ -219,7 +219,6 @@
 <div class="aw-card curate-group" id="curate-names">
   <h2>Names and checks</h2>
   <ul class="aw-links">
-    <li><a href="<%= domainApp %>/dailyUpdate.do">Daily update</a>: today's daily update (05:00 Pacific) step by step: status, start, end and duration of each step, and the earlier days.</li>
 <% if (accessLogin.isAdmin()) { %>
     <li><a href="<%= domainApp %>/query.do?name=worldantsUploads">World (AntCat) upload reports</a>: the nightly import of AntCat names (names added, changed and removed each night).</li>
 <% } %>

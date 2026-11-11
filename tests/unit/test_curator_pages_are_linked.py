@@ -23,6 +23,7 @@ REACHED_FROM = {
     "/editProject": "web/curate/projectMgr-body.jsp",
     "/newGroup": "web/curate/viewGroups-body.jsp",
     "/newLogin": "web/curate/viewLogins-body.jsp",
+    "/passwordResetCampaign": "web/curate/viewLogins-body.jsp",      # Login Manager (Brian Fisher, 2026-11-11)
     "/saveGroup": "web/curate/viewGroup-body.jsp",
     "/saveMuseum": "web/curate/viewMuseum.jsp",
     "/viewGroup": "web/curate/saveGroupSuccess-body.jsp",
@@ -40,10 +41,8 @@ REACHED_FROM = {
     "/speciesListToolSearch": "web/curate/speciesList/speciesListTool.jsp",
 }
 
-# Pages with no link, on purpose, and why.
+# Pages with no link, on purpose, and why. (None today.)
 NO_LINK = {
-    "/passwordResetCampaign": "asks every curator and admin for a new password (preview, mark, send); an admin opens "
-                              "it by its address; to decide (Brian Fisher): a link on the Login Manager",
 }
 
 
@@ -78,15 +77,18 @@ def test_every_curator_and_admin_page_has_a_way_in():
     print("ok   test_every_curator_and_admin_page_has_a_way_in")
 
 
-def test_the_daily_update_page_is_on_both_hub_pages():
-    curate = read("web/curate/curate-body.jsp")
-    card = curate.split('id="curate-names"', 1)[1].split("</div>", 1)[0]
-    assert '<li><a href="<%= domainApp %>/dailyUpdate.do">Daily update</a>:' in card, "not in Names and checks"
-    # for every curator: not inside an admin-only block
-    before = card.split("/dailyUpdate.do", 1)[0]
-    assert before.count("<% if (") == before.count("<% } %>"), "the Daily update link is inside a condition"
+def test_the_daily_update_page_is_an_admin_report():
+    """Brian Fisher, 2026-11-11: the daily update is an admin matter; its link is in the admins' Reports section of
+    the Curator Tools page (first line), not in a section every curator sees, and on the Technical page."""
+    links = read("web/curate/curatorLinks.jsp")
+    card = links.split('id="curate-reports"', 1)[1].split("</div>", 1)[0]
+    first = card.split("<li>", 2)[1]
+    assert first.startswith('<a href="<%= domainApp %>/dailyUpdate.do">Daily update</a>'), first[:120]
+    assert links.lstrip().startswith("<% if (accessLogin.isAdmin()) {") or "isAdmin" in links.split('id="curate-reports"', 1)[0], \
+        "curatorLinks.jsp is no longer for admins only"
+    assert "dailyUpdate.do" not in read("web/curate/curate-body.jsp"), "the link is in a section curators see"
     assert '/dailyUpdate.do">Daily update</a>' in read("web/curate/technical-body.jsp")
-    print("ok   test_the_daily_update_page_is_on_both_hub_pages")
+    print("ok   test_the_daily_update_page_is_an_admin_report")
 
 
 def test_the_lists_name_real_pages():
@@ -98,6 +100,6 @@ def test_the_lists_name_real_pages():
 
 if __name__ == "__main__":
     test_every_curator_and_admin_page_has_a_way_in()
-    test_the_daily_update_page_is_on_both_hub_pages()
+    test_the_daily_update_page_is_an_admin_report()
     test_the_lists_name_real_pages()
     print("ok")
