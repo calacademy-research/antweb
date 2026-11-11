@@ -522,7 +522,8 @@ def drop_tables(db, table):
 
 
 def rollback(db, table, folder, when):
-    """Puts the old values back where the specimen still holds what the run gave it; the report text."""
+    """Puts the old values back where the specimen still holds what the run gave it: (the report text, whether
+    restored and left add up to the table)."""
     columns = {r[0] for r in run_sql(db, "show columns from " + table)}
     if not all(c in columns for c in NEW_COLUMNS) and not run_sql(db, "show tables like '" + table + "\\_map'"):
         sys.exit("--rollback: table " + table + " does not say what the run applied (no columns " + ", ".join(NEW_COLUMNS)
@@ -549,7 +550,7 @@ def rollback(db, table, folder, when):
     text = "\n".join(lines) + "\n"
     with open(os.path.join(folder, "report.txt"), "w", encoding="utf-8") as f:
         f.write(text)
-    return text
+    return text, restored + len(skipped) == total
 
 
 def main(argv=None):
@@ -581,9 +582,10 @@ def run(argv=None):
         if not TABLE_NAME.match(args.rollback):
             sys.exit("--rollback: not a backup table name: " + repr(args.rollback))
         folder = args.out or os.path.join("/root/antweb-place-fix", now.strftime("%Y-%m-%d-%H%M") + "-rollback")
-        print(rollback(db, args.rollback, folder, now.strftime("%Y-%m-%d %H:%M")))
+        text, adds_up = rollback(db, args.rollback, folder, now.strftime("%Y-%m-%d %H:%M"))
+        print(text)
         print("Files: " + folder)
-        return 0
+        return 0 if adds_up else 1      # the NOTE in the report: a script that runs the rollback must notice it too
 
     folder = args.out or os.path.join("/root/antweb-place-fix", now.strftime("%Y-%m-%d-%H%M"))
     os.makedirs(folder, exist_ok=True)

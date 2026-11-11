@@ -868,7 +868,7 @@ jobs:
           done
           [ "$ok" = 1 ] || { docker logs pfmysql 2>&1 | tail -30; echo "::error::MySQL did not start"; exit 1; }
           PLACE_FIX_TEST_CONTAINER=pfmysql PLACE_FIX_TEST_PASSWORD=ci-root python3 tests/unit/test_place_fix_db.py | tee /tmp/place_fix_db.txt
-          grep -q "^4 tests passed (MySQL 8.4" /tmp/place_fix_db.txt
+          grep -q "^6 tests passed (MySQL 8.4" /tmp/place_fix_db.txt
           docker rm -f pfmysql
 
       - name: Pheidole head export, plan and contact sheets without a database (tests/unit/test_pheidole_export.py)

@@ -226,6 +226,30 @@ def test_rollback_leaves_a_specimen_that_is_in_another_state_now():
         w.close()
 
 
+def test_a_rollback_that_does_not_add_up_exits_with_an_error():
+    """Automatic review of #341, 2026-11-10: when a specimen changes while the rollback runs, restored and left do not
+    add up to the table; the report had a NOTE, the exit code was 0, and a script that ran the rollback saw a success."""
+    w = World("h")
+    try:
+        result, printed, _ = w.tool("--apply")
+        assert result == 0, (result, printed)
+        table = [t for t in w.tables() if not t.endswith("_map")][0]
+
+        def a_curator(statement):       # between the list of what will be left alone and the rollback itself
+            if statement.startswith("update specimen s join " + table):
+                w.sql("update specimen set bioregion = 'Neotropical' where code = 'c4'")
+
+        result, printed, _ = w.tool("--rollback", table, before=a_curator)
+        assert result == 1, (result, printed)
+        assert "NOTE: restored and left do not add up to the table (5 of 6)" in printed, printed
+        assert w.specimens()["c4"] == ("Canada", "", "Neotropical")
+        # run again, as the note says: it adds up, and the exit code is 0
+        result, printed, _ = w.tool("--rollback", table)
+        assert result == 0 and "NOTE" not in printed and "(rollback_skipped.csv): 6\n" in printed, (result, printed)
+    finally:
+        w.close()
+
+
 def version_3_apply(w, table):
     """What version 3 of the tool did on the servers on 2026-11-10: the same tables, a key on the code, and an update
     by the code alone. (Its hex comparisons had no convert; on a utf8mb4 table the bytes are the same.)"""

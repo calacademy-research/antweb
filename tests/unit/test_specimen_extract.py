@@ -4,7 +4,7 @@ The Ants of the Nearctic list built from a March 2026 extract was short (Stenamm
 said so. The tool writes every specimen of the chosen countries (with or without coordinates, with or without a
 taxon row) and a manifest whose counts are checked against a separate count of the database.
 
-No database here: a stand-in `docker` answers the tool's four queries with mysql --batch output (escaped tabs,
+No database here: a stand-in `docker` answers the tool's queries with mysql --batch output (escaped tabs,
 newlines, backslashes, NULL), records its arguments, and can make the database count differ.
 
 Run: python3 tests/unit/test_specimen_extract.py   (also in .github/workflows/tests.yaml)
@@ -410,6 +410,7 @@ def test_ants_only_is_the_default_and_says_what_it_left_out():
     assert r.returncode == 0, r.stdout + r.stderr
     nc = [c["sql"] for c in calls(d) if "s.country is null" in c["sql"]]
     assert nc and all(se.ANTS in q for q in nc), nc
+    print("ok   test_ants_only_is_the_default_and_says_what_it_left_out")
 
 
 def test_the_same_specimens_give_the_same_checksum():
@@ -426,6 +427,7 @@ def test_the_same_specimens_give_the_same_checksum():
     assert shas[0] == shas[1], shas
     with gzip.open(os.path.join(d, "out", "specimens.csv.gz"), "rt", encoding="utf-8", newline="") as f:
         assert len(list(csv.DictReader(f))) == 5
+    print("ok   test_the_same_specimens_give_the_same_checksum")
 
 
 if __name__ == "__main__":

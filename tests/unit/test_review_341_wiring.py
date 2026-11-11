@@ -63,6 +63,22 @@ def test_the_upload_stores_a_respelled_country_and_reports_it():
     assert 'public static final String countrySpellingCorrected = "countrySpellingCorrected";' in read("src/org/calacademy/antweb/upload/MessageMgr.java")
 
 
+def test_the_upload_works_out_the_bioregion_from_the_valid_country():
+    """Automatic review of #341, 2026-11-10: tools/place/place_fix.py corrects stored bioregions to what an upload
+    today would store, and the CAS TaxonWorks upload loads its specimens again every day. If parseLine worked out the
+    bioregion from the country as the file wrote it (USA, México), the next upload would undo the correction. The
+    bioregion is asked for with the variable country, after it was given the valid country's name and with no other
+    value given to it in between."""
+    src = read("src/org/calacademy/antweb/upload/SpecimenUploadParse.java")
+    parse = code(body(src, "protected String parseLine(String theLine, int lineNum, Hashtable specimenItem, Hashtable taxonItem"))
+    named = parse.index("country = validCountry.getName();")
+    asked = parse.index("GeolocaleMgr.getGeolocaleBioregion(country, adm1)")
+    assert named < asked, "parseLine asks for the bioregion before the country has its valid name"
+    assert parse.count("GeolocaleMgr.getGeolocaleBioregion(") == 1, "a second bioregion lookup in parseLine: check what country it is given"
+    between = parse[named + len("country = validCountry.getName();"):asked]
+    assert not re.search(r"(?<![\w.])country\s*=[^=]", between), "country is given another value before the bioregion is worked out"
+
+
 def test_the_server_start_schedules_the_early_taxonworks_request():
     src = read("src/org/calacademy/antweb/util/SessionRequestFilter.java")
     run = code(body(src, "public void runTask()"))
@@ -81,5 +97,6 @@ def test_the_server_start_schedules_the_early_taxonworks_request():
 
 if __name__ == "__main__":
     test_the_upload_stores_a_respelled_country_and_reports_it()
+    test_the_upload_works_out_the_bioregion_from_the_valid_country()
     test_the_server_start_schedules_the_early_taxonworks_request()
     print("ok")

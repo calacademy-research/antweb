@@ -70,6 +70,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 
 VERSION = "8"
 TAXON_COLUMNS = ("taxon_status", "taxon_fossil", "taxon_rank", "taxon_current_valid_name", "taxon_author_date",
@@ -142,14 +143,18 @@ def left_out_sql(countries, islands):
             + " and not " + ANTS + " group by 1 order by 2 desc, 1 /* left out */")
 
 
-def export_sql(countries, islands, ants_only=False):
+def export_sql(countries, islands, ants_only=False, where=None):
+    """The export. where: another condition in place of the countries' (the no-country file).
+    Every column of specimen: all specimen records in AntWeb are public (there is no hidden group), and the columns
+    are what the specimen page and the API show, plus where the row came from (group, login and upload ids, line
+    number, upload file name). The manifest lists the columns of each extract."""
     return ("set session transaction isolation level read committed; "
             "select s.*, t.status as taxon_status, t.fossil as taxon_fossil, t.taxarank as taxon_rank, "
             "t.current_valid_name as taxon_current_valid_name, t.author_date as taxon_author_date, g.name as group_name, "
             "case when t.taxon_name is null then 1 else 0 end as no_taxon_row "
             "from specimen s left join taxon t on t.taxon_name = s.taxon_name "
             "left join ant_group g on g.id = s.access_group "
-            "where " + where_sql(countries, islands, ants_only) + " order by s.code")
+            "where " + (where or where_sql(countries, islands, ants_only)) + " order by s.code")
 
 
 def outdated_sql(countries):
@@ -197,7 +202,7 @@ def no_country_where(islands, ants_only=False):
 def no_country_export_sql(islands, ants_only=False):
     """Specimens with no country at all: no country filter can find them (production 2026-11-10: 1,623, among them
     303 of the University of Utah and 167 of UTEP), so they go in a file of their own for the curators to look through."""
-    return export_sql([], []).replace(where_sql([], []), no_country_where(islands, ants_only))
+    return export_sql([], [], where=no_country_where(islands, ants_only))
 
 
 def no_country_count_sql(islands, ants_only=False):
@@ -268,20 +273,22 @@ def run_query(project, sql, container):
 def stream_query(project, sql, container):
     """Lines of a large query, one at a time (the first line is the header)."""
     user, password = db_login(project)
-    p = subprocess.Popen(mysql_command(user, container, header=True), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, env=dict(os.environ, MYSQL_PWD=password))
-    p.stdin.write(sql.encode("utf-8"))
-    p.stdin.close()
-    try:
-        for raw in p.stdout:
-            yield raw.decode("utf-8", "replace").rstrip("\n")
-        err = p.stderr.read().decode("utf-8", "replace").strip()
-        if p.wait() != 0:
-            sys.exit("mysql failed during the export: " + err)
-    finally:
-        if p.poll() is None:        # the reader stopped early (a broken row): the query must not run on
-            p.kill()
-            p.wait()
+    # Errors and warnings go to a file, not a pipe: a pipe nobody reads while the rows stream fills up and stops mysql.
+    with tempfile.TemporaryFile() as errors:
+        p = subprocess.Popen(mysql_command(user, container, header=True), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                             stderr=errors, env=dict(os.environ, MYSQL_PWD=password))
+        p.stdin.write(sql.encode("utf-8"))
+        p.stdin.close()
+        try:
+            for raw in p.stdout:
+                yield raw.decode("utf-8", "replace").rstrip("\n")
+            if p.wait() != 0:
+                errors.seek(0)
+                sys.exit("mysql failed during the export: " + errors.read().decode("utf-8", "replace").strip())
+        finally:
+            if p.poll() is None:        # the reader stopped early (a broken row): the query must not run on
+                p.kill()
+                p.wait()
 
 
 def has_coordinates(lat, lon):
