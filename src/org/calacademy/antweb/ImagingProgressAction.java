@@ -26,8 +26,12 @@ import org.calacademy.antweb.util.HttpUtil;
 /**
  * /imagingProgress.do (public; util/imagingProgress.jsp; Brian Fisher, 2026-11-08): how many valid living ant species
  * and subspecies have a photo of the ant on AntWeb, overall, by bioregion, country, genus and museum, the trend since
- * 2026-10-28, and the names still to image. Reads the table imaging_progress (ImagingProgressDb, filled by the daily
- * update, set 4) and the statistics rows; nothing is counted on a visit except the unimaged list, read once per day.
+ * ImagingProgressDb.RULE_SINCE, and the names still to image. Reads the tables imaging_progress and imaging_unimaged
+ * (ImagingProgressDb, both written in one transaction by the daily update, set 4) and the statistics rows; nothing is
+ * counted on a visit. The numbers and the list are shown only together: where the stored list is not the list of the
+ * stored counts (ImagingProgressDb.listStored(): counts stored before the list table existed), the page says the
+ * progress is not counted yet and the CSV answers 503, until the next fill (2026-11-11; staging the day before: the
+ * page said "Still to image: 2,773" while the CSV, read live after a restart, had 2,780 names).
  *
  *   (no parameter)     the page (request attributes progress, trend, computed)
  *   genus=<key>        the unimaged species and subspecies of one genus (key: subfamily + genus, as the genus table's links)
@@ -66,9 +70,10 @@ public final class ImagingProgressAction extends AntwebAction {
             DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, dbMethodName);
             ImagingProgressDb db = new ImagingProgressDb(connection);
-            if (!db.tableExists()) {
+            if (!db.tableExists() || !db.listStored()) {
                 if (csv) {
-                    // not counted yet (the day of the first deploy): a script asking for the CSV must not get a page
+                    // not counted yet (the day of the first deploy), or counted before the list was stored with the
+                    // counts: a script asking for the CSV must not get a page, nor a list of another moment
                     response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
                     response.setContentType("text/plain; charset=UTF-8");
                     response.getWriter().write("The imaging progress has not been counted yet. It is counted once a day by the daily update.");

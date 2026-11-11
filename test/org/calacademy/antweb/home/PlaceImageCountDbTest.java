@@ -19,7 +19,8 @@ import org.calacademy.antweb.util.CountCheck;
  * labels too), images per view, Imaged specimens (an image that is not a label) and specimens with
  * only a label photo, for an island (Madagascar), a country, an adm1, a region, a museum, a bioregion
  * and a project; the per-taxon image counts of a place (Geolocale.getTaxonImageCountQuery) only count
- * the place's specimens; the count check (CountCheck "place images") finds stale numbers.
+ * the place's specimens; red-flagged specimens' images are not counted (2026-11-09); the count check (CountCheck
+ * "place images") finds stale numbers.
  *
  * Runs in CI against MySQL 8.4 (host "mysql"), like CountCheckTest; ANTWEB_TEST_DB_URL overrides.
  */
@@ -51,7 +52,8 @@ public class PlaceImageCountDbTest extends TestCase {
         exec("alter table taxon add column genus varchar(64) invisible");
         exec("create table specimen (code varchar(128) primary key, taxon_name varchar(128), status varchar(40), country varchar(64),"
             + " adm1 varchar(64), island_country varchar(64), museum varchar(64), bioregion varchar(64), upload_id int,"
-            + " family varchar(64) default 'formicidae', subfamily varchar(64), genus varchar(64), species varchar(64), image_count int default 0)");
+            + " family varchar(64) default 'formicidae', subfamily varchar(64), genus varchar(64), species varchar(64), image_count int default 0,"
+            + " flag varchar(10))");   // red flag (2026-11-09: images of red-flagged specimens are not counted)
         exec("create table image (id int primary key, image_of_id varchar(128), shot_type varchar(10), upload_date datetime)");
         exec("create table geolocale (id int primary key, name varchar(128), georank varchar(20), parent varchar(128), is_valid tinyint default 1,"
             + " is_island tinyint default 0, image_count int default 0, imaged_specimen_count int default 0)");
@@ -148,6 +150,9 @@ public class PlaceImageCountDbTest extends TestCase {
         PlaceImageCountDb db = new PlaceImageCountDb(connection);
         String line = db.updateAll();
         assertTrue(line, line.startsWith("Place image counts:"));
+        // 2026-11-10: the geolocale part says how long each of its sources took (production: 639 s, which one?)
+        assertTrue(line, line.matches("Place image counts: geolocale \\d+ places with images in [0-9.]+ s \\(islands [0-9.]+ s, countries [0-9.]+ s,"
+            + " adm1s [0-9.]+ s, regions and subregions [0-9.]+ s\\); bioregion \\d+ places with images in [0-9.]+ s; museum .* s; project .* s;"));
 
         PlaceImageCountDb.PlaceImages p = db.read(PlaceImageCountDb.GEOLOCALE, "7");
         assertNotNull(p);
@@ -340,6 +345,61 @@ public class PlaceImageCountDbTest extends TestCase {
         // worldants keeps the very name (it lists every name as AntCat has it)
         org.calacademy.antweb.Project world = new org.calacademy.antweb.Project("worldants");
         assertFalse(world.getTaxonImageCountQuery().contains("current_valid_name"));
+    }
+
+    /**
+     * Brian Fisher, 2026-11-09: images of red-flagged specimens are not counted anywhere. casent3 (H, f, empty) red-flagged:
+     * every place it was counted in loses its 3 images and 1 imaged specimen; the list rows' Images too; a green flag
+     * changes nothing; the count check recounts by the same rule and agrees.
+     */
+    public void testRedFlaggedSpecimensImagesAreNotCounted() throws Exception {
+        exec("update specimen set flag = 'green' where code = 'casent1'");   // a flag that is not red: still counted
+        exec("update specimen set flag = 'red' where code = 'casent3'");
+        PlaceImageCountDb db = new PlaceImageCountDb(connection);
+        db.updateAll();
+        PlaceImageCountDb.PlaceImages p = db.read(PlaceImageCountDb.GEOLOCALE, "7");
+        assertEquals("8 without casent3's 3", 5, p.allImages);
+        assertEquals("6 without casent3's 3", 3, p.antImages);
+        assertEquals(2, p.labelImages());
+        assertEquals("casent1 only", 1, p.imagedSpecimens);
+        assertEquals("casent2", 1, p.labelOnlySpecimens);
+        assertNull("casent3's field image is not counted", p.shotImages.get("f"));
+        assertEquals(5, placeRow("geolocale", "id", "7")[0]);
+        assertEquals(1, placeRow("geolocale", "id", "7")[1]);
+        assertEquals("Africa: 9 - 3", 6, placeRow("geolocale", "id", "1")[0]);
+        assertEquals(2, placeRow("geolocale", "id", "1")[1]);
+        assertEquals("CASC: 8 - 3", 5, placeRow("museum", "code", "CASC")[0]);
+        assertEquals(1, placeRow("museum", "code", "CASC")[1]);
+        assertEquals("Malagasy: 10 - 3", 7, placeRow("bioregion", "name", "Malagasy")[0]);
+        assertEquals(3, placeRow("bioregion", "name", "Malagasy")[1]);
+        assertEquals("madants: 10 - 3", 7, placeRow("project", "project_name", "madants")[0]);
+        assertEquals(3, placeRow("project", "project_name", "madants")[1]);
+
+        // the Images column of the Madagascar list: megacephala had casent3's 3 images only
+        Geolocale madagascar = new Geolocale();
+        madagascar.setId(7);
+        madagascar.setName("Madagascar");
+        madagascar.setGeorank("country");
+        madagascar.setIsIsland(true);
+        int spB = -1;
+        try (Statement s = connection.createStatement(); ResultSet r = s.executeQuery(madagascar.getTaxonImageCountQuery())) {
+            while (r.next()) if (SP_B.equals(r.getString("taxonName"))) spB = r.getInt("imageSum");
+        }
+        assertEquals("the row is kept, with no image", 0, spB);
+
+        List<CountCheck.Place> places = new ArrayList<>();
+        places.add(new CountCheck.Place(CountCheck.GEOLOCALE, "7", "Madagascar", "island_country", "Madagascar"));
+        places.add(new CountCheck.Place(CountCheck.MUSEUM, "CASC", "museum CASC", "museum", "CASC"));
+        places.add(new CountCheck.Place(CountCheck.BIOREGION, "Malagasy", "Malagasy bioregion", "bioregion", "Malagasy"));
+        places.add(new CountCheck.Place(CountCheck.PROJECT, "madants", "project madants", null, null));
+        CountCheck.Result r = new CountCheck(connection).run(places, java.sql.Timestamp.valueOf("2021-01-01 08:00:00"));
+        assertEquals(placeImageMismatches(r).toString(), 0, placeImageMismatches(r).size());
+
+        // unflagged again (curated): counted again by the next count
+        exec("update specimen set flag = null where code = 'casent3'");
+        db.updateAll();
+        assertEquals(8, placeRow("geolocale", "id", "7")[0]);
+        assertEquals(2, placeRow("geolocale", "id", "7")[1]);
     }
 
     public void testCountCheckWaitsForTheFirstRun() throws Exception {

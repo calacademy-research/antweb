@@ -452,6 +452,8 @@ public class UtilDataAction extends AntwebAction {
         OperationDetails operationDetails = new OperationDetails(action);
         
 		String message = null;
+		// what a job for ONE place adds to its answer when the place's list totals could not be counted (finishOnePlace)
+		String onePlaceNote = "";
 		Date startTime = new Date();
 
         String param = form.getParam();
@@ -617,9 +619,10 @@ public class UtilDataAction extends AntwebAction {
                 // Since 2026-10-27 also: the lists' Images are ant images (StatisticsDb.ANT_IMAGES_RULE_LOG; CountCheck).
                 // Since 2026-10-28 also: the counting rules of 2026-10-28 (CountInvariants.COUNTING_RULES_LOG; docs/numbers.md section 5).
                 // Since 2026-10-30 also: the genera and subfamilies rule of 2026-10-30 (CountInvariants.GENERA_RULE_LOG; sets 2 and 3 counted by it).
-                // Since 2026-11-09 also: the adm1 rule of 2026-11-09 (B26 fixed: an adm1 by its country and name; CountInvariants.ADM1_RULE_LOG).
+                // Since 2026-11-09 also: the adm1 rule of 2026-11-09 (B26 fixed: an adm1 by its country and name; CountInvariants.ADM1_RULE_LOG), and the image numbers above leave out red-flagged specimens (StatisticsDb.RED_FLAG_IMAGES_RULE_LOG).
                 LogMgr.appendLog("compute.log", "  Set 4 done (" + CountInvariants.RULES_LOG + "; " + StatisticsDb.ANT_IMAGES_RULE_LOG
-                    + "; " + CountInvariants.COUNTING_RULES_LOG + "; " + CountInvariants.GENERA_RULE_LOG + "; " + CountInvariants.ADM1_RULE_LOG + ")", true);
+                    + "; " + CountInvariants.COUNTING_RULES_LOG + "; " + CountInvariants.GENERA_RULE_LOG + "; " + CountInvariants.ADM1_RULE_LOG
+                    + "; " + StatisticsDb.RED_FLAG_IMAGES_RULE_LOG + ")", true);
                 // message += " " + doAction("calcEndemic", form, accessLogin, accessGroup, connection, request, mapping);
                 // message += " " + doAction("calcIntroduced", form, accessLogin, accessGroup, connection, request, mapping);
             }
@@ -784,7 +787,7 @@ public class UtilDataAction extends AntwebAction {
 		  int geolocaleId = form.getNum();
 		  if (geolocaleId > 0) {
 			new GeolocaleDb(connection).updateCounts(geolocaleId);
-			new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.GEOLOCALE, "" + geolocaleId);
+			onePlaceNote = finishOnePlace(connection, PlaceImageCountDb.GEOLOCALE, "" + geolocaleId, GeolocaleMgr.getGeolocale(geolocaleId));
 		  } else {			    
             CountDb.s_isBulk = true;
             try {
@@ -793,7 +796,7 @@ public class UtilDataAction extends AntwebAction {
               CountDb.s_isBulk = false;
             }
 		  }                 
-		  message = "Updated Geolocale Counts. ";
+		  message = "Updated Geolocale Counts. " + onePlaceNote;
 		}
 
 		if (action.equals("updateGeolocaleParentHierarchy")) {
@@ -816,10 +819,13 @@ public class UtilDataAction extends AntwebAction {
 		    bioregion = Formatter.initCap(bioregion);
 			appendStr += ":" + Html.esc(bioregion);
 			new BioregionDb(connection).populate(bioregion);
+			// populate(name) writes the bioregion's Images and Imaged specimens with queries that count red-flagged
+			// specimens' images; the place's image recount writes them by the rule, as "Update statistics" does (2026-11-11)
+			onePlaceNote = finishOnePlace(connection, PlaceImageCountDb.BIOREGION, bioregion, BioregionMgr.getBioregion(bioregion));
 		  } else {
 			new BioregionDb(connection).populate();
 		  }
-		  message = "Bioregion populated" + appendStr;                
+		  message = "Bioregion populated" + appendStr + onePlaceNote;
 		}		  
 
         // ------ Museums ---------
@@ -838,12 +844,14 @@ public class UtilDataAction extends AntwebAction {
 		  if (museumCode != null && !"".equals(museumCode)) {
 			appendStr += ":" + Html.esc(museumCode);
 			museumDb.populate(museumCode);
+			// as the bioregion job: populate(code) counts red-flagged specimens' images; the image recount corrects it (2026-11-11)
+			onePlaceNote = finishOnePlace(connection, PlaceImageCountDb.MUSEUM, museumCode, MuseumMgr.getMuseum(museumCode));
 		  } else {
 			museumDb.populate();
 		  }
 		  museumDb.updateMuseum();
 
-		  message = "Museum populated" + appendStr;                 
+		  message = "Museum populated" + appendStr + onePlaceNote;
 		}
 
         // ------ Project ----------
@@ -866,14 +874,14 @@ public class UtilDataAction extends AntwebAction {
 			  new ProjTaxonCountDb(connection).recount(project);
 			}
 			projectDb.updateCounts(projectName);
-			new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.PROJECT, projectName);
+			onePlaceNote = finishOnePlace(connection, PlaceImageCountDb.PROJECT, projectName, project);
 			appendStr += ":" + Html.esc(projectName);
 		  } else {
 			// The counts on the project species lists (proj_taxon), not only the project totals (2026-10).
 			appendStr += " " + new ProjTaxonCountDb(connection).curatedProjectsCountCrawl();
 			projectDb.updateCounts();
 		  }
-		  message = "Project" + appendStr + " counts updated";
+		  message = "Project" + appendStr + " counts updated" + onePlaceNote;
 		}
 
 		if (action.equals("regenerateAllAntweb")) {
@@ -1196,6 +1204,49 @@ public class UtilDataAction extends AntwebAction {
             + "(country for each adm1 record, parent taxon for each record).</p>"
             + Csrf.postButton(request, url, "Apply the fix", "Change geolocale_taxon records now?");
     }
+
+    /**
+     * The last steps of a job that rebuilt ONE place's list (geolocaleCountCrawl with num, populateBioregion with name,
+     * populateMuseum with code, projectCountCrawl with name), the same two that "Update statistics" on the place's page
+     * runs after its rebuild (OverviewAction), in one method for the four jobs:
+     *
+     *  1. the place's image numbers (PlaceImageCountDb.updatePlace: place_image_count and the place's Images and Imaged
+     *     specimens, by the rule: labels apart, red-flagged specimens' images not counted). The museum and bioregion
+     *     rebuilds write these two numbers themselves with queries that count red-flagged specimens' images
+     *     (MuseumDb.populate, BioregionDb.populate); until 2026-11-11 the jobs for one museum or bioregion stopped
+     *     there, so the place showed them until the next daily update;
+     *  2. the stored totals of the place's lists (recountListTotals).
+     *
+     * Returns what the job adds to its answer: "" when all is counted, else why the list totals are not.
+     */
+    public static String finishOnePlace(Connection connection, String imageType, String imageKey, Overview place) throws SQLException {
+        new PlaceImageCountDb(connection).updatePlace(imageType, imageKey);
+        return recountListTotals(connection, place);
+    }
+
+    /**
+     * After a job rebuilt ONE place's list: the stored totals of that place's lists, which its page shows as
+     * Subfamilies, Genera and Species, are counted again (PlaceViewTotalDb.recountPlace; 2026-11-10: they stayed as the
+     * last daily update counted them, so the page and the rebuilt list disagreed until the next one). Only that place's
+     * rows are written. The forms of these jobs for every place do not call this: the daily update counts the totals in
+     * its own step afterwards (placeViewTotals), which an admin can also run by hand.
+     *
+     * Returns the note for the job's answer (2026-11-11: a count that failed was only a warning in the server log and
+     * the job answered "populated"): "" when the totals are counted, or the place is one that has none (the AntWeb-wide
+     * list); else "; list totals not recounted: <reason>" (escaped, at most 300 characters of the reason).
+     */
+    public static String recountListTotals(Connection connection, Overview place) {
+        if (place == null) return LIST_TOTALS_NOT_RECOUNTED + "the place is not among the places in memory";
+        PlaceViewTotalDb db = new PlaceViewTotalDb(connection);
+        if (db.recountPlace(place) || db.getLastFailure() == null) return "";
+        String reason = db.getLastFailure().replaceAll("\\s+", " ").trim();
+        if (reason.length() > 300) reason = reason.substring(0, 300) + "...";
+        return LIST_TOTALS_NOT_RECOUNTED + Html.esc(reason)
+            + " (the place's page shows its own counts for Subfamilies, Genera and Species until the next daily update)";
+    }
+
+    /** Starts the note a single-place job adds to its answer when the place's list totals could not be counted. */
+    public static final String LIST_TOTALS_NOT_RECOUNTED = "; list totals not recounted: ";
 
     /**
      * A job's own result line in compute.log (2026-11-04: three nightly jobs wrote none, so the morning test

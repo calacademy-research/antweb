@@ -22,7 +22,9 @@ import org.apache.commons.logging.LogFactory;
  * imaged now because AntWeb has specimens of them. The imaging labs' work queue.
  *
  * The rule of "imaged" is the one of the home page and the lists (StatisticsDb.ANT_IMAGE, docs/numbers.md Q6, Q12): a
- * name is imaged when a specimen filed under it, anywhere in AntWeb, has a photo of the ant; label photos never count.
+ * name is imaged when a specimen filed under it, anywhere in AntWeb, has a photo of the ant; label photos never count,
+ * nor do photos of red-flagged specimens (Brian Fisher, 2026-11-09; SpecimenDb.notRedFlagged). A red-flagged specimen
+ * is still a specimen: it counts for "unimaged, with specimens" (it can be fixed and unflagged, or imaged again).
  *
  * Table imaging_progress, one row per place, filled once a day by the daily update (set 4, after the statistics row;
  * its own step "imagingProgress" on dailyUpdate.do; admins: utilData.do?action=imagingProgress), one grouped query per
@@ -36,7 +38,7 @@ import org.apache.commons.logging.LogFactory;
  *               genus      key subfamily + genus (the genus taxon_name); the valid living species and subspecies of it
  *               museum     key the museum code; the valid living species and subspecies with a specimen there
  *   total                    the names counted (above)
- *   imaged                   of them, those with a photo of the ant anywhere in AntWeb
+ *   imaged                   of them, those with a photo of the ant anywhere in AntWeb (not of a red-flagged specimen)
  *   imaged_here              of them, those with a photo of the ant of a specimen collected in this place (bioregion:
  *                            specimen.bioregion; country: specimen.country, or island_country for island countries, as
  *                            the place's Images, PlaceImageCountDb; museum: a specimen of this museum). Null for all and genus.
@@ -44,8 +46,19 @@ import org.apache.commons.logging.LogFactory;
  *   unimaged_casc            of those, with a specimen of museum CASC
  *
  * imaged_here <= imaged <= total, checked every morning by the count check (CountInvariants id imaging.progress,
- * which also recounts a sample of rows with a query of its own). The unimaged list (CSV and genus view) is read live
- * (unimaged()), once per day's fill. Record and undo: db/upgrade/9.4.0/2026-11-08-imaging-progress.sql. Docs:
+ * which also recounts a sample of rows with a query of its own).
+ *
+ * The unimaged list (the CSV and the genus view) is stored too, in table imaging_unimaged, one row per name, written by
+ * fill() in the same transaction as the counts (2026-11-11). The page's "Still to image" (total minus imaged of the row
+ * all/living) and the rows of the CSV are therefore always of the same moment. fill() counts the rows of all of AntWeb,
+ * the genus rows and the list one after the other and writes them only together, and only when the list has total
+ * minus imaged names (it counts them again, up to 3 times, when data changed in between). Until 2026-11-11 the list was
+ * read live at the first request after a fill and kept in memory only, so after a restart or a deploy it was read again
+ * with whatever had changed since the counts (staging 2026-11-10: page "Still to image: 2,773", CSV 2,780 names). A
+ * server whose counts were stored before this table existed has no list for them: listStored() is false and the page
+ * says the progress is not counted yet until the next fill (the daily update, or utilData.do?action=imagingProgress).
+ *
+ * Record and undo: db/upgrade/9.4.0/2026-11-08-imaging-progress.sql, 2026-11-11-imaging-unimaged.sql. Docs:
  * docs/numbers.md rows 124 to 128, docs/data-model.md. Tests: test/.../home/ImagingProgressDbTest.java,
  * tests/e2e/test_imaging_progress.py.
  */
@@ -54,6 +67,8 @@ public class ImagingProgressDb {
     private static final Log s_log = LogFactory.getLog(ImagingProgressDb.class);
 
     public static final String TABLE = "imaging_progress";
+    /** The unimaged names as of the last fill (the CSV and the genus view), written with the counts. */
+    public static final String LIST_TABLE = "imaging_unimaged";
     /** Written to compute.log by the daily update. */
     public static final String LOG = "Imaging progress counted";
 
@@ -72,8 +87,17 @@ public class ImagingProgressDb {
     /** The museum the labs image first (CAS, San Francisco; the MBC lab images CAS specimens too). */
     public static final String CASC = "CASC";
 
-    /** The day the "imaged" rule last changed: statistics rows before it are not comparable (trend). */
-    public static final String RULE_SINCE = "2026-10-28";
+    /**
+     * The first day whose statistics rows are all counted by today's "imaged" rule: the trend starts here, and the page
+     * says so (the one date for the query, the page's texts and the tests). The rule last changed when photos of
+     * red-flagged specimens stopped counting (decided by Brian Fisher on 2026-11-09; before: 2026-10-28). Production got
+     * that rule on 2026-11-11 after its daily update of that day: its statistics rows of 11-09, 11-10 and of 11-11 05:00
+     * were counted the old way, and a row written by an upload later on 11-11 the new way, so 11-11 is mixed. The first
+     * daily update with the rule on production is the one of 2026-11-12. Staging has had the rule since 11-09; it loses
+     * three days of trend (its page says "No daily numbers yet" until its daily update of 11-12), which keeps one date
+     * for every server.
+     */
+    public static final String RULE_SINCE = "2026-11-12";
 
     private final Connection connection;
 
@@ -99,23 +123,44 @@ public class ImagingProgressDb {
             + ") ENGINE=InnoDB" + PlaceGenusCurationDb.defaults(charset, collation);
     }
 
+    /** The unimaged names of the last fill, in the list's order (pos): the columns of UNIMAGED_SQL. */
+    public static String createListTable(String charset, String collation) {
+        return "CREATE TABLE IF NOT EXISTS " + LIST_TABLE + " ("
+            + " pos int NOT NULL,"
+            + " taxon_name varchar(128) NOT NULL,"
+            + " subfamily varchar(128) NULL,"
+            + " genus varchar(128) NULL,"
+            + " species varchar(128) NULL,"
+            + " taxarank varchar(32) NULL,"
+            + " specimens int NOT NULL DEFAULT 0,"
+            + " casc_specimens int NOT NULL DEFAULT 0,"
+            + " museums text NULL,"
+            + " computed datetime NULL,"
+            + " PRIMARY KEY (pos)"
+            + ") ENGINE=InnoDB" + PlaceGenusCurationDb.defaults(charset, collation);
+    }
+
     private static volatile boolean s_schemaChecked = false;
 
-    /** Creates the table when missing (only then: CREATE TABLE commits the caller's transaction), in taxon_name's collation. */
+    /**
+     * Creates the two tables when missing (only then: CREATE TABLE commits the caller's transaction), in taxon_name's
+     * collation. Once at start-up (LoginMgr), so that fill() inside a job's transaction finds them.
+     */
     public void ensureSchema() throws SQLException {
         if (s_schemaChecked) return;
-        if (LicenseUpdateDb.tableExists(connection, TABLE)) {
-            s_schemaChecked = true;
-            return;
-        }
-        String charset = null;
-        String collation = null;
-        try (Statement stmt = connection.createStatement()) {
-            try (ResultSet r = stmt.executeQuery("select character_set_name, collation_name from information_schema.columns"
-                    + " where table_schema = database() and table_name = 'taxon' and column_name = 'taxon_name'")) {
-                if (r.next()) { charset = r.getString(1); collation = r.getString(2); }
+        boolean counts = LicenseUpdateDb.tableExists(connection, TABLE);
+        boolean list = LicenseUpdateDb.tableExists(connection, LIST_TABLE);
+        if (!counts || !list) {
+            String charset = null;
+            String collation = null;
+            try (Statement stmt = connection.createStatement()) {
+                try (ResultSet r = stmt.executeQuery("select character_set_name, collation_name from information_schema.columns"
+                        + " where table_schema = database() and table_name = 'taxon' and column_name = 'taxon_name'")) {
+                    if (r.next()) { charset = r.getString(1); collation = r.getString(2); }
+                }
+                if (!counts) stmt.executeUpdate(createTable(charset, collation));
+                if (!list) stmt.executeUpdate(createListTable(charset, collation));
             }
-            stmt.executeUpdate(createTable(charset, collation));
         }
         s_schemaChecked = true;
     }
@@ -141,7 +186,7 @@ public class ImagingProgressDb {
     // "is not null": the list query reads it with NOT IN, and one null name in it would empty the whole list (SQL's
     // NOT IN with a null; review 2026-11-08: one imaged specimen without a name took the list from 4,320 names to 0).
     static final String IMAGED_NAMES = "(select distinct s.taxon_name from image i join specimen s on s.code = i.image_of_id where "
-        + StatisticsDb.ANT_IMAGE + " and s.taxon_name is not null)";
+        + StatisticsDb.ANT_IMAGE + " and " + SpecimenDb.notRedFlagged("s") + " and s.taxon_name is not null)";
 
     /** Specimens per name and those of CASC (alias sp: taxon_name, n, casc). */
     static final String SPECIMENS = "(select s.taxon_name, count(*) n, sum(s.museum = '" + CASC + "') casc from specimen s"
@@ -149,7 +194,9 @@ public class ImagingProgressDb {
 
     /** (place key k, name) of the specimens with a photo of the ant collected in each place of the kind, each pair once. */
     static String hereSql(String kind) {
-        String imaged = " from image i join specimen s on s.code = i.image_of_id where " + StatisticsDb.ANT_IMAGE;
+        // photos of red-flagged specimens do not count (2026-11-09), as IMAGED_NAMES
+        String counted = StatisticsDb.ANT_IMAGE + " and " + SpecimenDb.notRedFlagged("s");
+        String imaged = " from image i join specimen s on s.code = i.image_of_id where " + counted;
         switch (kind) {
             case BIOREGION: return "select distinct s.bioregion k, s.taxon_name" + imaged + " and s.bioregion is not null";
             case MUSEUM: return "select distinct s.museum k, s.taxon_name" + imaged + " and s.museum is not null";
@@ -157,9 +204,9 @@ public class ImagingProgressDb {
                 // as the country's Images (PlaceImageCountDb): island countries by specimen.island_country
                 String g = " join geolocale g on g.georank = 'country' and g.is_valid = 1 and ";
                 return "select g.id k, s.taxon_name from image i join specimen s on s.code = i.image_of_id" + g + "coalesce(g.is_island, 0) = 0 and g.name = s.country"
-                    + " where " + StatisticsDb.ANT_IMAGE
+                    + " where " + counted
                     + " union select g.id k, s.taxon_name from image i join specimen s on s.code = i.image_of_id" + g + "coalesce(g.is_island, 0) = 1 and g.name = s.island_country"
-                    + " where " + StatisticsDb.ANT_IMAGE;
+                    + " where " + counted;
             default: return null;
         }
     }
@@ -289,25 +336,101 @@ public class ImagingProgressDb {
         return out;
     }
 
+    /** Tests only: called after the rows of all of AntWeb and of the genera are counted, before the list is read. */
+    private static volatile Runnable s_beforeListForTests = null;
+
+    public static void setBeforeListForTests(Runnable beforeList) {
+        s_beforeListForTests = beforeList;
+    }
+
+    /** How often fill() counts the rows of all of AntWeb, the genus rows and the list until they agree. */
+    static final int LIST_TRIES = 3;
+
+    /** The key of a genus as the list and the genus rows are compared by: lower case. */
+    private static String genusKeyOf(String key) {
+        return key == null ? "" : key.toLowerCase(Locale.ROOT);
+    }
+
     /**
-     * The daily fill: every kind counted, then the table replaced in one transaction (readers see yesterday's rows until
-     * the commit). Returns the compute.log line. A kind that fails is named; the others are still written.
+     * Whether a list read now belongs to rows counted now: null when it does, else what differs. The headline: the list
+     * has total minus imaged names (the page's "Still to image" = the rows of the CSV). The genera: each genus row's
+     * total minus imaged = the names of the list in that genus (the genus view lists them under that number).
+     */
+    static String listDifference(List<Row> all, List<Row> genera, List<Unimaged> list) {
+        Row headline = null;
+        for (Row row : all) if (LIVING.equals(row.key)) headline = row;
+        int expected = headline == null ? 0 : headline.unimaged();
+        if (expected != list.size()) return "the unimaged list has " + list.size() + " names, total minus imaged is " + expected;
+        Map<String, Integer> perGenus = new java.util.HashMap<>();
+        for (Unimaged u : list) perGenus.merge(genusKeyOf(u.genusKey()), 1, Integer::sum);
+        for (Row row : genera) {
+            int listed = perGenus.getOrDefault(genusKeyOf(row.key), 0);
+            if (listed != row.unimaged()) return "genus " + row.key + ": " + listed + " names in the unimaged list, total minus imaged is " + row.unimaged();
+        }
+        return null;
+    }
+
+    /**
+     * The daily fill: every kind counted, then the tables replaced in one transaction (readers see yesterday's rows and
+     * yesterday's list until the commit). Returns the compute.log line. A kind that fails is named; the others are still
+     * written.
+     *
+     * The rows of all of AntWeb, the genus rows and the unimaged list go together (2026-11-11): counted one after the
+     * other, compared (listDifference), counted again when data changed between them (LIST_TRIES), and written only
+     * together and only when the list has total minus imaged names; else all three keep yesterday's values, which agree
+     * with each other, and the line says FAILED. So "Still to image" on the page and the rows of the CSV never differ.
+     * A genus row that still differs from the list after the tries does not stop the write; the line names it.
      */
     public String fill() throws SQLException {
         ensureSchema();
         long start = System.currentTimeMillis();
-        Map<String, List<Row>> rows = new LinkedHashMap<>();
+        Map<String, List<Row>> counted = new java.util.HashMap<>();
         List<String> failed = new ArrayList<>();
-        for (String kind : KINDS) {
-            long t0 = System.currentTimeMillis();
+        List<Unimaged> list = null;
+        String genusNote = null;
+        long t0 = System.currentTimeMillis();
+        String listError = null;
+        for (int attempt = 1; attempt <= LIST_TRIES; attempt++) {
             try {
-                rows.put(kind, count(kind));
-                s_log.info("fill() " + kind + " " + rows.get(kind).size() + " rows in " + (System.currentTimeMillis() - t0) + " ms");
+                List<Row> all = count(ALL);
+                List<Row> genera = count(GENUS);
+                Runnable hook = s_beforeListForTests;
+                if (hook != null) hook.run();
+                List<Unimaged> read = readUnimaged();
+                String difference = listDifference(all, genera, read);
+                boolean headlineAgrees = difference == null || difference.startsWith("genus ");
+                if (difference == null || (headlineAgrees && attempt == LIST_TRIES)) {
+                    counted.put(ALL, all);
+                    counted.put(GENUS, genera);
+                    list = read;
+                    listError = null;
+                    genusNote = difference;
+                    break;
+                }
+                listError = difference + " (data changed while they were counted, " + attempt + " of " + LIST_TRIES + " tries)";
+                s_log.warn("fill() try " + attempt + ": " + difference);
+            } catch (SQLException e) {
+                listError = e.getMessage();
+                s_log.warn("fill() all, genus and the unimaged list e:" + e);
+                break;
+            }
+        }
+        if (list == null) failed.add(ALL + ", " + GENUS + " and the unimaged list (" + listError + ")");
+        else s_log.info("fill() all, genus and the unimaged list (" + list.size() + " names) in " + (System.currentTimeMillis() - t0) + " ms");
+        for (String kind : KINDS) {
+            if (ALL.equals(kind) || GENUS.equals(kind)) continue;
+            t0 = System.currentTimeMillis();
+            try {
+                counted.put(kind, count(kind));
+                s_log.info("fill() " + kind + " " + counted.get(kind).size() + " rows in " + (System.currentTimeMillis() - t0) + " ms");
             } catch (SQLException e) {
                 failed.add(kind + " (" + e.getMessage() + ")");
                 s_log.warn("fill() " + kind + " e:" + e);
             }
         }
+        // in the order of KINDS (the log line names them in it)
+        Map<String, List<Row>> rows = new LinkedHashMap<>();
+        for (String kind : KINDS) if (counted.containsKey(kind)) rows.put(kind, counted.get(kind));
         if (rows.isEmpty()) return LOG + ": FAILED, " + String.join(", ", failed);
         boolean auto = connection.getAutoCommit();
         try {
@@ -318,8 +441,8 @@ public class ImagingProgressDb {
             }
             try (PreparedStatement ins = connection.prepareStatement("insert into " + TABLE + " (place_type, place_key, place_name, parent_name,"
                     + " total, imaged, imaged_here, unimaged_with_specimens, unimaged_casc, computed) values (?, ?, ?, ?, ?, ?, ?, ?, ?, now())")) {
-                for (List<Row> list : rows.values()) {
-                    for (Row row : list) {
+                for (List<Row> kindRows : rows.values()) {
+                    for (Row row : kindRows) {
                         ins.setString(1, row.type);
                         ins.setString(2, row.key);
                         ins.setString(3, cut(row.name, 250));
@@ -334,6 +457,8 @@ public class ImagingProgressDb {
                 }
                 ins.executeBatch();
             }
+            // the list of the rows just written, in the same transaction: a reader sees both or neither
+            if (list != null) writeList(list);
             connection.commit();
         } catch (SQLException e) {
             try { connection.rollback(); } catch (SQLException e2) { s_log.warn("fill() rollback e:" + e2); }
@@ -348,9 +473,35 @@ public class ImagingProgressDb {
         List<String> parts = new ArrayList<>();
         for (Map.Entry<String, List<Row>> e : rows.entrySet()) if (!ALL.equals(e.getKey())) parts.add(e.getValue().size() + " " + e.getKey() + " rows");
         b.append(String.join(", ", parts)).append(" in ").append((System.currentTimeMillis() - start) / 1000).append(" s");
+        if (list != null) b.append("; ").append(list.size()).append(" unimaged names listed");
+        if (genusNote != null) b.append("; the genus rows and the list differ (").append(genusNote).append(")");
         if (!failed.isEmpty()) b.append("; FAILED for ").append(String.join(", ", failed));
-        s_unimaged = null;   // the list is read again for the new day
         return b.toString();
+    }
+
+    /** Replaces the stored list (no commit: the caller's transaction, with the counts). */
+    private void writeList(List<Unimaged> list) throws SQLException {
+        try (Statement stmt = connection.createStatement()) {
+            stmt.executeUpdate("delete from " + LIST_TABLE);
+        }
+        try (PreparedStatement ins = connection.prepareStatement("insert into " + LIST_TABLE + " (pos, taxon_name, subfamily, genus, species, taxarank,"
+                + " specimens, casc_specimens, museums, computed) values (?, ?, ?, ?, ?, ?, ?, ?, ?, now())")) {
+            int pos = 0;
+            for (Unimaged u : list) {
+                ins.setInt(1, ++pos);
+                ins.setString(2, u.taxonName);
+                ins.setString(3, cut(u.subfamily, 128));
+                ins.setString(4, cut(u.genus, 128));
+                ins.setString(5, cut(u.species, 128));
+                ins.setString(6, cut(u.rank, 32));
+                ins.setInt(7, u.specimens);
+                ins.setInt(8, u.cascSpecimens);
+                ins.setString(9, cut(u.museums, 16000));
+                ins.addBatch();
+                if (pos % 1000 == 0) ins.executeBatch();
+            }
+            ins.executeBatch();
+        }
     }
 
     private static String cut(String s, int n) {
@@ -426,6 +577,7 @@ public class ImagingProgressDb {
     /**
      * Every valid living ant species and subspecies with no photo of the ant (the rule of the table), with its specimen
      * count, CASC specimens and museums; CASC specimens first, then most specimens, then name: the labs' work queue.
+     * Run by fill() only, right after the counts; the page and the CSV read what fill() stored (unimaged()).
      */
     public static final String UNIMAGED_SQL = "select t.taxon_name, t.subfamily, t.genus, t.species, t.taxarank,"
         + " count(s.code) specimens, coalesce(sum(s.museum = '" + CASC + "'), 0) casc,"
@@ -435,49 +587,52 @@ public class ImagingProgressDb {
         + " group by t.taxon_name, t.subfamily, t.genus, t.species, t.taxarank"
         + " order by casc desc, specimens desc, t.taxon_name";
 
-    /** The list read for the current fill (the stored computed time of the headline row); null: read it again. */
-    private static volatile Object[] s_unimaged = null;
-    private static final Object UNIMAGED_LOCK = new Object();
-
-    /** The unimaged list as of the last fill, read once per fill (the page and its CSV share it). */
-    public List<Unimaged> unimaged() throws SQLException {
+    /**
+     * Whether the stored list is the list of the stored counts: it has as many names as the headline's total minus imaged.
+     * True after every fill (fill() writes both in one transaction). False where the counts were stored before the list
+     * table existed, or nothing is counted yet: the page then says "not counted yet" rather than show a number and a
+     * list of two different moments.
+     */
+    public boolean listStored() throws SQLException {
+        if (!tableExists() || !LicenseUpdateDb.tableExists(connection, LIST_TABLE)) return false;
         Row headline = read(ALL, LIVING);
-        Timestamp at = headline == null ? null : headline.computed;
-        Object[] kept = s_unimaged;
-        if (kept != null && java.util.Objects.equals(kept[0], at)) {
-            @SuppressWarnings("unchecked") List<Unimaged> list = (List<Unimaged>) kept[1];
-            return list;
-        }
-        synchronized (UNIMAGED_LOCK) {
-            kept = s_unimaged;
-            if (kept != null && java.util.Objects.equals(kept[0], at)) {
-                @SuppressWarnings("unchecked") List<Unimaged> list = (List<Unimaged>) kept[1];
-                return list;
-            }
-            List<Unimaged> list = Collections.unmodifiableList(readUnimaged());
-            s_unimaged = new Object[] {at, list};
-            return list;
+        if (headline == null) return false;
+        try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery("select count(*) from " + LIST_TABLE)) {
+            return r.next() && r.getInt(1) == headline.unimaged();
         }
     }
 
-    /** The unimaged list, read now. */
+    /** The unimaged list as of the last fill (the stored list, in its order): the page's genus view and the CSV. */
+    public List<Unimaged> unimaged() throws SQLException {
+        List<Unimaged> out = new ArrayList<>();
+        if (!LicenseUpdateDb.tableExists(connection, LIST_TABLE)) return out;
+        try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery("select taxon_name, subfamily, genus, species, taxarank,"
+                + " specimens, casc_specimens, museums from " + LIST_TABLE + " order by pos")) {
+            while (r.next()) out.add(unimagedOf(r));
+        }
+        return out;
+    }
+
+    private static Unimaged unimagedOf(ResultSet r) throws SQLException {
+        Unimaged u = new Unimaged();
+        u.taxonName = r.getString(1);
+        u.subfamily = r.getString(2);
+        u.genus = r.getString(3);
+        u.species = r.getString(4);
+        u.rank = r.getString(5);
+        u.specimens = r.getInt(6);
+        u.cascSpecimens = r.getInt(7);
+        u.museums = r.getString(8) == null ? "" : r.getString(8);
+        return u;
+    }
+
+    /** The unimaged list counted now from the taxon, specimen and image tables (fill() stores it; the count check compares). */
     public List<Unimaged> readUnimaged() throws SQLException {
         List<Unimaged> out = new ArrayList<>();
         try (Statement stmt = connection.createStatement()) {
             try { stmt.execute("set session group_concat_max_len = 65536"); } catch (SQLException e) { s_log.debug("group_concat_max_len e:" + e); }
             try (ResultSet r = stmt.executeQuery(UNIMAGED_SQL)) {
-                while (r.next()) {
-                    Unimaged u = new Unimaged();
-                    u.taxonName = r.getString(1);
-                    u.subfamily = r.getString(2);
-                    u.genus = r.getString(3);
-                    u.species = r.getString(4);
-                    u.rank = r.getString(5);
-                    u.specimens = r.getInt(6);
-                    u.cascSpecimens = r.getInt(7);
-                    u.museums = r.getString(8) == null ? "" : r.getString(8);
-                    out.add(u);
-                }
+                while (r.next()) out.add(unimagedOf(r));
             }
         }
         return out;

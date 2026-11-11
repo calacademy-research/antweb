@@ -85,6 +85,7 @@ public final class UploadReportPage {
         ACTIONS.put(MessageMgr.invalidSubfamilyForGenusReplaced, "Filed under AntCat's subfamily for the genus.");
         ACTIONS.put(MessageMgr.specimenIdSpacesRemoved, "Spaces removed from the code; loaded.");
         ACTIONS.put(MessageMgr.codeQuoteReplaced, "Each double quote replaced by -; loaded.");
+        ACTIONS.put(MessageMgr.countrySpellingCorrected, "Loaded under AntWeb's spelling of the country (it differed only by capitals, accents or blanks).");
         ACTIONS.put(MessageMgr.invalidDateCollectedStart, "Loaded without this date.");
         ACTIONS.put(MessageMgr.invalidDateCollectedEnd, "Loaded without this date.");
         ACTIONS.put(MessageMgr.invalidDateDetermined, "Loaded without this date.");

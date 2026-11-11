@@ -92,6 +92,12 @@ jobs:
       - name: A recount of one bioregion or museum makes the statistics page count again (tests/unit/test_statspage_forget.py)
         run: python3 tests/unit/test_statspage_forget.py
 
+      - name: Rebuilding one place's list counts its stored list totals again (tests/unit/test_recalc_view_totals.py)
+        run: python3 tests/unit/test_recalc_view_totals.py
+
+      - name: The upload still corrects a country's spelling and the server start still schedules the early TaxonWorks request (tests/unit/test_review_341_wiring.py)
+        run: python3 tests/unit/test_review_341_wiring.py
+
       - name: Production smoke run and morning check pass, fail and skip as they should (tests/unit/test_prod_smoke_logic.py)
         run: python3 tests/unit/test_prod_smoke_logic.py
 
@@ -661,7 +667,9 @@ jobs:
       - name: Java unit tests of uploads and the nightly TaxonWorks job (transform fixture, job decisions, name rule, nightly name update, password hash)
         # TaxonWorksTransformFixtureTest: test/.../upload/fixtures/taxonworks-data.tsv through the
         # TaxonWorks transform. TaxonWorksNightlyDecisionsTest: wait/skip decisions, one run at a
-        # time, no settings file. NameResolutionRuleTest: statuses that use the current valid name,
+        # time, no settings file; the early request (2026-11-10): 04:35 by the clock, off without the settings file,
+        # its compute.log line, and the request against a local server (zip, 422, error, no server; no file left, no
+        # address in the line). NameResolutionRuleTest: statuses that use the current valid name,
         # indet and morpho names. SpecimenNameUpdateTest: the upload's name rule with a fake taxon table
         # and the nightly name update's decisions, cap, settings and page line. GenusSynonymRuleTest: morphospecies and
         # indets of a synonym genus, names without subfamily ("(formicidae)pyramica ludovici"), combinations AntCat does
@@ -689,6 +697,14 @@ jobs:
         # sentence as its job result ({operation:...} in plain words), and the job page never shows a whole AntWeb page.
         # LocalityCodePlainTest: locality codes are stored as written (not URL-encoded, 2026-10-22), links encode them
         # once in UTF-8, the specimen search for one quoted code takes it whole.
+        # CountrySpellingTest (2026-11-10): the upload stores a country written with other capitals, accents or blanks
+        # (México, MEXICO) under the one valid country it is a spelling of, the rule of tools/place/place_fix.py; another
+        # word, two valid countries with the same spelling, or an island: no change; exact and old names as before; the
+        # report section counts as corrected; the TaxonWorks upload passes such a spelling on instead of dropping it.
+        # PlaceBioregionTest (2026-11-10): the bioregion an upload stores comes from the valid state (the state itself or
+        # the valid state an old name points to) when it has one, else from the country when it has one, else none; an old
+        # state name that points nowhere gives nothing; an old country name takes the valid country's bioregion, whoever
+        # calls (review of PR #341). The cases of tests/unit/test_place_fix.py.
         # See docs/flows/test-gaps-uploads-nightly.md.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" -v "$PWD/web:/web:ro" \
@@ -721,13 +737,16 @@ jobs:
               /t/org/calacademy/antweb/util/QueriesReviewTest.java \
               /t/org/calacademy/antweb/util/JobSummaryTest.java \
               /t/org/calacademy/antweb/upload/SubfamilyFromGenusTest.java \
-              /t/org/calacademy/antweb/upload/LocalityCodePlainTest.java
-            for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:11 \
+              /t/org/calacademy/antweb/upload/LocalityCodePlainTest.java \
+              /t/org/calacademy/antweb/util/CountrySpellingTest.java \
+              /t/org/calacademy/antweb/util/PlaceBioregionTest.java
+            for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:15 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:19 upload.GenusSynonymRuleTest:16 upload.GenusConceptRuleTest:8 upload.GenusConceptProposalsTest:5 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:16 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
-                     util.JobSummaryTest:8 upload.SubfamilyFromGenusTest:9 upload.LocalityCodePlainTest:6; do
+                     util.JobSummaryTest:8 upload.SubfamilyFromGenusTest:9 upload.LocalityCodePlainTest:6 \
+                     util.CountrySpellingTest:8 util.PlaceBioregionTest:9; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
@@ -828,6 +847,29 @@ jobs:
 
       - name: Names the e2e tests expect a test-group upload to write, by the indet rules (tests/unit/test_upload_expected_names.py)
         run: python3 tests/unit/test_upload_expected_names.py
+
+      - name: Specimen extract for collaborators, complete and verified (tests/unit/test_specimen_extract.py)
+        run: python3 tests/unit/test_specimen_extract.py
+
+      - name: Place fix, the stored country and bioregion against today's upload rule (tests/unit/test_place_fix.py)
+        run: python3 tests/unit/test_place_fix.py
+
+      - name: Place fix against MySQL 8.4, apply and rollback never overwrite newer values (tests/unit/test_place_fix_db.py)
+        # Review of PR #341 (2026-11-10): the tool runs against a database of its own, through the docker exec it uses
+        # on the servers: a specimen changed between the backup and the update is left as it is and counted; a rollback
+        # leaves alone and lists what has other values by now, also from a backup table as versions 1 to 3 wrote it;
+        # a latin1 table (the bytes compared as UTF-8); values as long as the columns allow; a failed apply leaves no table.
+        run: |
+          docker run -d --name pfmysql -e MYSQL_ROOT_PASSWORD=ci-root mysql:8.4
+          ok=0
+          for i in $(seq 1 90); do
+            if docker exec pfmysql mysql -uroot -pci-root -h127.0.0.1 -e "select 1" >/dev/null 2>&1; then ok=1; break; fi
+            sleep 2
+          done
+          [ "$ok" = 1 ] || { docker logs pfmysql 2>&1 | tail -30; echo "::error::MySQL did not start"; exit 1; }
+          PLACE_FIX_TEST_CONTAINER=pfmysql PLACE_FIX_TEST_PASSWORD=ci-root python3 tests/unit/test_place_fix_db.py | tee /tmp/place_fix_db.txt
+          grep -q "^6 tests passed (MySQL 8.4" /tmp/place_fix_db.txt
+          docker rm -f pfmysql
 
       - name: Pheidole head export, plan and contact sheets without a database (tests/unit/test_pheidole_export.py)
         run: python3 tests/unit/test_pheidole_export.py
@@ -1175,7 +1217,8 @@ jobs:
           # concepts by bioregion); the proposal queries and an approved genus_concept_rule row driving the move.
           # CountCheckTest: list counts against a recount from specimens (real and pending differences).
           # PlaceImageCountDbTest: Images, images per view and Imaged specimens of places (labels apart),
-          # per-taxon image counts of a place, and the count check of those numbers.
+          # per-taxon image counts of a place, and the count check of those numbers; red-flagged specimens'
+          # images not counted (2026-11-09).
           # RegionCountDbTest: region and subregion numbers count the specimens of their countries only.
           # BackgroundJobDbTest: the background_job table (status pages of uploads and admin jobs; interrupted at start-up).
           # DailyUpdateDbTest (2026-11-07): the daily_update_step table of the Daily update page (start, end, read back in
@@ -1188,7 +1231,8 @@ jobs:
           # country's curator assignments (login_country), in the same transaction; an ambiguous old name carries nothing.
           # SpecimenNameHistoryDbTest: the specimen page's Name History query (applied rows of one specimen, newest first,
           # never report-only rows; index by_code; no history when the table is missing).
-          # CountInvariantsTest: the count check's invariants over every place (docs/numbers.md), each wrong number found.
+          # CountInvariantsTest: the count check's invariants over every place (docs/numbers.md), each wrong number found;
+          # a red-flagged imaged specimen: pending until the nightly run, then real, agreeing once recounted (2026-11-09).
           # NumberChecksTest: the count check's other numbers (statsPage tables, admin pages, API /taxa, endemic flags, B25, the
           # adm1 Specimens recount by country and name: B26 fixed 2026-11-09).
           # PlaceTotalsDbTest: the numbers the nightly run writes (place totals, pies, endemic, museums, taxon images,
@@ -1202,7 +1246,8 @@ jobs:
           # NumberDecisionsDbTest (2026-10-22, Brian Fisher's answers Q7, Q8, Q9, Q12, Port of Entry): statsPage and home
           # count ants only; upload group Species are full names and the groups.do Totals row is distinct over all groups;
           # orphaned images counted as images and codes; unimaged = no photo of the ant anywhere; Port of Entry has no
-          # specimen or image numbers and the count check skips it.
+          # specimen or image numbers and the count check skips it; photos of red-flagged specimens are counted in no
+          # image or imaged number of the home page and statsPage (2026-11-09).
           # DownloadGuardsDbTest: a place download holds only the specimens collected there (5,000 cap), the paged
           # search list (COUNT, LIMIT/OFFSET, sort before paging, images/types only), ant specimens only on place pages.
           # PlaceTaxonNotesDbTest (2026-10-29): country and adm1 lists get the genus rows of specimens identified to genus
@@ -1228,10 +1273,18 @@ jobs:
           # country and name (B26 fixed; same-named state elsewhere, no country: not its), the adm1 and country queries can
           # use country_adm1_idx (EXPLAIN), a country's two parts are its specimens once; only places whose data changed are
           # counted again (unchanged skipped, list or taxon or specimen change counted, specimen names not stored again,
-          # rules change, over 7 days, full count, place gone, a morphospecies curated anywhere), each place committed on its own.
+          # rules change, over 7 days, full count, place gone, a morphospecies curated anywhere), each place committed on its own;
+          # 2026-11-10 (production: every place recounted on a Tuesday): the daily sequence day after day (what the daily
+          # update rewrites before the totals leaves every place unchanged; a morphospecies curated elsewhere counts only
+          # the places that have the name; the stored totals equal the lists every day), the curated part of the
+          # fingerprint against ListView.vettedCondition; one place between two daily updates (staging 2026-11-10: after
+          # "Update statistics" the bioregion Nearctic's genus list had 91 genera, its page said 90): recountPlace makes
+          # the place's stored totals the rows of its lists, for every kind of place by its own key, every row of every
+          # other place stays as it was, the AntWeb-wide list is not counted, a count that fails leaves no totals.
           # ImagingProgressDbTest (2026-11-08): the imaging progress page's table (a label-only name is unimaged; a name
           # imaged elsewhere is imaged but not imaged from here; all of AntWeb = the home page numbers; the unimaged list
-          # and CSV; the count check finds a wrong row; the trend from the statistics rows since 2026-10-28).
+          # and CSV; the count check finds a wrong row; photos of red-flagged specimens do not count, 2026-11-09; the
+          # trend from the statistics rows since 2026-11-09).
           # BlankNameCleanupDbTest (2026-10-29): with specimens of blank name, the old cleanups delete nothing; the
           # blank-safe ones delete the names and list rows no specimen uses (not AntCat's, not curators' rows, not blank
           # rows) and the preview counts them. Last: it makes its own small tables.
@@ -1273,8 +1326,9 @@ jobs:
               /t/org/calacademy/antweb/home/ListRemovalDbTest.java \
               /t/org/calacademy/antweb/home/PlaceViewTotalDbTest.java \
               /t/org/calacademy/antweb/home/ApiKeyDbTest.java \
-              /t/org/calacademy/antweb/home/ImagingProgressDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:13 util.NumberChecksTest:23 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:8 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:7; do
+              /t/org/calacademy/antweb/home/ImagingProgressDbTest.java \
+              /t/org/calacademy/antweb/util/OnePlaceJobDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:8 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:23 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:16 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

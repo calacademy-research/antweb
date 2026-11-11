@@ -24,13 +24,15 @@ import api  # noqa: E402
 def database():
     db = sqlite3.connect(":memory:")
     db.executescript("""
-        create table specimen (code text, taxon_name text, caste text, image_count int);
+        create table specimen (code text, taxon_name text, caste text, image_count int, flag text);
         create table image (id int, image_of_id text, shot_type text);
         create table taxon (taxon_name text);
-        insert into taxon values ('one image'), ('labels only'), ('no image'), ('two images'), ('queen only');
-        insert into specimen values ('s1', 'one image', 'worker', 1), ('s2', 'labels only', 'worker', 2),
-            ('s3', 'no image', 'worker', 0), ('s4', 'two images', 'worker', 2), ('s5', 'queen only', 'queen', 1);
-        insert into image values (1, 's1', 'h'), (2, 's2', 'l'), (3, 's2', 'L '), (4, 's4', 'p'), (5, 's4', 'd'), (6, 's5', 'h');
+        insert into taxon values ('one image'), ('labels only'), ('no image'), ('two images'), ('queen only'), ('red-flagged only');
+        insert into specimen values ('s1', 'one image', 'worker', 1, null), ('s2', 'labels only', 'worker', 2, null),
+            ('s3', 'no image', 'worker', 0, null), ('s4', 'two images', 'worker', 2, 'green'), ('s5', 'queen only', 'queen', 1, null),
+            ('s6', 'red-flagged only', 'worker', 1, 'red');
+        insert into image values (1, 's1', 'h'), (2, 's2', 'l'), (3, 's2', 'L '), (4, 's4', 'p'), (5, 's4', 'd'), (6, 's5', 'h'),
+            (7, 's6', 'h');
     """)
     return db
 
@@ -42,13 +44,14 @@ def unimaged(db, caste_clause=""):
 
 
 def test_a_taxon_with_one_image_of_the_ant_is_imaged():
-    assert unimaged(database()) == ["labels only", "no image"], unimaged(database())
+    # Brian Fisher, 2026-11-09: a name whose only photos are of a red-flagged specimen is unimaged
+    assert unimaged(database()) == ["labels only", "no image", "red-flagged only"], unimaged(database())
 
 
 def test_caste_clause_uses_the_specimen():
     db = database()
-    assert unimaged(db, " and s.caste = 'queen'") == ["labels only", "no image", "one image", "two images"]
-    assert unimaged(db, " and s.caste = 'worker'") == ["labels only", "no image", "queen only"]
+    assert unimaged(db, " and s.caste = 'queen'") == ["labels only", "no image", "one image", "red-flagged only", "two images"]
+    assert unimaged(db, " and s.caste = 'worker'") == ["labels only", "no image", "queen only", "red-flagged only"]
 
 
 def test_endpoint_uses_the_rule():

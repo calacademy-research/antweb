@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.text.Normalizer;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -23,7 +24,9 @@ import java.util.stream.Stream;
  * as a tree (deep) and as a flat list (shallow), plus the place names for the search box. Loaded by AntwebMgr
  * at start-up (about 12 seconds) and on util.do?action=reloadAntwebMgr. Lookups by name or id, validity of a
  * country or adm1 for uploads, a place's bioregion, and the adm1 lists of countryAdm1List.do. Docs:
- * docs/flows/places.md. Tests: PreviousDeterminationsTest, tests/unit/test_small_fixes.py.
+ * docs/flows/places.md. Tests: PreviousDeterminationsTest, tests/unit/test_small_fixes.py, CountrySpellingTest
+ * (a country written with other capitals, accents or blanks, for the specimen upload), PlaceBioregionTest (the
+ * bioregion a country and state give an uploaded specimen).
  */
 public class GeolocaleMgr extends Manager {
 
@@ -43,6 +46,11 @@ public class GeolocaleMgr extends Manager {
     /** map of all country names, not just valid ones
      */
     private static volatile Map<String, Country> countryNameMap;
+
+    /** For the specimen upload (getCountrySpelledLike): normalName of the name -> the valid country, islands left
+     *  out, and a normalized name that two valid countries share left out. Built together with countryNameMap.
+     */
+    private static volatile Map<String, Country> countrySpellingMap;
 
     /**
      * key is pair of adm1Name, countryName, value is the Adm1 object
@@ -143,6 +151,7 @@ public class GeolocaleMgr extends Manager {
         islands = newIslands;
         adm1List = newAdm1List;
         adm1CountryMap = newAdm1CountryMap;
+        countrySpellingMap = countriesBySpelling(newCountryNameMap.values());
         countryNameMap = newCountryNameMap;
         s_geolocales = geolocales;
     }
@@ -541,10 +550,15 @@ public class GeolocaleMgr extends Manager {
      * I.E: "Iran (Islamic Republic of)" will return Iran.
      */
     public static @Nullable Country getValidCountry(String country) {
-        if (countryNameMap == null) {
+        return validCountry(countryNameMap, country);
+    }
+
+    /** getValidCountry on a given map of country names (all names, not just valid ones); the tests call it without a database. */
+    public static @Nullable Country validCountry(Map<String, Country> countryNames, String country) {
+        if (countryNames == null) {
             return null;
         }
-        Country matchingCountry = countryNameMap.get(country);
+        Country matchingCountry = countryNames.get(country);
 
         if (matchingCountry == null) {
             return null;
@@ -555,7 +569,84 @@ public class GeolocaleMgr extends Manager {
         }
 
         // country is not valid, return the Country that this points to
-        return countryNameMap.get(matchingCountry.getValidName());
+        return countryNames.get(matchingCountry.getValidName());
+    }
+
+    /**
+     * A place name without capitals, accents or extra blanks: "México", "MEXICO" and "  mexico " all give "mexico".
+     * The same rule as normal() in tools/place/place_fix.py, the tool that corrects the specimens already stored, so
+     * that an upload does not bring back what the tool corrected: Unicode NFKD, accents (combining marks) removed,
+     * small letters (ß as ss), blanks at both ends removed and several blanks made one. A letter that is not a plain
+     * letter plus an accent stays what it is (ø is not o). Wherever that tool takes two names as the same, so does
+     * this (compared for every Unicode character, 2026-11-10); this also takes a dotless ı as i and removes the vowel
+     * signs of some non-Latin scripts, which the tool keeps. Never null. Needs no database and no loaded places.
+     */
+    public static String normalName(String name) {
+        if (name == null) return "";
+        String s = Normalizer.normalize(name, Normalizer.Form.NFKD).replaceAll("\\p{M}+", "");
+        // small, capital, small: the middle step turns ß into SS, so Straße and STRASSE agree
+        s = s.toLowerCase(Locale.ROOT).toUpperCase(Locale.ROOT).toLowerCase(Locale.ROOT);
+        StringBuilder normal = new StringBuilder(s.length());
+        for (String word : s.split("[\\s\\p{Z}\\x1c-\\x1f\\x85]+")) {
+            if (word.isEmpty()) continue;
+            if (normal.length() > 0) normal.append(' ');
+            normal.append(word);
+        }
+        return normal.toString();
+    }
+
+    /**
+     * normalName of the name -> country, for the valid countries that are not islands. A normalized name that two
+     * of them share is left out: the upload does not choose between them.
+     */
+    public static Map<String, Country> countriesBySpelling(Collection<Country> countries) {
+        Map<String, Country> bySpelling = new HashMap<>();
+        Set<String> shared = new HashSet<>();
+        for (Country country : countries) {
+            if (country == null || country.getName() == null || !country.isValid() || country.isIsland()) continue;
+            String normal = normalName(country.getName());
+            if (normal.isEmpty()) continue;
+            Country other = bySpelling.putIfAbsent(normal, country);
+            if (other != null && !other.getName().equals(country.getName())) {
+                shared.add(normal);
+                s_log.warn("countriesBySpelling() two valid countries differ only by capitals, accents or blanks:"
+                    + other.getName() + ", " + country.getName() + ". Neither is used to correct an uploaded spelling.");
+            }
+        }
+        bySpelling.keySet().removeAll(shared);
+        return bySpelling;
+    }
+
+    /**
+     * The valid country a name is another spelling of: the one valid country, not an island, that differs from the
+     * name only by capitals, accents or blanks ("México", "MEXICO", "  panamá ": Mexico, Mexico, Panama). Null when
+     * there is none ("Equador") or more than one. Only the specimen upload calls it (SpecimenUploadParse.parseLine),
+     * after getValidCountry found nothing, and lists the change in the upload report
+     * (MessageMgr.countrySpellingCorrected). Pages, counts and the AntCat import keep the exact getValidCountry.
+     */
+    public static @Nullable Country getCountrySpelledLike(String name) {
+        return countrySpelledLike(countrySpellingMap, name);
+    }
+
+    /** getCountrySpelledLike on a given map (countriesBySpelling); the tests call it without a database. */
+    public static @Nullable Country countrySpelledLike(Map<String, Country> bySpelling, String name) {
+        if (bySpelling == null || name == null) return null;
+        return bySpelling.get(normalName(name));
+    }
+
+    /**
+     * For the TaxonWorks upload (TaxonWorksTransformer), which passes a country on only when AntWeb knows it: a name
+     * AntWeb has as a country (valid or an old name, as getCountry), or another spelling of one valid country
+     * (getCountrySpelledLike). False before the places are loaded.
+     */
+    public static boolean isCountryOrSpelling(String name) {
+        return isCountryOrSpelling(countryNameMap, countrySpellingMap, name);
+    }
+
+    /** isCountryOrSpelling on given maps; the tests call it without a database. */
+    public static boolean isCountryOrSpelling(Map<String, Country> countryNames, Map<String, Country> bySpelling, String name) {
+        if (countryNames == null || name == null) return false;
+        return countryNames.containsKey(name) || countrySpelledLike(bySpelling, name) != null;
     }
 
 
@@ -698,8 +789,14 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
      * @return The valid adm1 or null if not found.
      */
     public static @Nullable Geolocale getValidAdm1(String adm1, String country) {
+        return validAdm1(adm1CountryMap, adm1, country);
+    }
 
-        Adm1 matching_adm1 = adm1CountryMap.get(adm1, country);
+    /** getValidAdm1 on a given map (key: adm1 name, country name); the tests call it without a database. */
+    public static @Nullable Adm1 validAdm1(MultiKeyMap<String, Adm1> adm1s, String adm1, String country) {
+        if (adm1s == null) return null;
+
+        Adm1 matching_adm1 = adm1s.get(adm1, country);
 
         if (matching_adm1 == null) {
             return null;
@@ -707,7 +804,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
 
         if (matching_adm1.isValid()) {return matching_adm1;}
 
-        Adm1 valid_adm1 = adm1CountryMap.get(matching_adm1.getValidName(), country);
+        Adm1 valid_adm1 = adm1s.get(matching_adm1.getValidName(), country);
 
         if (valid_adm1 == null) {
             // This will show up in the upload report.
@@ -762,20 +859,42 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         return display.toString();
     }
 
+    /**
+     * The bioregion the specimen upload stores for a country and state (adm1). The valid countries and states, the
+     * list on bioregionCountryList.do, are AntWeb's definition (Brian Fisher, 2026-11-10): the state's bioregion when
+     * the state is valid, or is an old name that points to a valid state, and has exactly one; otherwise the
+     * country's when the country has exactly one; otherwise null (the upload then keeps the bioregion of the
+     * curator's file when that is a bioregion name). A row for an old state name that points to no valid state
+     * gives nothing, whatever bioregion it holds: such rows were filled with the country's first bioregion when
+     * they were made. The same rule as decide() in tools/place/place_fix.py, which corrects the specimens already
+     * stored.
+     * The country too is the valid country: the row itself when it is valid, the valid row an old name points to
+     * otherwise (USA: United States), and its bioregion is read from that row, whoever calls (review of PR #341,
+     * 2026-11-10; until then the row was read by the name as written, so an old name gave its own row's bioregion,
+     * often blank, and the function was right only because the upload replaces an old name before it asks:
+     * SpecimenUploadParse.parseLine, the one caller, which the TaxonWorks upload goes through as well). A country row
+     * that is not valid and points to no valid country gives nothing, like such a state's row. The cases are pinned on
+     * both sides: PlaceBioregionTest and tests/unit/test_place_fix.py.
+     */
     public static String getGeolocaleBioregion(String countryName, String adm1Name) {
+        return geolocaleBioregion(countryNameMap, adm1CountryMap, countryName, adm1Name);
+    }
+
+    /** getGeolocaleBioregion on given maps (all country names; adm1 name and country name); the tests call it without a database. */
+    public static @Nullable String geolocaleBioregion(Map<String, Country> countryNames, MultiKeyMap<String, Adm1> adm1s,
+                                                      String countryName, String adm1Name) {
+        if (countryNames == null) return null;
         String useBioregion = null;
 
-        Geolocale adm1 = getAdm1(adm1Name, countryName);
+        Country validCountry = validCountry(countryNames, countryName);
+        if (validCountry != null && !validCountry.isValid()) validCountry = null;   // an old name that points to a row that is not valid
+        Adm1 adm1 = validCountry == null || adm1Name == null ? null : validAdm1(adm1s, adm1Name, validCountry.getName());
         if (adm1 != null) {
             useBioregion = adm1.getTheOneBioregion();
         }
-        if (useBioregion == null) {
-            Geolocale country = getCountry(countryName);
-            if (country != null) {
-                useBioregion = country.getTheOneBioregion();
-            }
+        if (useBioregion == null && validCountry != null) {
+            useBioregion = validCountry.getTheOneBioregion();
         }
-        //A.log("GeolocaleMgr.getGeolocaleBioregion() countryName:" + countryName + " adm1Name:" + adm1Name + " useBioregion:" + useBioregion);
         return useBioregion;
     }
 

@@ -9,7 +9,7 @@ Every morning at 5:00 Pacific, AntWeb recomputes everything that depends on name
 1. **Set 1, names and CAS specimens:** load the AntCat catalog ([antcat-to-antweb.md](antcat-to-antweb.md)), then upload the CAS specimens from TaxonWorks ([specimen-upload.md](specimen-upload.md) section 5), then (when switched on) move existing specimens whose name AntCat has changed to the current valid name ([antcat-to-antweb.md](antcat-to-antweb.md) section 7). Can take up to about two hours because it waits for TaxonWorks.
 2. **Set 2, countries and states:** remove names nobody uses any more, rebuild the country and adm1 species lists from the specimens, recount every country and adm1.
 3. **Set 3, projects, museums, bioregions:** recount projects, rebuild museum and bioregion lists and counts, move list entries to current valid names, mark species with type specimens.
-4. **Set 4, images:** count images for every taxon, then for every place (country, adm1, island, region, subregion, project, museum, bioregion) its Images, the images of each view and its Imaged specimens, straight from the image table (since 2026-10-20).
+4. **Set 4, images:** count images for every taxon, then for every place (country, adm1, island, region, subregion, project, museum, bioregion) its Images, the images of each view and its Imaged specimens, straight from the image table (since 2026-10-20). Since 2026-11-09 no image number counts the images of red-flagged specimens (Brian Fisher; [numbers.md](../numbers.md) section 5); the "Set 4 done" line says so (`StatisticsDb.RED_FLAG_IMAGES_RULE_LOG`).
 5. **Set 5, maps and checks:** drop default-specimen choices that no longer fit, rebuild the map data of countries, adm1s and museums, tidy species lists, reload all caches.
 
 While a set runs, specimen uploads are refused ("re-computation process"). Since 2026-10-18 the container is **not** restarted after the run (it used to be, around 8 AM); a restart only happens if set 1 is still running after 3.5 hours, or if an admin asks for one. On staging, set 5 is skipped because the 4 GB droplet runs out of memory; the caches are reloaded instead.
@@ -22,6 +22,7 @@ While a set runs, specimen uploads are refused ("re-computation process"). Since
 |---|---|---|
 | Timer | `util/SessionRequestFilter.runTask()` (line 325), `nextLaunchTime()` (line 338), `scheduleNextRun()`, `CustomTask` (line 358) | At startup (filter `init`), a `java.util.Timer` is set for the next 05:00:00 in the JVM's time zone (Pacific). Each run schedules the next one, also after a failure. Not in dev mode. |
 | Launch hour | `Scheduler.LAUNCHTIME = 5` (line 33) | |
+| TaxonWorks early request (2026-11-10) | `TaxonWorksNightly.scheduleEarlyRequest` (from `runTask()`), `earlyRequest()` | 04:35, 25 minutes before the run: the CAS archive's download link is requested once so that TaxonWorks builds a fresh archive before set 1 reaches the upload (a request only; one line "TaxonWorks early request: ..." in compute.log; off without `etc/taxonworks.properties`). See [specimen-upload.md](specimen-upload.md) section 5, step 5 (it only helps once the TaxonWorks project's maximum archive age is under one day). |
 | Admin, by hand | `schedule.do?action=run` (`WEB-INF/struts-config.xml` line 603), optionally `&num=1..5` for one set | `Scheduler.execute()` (line 84): admin only, POST confirmation (`PostOnly.confirm`), then the same `doAction()`; the browser waits for the whole run. |
 | One set, by hand | `utilData.do?action=set1` ... `set5` (struts line 588) | `UtilDataAction` directly: admin, POST confirmation (line 109). `utilData.do?action=<step>` runs one step of a set (the list in `UtilDataAction.ACTIONS`, line 46). |
 
@@ -60,7 +61,7 @@ Times are from comments in `UtilDataAction.doAction()` (production unless stated
 |---|---|---|
 | `worldantsFetchAndReload` | `SpeciesListUploader.worldantsFetchAndReload()`, then `ProjTaxonCountDb.childrenCountCrawl("worldants")` | see [antcat-to-antweb.md](antcat-to-antweb.md): `taxon`, `homonym`, taxonomic history, `proj_taxon`, `geolocale_taxon`, `bioregion_taxon`, `museum_taxon`, `worldants_upload` |
 | `taxonFinish` | `TaxonDb.setSubfamilyChartColor()` (35 s) | `taxon` chart colours |
-| TaxonWorks | `TaxonWorksNightly.run(connection, 90)` | CAS specimens, see [specimen-upload.md](specimen-upload.md) section 5 |
+| TaxonWorks | `TaxonWorksNightly.run(connection, 30)` | CAS specimens, see [specimen-upload.md](specimen-upload.md) section 5 |
 | name update | `UtilDataAction.nightlyNameUpdate()` -> `SpecimenNameUpdate.runLocked()`; setting `etc/name-update.properties` (no file = off); skipped if the AntCat import failed or an upload is running; commits on its own | `specimen` (apply mode), `specimen_name_update`, `taxon_set_parked`, `taxon` (apply mode: rows for morphospecies/indets moved with a synonym genus, since 2026-11-03); a second pass moves morphospecies and indets of synonym genera and names filed without a subfamily (`GenusSynonymRule`); a third pass moves a bioregion's morphospecies and indets by an approved old genus concept (table `genus_concept_rule`, approved on genusConceptRules.do from proposals made from AntCat's data; e.g. Mesoponera in the Afrotropical and Malagasy regions is Xiphopelta); see [antcat-to-antweb.md](antcat-to-antweb.md) section 7 |
 | taxon parents (since 2026-10-22, B36 in [numbers.md](../numbers.md)) | `UtilDataAction.nightlyTaxonParents()` -> `TaxonParentDb.repair()`: every ant species and subspecies of a counted status that is its own current valid name and is identified to genus gets its genus row as parent, where that row exists; no genus row is ever made (names not identified to genus are left alone; names whose genus row is missing are listed in the log line, valid ones also in an admin alert at most weekly: an AntCat import problem); when it changed a row, recounts the worldants list and rebuilds Global (allantwebants); commits on its own; compute.log "taxon parents (B36): ..." | `taxon`, `proj_taxon` (worldants, allantwebants) |
 | cache | `TaxonMgr.populate(connection, true, false)` | in-memory taxon cache |
@@ -90,17 +91,22 @@ Times are from comments in `UtilDataAction.doAction()` (production unless stated
 
 | Step | Code | What |
 |---|---|---|
-| `imageCountCrawl` | `ImageCountDb.imageCountCrawls()` (line 22) | image counts per specimen, species, genus, subfamily, family, then in `geolocale_taxon`, `proj_taxon`, `bioregion_taxon`, `museum_taxon` (the "N Images" of each taxon on a place's image pages). Since 2026-10-20 the counts of a country, adm1, island, region, subregion, museum or bioregion list are of the images of that place's specimens only (regions and subregions: the specimens of their countries, as in set 2) (before: of every specimen of the name, anywhere), the rows are set to 0 first; since 2026-10-22 the genus, subfamily and family rows are added up by the taxon tree (`parent_taxon_name`, as the specimen counts), not by the specimen's genus column, so a synonym's images count in the genus of its valid name (B40 in [numbers.md](../numbers.md)); "Image Count Crawl completed" |
-| `placeImageCounts` (since 2026-10-20) | `PlaceImageCountDb.updateAll()` | for every place, from the `image` table joined to the specimens that the place's Specimens number counts (country, adm1, island: `specimen.country` / `adm1` (and `specimen.country` = the adm1's parent since 2026-11-09, B26) / `island_country`, countable status, name on the list; region and subregion (since 2026-10-20): the specimens of their countries, see set 2; bioregion, museum (since 2026-10-28, as their Specimens): `specimen.bioregion` / `specimen.museum`, countable status, a name on the list or a synonym of one (counted under the valid name), before: all their specimens; project: names on the list (curated projects: and their synonyms, since 2026-10-28), anywhere, any status): table `place_image_count` (one row per place and shot type, plus `*all`, `*ant` and `*label_only`; created by the application, record and undo in `db/upgrade/8.113/2026-10-20-place-image-count.sql`), and `image_count` (all files, labels too) and `imaged_specimen_count` (an image of the ant, labels not counted) of `geolocale`, `project`, `museum`, `bioregion`. Two grouped queries per kind of place (all places at once), done by MySQL; estimated 1 to 3 minutes on production (about 3 times the image table for projects, as allantwebants and worldants each cover nearly every image). compute.log "Place image counts: geolocale N places with images in S s; ...". `utilData.do?action=placeImageCounts&name=<geolocale, bioregion, museum or project>` redoes one kind. The Recalculate button of a place page redoes that place. Checked by countCheck.do ("place images") |
+| `imageCountCrawl` | `ImageCountDb.imageCountCrawls()` (line 22) | image counts per specimen, species, genus, subfamily, family, then in `geolocale_taxon`, `proj_taxon`, `bioregion_taxon`, `museum_taxon` (the "N Images" of each taxon on a place's image pages). Since 2026-10-20 the counts of a country, adm1, island, region, subregion, museum or bioregion list are of the images of that place's specimens only (regions and subregions: the specimens of their countries, as in set 2) (before: of every specimen of the name, anywhere), the rows are set to 0 first; since 2026-10-22 the genus, subfamily and family rows are added up by the taxon tree (`parent_taxon_name`, as the specimen counts), not by the specimen's genus column, so a synonym's images count in the genus of its valid name (B40 in [numbers.md](../numbers.md)); since 2026-11-09 a taxon's and a list row's counts leave out red-flagged specimens (`ImageCountDb.SPECIES_IMAGES_SQL`, `StatisticsDb.ANT_IMAGES_OF_SPECIMEN`; the specimen's own `image_count` still counts all its images); "Image Count Crawl completed" |
+| `placeImageCounts` (since 2026-10-20) | `PlaceImageCountDb.updateAll()` | for every place, from the `image` table joined to the specimens that the place's Specimens number counts (country, adm1, island: `specimen.country` / `adm1` (and `specimen.country` = the adm1's parent since 2026-11-09, B26) / `island_country`, countable status, name on the list; region and subregion (since 2026-10-20): the specimens of their countries, see set 2; bioregion, museum (since 2026-10-28, as their Specimens): `specimen.bioregion` / `specimen.museum`, countable status, a name on the list or a synonym of one (counted under the valid name), before: all their specimens; project: names on the list (curated projects: and their synonyms, since 2026-10-28), anywhere, any status; every kind: not red-flagged, since 2026-11-09): table `place_image_count` (one row per place and shot type, plus `*all`, `*ant` and `*label_only`; created by the application, record and undo in `db/upgrade/8.113/2026-10-20-place-image-count.sql`), and `image_count` (all files, labels too) and `imaged_specimen_count` (an image of the ant, labels not counted) of `geolocale`, `project`, `museum`, `bioregion`. Two grouped queries per kind of place (all places at once), done by MySQL; estimated 1 to 3 minutes on production (about 3 times the image table for projects, as allantwebants and worldants each cover nearly every image). compute.log "Place image counts: geolocale N places with images in S s; ...". `utilData.do?action=placeImageCounts&name=<geolocale, bioregion, museum or project>` redoes one kind. The Recalculate button of a place page redoes that place. Checked by countCheck.do ("place images") |
 | `placeGenusCuration` (since 2026-11-02) | `PlaceGenusCurationDb.fillAll()` | the Not curated column of genus lists (Brian Fisher, 2026-11-02): for every country (specimen.country or island_country, each specimen once), adm1 (specimen.country = its parent and specimen.adm1 = its name, keyed by its geolocale id: B26 fixed 2026-11-09; before: specimen.adm1, keyed by the name), museum and bioregion, the not red-flagged ant specimens by name (`place_specimen_name`, which the genus lists read instead of the specimen table), then per genus the specimens and those whose name is not curated (neither valid nor a curated morphospecies: uncurated morphospecies, names identified only to genus, unrecognized names) with their parts (`place_genus_curation`). One grouped query per kind of place, each kind replaced in one transaction; created by the application, record and undo in `db/upgrade/8.115/2026-11-02-place-genus-curation.sql`. Its own try in set 4 (a failure leaves the cells empty, the rest of set 4 runs). compute.log "Not curated counted: country N places, M genus rows in S s; ...". `utilData.do?action=placeGenusCuration&name=<country, adm1, museum or bioregion>` redoes one kind |
-| `imagingProgress` (since 2026-11-08) | `ImagingProgressDb.fill()` | the imaging progress page (`imagingProgress.do`, Brian Fisher, 2026-11-08), after the statistics row: valid living ant species and subspecies imaged (a photo of the ant anywhere in AntWeb, labels never count) for all of AntWeb and every bioregion, country, genus and museum, with imaged from here, unimaged with specimens in AntWeb and with a CASC specimen (`imaging_progress`). One grouped query per kind of place, then the table replaced in one transaction; its own step of the daily update (`dailyUpdate.do`) and its own try in set 4. Estimated 1 to 3 minutes on production. compute.log "Imaging progress counted: N of M valid living species and subspecies imaged; ... rows in S s". `utilData.do?action=imagingProgress` redoes it |
+| `imagingProgress` (since 2026-11-08) | `ImagingProgressDb.fill()` | the imaging progress page (`imagingProgress.do`, Brian Fisher, 2026-11-08), after the statistics row: valid living ant species and subspecies imaged (a photo of the ant anywhere in AntWeb, labels never count, nor photos of red-flagged specimens since 2026-11-09) for all of AntWeb and every bioregion, country, genus and museum, with imaged from here, unimaged with specimens in AntWeb and with a CASC specimen (`imaging_progress`). One grouped query per kind of place, then the table replaced in one transaction, together with the unimaged list (`imaging_unimaged`, 2026-11-11: the list the CSV and the genus view show is the one of the counts, also after a restart; the rows of all of AntWeb, the genus rows and the list are counted one after the other, counted again up to 3 times when data changed between them, and written only together and only when the list has total minus imaged names, else yesterday's stay and the line says "FAILED for all, genus and the unimaged list (...)"); its own step of the daily update (`dailyUpdate.do`) and its own try in set 4. Estimated 1 to 3 minutes on production. compute.log "Imaging progress counted: N of M valid living species and subspecies imaged; ... rows in S s; U unimaged names listed". `utilData.do?action=imagingProgress` redoes it (run it once after the deploy of 2026-11-11 on a server that has counts but no stored list: until then its page says "not counted yet"). The page's trend starts on 2026-11-12 (`ImagingProgressDb.RULE_SINCE`: the first daily update on production that leaves out photos of red-flagged specimens) |
 
 ### Place list totals (after set 4)
 
 `Scheduler.runPlaceListTotals` -> `PlaceViewTotalDb.fillAll()` on a direct connection (not the long pool): the place
 pages' Subfamilies, Genera and Species, the rows each place's lists show in their default view, counted with the list
 page's own code (`place_view_total`). After `placeGenusCuration`, whose stored specimen names the lists read.
-compute.log: "Place list totals counted: N places in S s (M recounted, K unchanged)".
+compute.log: "Place list totals counted: N places in S s (M recounted, K unchanged); recounted because: <reason> <places>,
+...; comparing S s, counting S s" (the reasons are listed below; "; recounted because" is left out when no place was
+counted again). A place that fails adds "; FAILED for N places (their stored totals are shown), e.g. ...", and a run
+that counted none starts "Place list totals counted: FAILED, 0 places". The morning check reads the number of places
+and the word FAILED (`tests/e2e/test_nightly_jobs_ran.py`, `test_place_list_totals_counted_every_place`); the release
+gate does not read this line (its check 8 asks `dailyUpdate.do` whether the daily update is running).
 
 - Production 2026-11-09: 60 minutes on 11-07 and 11-08, about 4 hours on 11-09. Causes: an adm1's specimens were read
   by `specimen.adm1 = X` alone, which no index serves (the index is `country_adm1_idx` (country, adm1)), so MySQL walked
@@ -112,13 +118,63 @@ compute.log: "Place list totals counted: N places in S s (M recounted, K unchang
   `island_country_idx` and `bioregion_idx` come with `db/upgrade/9.3.1/2026-11-09-specimen-place-indexes.sql`, until
   then those parts scan); only the places whose data changed are counted again: a fingerprint per place
   (`place_view_total_state`: its list rows with their taxon rows, tonight's stored specimen names with their
-  specimens, its disputes, AntWeb's curated morphospecies, the rules `PlaceViewTotalDb.RULES`). Specimen dates are no
+  specimens, its disputes, the curated morphospecies among its names (until 2026-11-10: all of AntWeb's), the rules
+  `PlaceViewTotalDb.RULES`). Specimen dates are no
   signal: every upload, the nightly CAS TaxonWorks upload among them, deletes its group's specimens and loads them
   again. Counted again: a changed fingerprint, specimen names not stored again since the last comparison (the Not
   curated count failed), a count older than 7 days, new rules, missing totals; every place on Sundays and with
   `utilData.do?action=placeViewTotals&param=all`. Each place is committed on its own (autocommit).
 - Bump `PlaceViewTotalDb.RULES` when what a list shows changes (ListView, StatusSet, TaxaPage, PlaceTotals), so the next
   run counts every place.
+- One place between two daily updates (2026-11-10): whatever rebuilds one place's list outside the daily update counts
+  that place's totals again, `PlaceViewTotalDb.recountPlace(place)`: the "Update statistics" button of a place page
+  (`OverviewAction`, `action=recalc`: project, museum, bioregion, country, island, adm1) and the admin jobs for one
+  place (`utilData.do?action=geolocaleCountCrawl&num=<id>`, `populateBioregion&name=`, `populateMuseum&code=`,
+  `projectCountCrawl&name=`). It writes that place's totals and state only (`fill()` is not used for one place: it
+  removes the rows of every place it is not given), through the same per-place method as the daily fill
+  (`countAndStore`). Before, the button rebuilt the list and left the totals of the last daily update: staging
+  2026-11-10, after 2,215 Mexican specimens became Nearctic and "Update statistics" on the bioregion Nearctic, its genus
+  list had 91 genera and the page said Genera 90 (Indomalaya: species list 3,785, page 3,784). A count that fails is
+  logged, never fails the page, and removes the place's totals and state, as the daily fill does for a failed place: the
+  page shows the place's own counts (`data-view-counted="false"`) until the next daily update counts it ("new place").
+  Not counted again here: the jobs for every place run by hand (run `placeViewTotals` after them), a save in the Species
+  List Tool, a species list upload, a specimen upload and "Recalculate Your Museums" (they do not recount the place's
+  other numbers either; the daily update does). Tests: `PlaceViewTotalDbTest` (the four tests on one place),
+  `tests/e2e/test_place_recalc.py`, `tests/unit/test_recalc_view_totals.py`.
+- Review of PR #341 (2026-11-11), the count of one place:
+  - the state it stores is the mark "one place, counted between two daily updates" (`PlaceViewTotalDb.ONE_PLACE`), not
+    a fingerprint, so the next daily update counts that place once more and its line says "data changed N (counted for
+    one place since the last daily update N)". A country's or adm1's lists are counted from the specimens as they are
+    now, the fingerprint's specimen names are those the last daily update stored: with a fingerprint taken at the
+    count, specimens added, the place counted, and the specimens taken away again before the next daily update gave
+    the same fingerprint as the day before, "unchanged", and a stale total for up to 7 days;
+  - the admin jobs for one place end as the button does (`UtilDataAction.finishOnePlace`): first the place's image
+    numbers (`PlaceImageCountDb.updatePlace`), then its list totals. `MuseumDb.populate(code)` and
+    `BioregionDb.populate(name)` write the place's Images and Imaged specimens with queries that count red-flagged
+    specimens' images; the jobs for one museum or one bioregion stopped there, so the place showed them until the
+    next daily update (the geolocale and project jobs already ran the image recount);
+  - a count that fails is said in the job's answer, on the job page: "...; list totals not recounted: <reason> (the
+    place's page shows its own counts for Subfamilies, Genera and Species until the next daily update)"; before it was
+    a warning in the server log and the job answered "populated";
+  - `PlaceViewTotalDb.ensureSchema` creates only a missing table and runs at start-up (`LoginMgr`): CREATE TABLE, also
+    IF NOT EXISTS on a table that exists, commits the transaction it runs in, and the first count of one place after
+    a restart committed the admin job's work so far.
+  Tests: `PlaceViewTotalDbTest#testAPlaceCountedBetweenTwoDailyUpdatesIsCountedAgainByTheNext`,
+  `#testTheSchemaCheckCommitsNothingWhenTheTablesExist`, `util.OnePlaceJobDbTest`, `tests/unit/test_recalc_view_totals.py`.
+- Production 2026-11-10 (a Tuesday, the first daily update with the fingerprints): "1987 recounted, 0 unchanged", 584 s.
+  Cause: the curated morphospecies were in every place's fingerprint as one checksum of all of AntWeb's
+  (`globalFingerprint`), so one curator's entry for a morphospecies anywhere, or one curated morphospecies whose
+  specimens were renamed or lost, changed every fingerprint. What the daily update rewrites every day (specimens of CAS
+  deleted and loaded again, list rows deleted and inserted again, counts, the stored specimen names) changes no
+  fingerprint: `PlaceViewTotalDbTest#testTheDailySequenceRecountsOnlyThePlacesThatChanged`. Since 2026-11-10 each place
+  takes the curated morphospecies among its own names (list rows and stored specimen names; `curatedPart`, the rule of
+  `ListView.vettedCondition` read once per run): a curated morphospecies counts again the places that have the name.
+  The first run after the change counts every place once more (the stored fingerprints have the old form).
+- The line also says why places were counted again and what took the time: "...(12 recounted, 1975 unchanged);
+  recounted because: data changed 12 (list rows 3, specimen names 10, curated morphospecies 1); comparing 20 s,
+  counting 4 s". Reasons: data changed (with the parts: list rows, specimen names, removed names, curated
+  morphospecies, or "fingerprint of an earlier version"), new place, totals missing, rules changed, counted over 7 days
+  ago, specimen names not stored again since the last count, full count.
 
 ### Set 5 (line 262): maps and checks, about 51 minutes; skipped on staging
 
@@ -129,6 +185,23 @@ compute.log: "Place list totals counted: N places in S s (M recounted, K unchang
 | `cleanupSpeciesListProxyRecords` | `ProjTaxonDb.cleanupSpeciesListProxyRecords()` (line 398) | deletes `proj_taxon` rows with source `proxyspeciesListTool` that have no children in that project |
 | `verifyProjTaxon` | `ProjTaxonDb.verifyProjTaxon()` (line 472) | deletes genus rows from project lists (not `worldants`) that have no species in that project |
 | caches | `AntwebMgr.populate(connection, true)` | reloads every in-memory manager (taxa, geolocales, projects, museums, groups, ...); pages show "initializing" meanwhile; also increments the specimen upload id |
+
+### Where the time goes (lines with times, 2026-11-10)
+
+Three compute.log lines say how long their parts took, so a slow step can be read from the log (Brian Fisher,
+2026-11-10: a faster daily update; production that day: museums 5 minutes, image counts 8, place image counts 13.6):
+
+- "Museums populated (N museums, specimen.museum S s, museum numbers S s, species rows S s, synonym rows S s, higher
+  taxa S s, counts S s, totals S s)": the parts of `MuseumDb.populate(code)` over all museums. `specimen.museum` is, per
+  museum, `update specimen set museum = null where museum = X` and `update specimen set museum = X where ownedBy regexp
+  ...` (no index serves the regexp: the specimen table is read once per museum).
+- "Image Count Crawl completed (specimens S s, taxa S s, roll-up S s, geolocale lists S s, project lists S s, bioregion
+  lists S s, museum lists S s)": `ImageCountDb.imageCountCrawls`. The list parts run one query per place and one UPDATE
+  per list row with images.
+- "Place image counts: geolocale N places with images in S s (islands S s, countries S s, adm1s S s, regions and
+  subregions S s); ...": the four sources of the geolocale kind (`PlaceImageCountDb.sources`), two grouped queries each.
+
+The lines still begin with the same words (the tests and the morning check look for the beginning).
 
 ## 5. Restart logic
 

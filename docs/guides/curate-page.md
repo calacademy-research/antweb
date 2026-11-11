@@ -160,6 +160,7 @@ What it does, in order:
 5. Count crawl: adds the counts up the tree (species to genus to subfamily).
 6. Finish: the museum's subfamily, genus and species counts (valid and other countable names), imaged-specimen count, valid-species count, and the data for the two pie charts (taxa and specimens by subfamily).
 7. Reloads the in-memory museum list, so the page shows the new numbers at once.
+8. Counts the museum's Subfamilies, Genera and Species again (since 2026-11-10): these three numbers are the headers of the museum's lists in their default view, Curated, and the page keeps them stored. Before, only the daily update counted them, so after the button the page could say one genus or species more or fewer than the list it opens until the next day.
 
 How long: a few minutes for most museums (the code notes about 4 minutes for ZMHB); a museum with many specimens, such as CASC, takes longer. The page answers when it is done. The nightly run recounts all museums in about 8 to 20 minutes.
 
@@ -167,7 +168,7 @@ When to use it: after a correction that should show on a museum page before tomo
 
 ### Recalculate on region, project and bioregion pages (admins)
 
-Country, adm1, project and bioregion pages have the same **Recalculate** button in their admin area. Each recounts that one page now, including the count crawl that adds the taxon counts up the tree (species to genus to subfamily). Since October 2026 there are no separate "Count Crawl" links on taxon pages or "Project Taxon Child Count Crawl" link on project pages: the project Recalculate now runs that crawl too.
+Country, adm1, project and bioregion pages have the same **Recalculate** button in their admin area. Each recounts that one page now, including the count crawl that adds the taxon counts up the tree (species to genus to subfamily). Since October 2026 there are no separate "Count Crawl" links on taxon pages or "Project Taxon Child Count Crawl" link on project pages: the project Recalculate now runs that crawl too. Since 2026-11-10 the button (now labelled **Update statistics**) also counts the page's Subfamilies, Genera and Species again, on every kind of page that has it (country, island, adm1, project, museum, bioregion), so these numbers equal the headers of the lists they open right after the button; before, they followed only at the next daily update.
 
 ### Technical page (`technical.do`, admins)
 

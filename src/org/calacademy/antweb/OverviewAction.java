@@ -24,10 +24,11 @@ import org.apache.commons.logging.LogFactory;
  * a geolocale's page: id=, regionName=, subregionName=, countryName=, adm1Name= (with countryName, else a unique
  * adm1 name) are read in this order, each one given replacing the one before; an unknown one gives a message. The
  * page type comes from the request URL; places come from memory (GeolocaleMgr, ProjectMgr, MuseumMgr, BioregionMgr).
- * action=recalc, by a curator and POST only, recounts the place (long connection pool). Page text through
- * DescriptionAction; the image numbers through setPlaceImages (PlaceImageCountDb). Docs: docs/flows/places.md,
+ * action=recalc, by a curator and POST only, recounts the place (long connection pool): its list and counts, its image
+ * numbers, and last the stored totals of its lists (recountListTotals: the page's Subfamilies, Genera and Species). Page
+ * text through DescriptionAction; the image numbers through setPlaceImages (PlaceImageCountDb). Docs: docs/flows/places.md,
  * docs/numbers.md rows 20 to 37. Tests: tests/e2e/test_place_pages.py, tests/e2e/test_place_image_counts.py,
- * tests/e2e/test_overview_editor.py.
+ * tests/e2e/test_overview_editor.py, tests/e2e/test_place_recalc.py, tests/unit/test_recalc_view_totals.py.
  */
 public final class OverviewAction extends DescriptionAction {
 
@@ -100,6 +101,7 @@ public final class OverviewAction extends DescriptionAction {
                 projectDb.updateCounts(projectName);
                 new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.PROJECT, projectName);
                 ProjectMgr.populate(connection, true);
+                recountListTotals(connection, project);
                 //A.log("Project:" + projectName + " action:" + action);
             }
 
@@ -144,6 +146,7 @@ public final class OverviewAction extends DescriptionAction {
    
                 MuseumMgr.populate(connection, true);
                 StatsPageAction.forget();   // the statistics page reads this list: count its tables again at the next visit
+                recountListTotals(connection, MuseumMgr.getMuseum(museumCode));
               }						
 
               Museum museum = MuseumMgr.getMuseum(museumCode);
@@ -193,6 +196,7 @@ public final class OverviewAction extends DescriptionAction {
 
                    BioregionMgr.populate(connection, true);
                    StatsPageAction.forget();   // the statistics page reads this list: count its tables again at the next visit
+                   recountListTotals(connection, BioregionMgr.getBioregion(name));
                }
 
 
@@ -383,6 +387,7 @@ public final class OverviewAction extends DescriptionAction {
 			geolocaleDb.updateCounts(geolocale.getId());
 			new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.GEOLOCALE, "" + geolocale.getId());
 			GeolocaleMgr.populate(connection, true, false);
+			recountListTotals(connection, GeolocaleMgr.getGeolocale(geolocale.getId()));
 			s_log.debug("execute() AntwebMgr.populate()");
 		  }
 
@@ -472,6 +477,7 @@ public final class OverviewAction extends DescriptionAction {
 			geolocaleDb.updateCounts(geolocale.getId());
 			new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.GEOLOCALE, "" + geolocale.getId());
 			GeolocaleMgr.populate(connection, true, false);
+			recountListTotals(connection, GeolocaleMgr.getGeolocale(geolocale.getId()));
 			s_log.debug("execute() geolocale:" + geolocale.getName() + " recalculated.");
 		  }
 		            
@@ -502,6 +508,21 @@ public final class OverviewAction extends DescriptionAction {
       // Reached after a database error (2026-10-26, finding F17: it returned null, a blank page with HTTP 200).
         request.setAttribute("message", "The page could not be built (database error). Please try again later.");
         return mapping.findForward("message");
+    }
+
+    /**
+     * The last step of "Update statistics" (action=recalc), in every branch that recounts a place (project, museum,
+     * bioregion, country and island, adm1): the stored totals of the place's lists (place_view_total: the page's
+     * Subfamilies, Genera and Species, the headers of its lists in the default view) are counted again for this one
+     * place (PlaceViewTotalDb.recountPlace). Called after the place's list and counts are rebuilt and its manager is
+     * populated again, with the place the page is then shown for (the key setPlaceImages reads the totals by).
+     * Until 2026-11-10 only the daily update counted these totals, so after the button the page and its list disagreed
+     * until the next daily update (staging, bioregion Nearctic: the genus list had 91 genera, the page said Genera 90).
+     * Never fails the page: a count that fails is logged and the place's totals are removed (see recountPlace).
+     */
+    static void recountListTotals(Connection connection, Overview place) {
+        if (place == null) return;
+        new PlaceViewTotalDb(connection).recountPlace(place);
     }
 
     /**

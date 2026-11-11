@@ -5,6 +5,13 @@ The page shows administrators an "Update statistics" button (overview-body.jsp; 
 form with the form token). OverviewAction recounts only on a POST by a curator or administrator. The test presses it on a small country and one of its adm1 and
 checks the page comes back as that place, with its statistics, and no error. An anonymous visitor gets no button.
 Staging only (it recounts, so it changes data); one at a time (the recount takes the long connection pool).
+
+After the button the page's Subfamilies, Genera and Species are the headers of the lists those numbers open (2026-11-10).
+They are stored totals (table place_view_total, PlaceViewTotalDb) that only the daily update counted: the button rebuilt
+the place's list and left them, so until the next daily update the page and the list disagreed (staging, after 2,215
+Mexican specimens became Nearctic and "Update statistics" on the bioregion Nearctic: its genus list had 91 genera, the
+page said Genera 90; Indomalaya: species list 3,785, page Species 3,784). The button now counts the place's list totals
+again (PlaceViewTotalDb.recountPlace); every place this file presses the button on is checked (_check_list_totals).
 """
 import re
 from datetime import datetime
@@ -16,6 +23,7 @@ import pytest
 
 import numbers_sample as ns
 from antweb import BASE_URL, TIMEOUT, new_session
+from public_pages import attr_unescape
 from staging_accounts import login, needs
 
 COUNTRY = "Seychelles"
@@ -52,6 +60,43 @@ def _check(html, title_words, path):
     assert re.search(r"Valid species", text), f"{path} after Update statistics: no statistics table"
 
 
+# A number of the statistics table and the list it opens (overview-body.jsp): the row's data-n and the link of its cell.
+LIST_TOTAL = re.compile(r'<tr data-stat="(subfamilies|genera|species)" data-n="(\d+)"><td class="ps_name">[^<]*</td>'
+                        r'<td class="ps_num"><a href="([^"]+)"')
+LIST_TOTALS = (("subfamilies", "subfamily"), ("genera", "genus"), ("species", "species"))
+
+
+def _check_list_totals(path, page):
+    """After Update statistics: Subfamilies, Genera and Species of the page (the page the button returned) = the headers
+    of the lists those numbers open, the place's lists in the default view, Curated. The lists are read as a visitor
+    (no login), each from the link of its number, so the test follows the page for every kind of place."""
+    assert 'data-view-counted="true"' in page, (
+        f"{path} after Update statistics: the page does not show counted list totals (data-view-counted is not true): "
+        "the count of the place's list totals failed or did not run (PlaceViewTotalDb.recountPlace), so the page shows "
+        "the place's own counts")
+    rows = {stat: (int(n), attr_unescape(href)) for stat, n, href in LIST_TOTAL.findall(page)}
+    stats = ns.place_stats(page)
+    wrong = []
+    for stat, rank in LIST_TOTALS:
+        assert stat in rows, f"{path} after Update statistics: no '{stat}' row with a link to its list in the statistics table"
+        shown, link = rows[stat]
+        assert shown == stats.get(stat), (path, stat, shown, stats.get(stat))
+        query = urlparse(link).query
+        assert f"rank={rank}" in query and "statusSet=curated" in query, (
+            f"{path}: the {stat} number opens {link!r}, not the place's {rank} list in the default view")
+        html = ns.fetch("/taxonomicPage.do?" + query)
+        assert html is not None, f"{path} after Update statistics: the {rank} list (/taxonomicPage.do?{query}) could not be read"
+        n, text = ns.header(html)
+        assert n is not None, f"{path} after Update statistics: the {rank} list has no header ({text!r})"
+        listed = len(ns.list_rows(html))
+        if n != shown:
+            wrong.append(f"{stat} {shown} on the page, its list's header {text!r}")
+        if listed != n:
+            wrong.append(f"the {rank} list's header {text!r}, {listed} rows listed")
+    assert not wrong, (f"{path} after Update statistics: the page's numbers are not the headers of the lists they open "
+                       "(the button counts the place's list totals again, PlaceViewTotalDb.recountPlace): " + "; ".join(wrong))
+
+
 def test_anonymous_visitor_gets_no_update_button():
     html = ns.get(f"/country.do?name={quote(COUNTRY)}", new_session())
     assert _button(html) is None, "an anonymous visitor sees the Update statistics button"
@@ -64,6 +109,7 @@ def test_admin_updates_a_country_and_an_adm1():
     posted, page = _press(s, path)
     assert posted == "/country.do?action=recalc", posted
     _check(page, [COUNTRY], path)
+    _check_list_totals(path, page)
     adm1 = re.search(r"""href=['"][^'"]*/adm1\.do\?([^'"]+)['"][^>]*>([^<]+)</a>""", page)
     if not adm1:
         pytest.skip(f"{COUNTRY}'s page links no adm1")
@@ -71,6 +117,7 @@ def test_admin_updates_a_country_and_an_adm1():
     posted, page = _press(s, path)
     assert posted == "/adm1.do?action=recalc", posted
     _check(page, [adm1.group(2).strip()], path)
+    _check_list_totals(path, page)
 
 
 @needs("admin")
@@ -106,7 +153,9 @@ def _flag_lists(session):
 @pytest.mark.parametrize("path, recalc, words", OTHER_PLACES)
 def test_admin_updates_a_museum_a_project_a_bioregion_and_an_island(path, recalc, words):
     """The "Update statistics" button of a museum, a project, a bioregion and an island page recounts that place and
-    shows the page again with its statistics (catalog gaps 9 to 12, 2026-11-04)."""
+    shows the page again with its statistics (catalog gaps 9 to 12, 2026-11-04); its Subfamilies, Genera and Species are
+    then the headers of the lists they open (2026-11-10: the bioregion Nearctic's page said Genera 90 after the button,
+    its genus list had 91)."""
     s, _token, _lid = login("admin")
     before = datetime.now(ZoneInfo("America/Los_Angeles")).strftime("%Y-%m-%d %H:%M")
     posted, page = _press(s, path)
@@ -132,3 +181,4 @@ def test_admin_updates_a_museum_a_project_a_bioregion_and_an_island(path, recalc
         assert word in text, f"{path} after Update statistics: '{word}' not on the page: {text[:300]}"
     for bad in ("not found", "Exception", "failed due to"):
         assert bad not in text, f"{path} after Update statistics: '{bad}': {text[:300]}"
+    _check_list_totals(path, page)
