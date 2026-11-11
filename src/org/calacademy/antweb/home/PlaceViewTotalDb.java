@@ -72,7 +72,12 @@ import org.apache.commons.logging.LogFactory;
  * Until then they rebuilt the list and left these totals as the last daily update counted them, so the page and the
  * list it opens disagreed until the next daily update (staging 2026-11-10, bioregion Nearctic after "Update
  * statistics": the genus list had 91 genera, the page said Genera 90; Indomalaya: species list 3,785, page 3,784).
- * The daily fill and recountPlace count and store through the same method (countAndStore).
+ * The daily fill and recountPlace count and store through the same method (countAndStore). recountPlace stores no
+ * fingerprint of the place's data but a mark (ONE_PLACE) that equals no fingerprint, so the next daily update counts the
+ * place once more: a country's or adm1's lists are counted from the specimens as they are now, while the fingerprint's
+ * specimen names are those the last daily update stored, so a fingerprint taken now could equal tomorrow's although the
+ * list was counted from other data (specimens added, the place counted, the specimens taken away again: "unchanged",
+ * and a stale total for up to 7 days). A failed count is said in the answer of the admin jobs (getLastFailure).
  *
  * Tests: home.PlaceViewTotalDbTest (unchanged places skipped, changed ones counted, rules change, commit per place, the
  * daily sequence day after day, the curated part against ListView.vettedCondition; one place counted again, the other
@@ -135,17 +140,28 @@ public class PlaceViewTotalDb {
 
     private static volatile boolean s_schemaChecked = false;
 
+    /**
+     * Creates the two tables when missing, in taxon_name's collation; once at start-up (LoginMgr). Only a table that is
+     * missing is created (asked from information_schema first, as PlaceImageCountDb and ImagingProgressDb): CREATE TABLE,
+     * also IF NOT EXISTS on a table that exists, commits the transaction it runs in, and recountPlace runs inside the
+     * transaction of an admin job (UtilDataAction, autocommit off), whose work so far it committed on the first use
+     * after a restart (2026-11-11).
+     */
     public void ensureSchema() throws SQLException {
         if (s_schemaChecked) return;
-        String charset = null;
-        String collation = null;
-        try (Statement stmt = connection.createStatement()) {
-            try (ResultSet r = stmt.executeQuery("select character_set_name, collation_name from information_schema.columns"
-                    + " where table_schema = database() and table_name = 'taxon' and column_name = 'taxon_name'")) {
-                if (r.next()) { charset = r.getString(1); collation = r.getString(2); }
+        boolean totals = LicenseUpdateDb.tableExists(connection, "place_view_total");
+        boolean state = LicenseUpdateDb.tableExists(connection, "place_view_total_state");
+        if (!totals || !state) {
+            String charset = null;
+            String collation = null;
+            try (Statement stmt = connection.createStatement()) {
+                try (ResultSet r = stmt.executeQuery("select character_set_name, collation_name from information_schema.columns"
+                        + " where table_schema = database() and table_name = 'taxon' and column_name = 'taxon_name'")) {
+                    if (r.next()) { charset = r.getString(1); collation = r.getString(2); }
+                }
+                if (!totals) stmt.executeUpdate(createTable(charset, collation));
+                if (!state) stmt.executeUpdate(createStateTable(charset, collation));
             }
-            stmt.executeUpdate(createTable(charset, collation));
-            stmt.executeUpdate(createStateTable(charset, collation));
         }
         s_schemaChecked = true;
     }
@@ -462,6 +478,15 @@ public class PlaceViewTotalDb {
         return f.length() > 255 ? f.substring(0, 255) : f.toString();
     }
 
+    /**
+     * Stored as the fingerprint of a place that recountPlace counted between two daily updates: no fingerprint (they
+     * start with "l" and have parts), so the next daily update finds the place's data changed and counts it once more.
+     */
+    public static final String ONE_PLACE = "one place, counted between two daily updates";
+
+    /** The log line's word for such a place ("data changed 1 (counted for one place since the last daily update 1)"). */
+    public static final String ONE_PLACE_REASON = "counted for one place since the last daily update";
+
     /** The parts of a fingerprint by their letter ("l" -> "12:345"); a part's text has no ';'. */
     static java.util.Map<String, String> parts(String fingerprint) {
         java.util.Map<String, String> out = new java.util.HashMap<>();
@@ -476,6 +501,10 @@ public class PlaceViewTotalDb {
      */
     static List<String> changedParts(String stored, String now) {
         List<String> out = new ArrayList<>();
+        if (ONE_PLACE.equals(stored)) {
+            out.add(ONE_PLACE_REASON);
+            return out;
+        }
         java.util.Map<String, String> a = parts(stored);
         java.util.Map<String, String> b = parts(now);
         if (a.containsKey("v") || !a.containsKey("c")) {
@@ -580,22 +609,28 @@ public class PlaceViewTotalDb {
      *
      * Returns true when the place was counted and stored. False, and nothing done, for a place the daily update does not
      * count either (counts(): the AntWeb-wide list; or not a place with totals). False also when the count fails: never
-     * thrown, so the page that called it is still shown. A place whose count failed loses its totals and its state, as
-     * a place that fails in the daily fill does: its page then shows the place's own stored counts, marked
-     * data-view-counted="false" (the number tests wait for the count instead of comparing), and the next daily update
-     * counts it ("new place"). Keeping the totals would show, as counted, numbers from before the list was rebuilt:
-     * the wrong number this method is there to prevent.
+     * thrown, so the page that called it is still shown; getLastFailure() then says why. A place whose count failed
+     * loses its totals and its state, as a place that fails in the daily fill does: its page then shows the place's own
+     * stored counts, marked data-view-counted="false" (the number tests wait for the count instead of comparing), and
+     * the next daily update counts it ("new place"). Keeping the totals would show, as counted, numbers from before the
+     * list was rebuilt: the wrong number this method is there to prevent.
      *
-     * The statements run on the connection as it is (autocommit or the caller's transaction); nothing is committed here.
+     * The state stored is the mark ONE_PLACE, not a fingerprint (2026-11-11): the next daily update counts the place
+     * once more, whatever its data is then (see the class comment).
+     *
+     * The statements run on the connection as it is (autocommit or the caller's transaction); nothing is committed here,
+     * and no table is created when both exist (ensureSchema).
      */
     public boolean recountPlace(Overview place) {
+        lastFailure = null;
         String[] tk = typeAndKey(place);
         if (tk == null || !counts(place)) return false;
         try {
             ensureSchema();
-            countAndStore(place, tk, fingerprint(place, loadCurated()));
+            countAndStore(place, tk, ONE_PLACE);
             return true;
         } catch (SQLException | RuntimeException e) {
+            lastFailure = e.getMessage() == null ? e.toString() : e.getMessage();
             s_log.warn("recountPlace() " + tk[0] + " " + tk[1] + " not counted; its list totals are removed until the next daily update. e:" + e);
             try {
                 removePlace(tk);
@@ -604,6 +639,13 @@ public class PlaceViewTotalDb {
             }
             return false;
         }
+    }
+
+    private String lastFailure = null;
+
+    /** Why the last recountPlace of this object did not count its place (the error's message), or null when it did or had nothing to count. */
+    public String getLastFailure() {
+        return lastFailure;
     }
 
     /**

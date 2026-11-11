@@ -5,6 +5,11 @@ anywhere in AntWeb; label photos never count), the species-only number of the ho
 tables by museum, bioregion, country and genus, each row linked to its unimaged names; a CSV lists all unimaged names.
 The numbers come from the table imaging_progress, filled by the daily update (set 4); the count check recounts them
 every morning ("imaging.progress", ImagingProgressDb, NumberChecks.imagingProgress). Static checks need no server.
+
+The CSV and the genus view read the unimaged list the same fill stored (table imaging_unimaged, 2026-11-11), so the
+CSV has exactly the page's "Still to image" rows at all times (test_csv_downloads_every_unimaged_name; on 2026-11-10 the
+list was read live after a restart and had 2,780 names under a stored count of 2,773). A server whose counts are older
+than that table says "not counted yet" until its next fill, and these tests skip there.
 """
 import re
 
@@ -70,6 +75,15 @@ def test_source_page_words():
                   "Photos of red-flagged specimens are not counted", "photos of red-flagged specimens are not counted"):
         assert words in text, words
     assert "toolsHead.jsp" not in text, "a public page: no tools.css"
+    # One date for "the rules since" (review of PR #341, 2026-11-11): the page prints ImagingProgressDb.RULE_SINCE, the
+    # first day counted by today's rule on every server, in every place it names that day, and has no date of its own
+    # for it (it said 2026-11-09, the day of the decision; production counts by the rule from 2026-11-12).
+    java = (REPO_ROOT / "src/org/calacademy/antweb/home/ImagingProgressDb.java").read_text(encoding="utf-8")
+    assert 'public static final String RULE_SINCE = "2026-11-12";' in java
+    assert "created >= '\" + RULE_SINCE + \"'" in java, "the trend query reads the same date"
+    assert "2026-11-09" not in text and "2026-11-12" not in text
+    assert text.count("<%= ImagingProgressDb.RULE_SINCE %>") == 4, "the label note, the trend's two notes and its drawing"
+    assert 'id="ip-trend-none"' in text, "a server with no day since the date says when the trend starts"
 
 
 # ---------- live ----------

@@ -40,7 +40,11 @@ import static test.org.calacademy.antweb.util.NumbersTestDb.*;
  *    genus list had 91 genera and the page said Genera 90): PlaceViewTotalDb.recountPlace counts the one place whose list
  *    was rebuilt, by its own key for every kind of place, and stores its totals and state; every row of every other
  *    place stays as it was; the AntWeb-wide list is not counted; a count that fails leaves no totals for the place (its
- *    page shows the place's own counts until the next daily update) instead of the totals of before the change.
+ *    page shows the place's own counts until the next daily update) instead of the totals of before the change;
+ *  - review of PR #341 (2026-11-11): a place counted that way is counted once more by the next daily update, whatever
+ *    its data is then (its lists were counted from today's specimens, the daily update's fingerprint reads the specimen
+ *    names stored the day before); the schema check creates nothing, and so commits nothing, when the tables exist
+ *    (recountPlace runs inside an admin job's transaction); a failed count says why (getLastFailure).
  * Runs in CI against MySQL 8.4 (host "mysql"); ANTWEB_TEST_DB_URL overrides.
  */
 public class PlaceViewTotalDbTest extends TestCase {
@@ -596,11 +600,12 @@ public class PlaceViewTotalDbTest extends TestCase {
         assertEquals(subfamilies, stored("geolocale", key, "subfamily"));
         assertTotalsAreTodays("after the count of one place", Arrays.asList(madagascar()));
         assertEquals("no row of another place was written or removed", others, rowsWithout("geolocale", key));
-        // its state: today's rules and fingerprint, counted now
+        // its state: today's rules, counted now, and the mark of a place counted between two daily updates (no fingerprint)
         String[] state = state("geolocale", key);
         assertNotNull(state);
         assertEquals(PlaceViewTotalDb.RULES, state[0]);
-        assertEquals(db.fingerprint(madagascar(), db.loadCurated()), state[1]);
+        assertEquals(PlaceViewTotalDb.ONE_PLACE, state[1]);
+        assertFalse("the mark is no fingerprint", PlaceViewTotalDb.ONE_PLACE.equals(db.fingerprint(madagascar(), db.loadCurated())));
         assertTrue("counted now, not an hour ago: " + state[2], Integer.parseInt(state[2]) < 600);
 
         // a second count changes no number (and still no other place)
@@ -609,12 +614,107 @@ public class PlaceViewTotalDbTest extends TestCase {
         assertEquals(species + 1, stored("geolocale", key, "species"));
         assertEquals(others, rowsWithout("geolocale", key));
 
-        // the state stored for the one place is the state the daily update compares: the next one counts no place again
+        // the next daily update counts that one place once more (and says why), the others stand; the one after, none
         anHourLater();
         String next = night(places);
-        assertTrue("the next daily update: " + next, next.contains("(0 recounted, 4 unchanged)"));
+        assertTrue("the next daily update: " + next, next.contains("(1 recounted, 3 unchanged); recounted because: data changed 1 ("
+            + PlaceViewTotalDb.ONE_PLACE_REASON + " 1); comparing "));
         assertEquals(genera + 1, stored("geolocale", key, "genus"));
         assertEquals(species + 1, stored("geolocale", key, "species"));
+        assertEquals("its state is a fingerprint again", db.fingerprint(madagascar(), db.loadCurated()), state("geolocale", key)[1]);
+        anHourLater();
+        String after = night(places);
+        assertTrue("the daily update after that: " + after, after.contains("(0 recounted, 4 unchanged)"));
+    }
+
+    /**
+     * Review of PR #341 (2026-11-11). A country's species list is counted from its specimens as they are now; the daily
+     * update's fingerprint reads the specimen names stored by the Not curated count of the daily update before. With a
+     * fingerprint stored by the count of one place: specimens of a curated morphospecies arrive (an upload), "Update
+     * statistics" counts the country with them, the specimens go again before the next daily update (the upload is
+     * corrected). The next daily update then stores the same specimen names as the day before, finds the same
+     * fingerprint, calls the country unchanged and keeps the total that counted the specimens, for up to 7 days. The
+     * count of one place therefore stores a mark that equals no fingerprint: the next daily update counts the place.
+     */
+    public void testAPlaceCountedBetweenTwoDailyUpdatesIsCountedAgainByTheNext() throws Exception {
+        List<Overview> places = Arrays.asList(madagascar(), casc());
+        // a morphospecies a curator has on Mozambique's list (curated everywhere), with no specimen in Madagascar yet
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus, species) values ('" + PZ
+            + "', 'species', 'morphotaxon', '" + PHEIDOLE + "', 'formicidae', '" + MYRM + "', 'pheidole', 'zz')");
+        exec("insert into geolocale_taxon (geolocale_id, taxon_name, source) values (40, '" + PZ + "', 'speciesListTool')");
+        night(places);
+        anHourLater();
+        String key = "" + MADAGASCAR;
+        int species = stored("geolocale", key, "species");
+        PlaceViewTotalDb db = new PlaceViewTotalDb(connection);
+        // an upload brings a specimen of it from Madagascar: the Curated species list of Madagascar shows the name
+        exec("insert into specimen (code, taxon_name, status, country, museum, family, subfamily, genus, access_group) values ('up1', '" + PZ
+            + "', 'morphotaxon', 'Madagascar', 'MCZC', 'formicidae', '" + MYRM + "', 'pheidole', 2)");
+        assertEquals("the list, counted from the specimens of now", species + 1, db.listRows(madagascar(), "species"));
+        assertTrue(db.recountPlace(madagascar()));
+        assertEquals(species + 1, stored("geolocale", key, "species"));
+        // the upload is corrected before the next daily update: the specimen is gone again
+        exec("delete from specimen where code = 'up1'");
+        assertEquals(species, db.listRows(madagascar(), "species"));
+        // the next daily update stores the same specimen names as the one before: the same fingerprint as then
+        anHourLater();
+        String next = night(places);
+        assertTrue("Madagascar is counted again: " + next, next.contains("(1 recounted, 1 unchanged); recounted because: data changed 1 ("
+            + PlaceViewTotalDb.ONE_PLACE_REASON + " 1); comparing "));
+        assertEquals("the total of the list as it is, not the one that counted the specimen", species, stored("geolocale", key, "species"));
+        assertTotalsAreTodays("after the daily update", places);
+    }
+
+    /** Sets PlaceViewTotalDb's "schema checked" mark back, as after a restart of the server. */
+    private static void asAfterARestart() throws Exception {
+        java.lang.reflect.Field f = PlaceViewTotalDb.class.getDeclaredField("s_schemaChecked");
+        f.setAccessible(true);
+        f.setBoolean(null, false);
+    }
+
+    private boolean tableExists(String table) throws Exception {
+        try (PreparedStatement s = connection.prepareStatement("select 1 from information_schema.tables where table_schema = database() and table_name = ?")) {
+            s.setString(1, table);
+            try (ResultSet r = s.executeQuery()) { return r.next(); }
+        }
+    }
+
+    /**
+     * Review of PR #341 (2026-11-11). The first count of one place after a restart ran CREATE TABLE IF NOT EXISTS for both
+     * tables. Any CREATE TABLE commits the transaction it runs in, also when the table exists, and the admin jobs for one
+     * place run in one transaction (autocommit off): the job's work so far was committed, so a failure later in the job
+     * could no longer undo it. The schema check now asks whether the tables exist and creates only a missing one.
+     */
+    public void testTheSchemaCheckCommitsNothingWhenTheTablesExist() throws Exception {
+        night(Arrays.asList(madagascar(), casc()));
+        connection.setAutoCommit(false);
+        try {
+            // the job's work so far, not committed
+            exec("update geolocale set parent = 'changed by the job' where id = " + MADAGASCAR);
+            asAfterARestart();
+            new PlaceViewTotalDb(connection).ensureSchema();
+            asAfterARestart();
+            assertTrue("the count of one place, first use after a restart", new PlaceViewTotalDb(connection).recountPlace(casc()));
+            // the job fails afterwards: everything it did is undone, the count of the place too
+            connection.rollback();
+        } finally {
+            connection.setAutoCommit(true);
+        }
+        try (PreparedStatement s = connection.prepareStatement("select parent from geolocale where id = " + MADAGASCAR); ResultSet r = s.executeQuery()) {
+            assertTrue(r.next());
+            assertEquals("the job's work was not committed by the schema check", "Indian Ocean", r.getString(1));
+        }
+        assertFalse("the count of the place was undone with the job", PlaceViewTotalDb.ONE_PLACE.equals(state("museum", "CASC")[1]));
+        // a missing table is still created (a new server), each one on its own
+        exec("drop table place_view_total_state");
+        asAfterARestart();
+        new PlaceViewTotalDb(connection).ensureSchema();
+        assertTrue(tableExists("place_view_total_state"));
+        exec("drop table place_view_total");
+        exec("drop table place_view_total_state");
+        asAfterARestart();
+        new PlaceViewTotalDb(connection).ensureSchema();
+        assertTrue(tableExists("place_view_total") && tableExists("place_view_total_state"));
     }
 
     /**
@@ -692,6 +792,7 @@ public class PlaceViewTotalDbTest extends TestCase {
         exec("alter table taxon drop column subspecies");
         PlaceViewTotalDb db = new PlaceViewTotalDb(connection);
         assertFalse("a failed count is reported, not thrown", db.recountPlace(madagascar()));
+        assertTrue("and says why (the admin job's answer): " + db.getLastFailure(), db.getLastFailure() != null && db.getLastFailure().contains("subspecies"));
         for (String rank : new String[] {"genus", "species", "subfamily"}) {
             assertEquals("no stored " + rank + " total rather than the one of before the change", -1, stored("geolocale", key, rank));
         }
@@ -705,6 +806,7 @@ public class PlaceViewTotalDbTest extends TestCase {
         String next = night(places);
         assertTrue(next, next.contains("(1 recounted, 1 unchanged); recounted because: new place 1;"));
         assertEquals(species + 1, stored("geolocale", key, "species"));
+        assertTrue("a count that works leaves no reason", db.recountPlace(madagascar()) && db.getLastFailure() == null);
     }
 
     /** Each place is committed when it is done, also on a connection whose autocommit was off (restored after). */

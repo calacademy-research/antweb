@@ -1081,7 +1081,7 @@ public final class NumberChecks {
      * imagingProgress.do (rows 124 to 128; Brian Fisher, 2026-11-08): every stored row of imaging_progress nests
      * (imaged from here <= imaged <= total; unimaged with specimens <= not imaged; with a CASC specimen <= with
      * specimens); the rows of all of AntWeb are recounted and equal the home page's numbers (valid living species
-     * imaged = statistics.living_species_imaged); the unimaged list (CSV) has total minus imaged names; and a sample of
+     * imaged = statistics.living_species_imaged); the unimaged list (CSV), counted now and as stored, has total minus imaged names; and a sample of
      * places of each kind (the largest and a few chosen by the day) is recounted by a query of its own, name by name
      * (exists, not the fill's grouped joins). A difference is pending when images, specimens or list rows were added
      * after the rows were counted.
@@ -1133,8 +1133,15 @@ public final class NumberChecks {
                     species.imaged, home, "=", p == null ? null : p + " (or the statistics row is older than the imaging progress)");
             }
             if (living != null) {
+                // the list counted now, against the stored counts: pending when data changed since they were counted
                 inv.compare(c, "site", "imagingProgress", "imaging progress: names in the unimaged list (CSV) = total minus imaged",
                     db.readUnimaged().size(), living.total - living.imaged, "=", p);
+                // the stored list (what the CSV downloads, written with the counts since 2026-11-11): never pending once
+                // it is stored; counts stored before the list table existed have none until the next fill
+                int listed = db.unimaged().size();
+                inv.compare(c, "site", "imagingProgress", "imaging progress: names in the stored unimaged list (the CSV as downloaded) = total minus imaged",
+                    listed, living.total - living.imaged, "=",
+                    listed == 0 && !db.listStored() ? "the list is stored with the counts by the next daily update (imaging_unimaged, 2026-11-11)" : null);
             }
             // A sample of each kind: the largest place and some chosen by the day, recounted name by name.
             int day = java.time.LocalDate.now().getDayOfYear();

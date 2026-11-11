@@ -1,9 +1,10 @@
 <%-- Body of the public Imaging progress page (imagingProgress.do; ImagingProgressAction, Brian Fisher 2026-11-08): the
      headline (valid living ant species and subspecies imaged, with a bar), the species-only number of the home page, the
      fossils apart, the names that can be imaged now (unimaged, with specimens in AntWeb; CASC first), the trend from the
-     daily statistics rows since 2026-11-09 (ImagingProgressDb.RULE_SINCE), and sortable tables by museum, bioregion, country and genus, each row linked
+     daily statistics rows since ImagingProgressDb.RULE_SINCE (the first day counted by today's rule on every server; the
+     page prints that date, never a date of its own), and sortable tables by museum, bioregion, country and genus, each row linked
      to its list of unimaged names. With genus=<key>: the unimaged names of that genus. Every number is explained on the
-     page. Reads request attributes only (table imaging_progress). Docs: docs/numbers.md rows 124 to 128. Tests:
+     page. Reads request attributes only (tables imaging_progress and imaging_unimaged). Docs: docs/numbers.md rows 124 to 128. Tests:
      tests/e2e/test_imaging_progress.py. --%>
 <%@ page import="java.util.*" %>
 <%@ page import="java.net.URLEncoder" %>
@@ -88,7 +89,7 @@
 <p>How many of the known living ant species and subspecies have a photo of the ant on AntWeb, where they come from, and which ones
   can be imaged now because AntWeb already has specimens of them.</p>
 <p class="ip-note" id="ip-label-note">Label photos never count: a name whose specimens only have photos of their labels is not imaged.
-  Photos of red-flagged specimens are not counted either (since 2026-11-09): a name whose only photos are of red-flagged specimens
+  Photos of red-flagged specimens are not counted either (since <%= ImagingProgressDb.RULE_SINCE %>): a name whose only photos are of red-flagged specimens
   is not imaged until those specimens are fixed and unflagged.</p>
 <% if (notCounted || progress == null) { %>
 <p id="ip-not-counted">The imaging progress has not been counted yet. The daily update counts it every morning; please come back tomorrow.</p>
@@ -131,7 +132,8 @@
 
 <h2>Trend</h2>
 <% if (trend == null || trend.isEmpty()) { %>
-<p>No daily numbers yet.</p>
+<p id="ip-trend-none">No daily numbers yet. The trend starts on <%= ImagingProgressDb.RULE_SINCE %>, when the rules of these numbers last changed;
+  the days before were counted another way and are left out.</p>
 <% } else {
      int w = 640, h = 180, pad = 40;
      long min = Long.MAX_VALUE, max = 0;

@@ -30,7 +30,14 @@ import static test.org.calacademy.antweb.util.NumbersTestDb.*;
  * The rules: a label-only name is unimaged; a name imaged elsewhere counts as imaged in Kenya but not as imaged from
  * there; the rows of all of AntWeb equal the home page numbers; the unimaged list and its CSV; the count check finds a
  * wrong row; photos of red-flagged specimens do not count (2026-11-09); the trend reads the last statistics row of each
- * day since 2026-11-09.
+ * day since ImagingProgressDb.RULE_SINCE (2026-11-12: the first daily update with that rule on production).
+ *
+ * The unimaged list is stored with the counts (table imaging_unimaged, 2026-11-11; staging 2026-11-10: the page said
+ * "Still to image: 2,773" and the CSV, read live after a restart, had 2,780 names): the stored list always has the
+ * headline's total minus imaged names, whatever changed since the fill and with nothing kept in memory; data that
+ * changes while the fill counts is counted again; when it keeps changing, yesterday's counts and list stay, together;
+ * counts stored before the list table existed have no list (the page says "not counted yet"); the count check finds a
+ * stored list that is not the list of the counts.
  *
  * Runs in CI against MySQL 8.4 (.github/workflows/tests.yaml); ANTWEB_TEST_DB_URL overrides.
  */
@@ -59,6 +66,7 @@ public class ImagingProgressDbTest extends TestCase {
 
     @Override
     protected void tearDown() throws Exception {
+        ImagingProgressDb.setBeforeListForTests(null);
         if (connection != null) connection.close();
     }
 
@@ -217,19 +225,184 @@ public class ImagingProgressDbTest extends TestCase {
     }
 
     public void testTrendReadsTheLastRowOfEachDaySinceTheRuleChanged() throws Exception {
-        // the rule last changed on 2026-11-09 (photos of red-flagged specimens no longer count; before: 2026-10-28)
-        assertEquals("2026-11-09", ImagingProgressDb.RULE_SINCE);
+        // The rule last changed when photos of red-flagged specimens stopped counting (decided 2026-11-09; before:
+        // 2026-10-28). Production got it on 2026-11-11 after that day's daily update: its rows of 11-09, 11-10 and
+        // 11-11 05:00 were counted the old way, a row written by an upload later on 11-11 the new way. The first day
+        // counted by the rule on every server is 2026-11-12: the one date of the query and of the page's texts.
+        assertEquals("2026-11-12", ImagingProgressDb.RULE_SINCE);
         exec(connection, "delete from statistics");
         exec(connection, "insert into statistics (action, extant_taxa, valid_species_imaged, created) values"
-            + " ('nightly', 100, 10, '2026-11-08 07:00:00'), ('nightly', 100, 20, '2026-11-09 07:00:00'),"
-            + " ('upload', 100, 21, '2026-11-09 15:00:00'), ('nightly', 101, 22, '2026-11-10 07:00:00')");
+            + " ('nightly', 100, 8, '2026-11-09 05:40:00'), ('nightly', 100, 9, '2026-11-10 05:40:00'),"
+            + " ('nightly', 100, 10, '2026-11-11 05:40:00'), ('upload', 100, 11, '2026-11-11 15:00:00'),"
+            + " ('nightly', 100, 20, '2026-11-12 05:40:00'),"
+            + " ('upload', 100, 21, '2026-11-12 15:00:00'), ('nightly', 101, 22, '2026-11-13 05:40:00')");
         List<ImagingProgressDb.Day> trend = new ImagingProgressDb(connection).trend();
-        assertEquals(2, trend.size());
-        assertEquals("2026-11-09", trend.get(0).date);
+        assertEquals("11-09, 11-10 and the mixed 11-11 are left out", 2, trend.size());
+        assertEquals("2026-11-12", trend.get(0).date);
         assertEquals(21, trend.get(0).validImaged);
         assertEquals(22, trend.get(1).validImaged);
         assertEquals(101, trend.get(1).validTotal);
         assertEquals("21.8%", ImagingProgressDb.Row.percent(22, 101));
+        // a server with rows before the date only (staging until its daily update of 11-12): no trend, no error
+        exec(connection, "delete from statistics where created >= '2026-11-12'");
+        assertTrue(new ImagingProgressDb(connection).trend().isEmpty());
+    }
+
+    // ------------------------------------------------------------------ the list stored with the counts (2026-11-11)
+
+    /** The names of a list, in its order. */
+    private static List<String> names(List<ImagingProgressDb.Unimaged> list) {
+        List<String> out = new ArrayList<>();
+        for (ImagingProgressDb.Unimaged u : list) out.add(u.taxonName);
+        return out;
+    }
+
+    /** The headline's "Still to image": total minus imaged of the stored row all/living. */
+    private int stillToImage() throws Exception {
+        return row(ImagingProgressDb.ALL, ImagingProgressDb.LIVING).unimaged();
+    }
+
+    /** What the page and its CSV show, read as after a restart (a new connection, nothing kept in memory): equal. */
+    private void assertCsvIsThePagesNumber(String when, int expected) throws Exception {
+        try (Connection other = connect()) {
+            ImagingProgressDb db = new ImagingProgressDb(other);
+            int page = db.read(ImagingProgressDb.ALL, ImagingProgressDb.LIVING).unimaged();
+            List<ImagingProgressDb.Unimaged> list = db.unimaged();
+            int csvRows = ImagingProgressDb.csv(list).split("\r\n").length - 1;
+            assertEquals(when + ": Still to image", expected, page);
+            assertEquals(when + ": CSV rows = the page's Still to image", page, csvRows);
+            assertTrue(when + ": the stored list is the list of the stored counts", db.listStored());
+            // the genus view: each genus row's total minus imaged = the names of the list in that genus
+            for (ImagingProgressDb.Row genus : db.read(ImagingProgressDb.GENUS)) {
+                int listed = 0;
+                for (ImagingProgressDb.Unimaged u : list) if (u.genusKey().equalsIgnoreCase(genus.key)) ++listed;
+                assertEquals(when + ": genus " + genus.key, genus.unimaged(), listed);
+            }
+        }
+    }
+
+    /**
+     * Staging 2026-11-10: the page said "Still to image: 2,773" (stored by the daily update) and the CSV had 2,780 names
+     * (read live at the first request after a restart, with what had changed since). The list is now stored by fill() in
+     * the transaction of the counts: whatever changes afterwards, the CSV has the page's number of names, also when
+     * nothing is kept in memory, and the next fill moves both.
+     */
+    public void testTheCsvAlwaysHasThePagesStillToImage() throws Exception {
+        assertCsvIsThePagesNumber("after the fill", 2);
+        assertEquals(java.util.Arrays.asList(PAX, HB), names(new ImagingProgressDb(connection).unimaged()));
+        assertEquals("every stored row has its time", 0, one("select count(*) from imaging_unimaged where computed is null"));
+        // since the fill: hypoponera b gets a head photo, and a new valid species arrives from AntCat
+        exec(connection, "insert into image (id, image_of_id, shot_type, upload_date) values (9950, 'casent5', 'h', '2026-11-10 10:00:00')");
+        exec(connection, "insert into taxon (taxon_name, taxarank, status, family, subfamily, genus, species) values"
+            + " ('" + PHEIDOLE + " n1', 'species', 'valid', 'formicidae', '" + MYRM + "', 'pheidole', 'n1'),"
+            + " ('" + PHEIDOLE + " n2', 'species', 'valid', 'formicidae', '" + MYRM + "', 'pheidole', 'n2')");
+        assertEquals("counted now, the list is another one", java.util.Arrays.asList(PAX, PHEIDOLE + " n1", PHEIDOLE + " n2"),
+            names(new ImagingProgressDb(connection).readUnimaged()));
+        assertCsvIsThePagesNumber("data changed since the fill (as after a restart or a deploy)", 2);
+        assertEquals("the stored list is the one of the fill", java.util.Arrays.asList(PAX, HB), names(new ImagingProgressDb(connection).unimaged()));
+        // the next fill: the counts and the list move together
+        String line = new ImagingProgressDb(connection).fill();
+        assertFalse(line, line.contains("FAILED"));
+        assertTrue(line, line.contains("; 3 unimaged names listed"));
+        assertCsvIsThePagesNumber("after the next fill", 3);
+        assertEquals(java.util.Arrays.asList(PAX, PHEIDOLE + " n1", PHEIDOLE + " n2"), names(new ImagingProgressDb(connection).unimaged()));
+        // a second fill replaces the list (no rows left over, none twice)
+        new ImagingProgressDb(connection).fill();
+        assertEquals(3, one("select count(*) from imaging_unimaged"));
+        assertEquals(3, one("select count(distinct taxon_name) from imaging_unimaged"));
+    }
+
+    /**
+     * Data that changes while the fill counts (an image upload between the counts and the list): the counts and the list
+     * are counted again and stored as one moment. Data that changes at every try: nothing of all of AntWeb, the genera
+     * and the list is written, so yesterday's counts and yesterday's list stay, still equal; the line says FAILED and the
+     * other kinds are written.
+     */
+    public void testDataChangingDuringTheFillNeverSeparatesTheCountsAndTheList() throws Exception {
+        assertEquals(2, stillToImage());
+        // once: hypoponera b gets its head photo after the counts and before the list is read
+        int[] calls = {0};
+        ImagingProgressDb.setBeforeListForTests(() -> {
+            try {
+                if (++calls[0] == 1) exec(connection, "insert into image (id, image_of_id, shot_type, upload_date) values (9951, 'casent5', 'h', '2026-11-10 10:00:00')");
+            } catch (java.sql.SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        String line = new ImagingProgressDb(connection).fill();
+        assertFalse(line, line.contains("FAILED"));
+        assertEquals("counted a second time", 2, calls[0]);
+        assertCsvIsThePagesNumber("an image arrived between the counts and the list", 1);
+        assertEquals(java.util.Arrays.asList(PAX), names(new ImagingProgressDb(connection).unimaged()));
+
+        // at every try: the photo comes and goes between the counts and the list
+        calls[0] = 0;
+        ImagingProgressDb.setBeforeListForTests(() -> {
+            try {
+                if (++calls[0] % 2 == 1) exec(connection, "delete from image where id = 9951");
+                else exec(connection, "insert into image (id, image_of_id, shot_type, upload_date) values (9951, 'casent5', 'h', '2026-11-10 10:00:00')");
+            } catch (java.sql.SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        exec(connection, "update imaging_progress set computed = '2026-11-01 05:40:00'");
+        line = new ImagingProgressDb(connection).fill();
+        assertEquals(3, calls[0]);
+        assertTrue(line, line.contains("FAILED for all, genus and the unimaged list (the unimaged list has 2 names, total minus imaged is 1"));
+        assertTrue(line, line.contains("3 of 3 tries"));
+        assertFalse("no list was written: the line does not say one was", line.contains("unimaged names listed"));
+        assertCsvIsThePagesNumber("the data changed at every try: yesterday's counts and list stay", 1);
+        assertEquals("the rows of all of AntWeb are yesterday's", "2026-11-01 05:40:00",
+            String.valueOf(row(ImagingProgressDb.ALL, ImagingProgressDb.LIVING).computed).substring(0, 19));
+        assertEquals("the genus rows too", "2026-11-01 05:40:00", String.valueOf(row(ImagingProgressDb.GENUS, HYPO).computed).substring(0, 19));
+        assertFalse("the other kinds were written", String.valueOf(row(ImagingProgressDb.MUSEUM, "MCZC").computed).startsWith("2026-11-01"));
+        // a quiet fill afterwards: everything again (the photo is gone: hypoponera b is to image again)
+        ImagingProgressDb.setBeforeListForTests(null);
+        line = new ImagingProgressDb(connection).fill();
+        assertFalse(line, line.contains("FAILED"));
+        assertCsvIsThePagesNumber("the next quiet fill", 2);
+    }
+
+    /**
+     * Counts stored before the list table existed (a server that had the page before 2026-11-11), or a list that is not
+     * the list of the counts: listStored() is false, so the page says "not counted yet" and the CSV answers 503 instead
+     * of a number and a list of two moments; nothing is read live. The count check reports it. The next fill stores both.
+     */
+    public void testCountsWithoutTheirListAreNotShown() throws Exception {
+        ImagingProgressDb db = new ImagingProgressDb(connection);
+        assertTrue(db.listStored());
+        CountCheck.Result r = checkRun();
+        assertEquals(list(r), 0, count(r, true));
+        // the stored list lost a name: not the list of the counts, and a real difference for the count check
+        exec(connection, "delete from imaging_unimaged where taxon_name = '" + HB + "'");
+        assertFalse(db.listStored());
+        r = checkRun();
+        assertTrue(list(r), list(r).contains("names in the stored unimaged list (the CSV as downloaded) = total minus imaged"));
+        assertEquals(list(r), 1, count(r, true));
+        // no list at all (counts of before the list was stored): pending for the count check, not shown by the page
+        exec(connection, "delete from imaging_unimaged");
+        assertFalse(db.listStored());
+        assertTrue("nothing is read live in its place", db.unimaged().isEmpty());
+        r = checkRun();
+        assertEquals(list(r), 0, count(r, true));
+        assertEquals(list(r), 1, count(r, false));
+        exec(connection, "drop table imaging_unimaged");
+        assertFalse(db.listStored());
+        assertTrue(db.unimaged().isEmpty());
+        // nothing counted at all
+        exec(connection, ImagingProgressDb.createListTable(null, null));
+        exec(connection, "delete from imaging_progress");
+        assertFalse(db.listStored());
+        // the next fill stores both
+        String line = db.fill();
+        assertFalse(line, line.contains("FAILED"));
+        assertCsvIsThePagesNumber("after the next fill", 2);
+        // no unimaged name at all: an empty list is the list of the counts
+        exec(connection, "insert into image (id, image_of_id, shot_type, upload_date) values (9952, 'casent5', 'h', '2026-11-10 10:00:00'),"
+            + " (9953, 'casent4', 'h', '2026-11-10 10:00:00')");
+        line = db.fill();
+        assertFalse(line, line.contains("FAILED"));
+        assertCsvIsThePagesNumber("every name imaged", 0);
     }
 
     // ------------------------------------------------------------------ count check helpers (as CountInvariantsTest)

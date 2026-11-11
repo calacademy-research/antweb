@@ -63,7 +63,7 @@ public final class NumbersTestDb {
     static final String[] TABLES = {"taxon", "specimen", "image", "geolocale", "geolocale_taxon", "project", "proj_taxon", "museum",
         "museum_taxon", "bioregion", "bioregion_taxon", "place_image_count", "statistics", "upload", "specimen_name_update", "ant_group",
         "description_edit", "image_upload", "image_uploaded", "description_hist", "object_edit", "object_hist", "group_count", "artist",
-        "geolocale_taxon_dispute", "proj_taxon_dispute", "place_genus_curation", "place_specimen_name", "imaging_progress"};
+        "geolocale_taxon_dispute", "proj_taxon_dispute", "place_genus_curation", "place_specimen_name", "imaging_progress", "imaging_unimaged"};
 
     /** Curator numbers as LoginMgr has them for the fixture (login 5): uploads, description edits, image uploads, images uploaded. */
     public static java.util.Map<Integer, int[]> curatorNumbers() {
@@ -130,6 +130,7 @@ public final class NumbersTestDb {
         exec(c, org.calacademy.antweb.home.PlaceGenusCurationDb.createNameTable(null, null));
         // the imaging progress page (2026-11-08; filled at the end of fill() by its own code)
         exec(c, org.calacademy.antweb.home.ImagingProgressDb.createTable(null, null));
+        exec(c, org.calacademy.antweb.home.ImagingProgressDb.createListTable(null, null));   // the unimaged list, stored with the counts
         exec(c, "create table statistics (id int auto_increment primary key, action varchar(40), specimens int, extant_taxa int, total_taxa int,"
             + " proj_taxa int, bioregion_taxa int, museum_taxa int, geolocale_taxa int, geolocale_taxa_introduced int, geolocale_taxa_endemic int,"
             + " total_images int, specimens_imaged int, species_imaged int, valid_species_imaged int, login_id int,"

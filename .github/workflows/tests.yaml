@@ -95,6 +95,9 @@ jobs:
       - name: Rebuilding one place's list counts its stored list totals again (tests/unit/test_recalc_view_totals.py)
         run: python3 tests/unit/test_recalc_view_totals.py
 
+      - name: The upload still corrects a country's spelling and the server start still schedules the early TaxonWorks request (tests/unit/test_review_341_wiring.py)
+        run: python3 tests/unit/test_review_341_wiring.py
+
       - name: Production smoke run and morning check pass, fail and skip as they should (tests/unit/test_prod_smoke_logic.py)
         run: python3 tests/unit/test_prod_smoke_logic.py
 
@@ -1323,8 +1326,9 @@ jobs:
               /t/org/calacademy/antweb/home/ListRemovalDbTest.java \
               /t/org/calacademy/antweb/home/PlaceViewTotalDbTest.java \
               /t/org/calacademy/antweb/home/ApiKeyDbTest.java \
-              /t/org/calacademy/antweb/home/ImagingProgressDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:8 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:23 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:14 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:8; do
+              /t/org/calacademy/antweb/home/ImagingProgressDbTest.java \
+              /t/org/calacademy/antweb/util/OnePlaceJobDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:8 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:23 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:16 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
