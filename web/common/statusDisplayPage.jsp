@@ -41,6 +41,6 @@
 <p><b>Valid species + morphospecies</b> - Valid names and morphospecies, identified to genus. Matches "Species / subspecies / morphospecies" on the place page. Opens first on the lists of bioregions, museums and All AntWeb.
 <p><b>All names</b> - Every name with specimens: valid, morphospecies, indetermined, unidentifiable and unrecognized.
 <p><b>Fossil species</b> - Valid fossil names.
-<p>On a genus list the same choices apply to the genera (valid genera, valid genera + morphogenera, all names, fossil genera). The AntCat list (Bolton World Catalog) and the Fossil Ants project keep their own choices: Valid (with fossils), Valid extant and Valid fossil.
+<p>On a genus list the same choices apply to the genera (valid genera, valid genera + morphogenera, all names, fossil genera). The AntCat list (Bolton World Catalog) and the Fossil Ants project have the views Valid, Curated (valid names and the morphospecies on the list; it opens first), Valid extant and Valid fossil. Their Valid and Curated count the fossil names too.
 
 

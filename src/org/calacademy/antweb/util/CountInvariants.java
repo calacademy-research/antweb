@@ -46,6 +46,8 @@ import org.calacademy.antweb.home.PlaceTotals;
  *   taxon.images             taxon image_count = images of its own specimens (not red-flagged, 2026-11-09) + of the taxa under it;
  *                            specimen image_count = its images
  *   geo.regions              a subregion's or region's Specimens <= the sum of its countries' Specimens
+ *   place.view.totals        (NumberChecks, 2026-11-11) every place page with a list has its list totals (Subfamilies,
+ *                            Genera, Species: the headers of the lists the numbers open), counted in the last 8 days
  *   imaging.progress         (NumberChecks, 2026-11-08) imagingProgress.do: imaged from here <= imaged <= total, all of
  *                            AntWeb = a recount and the home page's species imaged, a sample of places recounted
  *
@@ -105,7 +107,20 @@ public final class CountInvariants {
         "stats.global", "stats.images", "stats.imaged", "stats.bioregions", "stats.museums", "stats.nonants", "list.images", "admin.statistics", "admin.groups",
         "admin.curators", "admin.artists", "admin.imageUploads", "admin.imageUploadArtists", "api.taxa", "place.endemic.flags", "taxon.parents", "geo.adm1.country",
         // NumberChecks.imagingProgress (2026-11-08): imagingProgress.do
-        "imaging.progress"};
+        "imaging.progress",
+        // NumberChecks.placeListTotals (2026-11-11): every place page with a list has its list totals
+        "place.view.totals"};
+
+    /**
+     * The checks whose real differences are known findings, not fixed yet (docs/numbers.md section 3): B11 (API /taxa
+     * counts nobody writes), B31 (statsPage counts every family), B36 (names whose genus row is missing: reported, not
+     * repaired). They are real on every run until they are fixed, so the alert after the daily update
+     * (CountCheckJob.warning) does not count them: an email every morning for the same known numbers would teach
+     * everyone to ignore it. The same list as KNOWN in tests/e2e/test_count_check.py
+     * (tests/unit/test_count_check_alert.py compares the two). Take a check out when its finding is fixed.
+     */
+    public static final java.util.List<String> KNOWN_FINDINGS = java.util.Collections.unmodifiableList(
+        java.util.Arrays.asList("api.taxa", "stats.nonants", "taxon.parents"));
 
     /**
      * At most this many differences of one check are listed in the report (2026-10-22: API /taxa, B11, can differ for

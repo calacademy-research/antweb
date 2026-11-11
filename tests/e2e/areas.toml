@@ -404,6 +404,7 @@ tests = [
   "test_api_numbers.py",               # API counts (2026-10-22)
   "test_numbers_endemic.py",           # Endemic, Introduced, endemic.do, introduced.do on a rotating sample (2026-10-26)
   "test_numbers_lists.py",             # list headers and browse counts of every kind of place (2026-10-26)
+  "test_fossil_page_counts.py",        # Fossil Ants page: each number = the header of the list it opens (2026-11-11)
   "test_status_choice.py",             # views of lists: buttons, default Curated, headers, old values (2026-11-02)
   "test_numbers_species.py",           # species habitat summaries recounted from the API (2026-10-26)
   "test_numbers_api_meta.py",          # API counts recounted from other replies and pages (2026-10-27)
@@ -434,6 +435,7 @@ paths = [
   "src/org/calacademy/antweb/TaxaPageAction.java",
   "src/org/calacademy/antweb/TaxaPage.java",
   "src/org/calacademy/antweb/util/OverviewMgr.java",
+  "src/org/calacademy/antweb/util/OldPlaceNames.java",
   "web/subregion*",
   "web/museum*",
   "web/project*",
@@ -448,6 +450,7 @@ paths = [
 ]
 tests = [
   "test_place_recalc.py",              # Update statistics on a country and an adm1, as admin (2026-11-03)
+  "test_fossil_page_counts.py",        # Fossil Ants and AntCat list pages name and open their own views (2026-11-11)
   "test_place_pages.py",               # place pages, their lists and species lists (step 2)
   "test_geolocale_edit.py",
   "test_geolocale_edit_page.py",
@@ -457,6 +460,7 @@ tests = [
   "test_genus_indet_places.py",        # genus rows of specimens identified only to genus on country lists (2026-10-29)
   "test_status_choice.py",             # views of lists (2026-11-02)
   "test_list_sources.py",              # views, genus rows (Species, Not curated, species imaged), the view Not curated, source icons, About this list (2026-11-02)
+  "test_old_place_names.py",           # an old country or adm1 name in a link moves (301) to the current name (2026-11-10)
 ]
 
 [areas.downloads]

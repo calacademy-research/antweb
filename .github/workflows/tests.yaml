@@ -89,6 +89,9 @@ jobs:
       - name: Keys from the registration page fit the pattern the API accepts (tests/unit/test_api_key_format.py)
         run: python3 tests/unit/test_api_key_format.py
 
+      - name: An old place name in a link is redirected before the page runs; place names in JavaScript strings are escaped (tests/unit/test_old_place_names.py)
+        run: python3 tests/unit/test_old_place_names.py
+
       - name: A recount of one bioregion or museum makes the statistics page count again (tests/unit/test_statspage_forget.py)
         run: python3 tests/unit/test_statspage_forget.py
 
@@ -97,6 +100,9 @@ jobs:
 
       - name: The upload still corrects a country's spelling and the server start still schedules the early TaxonWorks request (tests/unit/test_review_341_wiring.py)
         run: python3 tests/unit/test_review_341_wiring.py
+
+      - name: Every curator and admin page is linked from Curator Tools or Technical, or says where it is reached from (tests/unit/test_curator_pages_are_linked.py)
+        run: python3 tests/unit/test_curator_pages_are_linked.py
 
       - name: Production smoke run and morning check pass, fail and skip as they should (tests/unit/test_prod_smoke_logic.py)
         run: python3 tests/unit/test_prod_smoke_logic.py
@@ -401,7 +407,7 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/DailyUpdateTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.DailyUpdateTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (9 tests)" /tmp/out.txt
+            grep -q "^OK (10 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of small core and util fixes (specimen XML without DOCTYPE, comparators, common names, folder delete keeps link targets)
@@ -1064,6 +1070,27 @@ jobs:
             grep -q "^OK (13 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
+      - name: Java unit tests of old place names in links (OldPlaceNamesTest)
+        # 2026-11-10: an old country or adm1 name with a valid name (USA: United States; MA: Massachusetts; Ivory Coast:
+        # Côte d'Ivoire after its rename) resolves to the current name; a valid name, an unknown name and an old name without
+        # a valid name do not. The address a request moves to: the parameters looked at on each page, the new name
+        # URL-encoded, every other parameter as written, the place tools left alone.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/OldPlaceNamesTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.OldPlaceNamesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            grep -v "LogMgr" /tmp/out.txt | tail -3
+            grep -q "^OK (9 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+          '
+
       - name: Java unit tests of the upload and nightly decisions of 2026-10-27 (strict upload dates, day 00 is the 1st, unknown genus without subfamily, TaxonWorks collection notes, failed nightly set stops the run)
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
@@ -1105,8 +1132,10 @@ jobs:
       - name: Java unit tests of the views of lists (2026-11-02; views and labels, old values mapped, Curated the default, criteria, headers; StatusChoiceTest)
         # StatusChoiceTest: four views (valid, curated, all, fossil) labelled Valid, Curated, All specimen names, Fossil on
         # every list and rank; validmorpho (Valid + morphospecies of 2026-10-30), all determined, all indetermined,
-        # complete, type -> all; every list opens with Curated, the AntCat list and Fossil Ants with their own set; the
-        # session is never read; the view Not curated (notcurated, 2026-11-02): not a button, its criteria, label, headers.
+        # complete, type -> all; every list opens with Curated; the AntCat list and Fossil Ants have Valid, Curated, Valid
+        # extant, Valid fossil, counted with their fossil names, and the old value "Valid (with fossils)" opens their
+        # Curated (2026-11-11); the session is never read; the view Not curated (notcurated, 2026-11-02): not a button,
+        # its criteria, label, headers.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
@@ -1120,7 +1149,7 @@ jobs:
             # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.StatusChoiceTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             grep -v "LogMgr" /tmp/out.txt | tail -3
-            grep -q "^OK (11 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+            grep -q "^OK (12 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
       - name: Java unit tests of the views' rules (2026-11-02; curated morphospecies, specimen names of geolocale lists, genus rows, Not curated, species imaged, source icons; ListViewTest)
@@ -1164,6 +1193,9 @@ jobs:
 
       - name: Place pages say Species / subspecies / morphospecies (tests/unit/test_place_species_label.py)
         run: python3 tests/unit/test_place_species_label.py
+
+      - name: The count check has the list totals check and the daily update tells when the counts are not true (tests/unit/test_count_check_alert.py)
+        run: python3 tests/unit/test_count_check_alert.py
 
       - name: Upload and nightly safety (upload flag, refused upload as, stopped upload rolled back, list removals) (tests/unit/test_upload_nightly_safety.py)
         run: python3 tests/unit/test_upload_nightly_safety.py
@@ -1281,6 +1313,11 @@ jobs:
           # "Update statistics" the bioregion Nearctic's genus list had 91 genera, its page said 90): recountPlace makes
           # the place's stored totals the rows of its lists, for every kind of place by its own key, every row of every
           # other place stays as it was, the AntWeb-wide list is not counted, a count that fails leaves no totals.
+          # 2026-11-11 (production: Fossil Ants Genera 259, its list 258; "Valid species 3" opening a list of 868): the
+          # site-wide lists (scope GLOBAL: the AntCat list, Fossil Ants) are counted too, in their default view Curated; a
+          # project whose list loses a genus without species in set 5's list check is counted again; for the AntCat list
+          # and Fossil Ants the species rows of their view Valid are stored too (valid < curated when the list has
+          # morphospecies, equal without; never valid_species_count), and the old address value opens Curated.
           # ImagingProgressDbTest (2026-11-08): the imaging progress page's table (a label-only name is unimaged; a name
           # imaged elsewhere is imaged but not imaged from here; all of AntWeb = the home page numbers; the unimaged list
           # and CSV; the count check finds a wrong row; photos of red-flagged specimens do not count, 2026-11-09; the
@@ -1328,7 +1365,7 @@ jobs:
               /t/org/calacademy/antweb/home/ApiKeyDbTest.java \
               /t/org/calacademy/antweb/home/ImagingProgressDbTest.java \
               /t/org/calacademy/antweb/util/OnePlaceJobDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:8 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:23 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:16 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3; do
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:8 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

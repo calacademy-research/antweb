@@ -181,6 +181,15 @@ public class SessionRequestFilter implements Filter {
                 afterPopulated = true;
             }
 
+            // An old place name in a link (country.do?name=USA, countryName=Ivory Coast after its rename) goes to the
+            // same address with the current name, for good (301): bookmarks and search engines move (OldPlaceNames).
+            String movedTo = OldPlaceNames.movedTo(request);
+            if (movedTo != null) {
+                response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+                response.setHeader("Location", movedTo);
+                return;
+            }
+
             chain.doFilter(request, response);
 
         } catch (Exception e) {

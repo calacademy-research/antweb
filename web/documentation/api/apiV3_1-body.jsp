@@ -155,7 +155,7 @@
             </tr>
             <tr>
                 <td><b>Country</b></td>
-                <td>The whole country name, in any case (country=Niger returns Niger, not Nigeria; country=madagascar works). Since 2026-10-27; before, any country containing the text matched.</td>
+                <td>The whole country name, in any case (country=Niger returns Niger, not Nigeria; country=madagascar works). Since 2026-10-27; before, any country containing the text matched. An old name of a country that AntWeb knows (country=USA) gives the records of the current country (United States), and metaData.countryName in the answer names both.</td>
             </tr>
             <tr>
                 <td><b>Adm1</b></td>
@@ -383,7 +383,7 @@
             </tr>
             <tr>
                 <td><b>Country</b></td>
-                <td>The whole country name, in any case (country=Niger returns Niger, not Nigeria). Since 2026-10-27; before, any country containing the text matched.</td>
+                <td>The whole country name, in any case (country=Niger returns Niger, not Nigeria). Since 2026-10-27; before, any country containing the text matched. An old name of a country that AntWeb knows (country=USA) gives the records of the current country (United States), and metaData.countryName in the answer names both.</td>
             </tr>
             <tr>
                 <td><b>Habitat</b></td>
@@ -589,7 +589,7 @@
             </tr>            
             <tr>
                 <td><b>Country</b></td>
-                <td>Query on the country: the whole country name, in any case</td>
+                <td>Query on the country: the whole country name, in any case. An old name of a country that AntWeb knows (country=USA) gives the records of the current country (United States), and metaData.countryName in the answer names both.</td>
             </tr>
             <tr>
                 <td><b>Adm1</b></td>

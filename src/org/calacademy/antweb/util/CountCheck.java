@@ -272,6 +272,20 @@ public class CountCheck {
             return n;
         }
 
+        /**
+         * The real differences of the checks that are not known findings (CountInvariants.KNOWN_FINDINGS): the ones
+         * the daily update's alert counts (CountCheckJob.warning). Listed ones by their check, unlisted ones by the
+         * check id of their key.
+         */
+        public int realOutside(java.util.Collection<String> knownChecks) {
+            int n = 0;
+            for (Mismatch m : mismatches) if (m.isReal() && !knownChecks.contains(m.check)) ++n;
+            for (Map.Entry<String, Integer> e : unlisted.entrySet()) {
+                if (!e.getKey().endsWith(" (pending)") && !knownChecks.contains(e.getKey())) n += e.getValue();
+            }
+            return n;
+        }
+
         public int pending() {
             int n = mismatches.size();
             for (Mismatch m : mismatches) if (m.isReal()) --n;
