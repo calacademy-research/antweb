@@ -619,7 +619,9 @@ public class PlaceViewTotalDb {
      * once more, whatever its data is then (see the class comment).
      *
      * The statements run on the connection as it is (autocommit or the caller's transaction); nothing is committed here,
-     * and no table is created when both exist (ensureSchema).
+     * and no table is created when both exist (ensureSchema). In a caller's transaction that is rolled back afterwards
+     * the removal is rolled back with everything else of the job: the place then has the totals and the state it had
+     * before the job, which belong to the data as it is again.
      */
     public boolean recountPlace(Overview place) {
         lastFailure = null;

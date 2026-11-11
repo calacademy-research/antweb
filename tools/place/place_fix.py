@@ -58,8 +58,8 @@ place and bioregion pages follow with the next daily update.
   are"); specimens.csv says which.
 
 Rollback: --rollback <table> sets country and bioregion back to the old values for the specimens that still hold
-the values this run gave them. A specimen that has other values by now (a later upload, a curator) is left alone:
-newer data is never overwritten. The run counts the specimens restored and those left, and lists the latter in
+the values this run gave them, in the state they had then. A specimen that has another country, state or bioregion
+by now (a later upload, a curator) is left alone: newer data is never overwritten. The run counts the specimens restored and those left, and lists the latter in
 rollback_skipped.csv (code, the old values, the values the run applied, the values there now, why) next to its
 report.txt, in a folder of its own. The values the run applied are read from the backup table (its columns
 set_country, new_country, set_bioregion, new_bioregion: every version of this tool wrote them); a backup table
@@ -406,10 +406,13 @@ def applied_values(table, columns):
 
 
 def still_applied(table, columns):
-    """(from clause after the specimen, condition): the specimen still holds the country and bioregion the run gave it
-    (and the run did change it: applied = 1, where the table has that column)."""
+    """(from clause after the specimen, condition): the specimen still holds the country and bioregion the run gave it,
+    in the state it had then (and the run did change it: applied = 1, where the table has that column). The state is
+    part of it since the review of 2026-11-10: an upload can load a specimen again with another state whose
+    bioregion happens to be the one the run gave; the old bioregion belonged to the old state and must not come back."""
     join, country, bioregion = applied_values(table, columns)
-    condition = hx("s.country") + " = " + country + " and " + hx("s.bioregion") + " = " + bioregion
+    condition = (hx("s.country") + " = " + country + " and " + same("s.adm1", "f.adm1") + " and "
+                 + hx("s.bioregion") + " = " + bioregion)
     return join, condition + (" and f.applied = 1" if "applied" in columns else "")
 
 
@@ -423,24 +426,28 @@ def rollback_sql(table, columns=NEW_COLUMNS):
 
 def rollback_skipped_sql(table, columns=NEW_COLUMNS):
     """The rows a rollback leaves alone, read before it: code, the old values, the values the run applied, whether the
-    specimen is gone, the values there now, whether the run ever changed the row."""
+    specimen is gone, the values there now, whether the run ever changed the row, whether the state is still the one
+    the backup recorded."""
     join, country, bioregion = applied_values(table, columns)
     _, condition = still_applied(table, columns)
     return ("select f.code, " + hx("f.old_country") + ", " + hx("f.old_bioregion") + ", " + country + ", " + bioregion + ", "
-            "s.code is null, " + hx("s.country") + ", " + hx("s.bioregion") + ", " + ("f.applied" if "applied" in columns else "1") + " "
+            "s.code is null, " + hx("s.country") + ", " + hx("s.bioregion") + ", " + ("f.applied" if "applied" in columns else "1") + ", "
+            + same("s.adm1", "f.adm1") + " "
             "from " + table + " f" + join + " left join specimen s on s.code = f.code "
             "where s.code is null or not (" + condition + ") order by f.code")
 
 
 def skipped_reason(row):
     """Why a rollback leaves a row of rollback_skipped_sql alone."""
-    code, old_country, old_bioregion, new_country, new_bioregion, gone, country, bioregion, applied = row
+    code, old_country, old_bioregion, new_country, new_bioregion, gone, country, bioregion, applied = row[:9]
     if gone == "1":
         return "the specimen is no longer in AntWeb"
     if applied != "1":
         return "never changed by this run (it had changed between the backup and the update)"
     if (country, bioregion) == (old_country, old_bioregion):
         return "holds the old values already"
+    if (country, bioregion) == (new_country, new_bioregion) and len(row) > 9 and row[9] != "1":
+        return "is in another state now than when the fix ran: a later upload or a curator; left as it is"
     return "has other values now than the run gave it: a later upload or a curator; left as it is"
 
 
@@ -609,7 +616,13 @@ def run(argv=None):
         if kept != expected:
             sys.exit("Nothing changed: the backup holds " + format(kept, ",") + " specimens, the report counted " + format(expected, ",")
                      + " (an upload ran in between?). Run it again. " + drop_tables(db, table))
-        run_sql(db, update_sql(table))
+        # From here on specimens may be changed: whatever fails, the operator is told which table holds the old values.
+        print("Backup table " + table + " written (" + format(kept, ",") + " specimens with their old values). Updating the specimens.", flush=True)
+        try:
+            run_sql(db, update_sql(table))
+        except SqlFailed as e:
+            sys.exit("The update failed (" + str(e) + "). Specimens may have been changed. The old values are in table " + table
+                     + ": python3 place_fix.py --rollback " + table + " puts them back where this run changed them.")
         left = int(run_sql(db, "select count(*) from " + table + " where applied = 0")[0][0])
         rows = run_sql(db, "select code, " + hx("old_country") + ", " + hx("new_country") + ", set_country, " + hx("old_bioregion") + ", "
                        + hx("new_bioregion") + ", set_bioregion, " + hx("reason") + ", applied from " + table + " order by code")

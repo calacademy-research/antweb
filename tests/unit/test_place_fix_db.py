@@ -11,6 +11,8 @@ Here the tool runs against a database of its own, through the same `docker exec 
   3. rollback of a backup table as versions 1 to 3 wrote it (no column applied; production place_fix_20261110_0901,
      staging _0840 and _0857), and of one without the new values, which is joined to its _map table;
   4. a specimen table in latin1: "México" is found and corrected (the bytes are compared as UTF-8);
+  6. rollback, with a specimen that an upload has put in another state with the same bioregion: left alone and
+     listed (review of 2026-11-10; the rollback compared country and bioregion only);
   5. an --apply that fails before the update leaves no table behind and no specimen changed; values as long as the
      columns allow (64 letters of four bytes each) fit the work table.
 
@@ -197,6 +199,33 @@ def test_apply_and_rollback_leave_newer_values_alone():
         w.close()
 
 
+def test_rollback_leaves_a_specimen_that_is_in_another_state_now():
+    """Review of PR #341, 2026-11-10: the rollback checked the country and the bioregion only. An upload that loads a
+    specimen again with another state, which gives the same bioregion, left both as the run had set them; the
+    rollback then wrote back the old bioregion, which belonged to the old state."""
+    w = World("g")
+    try:
+        result, printed, _ = w.tool("--apply")
+        assert result == 0, (result, printed)
+        table = [t for t in w.tables() if not t.endswith("_map")][0]
+        assert w.specimens()["c1"] == ("Mexico", "Chihuahua", "Nearctic")
+        # an upload: c1 is in California's namesake "Baja" now, c4 in Ontario; country and bioregion as the run gave them
+        w.sql("update specimen set adm1 = 'Baja California' where code = 'c1'; update specimen set adm1 = 'Ontario' where code = 'c4'")
+        result, printed, folder = w.tool("--rollback", table)
+        assert result == 0, (result, printed)
+        now = w.specimens()
+        assert now["c1"] == ("Mexico", "Baja California", "Nearctic"), "the old state's bioregion is back: " + repr(now["c1"])
+        assert now["c4"] == ("Canada", "Ontario", "Nearctic"), "the old state's bioregion is back: " + repr(now["c4"])
+        assert now["c2"] == ("México", "Chihuahua", None) and now["c5"] == ("Mexico", "Chihuahua", ""), now
+        assert "as they were before the fix): 4\n" in printed and "(rollback_skipped.csv): 2\n" in printed and "NOTE" not in printed, printed
+        skipped = read_csv(os.path.join(folder, "rollback_skipped.csv"))[1:]
+        why = "is in another state now than when the fix ran: a later upload or a curator; left as it is"
+        assert skipped == [["c1", "Mexico", "", "Mexico", "Nearctic", "Mexico", "Nearctic", why],
+                           ["c4", "Canada", "", "Canada", "Nearctic", "Canada", "Nearctic", why]], skipped
+    finally:
+        w.close()
+
+
 def version_3_apply(w, table):
     """What version 3 of the tool did on the servers on 2026-11-10: the same tables, a key on the code, and an update
     by the code alone. (Its hex comparisons had no convert; on a utf8mb4 table the bytes are the same.)"""
@@ -296,6 +325,18 @@ def test_an_apply_that_fails_before_the_update_leaves_nothing():
         assert "the backup holds 6 specimens, the report counted 5" not in result and "the backup holds 7 specimens, the report counted 6" in result, result
         assert result.endswith("The tables of this run were dropped.") and w.tables() == []
         assert {k: v for k, v in w.specimens().items() if k != "c11"} == before
+        # the update itself fails: the backup table stays, and the message names it with the rollback command
+        w.sql("delete from specimen where code = 'c11'")
+
+        def fail_update(statement):
+            if statement.startswith("update specimen s join place_fix_"):
+                raise pf.SqlFailed("ERROR 2013 (HY000): Lost connection")
+
+        result, printed, _ = w.tool("--apply", before=fail_update)
+        table = [t for t in w.tables() if not t.endswith("_map")][0]
+        assert isinstance(result, str) and result.startswith("The update failed (ERROR 2013") and "--rollback " + table + " " in result, result
+        assert "Backup table " + table + " written (6 specimens with their old values)" in printed, printed
+        assert w.specimens() == before
     finally:
         w.close()
 

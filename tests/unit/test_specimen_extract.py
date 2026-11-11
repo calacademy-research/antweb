@@ -214,7 +214,7 @@ def test_specimens_under_an_outdated_name_are_in_the_file_and_counted():
     count = [c["sql"] for c in calls(d) if "group by 1, 2" in c["sql"]][0]
     assert "'USA'" in count
     m = json.load(open(os.path.join(d, "out", "manifest.json")))
-    assert m["tool_version"] == "7"
+    assert m["tool_version"] == "8"
     assert m["outdated_names"] == [{"name": "USA", "valid_name": "United States"}]
     assert m["filed_under_outdated_name"] == 1 and m["specimens"] == 6 and m["verified"] is True
     assert m["countries_without_specimens"] == []
@@ -284,6 +284,10 @@ def test_a_second_run_and_a_failed_run_leave_no_stale_or_partial_file():
     assert os.path.exists(os.path.join(out, "bioregion_list.csv")) and os.path.exists(os.path.join(out, "specimens_no_country.csv.gz"))
     assert run(d, "--countries", "United States,Canada,Mexico").returncode == 0
     assert sorted(os.listdir(out)) == ["genus_summary.csv", "manifest.json", "manifest.txt", "specimens.csv.gz"]
+    # a mistyped country name stops the run before anything of the earlier extract is removed (review of PR #341)
+    r = run(d, "--countries", "United States,Canda,Mexico")
+    assert r.returncode != 0 and "no valid country in AntWeb named: Canda" in r.stderr, r.stderr
+    assert sorted(os.listdir(out)) == ["genus_summary.csv", "manifest.json", "manifest.txt", "specimens.csv.gz"]
     # an export that breaks off (a row with a field too few): no specimens.csv.gz, no manifest, nothing half-written
     d = setup(rows=ROWS + [["casent6", "broken row"]])
     r = run(d, "--countries", "United States,Canada,Mexico")
@@ -314,6 +318,22 @@ def test_specimens_with_no_country_go_in_their_own_file():
                                "by_group": {"University of Utah": 1, " UTEP": 1}}
     assert "specimens_no_country.csv.gz" in m["files"] and m["specimens"] == 5 and m["verified"] is True
     assert "Specimens with no country, in specimens_no_country.csv.gz" in r.stdout
+    # Review of PR #341, 2026-11-10: a specimen with no country that is filed under an included island (country null,
+    # island_country Hawaii) is in specimens.csv.gz; the no-country file and its count took it as well, so a
+    # collaborator who put the two files together had it twice. Both queries leave the included islands out.
+    no_country = [c["sql"] for c in calls(d) if "s.country is null" in c["sql"]]
+    assert len(no_country) == 2, no_country
+    for q in no_country:
+        assert ("(s.country is null or s.country = '') and (s.island_country is null or s.island_country not in ('Hawaii')) "
+                "and (s.family = 'formicidae'") in q, q
+    assert "so no specimen is in both files" in r.stdout
+    main_export = [c["sql"] for c in calls(d) if "select s.*" in c["sql"] and "s.country is null" not in c["sql"]][0]
+    assert "or s.island_country in ('Hawaii')" in main_export
+    # with --no-islands the countries file has no island specimens, so the no-country file keeps them
+    d2 = setup(counts=[["Canada", "", "1"], ["Mexico", "", "1"], ["United States", "", "2"]])
+    run(d2, "--countries", "United States,Canada,Mexico", "--with-no-country", "--no-islands")
+    for q in [c["sql"] for c in calls(d2) if "s.country is null" in c["sql"]]:
+        assert "island_country" not in q.split(" where ")[-1], q
     # a different database count fails the run
     d = setup(no_country_count=3)
     r = run(d, "--countries", "United States,Canada,Mexico", "--with-no-country")
@@ -362,7 +382,7 @@ def test_ants_only_is_the_default_and_says_what_it_left_out():
     assert se.ANTS in export and se.ANTS in count, "the file and the check must use the same filter"
     assert any("/* left out */" in q and "not " + se.ANTS in q for q in sqls)
     m = json.load(open(os.path.join(d, "out", "manifest.json")))
-    assert m["ants_only"] is True and m["tool_version"] == "7"
+    assert m["ants_only"] is True and m["tool_version"] == "8"
     assert m["left_out_not_formicidae"] == {"specimens": 341, "families": 3,
                                             "by_family": {"(coleoptera)": 164, "curculionidae": 153, "vespidae": 24}}
     assert "Ants only (family Formicidae): 341 specimens of other families are left out ((coleoptera) 164, curculionidae 153, vespidae 24)" in r.stdout

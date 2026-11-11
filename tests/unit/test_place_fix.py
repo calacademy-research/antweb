@@ -237,7 +237,9 @@ def test_the_rollback_restores_only_rows_that_still_hold_what_the_run_gave_them(
     # the choice between the new and the old value is made between their hex forms (the two columns may differ in collation)
     applied_country = "if(f.set_country = 1, " + HX % "f.new_country" + ", " + HX % "f.old_country" + ")"
     applied_bioregion = "if(f.set_bioregion = 1, " + HX % "f.new_bioregion" + ", " + HX % "f.old_bioregion" + ")"
-    guard = HX % "s.country" + " = " + applied_country + " and " + HX % "s.bioregion" + " = " + applied_bioregion
+    # and it must still be in the state the backup recorded (review of 2026-11-10: another state can give the same bioregion)
+    guard = (HX % "s.country" + " = " + applied_country + " and " + HX % "s.adm1" + " = " + HX % "f.adm1" + " and "
+             + HX % "s.bioregion" + " = " + applied_bioregion)
     # a table of versions 1 to 3 (production place_fix_20261110_0901, staging _0840 and _0857): the new values are in the backup table itself
     sql = pf.rollback_sql(T, V3_COLUMNS)
     assert sql == ("update specimen s join " + T + " f on f.code = s.code set s.country = f.old_country, s.bioregion = f.old_bioregion where "
@@ -258,6 +260,11 @@ def test_the_rollback_restores_only_rows_that_still_hold_what_the_run_gave_them(
     assert pf.skipped_reason(row("0", "USA", "")) == "holds the old values already"
     assert pf.skipped_reason(row("0", "United States", "Oceania")) == "has other values now than the run gave it: a later upload or a curator; left as it is"
     assert pf.skipped_reason(row("0", "USA", "Neotropical", "0")).startswith("never changed by this run")
+    # the tenth field: the state is still the one of the backup (1) or not (0)
+    assert ", " + HX % "s.adm1" + " = " + HX % "f.adm1" + " from " + T + " f" in skipped, skipped
+    assert pf.skipped_reason(row("0", "USA", "") + ["1"]) == "holds the old values already"
+    assert pf.skipped_reason(row("0", "United States", "Nearctic") + ["0"]) == "is in another state now than when the fix ran: a later upload or a curator; left as it is"
+    assert pf.skipped_reason(row("1", "", "") + ["NULL"]) == "the specimen is no longer in AntWeb"
 
 
 class Pretend:

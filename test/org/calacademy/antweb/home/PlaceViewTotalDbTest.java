@@ -289,7 +289,7 @@ public class PlaceViewTotalDbTest extends TestCase {
      * without the name is not, testTheDailySequenceRecountsOnlyThePlacesThatChanged). A curator's entry for a valid name
      * elsewhere changes no other place.
      */
-    public void testCuratingAMorphospeciesAnywhereRecountsEveryPlace() throws Exception {
+    public void testCuratingAMorphospeciesAnywhereRecountsThePlacesThatHaveIt() throws Exception {
         List<Overview> places = Arrays.asList(madagascar(), casc());
         night(places);
         exec("insert into geolocale_taxon (geolocale_id, taxon_name, source) values (40, '" + HB + "', 'speciesListTool')");

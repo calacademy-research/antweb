@@ -16,7 +16,8 @@ It writes one folder (default /root/antweb-extracts/<date>-<names>/):
                           WITHOUT coordinates are in the file (has_coordinates says which): a cut by a shape
                           file would lose them. Specimens whose name has no taxon row are in the file too
                           (no_taxon_row = 1; the API's specimen view leaves those out).
-  specimens_no_country.csv.gz   with --with-no-country: every specimen of AntWeb with no country (same columns).
+  specimens_no_country.csv.gz   with --with-no-country: every specimen of AntWeb with no country (same columns),
+                          except those filed under an included island: they are in specimens.csv.gz already.
                           No country filter can find these; some belong to the countries asked for.
   genus_summary.csv       per genus: specimens, names (distinct taxon names), names with at least one
                           specimen with coordinates, and the same for the chosen bioregion.
@@ -70,7 +71,7 @@ import re
 import subprocess
 import sys
 
-VERSION = "7"
+VERSION = "8"
 TAXON_COLUMNS = ("taxon_status", "taxon_fossil", "taxon_rank", "taxon_current_valid_name", "taxon_author_date",
                  "group_name", "no_taxon_row")
 PLACE_NAME = re.compile(r"^[^\x00-\x1f;\\]{1,64}$")
@@ -183,10 +184,24 @@ def per_country_sql(countries, outdated, ants_only=False):
 NO_COUNTRY = "(s.country is null or s.country = '')"
 
 
-def no_country_export_sql(ants_only=False):
+def no_country_where(islands, ants_only=False):
+    """No country, and not in the countries file already. A specimen with no country that is filed under an included
+    island (country null, island_country Hawaii: AntWeb has such rows) is in specimens.csv.gz; here it would be a
+    second copy, and whoever puts the two files together would count it twice (review of PR #341, 2026-11-10)."""
+    w = NO_COUNTRY
+    if islands:
+        w += " and (s.island_country is null or s.island_country not in " + sql_list(islands) + ")"
+    return w + (" and " + ANTS if ants_only else "")
+
+
+def no_country_export_sql(islands, ants_only=False):
     """Specimens with no country at all: no country filter can find them (production 2026-11-10: 1,623, among them
     303 of the University of Utah and 167 of UTEP), so they go in a file of their own for the curators to look through."""
-    return export_sql([], []).replace(where_sql([], []), NO_COUNTRY + (" and " + ANTS if ants_only else ""))
+    return export_sql([], []).replace(where_sql([], []), no_country_where(islands, ants_only))
+
+
+def no_country_count_sql(islands, ants_only=False):
+    return "select count(*) from specimen s where " + no_country_where(islands, ants_only)
 
 
 def count_sql(countries, islands, ants_only=False):
@@ -257,11 +272,16 @@ def stream_query(project, sql, container):
                          stderr=subprocess.PIPE, env=dict(os.environ, MYSQL_PWD=password))
     p.stdin.write(sql.encode("utf-8"))
     p.stdin.close()
-    for raw in p.stdout:
-        yield raw.decode("utf-8", "replace").rstrip("\n")
-    err = p.stderr.read().decode("utf-8", "replace").strip()
-    if p.wait() != 0:
-        sys.exit("mysql failed during the export: " + err)
+    try:
+        for raw in p.stdout:
+            yield raw.decode("utf-8", "replace").rstrip("\n")
+        err = p.stderr.read().decode("utf-8", "replace").strip()
+        if p.wait() != 0:
+            sys.exit("mysql failed during the export: " + err)
+    finally:
+        if p.poll() is None:        # the reader stopped early (a broken row): the query must not run on
+            p.kill()
+            p.wait()
 
 
 def has_coordinates(lat, lon):
@@ -447,7 +467,8 @@ def manifest_text(m):
                      "{:,}".format(b["names_without_specimen_in_extract"]))]
     if m.get("no_country"):
         nc = m["no_country"]
-        lines += ["", "Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them): "
+        lines += ["", "Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them; "
+                  "one filed under an included island is in specimens.csv.gz and not here, so no specimen is in both files): "
                   "{:,}; with coordinates {:,}; {:,} names, {:,} of them not in the countries file".format(
                       nc["specimens"], nc["with_coordinates"], nc["names"], nc["names_not_in_the_countries_file"]),
                   "  by upload group: " + ", ".join("%s %s" % (g.strip() or "(none)", "{:,}".format(n)) for g, n in nc["by_group"].items())]
@@ -510,11 +531,6 @@ def main(argv=None):
         sys.exit("--bioregion: not a name: " + repr(args.bioregion))
     now = datetime.datetime.now(datetime.timezone.utc)
     out = args.out or os.path.join("/root/antweb-extracts", now.strftime("%Y-%m-%d") + "-" + slug(countries))
-    os.makedirs(out, exist_ok=True)
-    # The files of an earlier run in this folder go first: no stale bioregion_list.csv, no old manifest beside new data.
-    for name in OUTPUT_FILES + ("specimens.csv.gz.part", "specimens_no_country.csv.gz.part", "manifest.json.part"):
-        if os.path.isfile(os.path.join(out, name)):
-            os.remove(os.path.join(out, name))
 
     places = run_query(project, places_sql(countries), args.container)
     found = {p[0] for p in places if p[1] == "country" and p[2] == "1"}
@@ -525,6 +541,12 @@ def main(argv=None):
         sys.exit("no valid country in AntWeb named: " + ", ".join(
             c + (" (use " + outdated[c] + ")" if outdated.get(c) else "") for c in unknown)
             + " (names as on AntWeb's country pages)")
+    os.makedirs(out, exist_ok=True)
+    # The files of an earlier run in this folder go before anything is written: no stale bioregion_list.csv, no old
+    # manifest beside new data. Only now, with the country names accepted: a mistyped name leaves a good extract alone.
+    for name in OUTPUT_FILES + ("specimens.csv.gz.part", "specimens_no_country.csv.gz.part", "manifest.json.part"):
+        if os.path.isfile(os.path.join(out, name)):
+            os.remove(os.path.join(out, name))
     islands = [] if args.no_islands else sorted({p[0] for p in places if p[3] == "1" and p[0] not in countries})
     print("Countries: " + ", ".join(countries))
     for p in places:
@@ -556,9 +578,8 @@ def main(argv=None):
     if args.with_no_country:
         nc_stats = Stats("")
         nc_path = os.path.join(out, "specimens_no_country.csv.gz")
-        write_specimens(stream_query(project, no_country_export_sql(ants_only), args.container), nc_path, nc_stats)
-        nc_db = int(run_query(project, "select count(*) from specimen s where " + NO_COUNTRY + (" and " + ANTS if ants_only else ""),
-                              args.container)[0][0])
+        write_specimens(stream_query(project, no_country_export_sql(islands, ants_only), args.container), nc_path, nc_stats)
+        nc_db = int(run_query(project, no_country_count_sql(islands, ants_only), args.container)[0][0])
         groups = collections.Counter()
         with gzip.open(nc_path, "rt", encoding="utf-8", newline="") as f:
             for row in csv.DictReader(f):
