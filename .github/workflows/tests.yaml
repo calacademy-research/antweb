@@ -870,8 +870,7 @@ jobs:
           PLACE_FIX_TEST_CONTAINER=pfmysql PLACE_FIX_TEST_PASSWORD=ci-root python3 tests/unit/test_place_fix_db.py | tee /tmp/place_fix_db.txt
           grep -q "^6 tests passed (MySQL 8.4" /tmp/place_fix_db.txt
           # The image view of the GBIF archive (2026-11-11): the upgrade file and its rollback run against the same
-          # server; ten columns in their order, medium static addresses, the Academy as rights holder of its own
-          # uploads only, one row per image.
+          # server; ten columns in their order, medium static addresses, nothing else changed, one row per image.
           GBIF_VIEW_TEST_CONTAINER=pfmysql GBIF_VIEW_TEST_PASSWORD=ci-root python3 tests/unit/test_gbif_image_view.py | tee /tmp/gbif_view.txt
           grep -q "^5 tests passed (texts)" /tmp/gbif_view.txt
           grep -q "^2 database tests passed (MySQL 8.4" /tmp/gbif_view.txt

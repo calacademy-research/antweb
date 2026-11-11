@@ -2,8 +2,8 @@
 
 The Academy's IPT publishes AntWeb to GBIF from two views of this database, read from a copy of it; the image view is
 changed by db/upgrade/9.4.0/2026-11-11-darwin-core-multimedia-medium.sql (Brian Fisher, 2026-11-11): medium images
-from static.antweb.org, and "California Academy of Sciences" as rights holder only for the images the Academy's group
-uploaded. The IPT maps the columns by position, so their number, order and names must not change.
+from static.antweb.org; nothing else (the rights holder stays the image's copyright line). The IPT maps the columns
+by position, so their number, order and names must not change.
 
 Without a database: the texts of the upgrade file, its rollback and the data model document.
 With a database (MySQL 8.4 in CI), reachable as `docker exec <container> mysql`:
@@ -27,7 +27,6 @@ ROLLBACK = os.path.join(ROOT, "db", "upgrade", "9.4.0", "2026-11-11-darwin-core-
 COLUMNS = ["occurrenceid", "catalognumber", "imageurl", "shot_type", "shot_number", "references", "title", "license",
            "rightsHolder", "creator"]
 DEFINER = "DEFINER=`antweb`@`localhost` SQL SECURITY DEFINER"
-ACADEMY = "California Academy of Sciences"
 
 CONTAINER = os.environ.get("GBIF_VIEW_TEST_CONTAINER", "")
 USER = os.environ.get("GBIF_VIEW_TEST_USER", "root")
@@ -60,12 +59,12 @@ def test_the_archive_gets_medium_images_from_the_static_address():
     assert 'code + "/" + code + "_" + shot +  "_" + number + "_med.jpg"' in java, "the site's own medium address (SpecimenImage)"
 
 
-def test_the_rights_holder_is_the_academy_for_its_own_uploads_only():
-    sql = statement(UPGRADE)
-    assert "(case when `cas`.`image_id` is not null then '" + ACADEMY + "' end) AS `rightsHolder`" in sql
-    assert "(select distinct `image_id` from `group_image` where `group_id` = 1) `cas`" in sql, "one row per image of group 1"
-    assert "copyright" not in sql, "the stamped copyright line (the Academy's name on every group's images) is not published"
-    assert "nullif(`ar`.`name`,'') AS `creator`" in sql and "`li`.`license` AS `license`" in sql, "photographer and licence stay"
+def test_only_the_address_differs_from_the_definition_of_2026_11_11():
+    """Brian Fisher, 2026-11-11: the address only; the rights holder and everything else as they were."""
+    before = statement(ROLLBACK).strip()
+    after = statement(UPGRADE).strip()
+    assert before.replace("'https://www.antweb.org/images/'", "'https://static.antweb.org/images/'").replace("'_high.jpg'", "'_med.jpg'") == after
+    assert "nullif(`cr`.`copyright`,'') AS `rightsHolder`" in after and "group_image" not in after
 
 
 def test_the_rollback_is_the_definition_of_2026_11_11():
@@ -114,9 +113,9 @@ def make_database():
         insert into image values
             (1, 'casent0000001', 'h', 1, 1, 1, 1),      -- uploaded by the Academy
             (2, '08costa-0161',  'p', 2, 1, 1, 2),      -- uploaded by another group, no photographer
-            (3, 'nogroup0001',   'd', 1, 1, 2, 1),      -- no group recorded
-            (4, 'casent0000004', 'l', 1, 1, 1, 1),      -- the Academy's row twice: still one row in the archive
-            (5, 'shared0001',    'v', 1, 1, 1, 1);      -- the Academy and another group (none on production)
+            (3, 'nogroup0001',   'd', 1, 1, 2, 1),      -- an empty copyright line
+            (4, 'casent0000004', 'l', 1, 1, 1, 1),
+            (5, 'shared0001',    'v', 1, 1, 1, 1);
         insert into group_image values (1, 1), (2, 2), (1, 4), (1, 4), (1, 5), (2, 5), (0, 99);
         """, DATABASE)
 
@@ -138,11 +137,10 @@ def db_test_the_view_as_the_upgrade_file_makes_it():
     assert url == "https://static.antweb.org/images/casent0000001/casent0000001_h_1_med.jpg"
     assert references == "https://www.antweb.org/specimenImages.do?name=casent0000001"
     assert title == "casent0000001 head view 1" and license_.startswith("CC BY 4.0") and creator == "April Nobile"
-    assert holder == ACADEMY
+    assert holder == "California Academy of Sciences, 2000-2019", "the rights holder as before: the image's copyright line"
     assert got["08costa-0161"][1] == "https://static.antweb.org/images/08costa-0161/08costa-0161_p_2_med.jpg"
-    assert got["08costa-0161"][5] == "<null>" and got["08costa-0161"][6] == "<null>", "another group's image: no rights holder; no photographer stored"
-    assert got["nogroup0001"][5] == "<null>" and got["nogroup0001"][6] == "April Nobile", "no group: no rights holder"
-    assert got["casent0000004"][5] == ACADEMY and got["shared0001"][5] == ACADEMY
+    assert got["08costa-0161"][5] == "California Academy of Sciences, 2000-2019" and got["08costa-0161"][6] == "<null>"
+    assert got["nogroup0001"][5] == "<null>" and got["nogroup0001"][6] == "April Nobile", "an empty copyright line: no rights holder"
     ordered = [r[0] for r in mysql("select imageurl from darwin_core_multimedia", DATABASE)]
     assert ordered == sorted(ordered), "in the order of the address"
 

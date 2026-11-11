@@ -1491,9 +1491,9 @@ Darwin Core multimedia view: one row per image (`db/upgrade/8.77`, redefined by
 `db/upgrade/9.4.0/2026-11-11-darwin-core-multimedia-medium.sql`). **In use:** the image rows of the GBIF archive, read
 by the Academy's IPT as `darwin_core_2` above (ten columns, mapped by position). Since 2026-11-11 (Brian Fisher) the
 address is the medium image at static.antweb.org (`.../<code>_<shot>_<number>_med.jpg`, as `SpecimenImage.getMedium`;
-it was the `_high.jpg` address of www.antweb.org, which the bot shield refused to GBIF), and the rights holder is
-"California Academy of Sciences" for the images the Academy's group uploaded (`group_image.group_id` = 1) and empty for
-the others; photographer, licence and the link to the specimen's page are on every row. Test:
+it was the `_high.jpg` address of www.antweb.org, which the bot shield refused to GBIF); who wants a larger view comes
+to AntWeb through the link to the specimen's page. Nothing else changed: the rights holder is the image's copyright
+line. Test:
 `tests/unit/test_gbif_image_view.py`.
 
 ### `tempgeoview`
