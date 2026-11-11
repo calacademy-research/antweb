@@ -53,7 +53,7 @@ public class UtilDataAction extends AntwebAction {
         "generateGeolocaleTaxaFromSpecimens", "geolocaleCountCrawl", "geolocaleTaxonFix",
         "fixGeolocaleTaxonParentage", "updateGeolocaleParentHierarchy",
         "projectCountCrawl", "populateMuseum", "populateBioregion", "updateTaxonSets", "crawlForType",
-        "imageCountCrawl", "placeImageCounts", "placeGenusCuration", "placeViewTotals", "imagingProgress", "deleteConflictedDefaultImages", "genObjectMaps", "cleanupSpeciesListProxyRecords",
+        "imageCountCrawl", "placeImageCounts", "placeImageCountCompare", "placeGenusCuration", "placeViewTotals", "imagingProgress", "deleteConflictedDefaultImages", "genObjectMaps", "cleanupSpeciesListProxyRecords",
         "verifyProjTaxon", "regenerateAllAntweb", "runCountCrawls", "countReport",
         "genGoogleMapFunction", "delGoogleMapFunction", "genGroupObjectMaps",
         "calcCaste", "setIsRestart", "siteWarning", "genRecentContent");
@@ -556,9 +556,18 @@ public class UtilDataAction extends AntwebAction {
                 // not in its Species number). Each list is now renamed right before it is counted (ProjTaxonCountDb.recount,
                 // MuseumDb.populate, BioregionDb.populate; geolocales in set 2); only the source column is updated here.
                 message += " " + TaxonSetDb.updateTaxonSetSources(connection);
-                // Upload groups: today's numbers of each group's specimens (Brian Fisher, 2026-10-22, Q13).
+                // Upload groups: today's numbers of each group's specimens (Brian Fisher, 2026-10-22, Q13). The groups it
+                // lists are those whose stored specimen count is above 0, as the end of yesterday's set 3 left it (below).
                 message += " " + new GroupCountDb(connection).recountAll();
                 message += " " + doAction("crawlForType", form, accessLogin, accessGroup, connection, request, mapping);
+                // Every group's stored specimen count (ant_group.upload_specimens). Until 2026-11-11 only a group's own
+                // upload wrote it, so any other change of a group's specimens left it stale and the count check reported
+                // it every day (GroupDb.recountUploadSpecimens). The LAST statement of the set, right before its commit
+                // (execute() and runDataJob() commit when doAction returns): the rows it changes are locked until the
+                // commit, and an upload of such a group that ends meanwhile waits for them. Keep it last.
+                String groupSpecimens = new GroupDb(connection).recountUploadSpecimens();
+                LogMgr.appendLog("compute.log", "  " + groupSpecimens, true);
+                message += " " + groupSpecimens;
                 // The e2e tests read this line: tonight's bioregion endemic flags follow the endemic rule of 2026-10-28, and
                 // every list (geolocales in set 2, projects, museums and bioregions here) got its missing parent rows before
                 // it was counted (B76, 2026-11-03: org.calacademy.antweb.home.ParentRows).
@@ -946,6 +955,18 @@ public class UtilDataAction extends AntwebAction {
 		    message = placeImageCountDb.updateAll();
 		  }
 		  LogMgr.appendLog("compute.log", "  " + message, true);
+		}
+
+		// Proof that the place image counts from the imaged specimens (2026-11-11) are those of the old statements:
+		// counts every place both ways and lists every place whose numbers differ (PlaceImageCountDb.compare). Writes
+		// nothing to the site's tables; takes as long as the old step did (10 to 14 minutes). Admins:
+		// utilData.do?action=placeImageCountCompare. One line in compute.log, the whole report on the job's page.
+		if (action.equals("placeImageCountCompare")) {
+		  PlaceImageCountDb.Comparison comparison = new PlaceImageCountDb(connection).compare();
+		  LogMgr.appendLog("compute.log", "  " + comparison.summary(), true);
+		  StringBuilder report = new StringBuilder();
+		  for (String line : comparison.lines) report.append(report.length() > 0 ? "<br>" : "").append(Html.esc(line));
+		  message = report.toString();
 		}
 
 		// The place pages' Genera and Species: the rows of their lists in the default view (Brian Fisher, 2026-11-04;

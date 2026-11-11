@@ -931,6 +931,15 @@ specimens with at least one: "Imaged specimens"), `*label_only` (specimens whose
 specimens belong to a place is the same as for the place's Specimens number (class comment of `PlaceImageCountDb`).
 Created by the application; record and undo in `db/upgrade/8.113/2026-10-20-place-image-count.sql`.
 
+**Working tables (since 2026-11-11).** While set 4 counts, the step holds the specimens that have an image (about
+67,000 of 917,000; the nine `specimen` columns the counting reads: `code`, `taxon_name`, `status`, `country`, `adm1`,
+`island_country`, `museum`, `bioregion`, `flag`) in three session-private TEMPORARY tables with the same rows,
+`tmp_place_image_specimen_a`, `_b` and `_c` (MySQL cannot read one temporary table twice in a statement, and the
+regions count reads the specimens three times). They are made at the start of the step, dropped at its end, seen by no
+other session, and are not part of the schema (no upgrade script, not in the schema check). The numbers written are
+those of the statements that read `specimen` itself; `utilData.do?action=placeImageCountCompare` (admins, read-only)
+counts both ways and lists every place that differs.
+
 **Read by.** Place pages (`PlaceImageCountDb.read`), `CountInvariants` (`place.images`).
 
 **Numbers.** #27 to #32, #75, #76, #109.
@@ -1245,15 +1254,24 @@ pages (`ObjectMapDb.getMap`: `BigMapAction`, `OverviewAction`, `AdvancedSearchAc
 **Purpose.** Curator groups (institutions or teams that upload specimens and images). Renamed from `groups` in
 `db/upgrade/8.0/2020-02-12.sql`.
 
-**Key columns.** `id`, `name`, `abbrev`, `admin_login_id`, `upload_specimens`, `first_specimen_upload`,
+**Key columns.** `id`, `name`, `abbrev`, `admin_login_id`, `upload_specimens` (the group's specimen records:
+`specimen.access_group` = its id; a group counts as one with specimens when it is above 0), `first_specimen_upload`,
 `last_specimen_upload`, `upload_count`.
 
 **Written by.** The Groups manager (`GroupDb.saveGroup`, `updateGroup`, `deleteById`), uploads
-(`SpecimenUploadDb.updateSpecimenUploadDate`, `UploadDb.updateGroup`), `UploaderOnboarding`.
+(`SpecimenUploadDb.updateSpecimenUploadDate`, `UploadDb.updateGroup`; `upload_specimens` of the uploading group,
+`GroupDb.updateUploadSpecimens`), `UploaderOnboarding`, and since 2026-11-11 the daily update, as the last statement
+of set 3 (`GroupDb.recountUploadSpecimens`: `upload_specimens` of every group, written only where the stored number
+is still the one the set read, so a number an upload wrote meanwhile stays; until then a change of a group's
+specimens outside its own upload left the number stale until its next upload).
 
 **Read by.** Group pages (`groups.do`, `group.do`), searches and admin queries that show the group name, the upload.
+`upload_specimens > 0`: the upload groups in memory (`GroupMgr`, the group menu of the advanced search), the groups
+`groups.do` lists and the group counts count (`GroupDb.getUploadGroups`, `GroupCountDb.LISTED_GROUPS_SQL`; the group
+counts run in set 3 before the recount, so they list by the numbers of the day before), and the count check
+(`admin.statistics`: each such group's number = its specimens).
 
-**Numbers.** #85.
+**Numbers.** #85, #98.
 
 **Status.** In use. Created in the repository only by `db/upgrade/8.115` (from production's columns). `name` is
 varchar(100) on production; `upload.group_name` was varchar(64) until 2026-10-23, when it was widened to
@@ -1477,8 +1495,12 @@ Older API view (`db/upgrade/7.9`, redefined in `8.56`). No reader. Unused; candi
 
 ### `darwin_core_2`
 
-Darwin Core view for an export (`db/upgrade/7.0`). Only a commented-out test in `api.py` mentions it. Unused, unless
-an outside service reads the database directly (none is known); candidate to drop after checking.
+Darwin Core view of the specimens (`db/upgrade/7.0`). **In use, by a reader outside this repository:** the Academy's
+IPT (ipt.calacademy.org, resource `antweb`) publishes AntWeb to GBIF every Monday at 12:00 Pacific from
+`select * from darwin_core_2` (44 columns) and `select * from darwin_core_multimedia`, read from a copy of this
+database kept at the Academy (restored from the daily dump, about a day and a half behind; found 2026-11-11). The
+IPT maps the columns by position: do not drop the view, and do not change the number, order or names of its columns.
+No code in the repository reads it (a commented-out test in `api.py` mentions it).
 
 ### `darwin_core_3`
 
@@ -1486,7 +1508,14 @@ As `darwin_core_2` (`db/upgrade/8.77`). No reader. Unused.
 
 ### `darwin_core_multimedia`
 
-Darwin Core multimedia view (`db/upgrade/8.77`). No reader. Unused.
+Darwin Core multimedia view: one row per image (`db/upgrade/8.77`, redefined by
+`db/upgrade/9.4.0/2026-11-11-darwin-core-multimedia-medium.sql`). **In use:** the image rows of the GBIF archive, read
+by the Academy's IPT as `darwin_core_2` above (ten columns, mapped by position). Since 2026-11-11 (Brian Fisher) the
+address is the medium image at static.antweb.org (`.../<code>_<shot>_<number>_med.jpg`, as `SpecimenImage.getMedium`;
+it was the `_high.jpg` address of www.antweb.org, which the bot shield refused to GBIF); who wants a larger view comes
+to AntWeb through the link to the specimen's page. Nothing else changed: the rights holder is the image's copyright
+line. Test:
+`tests/unit/test_gbif_image_view.py`.
 
 ### `tempgeoview`
 
