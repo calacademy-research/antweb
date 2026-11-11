@@ -1251,14 +1251,16 @@ pages (`ObjectMapDb.getMap`: `BigMapAction`, `OverviewAction`, `AdvancedSearchAc
 
 **Written by.** The Groups manager (`GroupDb.saveGroup`, `updateGroup`, `deleteById`), uploads
 (`SpecimenUploadDb.updateSpecimenUploadDate`, `UploadDb.updateGroup`; `upload_specimens` of the uploading group,
-`GroupDb.updateUploadSpecimens`), `UploaderOnboarding`, and since 2026-11-11 the daily update, set 3
-(`GroupDb.recountUploadSpecimens`: `upload_specimens` of every group; until then a change of a group's specimens
-outside its own upload left the number stale until its next upload).
+`GroupDb.updateUploadSpecimens`), `UploaderOnboarding`, and since 2026-11-11 the daily update, as the last statement
+of set 3 (`GroupDb.recountUploadSpecimens`: `upload_specimens` of every group, written only where the stored number
+is still the one the set read, so a number an upload wrote meanwhile stays; until then a change of a group's
+specimens outside its own upload left the number stale until its next upload).
 
 **Read by.** Group pages (`groups.do`, `group.do`), searches and admin queries that show the group name, the upload.
 `upload_specimens > 0`: the upload groups in memory (`GroupMgr`, the group menu of the advanced search), the groups
-`groups.do` lists and the group counts count (`GroupDb.getUploadGroups`, `GroupCountDb.LISTED_GROUPS_SQL`), and the
-count check (`admin.statistics`: each such group's number = its specimens).
+`groups.do` lists and the group counts count (`GroupDb.getUploadGroups`, `GroupCountDb.LISTED_GROUPS_SQL`; the group
+counts run in set 3 before the recount, so they list by the numbers of the day before), and the count check
+(`admin.statistics`: each such group's number = its specimens).
 
 **Numbers.** #85, #98.
 

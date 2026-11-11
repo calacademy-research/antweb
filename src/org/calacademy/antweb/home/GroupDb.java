@@ -17,7 +17,7 @@ import java.util.List;
  * (group.do, groups.do), saved and deleted by admins (newGroup.do, saveGroup.do, viewGroups.do; whyNotDeletable
  * refuses a group that still has logins or specimens), the curators of a group, and upload_specimens (the
  * group's specimen count): written for the uploading group after its upload (updateUploadSpecimens(group)) and for
- * every group by the daily update (recountUploadSpecimens, set 3). Tables ant_group, login, specimen, upload.
+ * every group by the daily update (recountUploadSpecimens, the last statement of set 3). Tables ant_group, login, specimen, upload.
  * Docs: docs/flows/specimen-upload.md, docs/flows/nightly.md. Tests: UploaderOnboardingDbTest, GroupSpecimenCountDbTest.
  */
 public class GroupDb extends AntwebDb {
@@ -78,11 +78,17 @@ public class GroupDb extends AntwebDb {
     /** How many changed groups the line names. */
     static final int LOG_EXAMPLES = 10;
 
+    /** Tests only: called after the numbers are read and before the first update. */
+    private static volatile Runnable s_beforeUpdateForTests = null;
+
+    public static void setBeforeUpdateForTests(Runnable beforeUpdate) {
+        s_beforeUpdateForTests = beforeUpdate;
+    }
+
     /**
-     * Every group's stored specimen count (ant_group.upload_specimens) is set to its specimen records now: the rows of
-     * specimen with access_group = the group's id; 0 for a group without specimens. Called by the daily update (set 3,
-     * before the group counts, GroupCountDb.recountAll, which lists the groups with upload_specimens > 0), in the set's
-     * transaction: nothing is committed here.
+     * Every group's stored specimen count (ant_group.upload_specimens) is set to its specimen records: the rows of
+     * specimen with access_group = the group's id; 0 for a group without specimens. Called by the daily update as the
+     * last statement of set 3, right before the set commits, in the set's transaction: nothing is committed here.
      *
      * Until 2026-11-11 the number was written only at the end of a group's own upload (updateUploadSpecimens(group)).
      * Whatever else changed a group's specimens (a correction, a deletion, a clean-up) left it as it was, and the count
@@ -95,22 +101,37 @@ public class GroupDb extends AntwebDb {
      * keeps shared locks on every specimen row it read until the set commits, and specimens cannot be added or removed
      * meanwhile (tried on the test database: an insert into specimen waited until its lock timeout).
      *
+     * A number is written only when the stored one is still the one read ("and upload_specimens <=> ?"). The selects
+     * read the data as it was when set 3 made its first read, minutes earlier (the set is one transaction); an upload
+     * that ended since then has written its group's number from newer data, and that number stays. Such groups are
+     * counted in the line as left, and the next daily update looks at them again.
+     *
+     * A changed row stays locked until the set commits, and an upload of that group that ends meanwhile waits for it.
+     * That is why this is the set's last statement: the wait is a moment. The group counts earlier in the set
+     * (GroupCountDb.recountAll, which lists the groups whose number is above 0) therefore read the numbers of the day
+     * before: a group whose number goes to or from 0 enters or leaves that list one day later.
+     *
      * Returns the line for compute.log: "Group specimen counts: 87 groups recounted, 2 numbers changed (group 52: 21099
-     * to 21102; group 7: 5 to 0) in 0 s" (up to LOG_EXAMPLES groups are named). Never throws: a failure is logged and
-     * the line says "Group specimen counts: FAILED (...)"; the stored numbers then stay as they were and the rest of
-     * the set goes on (as GroupCountDb.recountAll).
+     * to 21102; group 7: 5 to 0) in 0 s" (up to LOG_EXAMPLES groups are named; only numbers that were written are
+     * counted and named); with groups left: "..., 1 left as stored (written by an upload since it was read: group 9)".
+     * Never throws: a failure is logged and said in the line, and the rest of the set goes on (as
+     * GroupCountDb.recountAll). The updates run one at a time, so the line says what was written before the failure:
+     * "Group specimen counts: FAILED (...)" when no number was written, else "Group specimen counts: 2 numbers changed
+     * (group 52: 3 to 4; group 60: 7 to 0), then FAILED (...)"; the numbers written before it are right and stay.
      */
     public String recountUploadSpecimens() {
         long start = System.currentTimeMillis();
+        int groups = 0;
+        int changed = 0;
+        List<String> examples = new ArrayList<>();
+        List<Integer> left = new ArrayList<>();
         try {
             java.util.Map<Integer, Integer> specimens = new java.util.HashMap<>();
             try (Statement stmt = getConnection().createStatement();
                  ResultSet r = stmt.executeQuery("select access_group, count(*) from specimen where access_group is not null group by access_group")) {
                 while (r.next()) specimens.put(r.getInt(1), r.getInt(2));
             }
-            int groups = 0;
-            List<int[]> changes = new ArrayList<>();   // group id, the number now
-            List<String> examples = new ArrayList<>();
+            List<Integer[]> changes = new ArrayList<>();   // group id, the stored number (null: none), the number now
             try (Statement stmt = getConnection().createStatement();
                  ResultSet r = stmt.executeQuery("select id, upload_specimens from ant_group order by id")) {
                 while (r.next()) {
@@ -119,29 +140,49 @@ public class GroupDb extends AntwebDb {
                     int stored = r.getInt(2);
                     boolean none = r.wasNull();
                     int now = specimens.getOrDefault(id, 0);
-                    if (none || stored != now) {
-                        changes.add(new int[] {id, now});
-                        if (examples.size() < LOG_EXAMPLES) examples.add("group " + id + ": " + (none ? "no number" : "" + stored) + " to " + now);
-                    }
+                    if (none || stored != now) changes.add(new Integer[] {id, none ? null : stored, now});
                 }
             }
+            Runnable hook = s_beforeUpdateForTests;
+            if (hook != null) hook.run();
             if (!changes.isEmpty()) {
-                try (PreparedStatement stmt = getConnection().prepareStatement("update ant_group set upload_specimens = ? where id = ?")) {
-                    for (int[] change : changes) {
-                        stmt.setInt(1, change[1]);
+                // one row at a time: after a failure the line says exactly which numbers were written
+                try (PreparedStatement stmt = getConnection().prepareStatement(
+                        "update ant_group set upload_specimens = ? where id = ? and upload_specimens <=> ?")) {
+                    for (Integer[] change : changes) {
+                        stmt.setInt(1, change[2]);
                         stmt.setInt(2, change[0]);
-                        stmt.addBatch();
+                        if (change[1] == null) stmt.setNull(3, Types.INTEGER); else stmt.setInt(3, change[1]);
+                        if (stmt.executeUpdate() > 0) {
+                            ++changed;
+                            if (examples.size() < LOG_EXAMPLES) examples.add("group " + change[0] + ": " + (change[1] == null ? "no number" : "" + change[1]) + " to " + change[2]);
+                        } else {
+                            left.add(change[0]);   // another number is stored by now: an upload of the group wrote it
+                        }
                     }
-                    stmt.executeBatch();
                 }
             }
-            String named = examples.isEmpty() ? "" : " (" + String.join("; ", examples) + (changes.size() > examples.size() ? "; ..." : "") + ")";
-            return SPECIMENS_LOG + ": " + groups + " groups recounted, " + changes.size() + " numbers changed" + named
+            return SPECIMENS_LOG + ": " + groups + " groups recounted, " + changed + " numbers changed" + named(examples, changed) + leftAsStored(left)
                 + " in " + (System.currentTimeMillis() - start) / 1000 + " s";
         } catch (SQLException | RuntimeException e) {
             s_log.error("recountUploadSpecimens() e:" + e);
-            return SPECIMENS_LOG + ": FAILED (" + e + ")";
+            return SPECIMENS_LOG + ": " + (changed == 0 ? "" : changed + " numbers changed" + named(examples, changed) + leftAsStored(left) + ", then ")
+                + "FAILED (" + e + ")";
         }
+    }
+
+    /** " (group 52: 3 to 4; group 60: 7 to 0; ...)": the changed groups the line names, "" when none changed. */
+    private static String named(List<String> examples, int changed) {
+        return examples.isEmpty() ? "" : " (" + String.join("; ", examples) + (changed > examples.size() ? "; ..." : "") + ")";
+    }
+
+    /** ", 1 left as stored (written by an upload since it was read: group 9)", "" when none was left. */
+    private static String leftAsStored(List<Integer> left) {
+        if (left.isEmpty()) return "";
+        List<String> ids = new ArrayList<>();
+        for (int i = 0; i < left.size() && i < LOG_EXAMPLES; i++) ids.add("group " + left.get(i));
+        return ", " + left.size() + " left as stored (written by an upload since " + (left.size() == 1 ? "it was" : "they were") + " read: "
+            + String.join(", ", ids) + (left.size() > ids.size() ? ", ..." : "") + ")";
     }
 
     

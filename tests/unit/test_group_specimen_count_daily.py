@@ -7,9 +7,13 @@ group 52, no upload for months, 21,102 specimens, stored 21,099).
 
 Source checks (the behaviour is tested against a database by home.GroupSpecimenCountDbTest):
   - set 3, which production and staging both run (staging skips set 5), calls GroupDb.recountUploadSpecimens and
-    writes its line to compute.log, before the group counts (GroupCountDb.recountAll lists the groups by that number);
+    writes its line to compute.log;
+  - the call is the set's last statement, and the set commits when it returns: the ant_group rows the recount changes
+    are locked until that commit, and an upload of such a group that ends meanwhile waits for them (review of
+    2026-11-11: it ran before the group counts and the type crawl, so the rows were locked for minutes);
   - the recount is two selects and a bound update by id, not one UPDATE with the specimen count as a subquery (that
-    statement keeps shared locks on the specimen rows it read until the set commits);
+    statement keeps shared locks on the specimen rows it read until the set commits); the update writes only where
+    the stored number is still the one read (an upload that ended since then wrote a newer one), one row at a time;
   - nothing in it commits.
 """
 import pathlib
@@ -42,16 +46,28 @@ def code(text):
     return re.sub(r"(?m)^\s*//[^\n]*", "", text)
 
 
-def test_set_3_recounts_every_groups_specimens_before_the_group_counts():
+def test_set_3_recounts_every_groups_specimens_as_its_last_statement():
     src = read("src/org/calacademy/antweb/util/UtilDataAction.java")
     start = src.index('if ("set3".equals(action)) {')
     set3 = code(src[start:src.index('if ("set4".equals(action)) {', start)])
     call = "String groupSpecimens = new GroupDb(connection).recountUploadSpecimens();"
     log = 'LogMgr.appendLog("compute.log", "  " + groupSpecimens, true);'
-    counts = "new GroupCountDb(connection).recountAll();"
     assert call in set3, "set 3 no longer recounts every group's stored specimen count"
     assert log in set3, "its line no longer goes to compute.log"
-    assert set3.index('doAction("populateBioregion"') < set3.index(call) < set3.index(log) < set3.index(counts) < set3.index("Set 3 done")
+    before, after = set3.split(call)
+    # everything else of the set is before it: the group counts and the type crawl among them
+    for step in ('doAction("populateBioregion"', "new GroupCountDb(connection).recountAll();", 'doAction("crawlForType"'):
+        assert step in before, step
+    # after it the set only writes its lines: no job, no statement on the set's connection
+    assert "doAction(" not in after and "connection" not in after, after
+    assert after.index(log) < after.index("Set 3 done")
+    assert re.fullmatch(r'\s*LogMgr\.appendLog\("compute\.log", "  " \+ groupSpecimens, true\);\s*message \+= " " \+ groupSpecimens;\s*'
+                        r'LogMgr\.appendLog\("compute\.log", "  Set 3 done \(".*?, true\);\s*\}\s*', after, re.S), after
+    # and the set commits when doAction returns: in the request (the daily update) and as a background job (an admin)
+    for caller in ("OperationDetails operationDetails = doAction(action, theForm, accessLogin, accessGroup, connection, request, mapping);",
+                   "OperationDetails operationDetails = doAction(action, form, accessLogin, accessGroup, connection, null, null);"):
+        rest = code(src.split(caller, 1)[1])
+        assert re.match(r"\s*(String link = null;\s*)?if \(operationDetails instanceof UploadDetails\) \{[^}]*\}\s*connection\.commit\(\);", rest), caller
     # every run reaches set 3: the Scheduler starts it on production and on staging alike; only set 5 is skipped on staging
     scheduler = read("src/org/calacademy/antweb/util/Scheduler.java")
     assert 'DailyUpdate.start("set3");' in scheduler
@@ -65,7 +81,11 @@ def test_the_recount_is_two_selects_and_a_bound_update():
     recount = code(body(src, "public String recountUploadSpecimens()"))
     assert '"select access_group, count(*) from specimen where access_group is not null group by access_group"' in recount
     assert '"select id, upload_specimens from ant_group order by id"' in recount
-    assert 'prepareStatement("update ant_group set upload_specimens = ? where id = ?")' in recount
+    # written only where the stored number is still the one read; one row at a time, each result counted
+    assert '"update ant_group set upload_specimens = ? where id = ? and upload_specimens <=> ?"' in recount
+    assert "addBatch" not in recount and "executeBatch" not in recount
+    assert re.search(r"if \(stmt\.executeUpdate\(\) > 0\) \{\s*\+\+changed;", recount)
+    assert "left.add(change[0]);" in recount
     # one statement that updates ant_group, and it does not read the specimen table
     assert recount.count("update ant_group") == 1
     # a group without specimens gets 0
@@ -74,12 +94,13 @@ def test_the_recount_is_two_selects_and_a_bound_update():
     for word in ("commit(", "rollback(", "setAutoCommit("):
         assert word not in recount, word
     # a failure is said in the line, not thrown
-    assert re.search(r'catch \(SQLException \| RuntimeException e\) \{.*?return SPECIMENS_LOG \+ ": FAILED \(" \+ e \+ "\)";', recount, re.S)
+    assert re.search(r'catch \(SQLException \| RuntimeException e\) \{.*?return SPECIMENS_LOG \+ ": " \+ \(changed == 0 \? "" : .*?", then "\)\s*'
+                     r'\+ "FAILED \(" \+ e \+ "\)";', recount, re.S)
     # the uploading group's own number is still written at the end of its upload
     assert "groupDb.updateUploadSpecimens(group);" in read("src/org/calacademy/antweb/upload/UploadAction.java")
 
 
 if __name__ == "__main__":
-    test_set_3_recounts_every_groups_specimens_before_the_group_counts()
+    test_set_3_recounts_every_groups_specimens_as_its_last_statement()
     test_the_recount_is_two_selects_and_a_bound_update()
     print("ok")

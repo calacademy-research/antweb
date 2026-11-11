@@ -35,7 +35,9 @@ import static test.org.calacademy.antweb.util.NumbersTestDb.*;
  *
  * The tests: the stale numbers are corrected and nothing else of any group changes; the line for compute.log; the
  * count check's differences are gone; the recount runs in the caller's transaction (nothing committed, undone by a
- * rollback) and keeps no lock on the specimen table; a failure is said in the line and not thrown.
+ * rollback) and keeps no lock on the specimen table; a number an upload wrote since the numbers were read is not
+ * overwritten, and only numbers that were written are counted and named; a failure is said in the line, with what
+ * was written before it, and not thrown.
  * Runs in CI against MySQL 8.4 (.github/workflows/tests.yaml); ANTWEB_TEST_DB_URL overrides.
  */
 public class GroupSpecimenCountDbTest extends TestCase {
@@ -61,6 +63,7 @@ public class GroupSpecimenCountDbTest extends TestCase {
 
     @Override
     protected void tearDown() throws Exception {
+        GroupDb.setBeforeUpdateForTests(null);
         if (connection != null) {
             connection.setAutoCommit(true);
             exec(connection, "drop table if exists ant_group_gone");
@@ -158,7 +161,8 @@ public class GroupSpecimenCountDbTest extends TestCase {
         new GroupDb(connection).recountUploadSpecimens();
         stale = staleGroups(checkRun());
         assertEquals(stale.toString(), 0, stale.size());
-        // the group counts (set 3, right after) list the groups by the corrected number
+        // the group counts of the next daily update list the groups by the corrected number (the recount is the last
+        // statement of set 3: today's group counts ran before it)
         assertEquals(Arrays.asList(1), ids(GroupCountDb.LISTED_GROUPS_SQL + " order by g.id"));
     }
 
@@ -194,12 +198,87 @@ public class GroupSpecimenCountDbTest extends TestCase {
         }
     }
 
-    /** A failure (here: no ant_group table) is said in the line and not thrown: the rest of the set goes on. */
+    /**
+     * An upload of group 52 ends between the read of the numbers and the update (it adds two specimens and writes its
+     * group's number, 6, as UploadAction does): its number is not overwritten by the 4 counted before it, and the line
+     * counts and names only the numbers that were written.
+     */
+    public void testANumberWrittenSinceTheReadIsNotOverwritten() throws Exception {
+        try (Connection upload = connect()) {
+            GroupDb.setBeforeUpdateForTests(() -> {
+                try {
+                    exec(upload, "insert into specimen (code, taxon_name, status, country, family, subfamily, access_group) values"
+                        + " ('up52a', '" + PA + "', 'valid', 'Madagascar', 'formicidae', '" + MYRM + "', 52),"
+                        + " ('up52b', '" + PA + "', 'valid', 'Madagascar', 'formicidae', '" + MYRM + "', 52)");
+                    exec(upload, "update ant_group set upload_specimens = (select count(*) from specimen where access_group = 52) where id = 52");
+                    // and a group that had no number gets one meanwhile (the guard compares a missing number too)
+                    exec(upload, "update ant_group set upload_specimens = 0 where id = 61");
+                } catch (java.sql.SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            String line = new GroupDb(connection).recountUploadSpecimens();
+            assertTrue(line, line.startsWith(GroupDb.SPECIMENS_LOG + ": 6 groups recounted, 2 numbers changed (group 60: 7 to 0; group 62: 0 to 1),"
+                + " 2 left as stored (written by an upload since they were read: group 52, group 61) in "));
+            assertEquals("group 52 keeps the upload's number", Arrays.asList("1|CAS|1|5", "52|Stale|3|6", "60|Emptied|2|0", "61|New|0|0", "62|Moved in|0|1", "63|Right|1|2"),
+                groupRows(connection));
+        }
+        // the next daily update finds nothing to do
+        GroupDb.setBeforeUpdateForTests(null);
+        String line = new GroupDb(connection).recountUploadSpecimens();
+        assertTrue(line, line.startsWith(GroupDb.SPECIMENS_LOG + ": 6 groups recounted, 0 numbers changed in "));
+    }
+
+    /**
+     * Set 3 is one transaction, and its selects read the data as it was at the set's first read, minutes before the
+     * recount (the database's default, repeatable read). An upload of group 52 that ended during the set is not in
+     * what the recount reads: without the guard its number, 6, would be replaced by the 4 of the set's start.
+     */
+    public void testAnUploadThatEndedDuringTheSetKeepsItsNumber() throws Exception {
+        connection.setAutoCommit(false);
+        try (Connection upload = connect()) {
+            assertEquals("the set's first read", BEFORE, groupRows(connection));
+            exec(upload, "insert into specimen (code, taxon_name, status, country, family, subfamily, access_group) values"
+                + " ('up52a', '" + PA + "', 'valid', 'Madagascar', 'formicidae', '" + MYRM + "', 52),"
+                + " ('up52b', '" + PA + "', 'valid', 'Madagascar', 'formicidae', '" + MYRM + "', 52)");
+            exec(upload, "update ant_group set upload_specimens = (select count(*) from specimen where access_group = 52) where id = 52");
+            String line = new GroupDb(connection).recountUploadSpecimens();
+            assertTrue(line, line.contains("3 numbers changed (group 60: 7 to 0; group 61: no number to 0; group 62: 0 to 1),"
+                + " 1 left as stored (written by an upload since it was read: group 52) in "));
+            connection.commit();
+            assertEquals(Arrays.asList("1|CAS|1|5", "52|Stale|3|6", "60|Emptied|2|0", "61|New|0|0", "62|Moved in|0|1", "63|Right|1|2"), groupRows(upload));
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+
+    /** A failure before any number is written (here: no ant_group table) is said in the line and not thrown. */
     public void testAFailureIsSaidInTheLineAndNotThrown() throws Exception {
         exec(connection, "alter table ant_group rename to ant_group_gone");
         String line = new GroupDb(connection).recountUploadSpecimens();
         assertTrue(line, line.startsWith(GroupDb.SPECIMENS_LOG + ": FAILED ("));
         exec(connection, "alter table ant_group_gone rename to ant_group");
         assertEquals("no number was changed", BEFORE, groupRows(connection));
+    }
+
+    /**
+     * A failure after some numbers are written (here: another transaction holds the row of group 61, so its update
+     * waits until the lock timeout): the line says how many were written and which, then FAILED; those numbers are in
+     * the set's transaction and right; the groups after the failure keep theirs for the next daily update.
+     */
+    public void testAFailureAfterSomeNumbersSaysWhatWasWritten() throws Exception {
+        try (Connection other = connect()) {
+            other.setAutoCommit(false);
+            exec(other, "update ant_group set name = 'held' where id = 61");
+            exec(connection, "set innodb_lock_wait_timeout = 1");
+            String line = new GroupDb(connection).recountUploadSpecimens();
+            other.rollback();
+            assertTrue(line, line.startsWith(GroupDb.SPECIMENS_LOG + ": 2 numbers changed (group 52: 3 to 4; group 60: 7 to 0), then FAILED ("));
+            assertEquals("52 and 60 written, 61 and 62 as they were",
+                Arrays.asList("1|CAS|1|5", "52|Stale|3|4", "60|Emptied|2|0", "61|New|0|null", "62|Moved in|0|0", "63|Right|1|2"), groupRows(connection));
+        }
+        String line = new GroupDb(connection).recountUploadSpecimens();
+        assertTrue(line, line.startsWith(GroupDb.SPECIMENS_LOG + ": 6 groups recounted, 2 numbers changed (group 61: no number to 0; group 62: 0 to 1) in "));
+        assertEquals(AFTER, groupRows(connection));
     }
 }

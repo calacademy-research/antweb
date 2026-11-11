@@ -92,7 +92,8 @@ Numbers are the order in which things happen for `upload.do?action=specimenUploa
 10. **Post-processing** (`UploadAction.postProcessSpecimenUpload()` line 641, also used by the nightly job):
     - `specimen.status` copied from the taxon (`SpecimenDb.updateSpecimenStatus(groupId)`);
     - `ant_group.upload_specimens` = count (`GroupDb.updateUploadSpecimens`; since 2026-11-11 the daily update also
-      writes it for every group, set 3, `GroupDb.recountUploadSpecimens`: docs/flows/nightly.md);
+      writes it for every group, at the end of set 3, `GroupDb.recountUploadSpecimens`, and leaves a number an upload
+      wrote since the set began: docs/flows/nightly.md);
     - the group's map (`ObjectMapDb.genGroupObjectMap`);
     - one row in `upload` (`SpecimenUploadDb.recordUpload()`: upload id, login id of the effective curator, group, report file name, backup file; bound values, the group name cut to the width of its column (100 since 2026-10-23, 64 before; read on every upload), file names refused when longer than their 64-character columns, checked after the insert; a failure throws and the upload rolls back, since 2026-10-22) and its counts (`UploadDb.updateCounts`), `ant_group.first_specimen_upload` and `upload_count` (`UploadDb.updateGroup`). The job's "Upload ID N", the email and the report use the id of that row;
     - one row in `statistics` (`StatisticsDb.populateStatistics`, site totals);
