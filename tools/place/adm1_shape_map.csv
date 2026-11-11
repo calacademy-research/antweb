@@ -41,6 +41,9 @@
 #    The shape's name is another name of this state (another language, spelling or transliteration). It is a
 #    name like any other: tested with AntWeb's specimens, reported and not used when they contradict it
 #    (the state has 20 or more specimens with coordinates and fewer than half of them lie in the shape).
+#    A line serves only where no valid AntWeb state of the country has the shape's own name: a shape named as a
+#    valid state is that state. Where AntWeb has two valid spellings of the state the line names, the one the
+#    line writes is proposed.
 #    Nobody approved these lines one by one. 148 are the pairs of the production run of 2026-11-10 that the
 #    lead checked by the names; the others are plain from the names (the same name with the word kraj or
 #    län, Dutch for the Belgian provinces, ts/ch/sh/zh for c/č/š/ž in Macedonia ...). Where AntWeb has two
