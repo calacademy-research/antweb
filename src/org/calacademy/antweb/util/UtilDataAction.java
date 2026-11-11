@@ -53,7 +53,7 @@ public class UtilDataAction extends AntwebAction {
         "generateGeolocaleTaxaFromSpecimens", "geolocaleCountCrawl", "geolocaleTaxonFix",
         "fixGeolocaleTaxonParentage", "updateGeolocaleParentHierarchy",
         "projectCountCrawl", "populateMuseum", "populateBioregion", "updateTaxonSets", "crawlForType",
-        "imageCountCrawl", "placeImageCounts", "placeGenusCuration", "placeViewTotals", "imagingProgress", "deleteConflictedDefaultImages", "genObjectMaps", "cleanupSpeciesListProxyRecords",
+        "imageCountCrawl", "placeImageCounts", "placeImageCountCompare", "placeGenusCuration", "placeViewTotals", "imagingProgress", "deleteConflictedDefaultImages", "genObjectMaps", "cleanupSpeciesListProxyRecords",
         "verifyProjTaxon", "regenerateAllAntweb", "runCountCrawls", "countReport",
         "genGoogleMapFunction", "delGoogleMapFunction", "genGroupObjectMaps",
         "calcCaste", "setIsRestart", "siteWarning", "genRecentContent");
@@ -946,6 +946,18 @@ public class UtilDataAction extends AntwebAction {
 		    message = placeImageCountDb.updateAll();
 		  }
 		  LogMgr.appendLog("compute.log", "  " + message, true);
+		}
+
+		// Proof that the place image counts from the imaged specimens (2026-11-11) are those of the old statements:
+		// counts every place both ways and lists every place whose numbers differ (PlaceImageCountDb.compare). Writes
+		// nothing to the site's tables; takes as long as the old step did (10 to 14 minutes). Admins:
+		// utilData.do?action=placeImageCountCompare. One line in compute.log, the whole report on the job's page.
+		if (action.equals("placeImageCountCompare")) {
+		  PlaceImageCountDb.Comparison comparison = new PlaceImageCountDb(connection).compare();
+		  LogMgr.appendLog("compute.log", "  " + comparison.summary(), true);
+		  StringBuilder report = new StringBuilder();
+		  for (String line : comparison.lines) report.append(report.length() > 0 ? "<br>" : "").append(Html.esc(line));
+		  message = report.toString();
 		}
 
 		// The place pages' Genera and Species: the rows of their lists in the default view (Brian Fisher, 2026-11-04;

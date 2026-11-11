@@ -928,6 +928,15 @@ specimens with at least one: "Imaged specimens"), `*label_only` (specimens whose
 specimens belong to a place is the same as for the place's Specimens number (class comment of `PlaceImageCountDb`).
 Created by the application; record and undo in `db/upgrade/8.113/2026-10-20-place-image-count.sql`.
 
+**Working tables (since 2026-11-11).** While set 4 counts, the step holds the specimens that have an image (about
+67,000 of 917,000; the nine `specimen` columns the counting reads: `code`, `taxon_name`, `status`, `country`, `adm1`,
+`island_country`, `museum`, `bioregion`, `flag`) in three session-private TEMPORARY tables with the same rows,
+`tmp_place_image_specimen_a`, `_b` and `_c` (MySQL cannot read one temporary table twice in a statement, and the
+regions count reads the specimens three times). They are made at the start of the step, dropped at its end, seen by no
+other session, and are not part of the schema (no upgrade script, not in the schema check). The numbers written are
+those of the statements that read `specimen` itself; `utilData.do?action=placeImageCountCompare` (admins, read-only)
+counts both ways and lists every place that differs.
+
 **Read by.** Place pages (`PlaceImageCountDb.read`), `CountInvariants` (`place.images`).
 
 **Numbers.** #27 to #32, #75, #76, #109.
