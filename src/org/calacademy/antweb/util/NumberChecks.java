@@ -1062,6 +1062,22 @@ public final class NumberChecks {
     static final int IMAGING_SAMPLE = 6;
 
     /**
+     * Which rows of a kind (sorted, largest first) are recounted today: row 0 and others chosen by the day of the
+     * year, IMAGING_SAMPLE in all, or every row when there are fewer. Always ends: the chosen steps of 13 visit only
+     * size / 13 rows when the size is a multiple of 13 (13 museums: 2 rows, never 6; review of #340), so after one
+     * pass the next rows in order fill the sample.
+     */
+    public static java.util.Set<Integer> imagingSample(int day, int size) {
+        java.util.Set<Integer> pick = new java.util.TreeSet<>();
+        if (size <= 0) return pick;
+        int want = Math.min(IMAGING_SAMPLE, size);
+        pick.add(0);
+        for (int i = 0; i < size && pick.size() < want; i++) pick.add(Math.floorMod(day * 7 + i * 13, size));
+        for (int i = 0; i < size && pick.size() < want; i++) pick.add(i);
+        return pick;
+    }
+
+    /**
      * imagingProgress.do (rows 124 to 128; Brian Fisher, 2026-11-08): every stored row of imaging_progress nests
      * (imaged from here <= imaged <= total; unimaged with specimens <= not imaged; with a CASC specimen <= with
      * specimens); the rows of all of AntWeb are recounted and equal the home page's numbers (valid living species
@@ -1127,10 +1143,7 @@ public final class NumberChecks {
                 java.util.List<org.calacademy.antweb.home.ImagingProgressDb.Row> rows = new java.util.ArrayList<>(stored.get(kind));
                 if (rows.isEmpty()) continue;
                 rows.sort((a, b) -> b.total != a.total ? Integer.compare(b.total, a.total) : a.key.compareTo(b.key));
-                java.util.Set<Integer> pick = new java.util.TreeSet<>();
-                pick.add(0);
-                for (int i = 0; pick.size() < Math.min(IMAGING_SAMPLE, rows.size()); i++) pick.add((day * 7 + i * 13) % rows.size());
-                for (int i : pick) {
+                for (int i : imagingSample(day, rows.size())) {
                     org.calacademy.antweb.home.ImagingProgressDb.Row r = rows.get(i);
                     long[] n = imagingRecount(kind, r.key, imagedName);
                     String what = "imaging progress, " + kind + " " + r.label() + " (recount): ";
