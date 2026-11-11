@@ -794,11 +794,15 @@ specimens (the country page then shows none) and it keeps no row for the old nam
 Staging first. Not while an upload or the daily update runs (the tool asks AntWeb and stops), and outside 05:00 to
 08:00 Pacific.
 
+The tool is fetched into its own folder, outside AntWeb's checkout (`<commit>`: the commit of the tool to use; the
+reports of every run go into the same folder). It finds the project by itself: `/root/antweb` where that is a real
+folder with `etc/db.properties` (production), otherwise `/root/antweb-next` (staging, where `/root/antweb` is a link).
+
 1. Report (read-only). For each rename: what was found, and every table with the rows it would change.
 
 ```
 # ssh root@165.232.136.170   (staging)
-python3 /root/antweb-next/tools/place/country_rename.py
+mkdir -p /root/antweb-country-rename && curl -fsSL -o /root/antweb-country-rename/country_rename.py https://raw.githubusercontent.com/calacademy-research/antweb/<commit>/tools/place/country_rename.py && python3 /root/antweb-country-rename/country_rename.py
 ```
 
    Expect `Renames: 7; possible: 7; specimens that change: N`, then per country one line that says what happens to
@@ -812,7 +816,7 @@ python3 /root/antweb-next/tools/place/country_rename.py
 
 ```
 # ssh root@165.232.136.170   (staging)
-python3 /root/antweb-next/tools/place/country_rename.py --apply --only "Ivory Coast"
+python3 /root/antweb-country-rename/country_rename.py --apply --only "Ivory Coast"
 ```
 
    Expect the report again, then `Applied. Record and backup tables: country_rename_backup_<date>_<time> and ...`,
@@ -825,18 +829,19 @@ python3 /root/antweb-next/tools/place/country_rename.py --apply --only "Ivory Co
    it finds the rename done and carries the specimens still under the old name.
 
 4. Check: `country.do?name=<new name>` shows the country with its specimens, species list and page text;
-   `countries.do` lists the new name; `country.do?name=<old name>` shows "This location is Invalid" with a link to
-   the new name; Advanced Search by the new country finds the specimens; the species lists of its states open.
+   `countries.do` lists the new name; `country.do?name=<old name>` goes to the new name's page (before the
+   old-names change of 2026-11-10 is deployed: "This location is Invalid" with a link to the new name); Advanced
+   Search by the new country finds the specimens; the species lists of its states open.
    The Not curated column and the totals are counted again by the next daily update; the maps' titles by set 5.
 
-5. Then production: the same commands with `ssh root@165.232.137.86` and `/root/antweb/tools/place/country_rename.py`.
+5. Then production: the same commands with `ssh root@165.232.137.86`.
 
 Rollback (puts back every name of the run, from its tables; a specimen only when it still has the new name), then
 reload AntWeb's memory as in step 3:
 
 ```
-# ssh root@165.232.137.86   (antweb-prod; on staging /root/antweb-next/tools/place/country_rename.py)
-python3 /root/antweb/tools/place/country_rename.py --rollback country_rename_backup_<date>_<time>
+# ssh root@165.232.137.86   (antweb-prod; the same on staging)
+python3 /root/antweb-country-rename/country_rename.py --rollback country_rename_backup_<date>_<time>
 ```
 
 Another country later: `--rename "Old name=New name"` (with `--only "Old name"`). Keep the tables
