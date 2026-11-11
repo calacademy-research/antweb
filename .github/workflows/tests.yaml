@@ -776,7 +776,14 @@ jobs:
           # Locality codes stored plain; the one-off repair of the URL-encoded ones (tools/data/locality_codes.py):
           # preview, repair, second run refused, rollback (tests/unit/test_locality_codes.py).
           LOCALITY_CODES_DB_CONTAINER=refreshmysql LOCALITY_CODES_DB_PASSWORD=ci-root python3 tests/unit/test_locality_codes.py
+          # A country takes its current name (tools/place/country_rename.py): report, a busy AntWeb stops it, a failed
+          # statement undoes the run, apply (ids kept, old names kept, states, specimens, curators, page text, counts),
+          # second run, rollback (tests/unit/test_country_rename.py).
+          COUNTRY_RENAME_DB_CONTAINER=refreshmysql COUNTRY_RENAME_DB_PASSWORD=ci-root python3 tests/unit/test_country_rename.py
           docker rm -f refreshmysql
+
+      - name: Country rename tool, the decision and its SQL without a database (tests/unit/test_country_rename.py)
+        run: python3 tests/unit/test_country_rename.py
 
       - name: No email tells the reader to ignore it (tests/unit/test_email_texts.py)
         run: python3 tests/unit/test_email_texts.py

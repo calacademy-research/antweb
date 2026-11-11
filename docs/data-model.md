@@ -456,7 +456,9 @@ pages).
 | `specimen_local_count` | not named in any SQL of the code (see section 14) |
 
 **Written by.** The Geolocale manager (`editGeolocale.do`: `GeolocaleDb.createGeolocale`, `updateGeolocale`,
-`deleteGeolocale`; see [guides/manager-tools.md](guides/manager-tools.md)); specimen uploads add adm1s
+`deleteGeolocale`; see [guides/manager-tools.md](guides/manager-tools.md)); a country's rename to its current name
+(`tools/place/country_rename.py`, 2026-11-10: the row keeps its id, the old name stays as a not-valid row, and the
+name is carried to every table that keeps it; [runbook.md](runbook.md), "Renaming a country"); specimen uploads add adm1s
 (`GeolocaleDb.addAdm1FromSpecimenData`); set 2 (`GeolocaleDb.updateCounts`, `PlaceTotals`); set 4
 (`PlaceImageCountDb.updateAll`); the Recalculate button of a place page (`updatePlace`); `updateColor`.
 

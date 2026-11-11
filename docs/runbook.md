@@ -780,6 +780,68 @@ The day after the deploy, check CAS: `query.do?name=encodedLocalityCodes` (or th
 California Academy of Sciences codes once a nightly TaxonWorks upload has run (`taxonworksNightly.log`). Keep the
 backup table until the codes have been checked; drop it later (`drop table specimen_localitycode_bak_20261022;`).
 
+### Renaming a country
+
+Brian Fisher, 2026-11-10: AntWeb takes the current country names (Swaziland: Eswatini; Macedonia: North Macedonia; Cape
+Verde: Cabo Verde; Czech Republic: Czechia; Ivory Coast: Côte d'Ivoire; Democratic Republic of Congo: Democratic
+Republic of the Congo; Turkey: Türkiye). A country's name is kept in more places than its own row: its states, the
+specimens, the curators assigned to it, its page text and two count tables. The tool `tools/place/country_rename.py`
+(read its header) renames all of them in one transaction, keeps the country's id, and keeps the old name as a
+not-valid row that points to the new one, so uploads that write the old name are stored under the new one. Edit
+Geolocale's Name field renames the row, its states, its old names, the curators and the page text, but not the
+specimens (the country page then shows none) and it keeps no row for the old name: use the tool for a country.
+
+Staging first. Not while an upload or the daily update runs (the tool asks AntWeb and stops), and outside 05:00 to
+08:00 Pacific.
+
+1. Report (read-only). For each rename: what was found, and every table with the rows it would change.
+
+```
+# ssh root@165.232.136.170   (staging)
+python3 /root/antweb-next/tools/place/country_rename.py
+```
+
+   Expect `Renames: 7; possible: 7; specimens that change: N`, then per country one line that says what happens to
+   its row (it takes the new name and a row is added for the old name, or it swaps names with the row AntWeb already
+   has for the new name) and one line per table. `NOT RENAMED: <why>` means nothing is done for that country (a state
+   of the same name under both names, page text under the new name, both names valid): send the output to Claude.
+   A note `copy the folder web/speciesList/...` means the country page has an author image stored under the old name.
+   The same text is in `/root/antweb-country-rename/<date>-<time>/report.txt`, the numbers in `counts.csv`.
+
+2. Apply. One country first on staging (`--only "Ivory Coast"`: the first valid country with an apostrophe), then all.
+
+```
+# ssh root@165.232.136.170   (staging)
+python3 /root/antweb-next/tools/place/country_rename.py --apply --only "Ivory Coast"
+```
+
+   Expect the report again, then `Applied. Record and backup tables: country_rename_backup_<date>_<time> and ...`,
+   the rollback command, and `Check after the change: ... 0 (as expected)`. If it prints `Nothing changed`, nothing
+   was changed (AntWeb busy, an upload ran in between, or the database refused a statement): read the reason.
+
+3. Reload AntWeb's memory at once: sign in as an administrator, open `technical.do`, "Reload the in-memory lists":
+   "countries and adm1s (geolocales)" (about 12 seconds), then "logins". Until then the country page counts no
+   specimens and an upload stores the name AntWeb has in memory; if an upload did run in between, run step 2 again:
+   it finds the rename done and carries the specimens still under the old name.
+
+4. Check: `country.do?name=<new name>` shows the country with its specimens, species list and page text;
+   `countries.do` lists the new name; `country.do?name=<old name>` shows "This location is Invalid" with a link to
+   the new name; Advanced Search by the new country finds the specimens; the species lists of its states open.
+   The Not curated column and the totals are counted again by the next daily update; the maps' titles by set 5.
+
+5. Then production: the same commands with `ssh root@165.232.137.86` and `/root/antweb/tools/place/country_rename.py`.
+
+Rollback (puts back every name of the run, from its tables; a specimen only when it still has the new name), then
+reload AntWeb's memory as in step 3:
+
+```
+# ssh root@165.232.137.86   (antweb-prod; on staging /root/antweb-next/tools/place/country_rename.py)
+python3 /root/antweb/tools/place/country_rename.py --rollback country_rename_backup_<date>_<time>
+```
+
+Another country later: `--rename "Old name=New name"` (with `--only "Old name"`). Keep the tables
+`country_rename_backup_*` until the names have been checked; an administrator drops them later.
+
 ### Orphan photos
 
 Orphan photos are photos whose specimen code has no specimen record, so they show on no page (`orphanedImages.do`
