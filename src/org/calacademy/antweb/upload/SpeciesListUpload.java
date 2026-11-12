@@ -751,11 +751,14 @@ public class SpeciesListUpload extends AntwebUpload {
 
 						  // Use the worldants country to populate geolocale_taxon... 
 						  if (thisCountry != null && !"".equals(thisCountry) && !isFossil) {						
-							String tempCountry = thisCountry;
-							// We could try to get the adm1 from the parenthesis..
-							if (tempCountry.contains("(")) tempCountry = tempCountry.substring(0, tempCountry.indexOf("("));
-							tempCountry = tempCountry.trim();
-							Country country = GeolocaleMgr.getValidCountry(tempCountry);
+							// The country AntCat names is the text before the parenthesis ("Ecuador (Galapagos Is)": Ecuador).
+							String tempCountry = AntcatLocality.countryPart(thisCountry);
+							// 2026-11-12 (Brian Fisher, 2026-11-11: an oceanic island with its own ant fauna is its own country
+							// in AntWeb and never counts toward its political parent): when the place in the parentheses is such
+							// a country by the upload's rule (RecordPlace: Ecuador + Galapagos, United States + Hawaii), the name
+							// is filed under it only. Until now the parentheses were dropped, so every name described from the
+							// Galapagos was on Ecuador's list. Every other locality: the valid country of the text before them.
+							Country country = GeolocaleMgr.getAntcatListCountry(thisCountry);
                             if (taxonName.contains(debugTaxonName)) s_log.debug("importSpeciesList() 9 taxonName:" + taxonName + " status:" + status + " country:" + country);
 							if (country != null) {
 							  //if (taxonName.contains(debugTaxonName))
