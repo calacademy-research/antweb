@@ -518,7 +518,8 @@ public class UtilDataAction extends AntwebAction {
                     // The e2e tests read this line: the bioregion lists were rebuilt with valid names only (2026-10-29),
                     // and the names described from an island that is its own country are on the island's list only (2026-11-12).
                     LogMgr.appendLog("compute.log", "  AntCat import done (" + org.calacademy.antweb.upload.SpeciesListUpload.BIOREGION_VALID_LOG + ")"
-                        + " (" + org.calacademy.antweb.upload.AntcatLocality.ISLAND_LOG + ")", true);
+                        + " (" + org.calacademy.antweb.upload.AntcatLocality.ISLAND_LOG + "; "
+                        + org.calacademy.antweb.upload.AntcatLocality.placesNotKnownLog(org.calacademy.antweb.upload.SpeciesListUpload.lastPlacesNotKnown()) + ")", true);
                 }
                 message += " " + doAction("taxonFinish", form, accessLogin, accessGroup, connection, request, mapping);
                 // CAS specimens from TaxonWorks (GitHub #27). Does nothing without etc/taxonworks.properties.

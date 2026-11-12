@@ -725,7 +725,9 @@ jobs:
         # subregion are the island row's or, where it has none, the record's own (as the one-time update does).
         # AntcatLocalityTest (2026-11-12): the country the AntCat import files a name under, from AntCat's type locality:
         # "Ecuador (Galapagos Is)" is the Galapagos Islands' name only (the upload's rule for the place in the
-        # parentheses), "Hawaii (Oahu)" Hawaii's, "Mexico (Hawaii)" Mexico's; every other locality as before.
+        # parentheses), "Hawaii (Oahu)" Hawaii's, "Mexico (Hawaii)" Mexico's; every other locality as before. The country
+        # before the parentheses is resolved by the import's old lines and the new code alike, on the same spellings;
+        # a place AntWeb does not know in a country with island countries ("United States (Hawaiian Is)") is noted.
         # IslandParseLineTest: the same forms through SpecimenUploadParse.parseLine itself (the places, taxa and groups
         # in memory filled by the test, no database): the specimen it would store, and the bounds check against the
         # island's own box.
@@ -773,7 +775,7 @@ jobs:
                      util.BackgroundJobsTest:16 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
                      util.JobSummaryTest:8 upload.SubfamilyFromGenusTest:9 upload.LocalityCodePlainTest:6 \
-                     util.CountrySpellingTest:8 util.PlaceBioregionTest:9 upload.IslandCountryTest:10 upload.IslandParseLineTest:9 upload.AntcatLocalityTest:6; do
+                     util.CountrySpellingTest:8 util.PlaceBioregionTest:9 upload.IslandCountryTest:10 upload.IslandParseLineTest:9 upload.AntcatLocalityTest:9; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
