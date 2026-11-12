@@ -438,7 +438,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
                 }
             }
         } catch (SQLException e) {
-            s_log.error("cleanupSpeciesListProxyRecords()");
+            s_log.error("cleanupSpeciesListProxyRecords() e:" + e);
+            cleanupErrors.add("proxy rows: " + e);
         } finally {
             DBUtil.close(stmt, rset, "cleanupSpeciesListProxyRecords()");
         }
@@ -471,15 +472,67 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
     /**
      * The projects whose list lost a row in this object's clean-ups (cleanupSpeciesListProxyRecords, verifyProjTaxon), in
-     * the order found. Set 5 runs these after the daily update has counted the lists' totals (PlaceViewTotalDb, set 4), so
-     * the caller counts these projects' totals again (UtilDataAction; 2026-11-11: Fossil Ants said Genera 259 all day
-     * beside a list of 258: every day the AntCat import puts a fossil genus on the list that has no species there, the
-     * totals count it, and verifyProjTaxon then takes it off the list).
+     * the order found, each with its rows removed. In the daily update the clean-ups run in set 2 before any list is
+     * counted (cleanupLists, since 2026-11-12). Run by hand as an admin job (utilData.do?action=verifyProjTaxon,
+     * cleanupSpeciesListProxyRecords) they remove rows after the counts, so that caller counts these projects' list
+     * totals again (UtilDataAction.listTotalsAfterRowsRemoved).
      */
-    private final Set<String> projectsWithRowsRemoved = new LinkedHashSet<>();
+    private final java.util.Map<String, Integer> rowsRemoved = new java.util.LinkedHashMap<>();
+
+    /** What failed in this object's clean-ups (they log a database error and go on), for cleanupLists' line. */
+    private final List<String> cleanupErrors = new ArrayList<>();
 
     public Set<String> getProjectsWithRowsRemoved() {
-        return projectsWithRowsRemoved;
+        return rowsRemoved.keySet();
+    }
+
+    /** Starts the line cleanupLists returns (compute.log, written by the daily update's set 2). */
+    public static final String CLEANUP_LOG = "Project lists cleaned";
+
+    /**
+     * The two clean-ups that take rows off project lists, for the daily update: a proxy row of the Species List Tool
+     * whose children are gone from the list (cleanupSpeciesListProxyRecords), and a genus row of any project but the
+     * AntCat list that has no species on the list (verifyProjTaxon). Set 2 calls it right after the data clean-up and
+     * before the first count of a project list, so every number the daily update stores afterwards is counted from the
+     * lists as they stay.
+     *
+     * Until 2026-11-12 the two ran in set 5, production's last set, after set 3 had stored the project totals and set 4
+     * the statistics row: the rows they removed were still in those numbers, and the count check reported them every
+     * day. Production 2026-11-12, 6 rows removed: "Genera of project pages = genus rows on the list" fossilants 259
+     * stored, 258 listed, and allantwebants 536 and 535; statistics row proj_taxa 70,419, 70,413 by a recount. Staging
+     * skips set 5, so it never ran them and never showed it.
+     *
+     * A genus row that loses its last species later in the same run (a synonym's row renamed to a valid name of another
+     * genus: set 2's rename of the lists, set 3's rename before each project is counted) stays until the next daily
+     * update, on the list and in the numbers alike.
+     *
+     * Returns the line for compute.log: "Project lists cleaned: 6 rows removed (fossilants 1, allantwebants 1, madants
+     * 4) in 3 s", "Project lists cleaned: 0 rows removed in 2 s". Never throws; a database error in one of the two is in
+     * the line: "...; FAILED: genus rows: ..." (the rows removed before it stay removed, in the set's transaction).
+     */
+    public String cleanupLists() {
+        long start = System.currentTimeMillis();
+        try {
+            cleanupSpeciesListProxyRecords();
+        } catch (SQLException | RuntimeException e) {
+            s_log.error("cleanupLists() proxy rows e:" + e);
+            cleanupErrors.add("proxy rows: " + e);
+        }
+        try {
+            verifyProjTaxon();
+        } catch (SQLException | RuntimeException e) {
+            s_log.error("cleanupLists() genus rows e:" + e);
+            cleanupErrors.add("genus rows: " + e);
+        }
+        int rows = 0;
+        List<String> perProject = new ArrayList<>();
+        for (java.util.Map.Entry<String, Integer> e : rowsRemoved.entrySet()) {
+            rows += e.getValue();
+            perProject.add(e.getKey() + " " + e.getValue());
+        }
+        return CLEANUP_LOG + ": " + rows + " rows removed" + (perProject.isEmpty() ? "" : " (" + String.join(", ", perProject) + ")")
+            + " in " + (System.currentTimeMillis() - start) / 1000 + " s"
+            + (cleanupErrors.isEmpty() ? "" : "; FAILED: " + String.join("; ", cleanupErrors));
     }
 
     private String deleteProjTaxon(String taxonName, String projectName) throws SQLException {
@@ -495,7 +548,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "deleteProjTaxon()");
             c = stmt.executeUpdate(dml);
-            if (c > 0 && projectName != null) projectsWithRowsRemoved.add(projectName);
+            if (c > 0 && projectName != null) rowsRemoved.merge(projectName, c, Integer::sum);
         } catch (SQLException e) {
             s_log.error("deleteProjTaxon() e:" + e + " dml:" + dml);
             throw e;
@@ -533,6 +586,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             }
         } catch (SQLException e) {
             s_log.error("verifyProjTaxon() e:" + e);
+            cleanupErrors.add("genus rows: " + e);
         } finally {
             DBUtil.close(stmt, rset, "verifyProjTaxon()");
         }

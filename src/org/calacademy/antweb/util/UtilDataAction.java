@@ -514,6 +514,15 @@ public class UtilDataAction extends AntwebAction {
             if ("set2".equals(action)) {
                 message = "set2 - ";
                 message += doAction("dataCleanup", form, accessLogin, accessGroup, connection, request, mapping);
+                // Project list rows that go once their children are gone (a genus row without species on the list, a proxy
+                // row of the Species List Tool without children): removed here, after the data clean-up took its rows and
+                // before anything counts a project list (the Global recount right below is the first). Until 2026-11-12
+                // set 5 removed them, after sets 3 and 4 had stored the project totals and the statistics row, so the
+                // count check found those numbers one or a few rows too high every day on production (staging skips
+                // set 5 and never showed it). ProjTaxonDb.cleanupLists.
+                String listCleanup = new ProjTaxonDb(connection).cleanupLists();
+                LogMgr.appendLog("compute.log", "  " + listCleanup, true);
+                message += " " + listCleanup;
                 // The clean-up deletes list rows (morphospecies without specimens, names no longer in the taxon table) from every
                 // project, the Global column (allantwebants) too, which the specimen upload had counted before it and nothing
                 // recounts after it: its genus and subfamily rows then counted more rows than they have (count check 2026-10-27,
@@ -643,14 +652,11 @@ public class UtilDataAction extends AntwebAction {
                 s_log.info("Done deleteConflictedDefaultImages. Starting genObjectMaps...");
 
                 message += " " + doAction("genObjectMaps", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 48.93 mins
-                s_log.info("Done genObjectMaps. Starting cleanupSpeciesListProxyRecords...");
+                s_log.info("Done genObjectMaps.");
 
-                message += " " + doAction("cleanupSpeciesListProxyRecords", form, accessLogin, accessGroup, connection, request, mapping);
-                s_log.info("Done cleanupSpeciesListProxyRecords. Starting verifyProjTaxon...");
-
-                message += " " + doAction("verifyProjTaxon", form, accessLogin, accessGroup, connection, request, mapping);
-                s_log.info("Done verifyProjTaxon.");
-
+                // The two clean-ups of project lists (cleanupSpeciesListProxyRecords, verifyProjTaxon) ran here until
+                // 2026-11-12, after the counts of sets 3 and 4; they are in set 2 now (ProjTaxonDb.cleanupLists). No step
+                // of this set changes a table an earlier set counted: taxon_prop (default images), object_map, the caches.
                 AntwebMgr.populate(connection, true);
             }
 
@@ -1219,10 +1225,12 @@ public class UtilDataAction extends AntwebAction {
   
 
     /**
-     * After a clean-up took rows off project lists (set 5: cleanupSpeciesListProxyRecords, verifyProjTaxon; also run by
-     * hand): the list totals of those projects, counted earlier in the daily update (set 4), are counted again, so the
-     * project page's Genera equal its list (Brian Fisher, 2026-11-11: Fossil Ants Genera 259, its list 258). The text for
-     * the job's message: "" when no list lost a row.
+     * After a clean-up run by hand took rows off project lists (the admin jobs cleanupSpeciesListProxyRecords and
+     * verifyProjTaxon; until 2026-11-12 also set 5 of the daily update): the list totals of those projects, counted by
+     * the last daily update, are counted again, so the project page's Genera equal its list (Brian Fisher, 2026-11-11:
+     * Fossil Ants Genera 259, its list 258). The projects' own stored totals and the statistics row follow at the next
+     * daily update, which since 2026-11-12 runs the two clean-ups before it counts (set 2, ProjTaxonDb.cleanupLists).
+     * The text for the job's message: "" when no list lost a row.
      */
     static String listTotalsAfterRowsRemoved(Connection connection, ProjTaxonDb projTaxonDb) {
         java.util.Set<String> projects = projTaxonDb.getProjectsWithRowsRemoved();

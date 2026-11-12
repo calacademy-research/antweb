@@ -697,7 +697,9 @@ Found while doing this (2026-10-26, end-to-end tests of rows 24 to 53; each has 
   (2) set 5's `verifyProjTaxon` deletes the genus rows of every project (not worldants) that have no child row on the
   list, after set 3 has counted the project's Genera and its subfamily rows: until the next night Genera and those
   subfamily rows are one over per deleted genus, and the count check calls it real (the rows were deleted before the end
-  of the run). Queries (read-only):
+  of the run). (Fixed 2026-11-12: the two clean-ups run in set 2, before any project list is counted,
+  `ProjTaxonDb.cleanupLists`; production 11-12 had shown fossilants Genera 259 stored and 258 listed, allantwebants 536
+  and 535, and the statistics row's proj_taxa 70,419 against 70,413; test `junit:ListCleanupOrderDbTest`.) Queries (read-only):
   `select t.taxon_name, t.status, t.fossil, t.parent_taxon_name, pt.taxarank, pt.status, (select count(*) from proj_taxon x
   where x.project_name = 'fossilants' and x.taxon_name = t.parent_taxon_name) parent_on_list from proj_taxon l join taxon t
   on t.taxon_name = l.taxon_name left join taxon pt on pt.taxon_name = t.parent_taxon_name where l.project_name =
@@ -742,7 +744,9 @@ Found while doing this (2026-10-26, end-to-end tests of rows 24 to 53; each has 
   (`StatusSet.ownChoice`), while the number is `valid_species_count` (valid, not fossil). Fixed 2026-11-11: the daily
   update counts the site-wide lists' totals too (`PlaceViewTotalDb.countedProjects`; not allantwebants), in their own
   default view; set 5's `verifyProjTaxon` and `cleanupSpeciesListProxyRecords` count a project's totals again when they
-  take a row off its list (`ProjTaxonDb.getProjectsWithRowsRemoved`, `PlaceViewTotalDb.recountProjects`); the page's
+  take a row off its list (`ProjTaxonDb.getProjectsWithRowsRemoved`, `PlaceViewTotalDb.recountProjects`; since
+  2026-11-12 the two run in set 2, before every count, so the project's own stored Genera and the statistics row no
+  longer count a removed row either, and the recount is left for the two jobs run by hand); the page's
   lines follow one rule on every place page ("The rule of the place page's list numbers", section 5). The first form
   of that fix showed the species total of "Valid (with fossils)" on both species lines; read from production the same
   day, that view has 868 rows on Fossil Ants: 856 valid names (853 fossil, 3 not) and 12 morphospecies, so it was no
