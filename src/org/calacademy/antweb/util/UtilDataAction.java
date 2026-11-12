@@ -1090,17 +1090,9 @@ public class UtilDataAction extends AntwebAction {
 
 
         // If a species list proxy record is created for a species list species that is then removed... cleanup.
-        if (action.equals("cleanupSpeciesListProxyRecords")) {
-            ProjTaxonDb projTaxonDb = new ProjTaxonDb(connection);
-            String result = projTaxonDb.cleanupSpeciesListProxyRecords();
-            message = "Cleanup Species List Proxy Records:" + result + listTotalsAfterRowsRemoved(connection, projTaxonDb);
-        }
-
-        // If a species list proxy record is created for a species list species that is then removed... cleanup.
-        if (action.equals("verifyProjTaxon")) {
-            ProjTaxonDb projTaxonDb = new ProjTaxonDb(connection);
-            String result = projTaxonDb.verifyProjTaxon();
-            message = "verifyProjTaxon Records:" + result + listTotalsAfterRowsRemoved(connection, projTaxonDb);
+        // The two clean-ups of the project lists, by hand (the daily update runs both in set 2, cleanProjectLists).
+        if (action.equals("cleanupSpeciesListProxyRecords") || action.equals("verifyProjTaxon")) {
+            message = cleanListsByHand(connection, action);
         }
 
      // --- Map functions
@@ -1257,6 +1249,41 @@ public class UtilDataAction extends AntwebAction {
       return m_inComputeProcessSince;
     }
   
+
+    /**
+     * The admin jobs cleanupSpeciesListProxyRecords and verifyProjTaxon: one of the two clean-ups of the project lists,
+     * by hand. Returns the job's answer. When the clean-up met a database error (it logs it and goes on), the answer
+     * says "FAILED: ..." with the error, escaped, and what the job removed and recorded is rolled back, as set 2's step
+     * does (cleanProjectLists): the answer could not say truly which rows are gone (after a deadlock the database has
+     * undone them already), and until 2026-11-12 the job answered as if nothing had happened. The list totals are
+     * counted again only after a clean-up without error.
+     */
+    public static String cleanListsByHand(Connection connection, String action) {
+        boolean proxy = "cleanupSpeciesListProxyRecords".equals(action);
+        String head = proxy ? "Cleanup Species List Proxy Records:" : "verifyProjTaxon Records:";
+        ProjTaxonDb projTaxonDb = new ProjTaxonDb(connection);
+        String result;
+        try {
+            result = proxy ? projTaxonDb.cleanupSpeciesListProxyRecords() : projTaxonDb.verifyProjTaxon();
+        } catch (SQLException e) {      // the two catch their own; kept for their signature
+            s_log.error("cleanListsByHand() " + action + " e:" + e);
+            return head + rolledBack(connection, String.valueOf(e));
+        }
+        if (projTaxonDb.cleanupFailed()) return head + rolledBack(connection, projTaxonDb.cleanupErrorsText());
+        return head + result + listTotalsAfterRowsRemoved(connection, projTaxonDb);
+    }
+
+    /** "; FAILED: <error>; no row removed (rolled back)", after rolling the job's transaction back. */
+    private static String rolledBack(Connection connection, String errors) {
+        String undone = "; no row removed (rolled back)";
+        try {
+            connection.rollback();
+        } catch (SQLException e) {
+            s_log.error("cleanListsByHand() rollback e:" + e);
+            undone = "; the rows removed before the error stay removed (not rolled back: " + Html.esc(String.valueOf(e)) + ")";
+        }
+        return "; FAILED: " + Html.esc(errors) + undone;
+    }
 
     /**
      * After a clean-up run by hand took rows off project lists (the admin jobs cleanupSpeciesListProxyRecords and

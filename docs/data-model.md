@@ -828,8 +828,13 @@ Species List Tool proxy row with no children"; until then these rows of set 5 we
 the AntWeb-wide list for a genus that was on the list before it and is off it afterwards ("AntWeb-wide list rebuilt:
 genus with no species row or specimen"). Not the routine rebuilds (the rows from specimens deleted and inserted again
 each night, the AntCat rows of set 1, the rows of the Global list allantwebants that its rebuild puts on the list
-again). A genus the AntCat import puts on the Fossil Ants list every day without a species there is taken off and
-recorded every day. Created at startup when missing (`ListRemovalLog.ensureSchema`, from `LoginMgr`; DDL only when missing, as a
+again). A genus the AntCat import puts on the Fossil Ants list every day without a species there is taken off every
+day and recorded once (`ListRemovalLog.recordWhereOnce`): no new record while the newest record of that list and name
+is the same in job, reason and source and was written by a job. No table says when a list row was added, so the row's
+source tells a curator's row (a curator source, or "proxy" + one): its removal is always recorded; and a curator's own
+removal in between is a newer, different record, after which the job's next removal is recorded again. A deadlock
+while a record is written is passed on to the caller (the database has rolled back its transaction); any other
+failure of the record is logged and the job goes on. Created at startup when missing (`ListRemovalLog.ensureSchema`, from `LoginMgr`; DDL only when missing, as a
 CREATE commits an open transaction). Record: `db/upgrade/8.115/2026-11-03-list-removal-log.sql`.
 
 **One-off data scripts** that delete list rows write the same record first, with the delete's condition on alias `l`

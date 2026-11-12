@@ -438,7 +438,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
                         ListRemovalLog.JOB_PROXY_NO_CHILDREN, ListRemovalLog.REASON_PROXY_NO_CHILDREN);
                 }
             }
-        } catch (SQLException e) {
+        } catch (SQLException | RuntimeException e) {
             s_log.error("cleanupSpeciesListProxyRecords() e:" + e);
             cleanupErrors.add("proxy rows: " + e);
         } finally {
@@ -580,7 +580,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             + " and project_name = " + DBUtil.sqlQuote(projectName)
             + (extraClause != null ? extraClause : "");
         if (job != null) {
-            ListRemovalLog.recordWhere(getConnection(), ListRemovalLog.PROJECT, "l.taxon_name = " + DBUtil.sqlQuote(taxonName)
+            // not the same record day after day for a row the AntCat import puts back every day (recordWhereOnce)
+            ListRemovalLog.recordWhereOnce(getConnection(), ListRemovalLog.PROJECT, "l.taxon_name = " + DBUtil.sqlQuote(taxonName)
                 + " and l.project_name = " + DBUtil.sqlQuote(projectName) + (extraClause != null ? extraClause : ""), job, reason);
         }
         String dml = "delete from proj_taxon " + where;
@@ -706,7 +707,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
                 while (r.next()) projects.add(r.getString(1));
             }
             for (String project : projects) removed += removeGenusRowsWithoutSpeciesOrSpecimen(project);
-        } catch (SQLException e) {
+        } catch (SQLException | RuntimeException e) {
             s_log.error("verifyProjTaxon() e:" + e);
             cleanupErrors.add("genus rows: " + e);
         }
@@ -1029,13 +1030,22 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
      * after the rebuild, 535 after the clean-up). The builder and the clean-up read the list's rule differently; now
      * the builder applies the clean-up's own method to its list, after the disputed rows are gone and before anything
      * is counted, in the same transaction, so no page and no count ever sees such a row. An error there (database or
-     * other) is logged and the list stays as built (the daily clean-up applies the rule again); it never fails an upload.
+     * other) that leaves the transaction intact is logged and the list stays as built (the daily clean-up applies the
+     * rule again); it does not fail an upload. A deadlock is passed on: the transaction, the upload's own, is gone
+     * (DBUtil.transactionRolledBack).
      *
      * A genus row that was on the list before the rebuild and is off it afterwards by the rule is recorded
      * (ListRemovalLog, JOB_REBUILD_GENUS; Brian Fisher, 2026-11-03: no job deletes list entries without a record a
      * curator can see). A genus the rebuild put on the list and took off again in the same transaction was not on the
      * list before and is not after: no record (it would be one for every such genus at every upload).
      */
+    /** Tests only: called in rebuildAllAntwebList when the list's rows are in, before the rule of the genus rows. */
+    private static volatile Runnable s_beforeGenusRuleForTests = null;
+
+    public static void setBeforeGenusRuleForTests(Runnable beforeGenusRule) {
+        s_beforeGenusRuleForTests = beforeGenusRule;
+    }
+
     public void rebuildAllAntwebList() throws SQLException {
         //LogMgr.logAntQuery(getConnection(), "projectTaxaCountByProjectRank", "Before regenerateAllAntweb Proj_taxon worldants counts");
         //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "Before regenerateAllAntweb Proj_taxon worldants counts");
@@ -1079,10 +1089,20 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         s_log.debug("rebuildAllAntwebList() deleteCount:" + deleteCount + " updateCount:" + updateCount);
 
         try {
+            Runnable hook = s_beforeGenusRuleForTests;
+            if (hook != null) hook.run();
             int removed = removeGenusRows(Project.ALLANTWEBANTS, ListRemovalLog.JOB_REBUILD_GENUS, generaBefore);
             if (removed > 0) s_log.info("rebuildAllAntwebList() genus rows without a species row or a specimen left out: " + removedRowsText());
         } catch (SQLException | RuntimeException e) {
             s_log.error("rebuildAllAntwebList() genus rows e:" + e);
+            // A deadlock: the database has rolled back the whole transaction, which is the upload's own (its specimens
+            // and this list share one connection, committed once at the end: SpecimenUploadJob, TaxonWorksNightly).
+            // Going on would commit an upload without its specimens and call it done. Passed on: the upload fails and
+            // says so. Any other error leaves the transaction as it was and the list as built.
+            if (DBUtil.transactionRolledBack(e)) {
+                throw e instanceof SQLException ? (SQLException) e
+                    : new SQLException("rebuildAllAntwebList(): the transaction was rolled back by a deadlock", "40001", 1213, e);
+            }
         }
     }
 
