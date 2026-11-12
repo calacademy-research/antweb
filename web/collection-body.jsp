@@ -154,7 +154,9 @@ function selectAll(thisForm) {
 
 <% } %>
 
-<% if (Utility.displayEmptyOrNotBlank(locality.getCountry())) { %>
+<%-- 2026-11-11 (Brian Fisher: an oceanic island is its own country): a collection of Hawaii has country Hawaii and
+     island Hawaii; the Island line below is enough. --%>
+<% if (Utility.displayEmptyOrNotBlank(locality.getCountry()) && !(locality.getCountry() != null && locality.getCountry().equals(locality.getIslandCountry()))) { %>
 <ul>
 <li>Country:</li>
 <%

@@ -951,6 +951,118 @@ cd /root/antweb-next && python3 tools/data/indet_form.py rollback --project /roo
 docker restart antweb_antweb_1
 ```
 
+### Islands that are their own country
+
+Brian Fisher, 2026-11-11: "An oceanic island or archipelago with its own ant fauna is its own country in AntWeb. Its
+specimens never count toward the political parent." This round Hawaii (was filed under United States) and Galapagos
+Islands (Ecuador); the rule and what the upload does: docs/flows/places.md, "Islands that are their own country". The
+tool `tools/place/island_countries.py` (read its header) brings the specimens already stored to the new form once:
+`specimen.country` = the island's name where `specimen.island_country` names a valid place flagged as an island. It
+also gives the place row "Rodrigues" of Mauritius its valid name. Production on 2026-11-11: 763 specimens of Galapagos
+Islands under Ecuador (3 groups, 697 of CAS) and 248 of Hawaii under United States (8 groups, 174 of CAS).
+
+**Order, and why.** (1) Report with the code as it is, to see the islands' bounding boxes. (2) Deploy the code. (3)
+`--apply`. (4) Reload the places. (5) Build the lists and numbers again, or wait for the daily update. (6) Checks. The
+code goes first because the CAS TaxonWorks upload loads every CAS specimen again each morning: with the old code it
+would put the CAS specimens back under the parent. Staging first; on production after 08:15 Pacific and not while an
+upload is running (the tool asks AntWeb and stops if one is).
+
+1. Report (read-only: select statements only; it writes its files to `/root/antweb-island-countries/`). Before the
+   deploy the tool is not on the server yet, so it is fetched from GitHub; `<commit>` is the commit Claude names.
+
+```
+# ssh root@165.232.136.170   (staging)
+mkdir -p /root/antweb-island-countries && curl -fsSL -o /root/antweb-island-countries/island_countries.py https://raw.githubusercontent.com/calacademy-research/antweb/<commit>/tools/place/island_countries.py && python3 /root/antweb-island-countries/island_countries.py
+```
+
+   Expect "Islands (valid places flagged as islands): Galapagos Islands, Hawaii"; for each island its specimens "to
+   move" by present country and group; "region and subregion they get"; "bounding box used at upload: ...; specimens
+   with coordinates outside it: 0"; under "Old names": "Rodrigues of Mauritius -> the country Rodrigues: ..."; the
+   two lists for a curator; and last "Report only: nothing was changed." Send the output to Claude before going on.
+   **If a line says specimens lie outside an island's bounding box**, stop: from the deploy on, the upload checks an
+   island's specimen against the island's own box (before: the parent's) and would red-flag those specimens at their
+   next upload. An administrator corrects the island's box first (Edit Geolocale, "bounding box fixed"), then the
+   report again.
+
+2. Deploy the code (Claude pushes it to staging; on production the merge deploys it). Wait until the site answers
+   again (2 to 4 minutes), then check that the United States page says "Hawaii has its own page and is not counted
+   here." (https://staging.antweb.org/country.do?name=United+States).
+
+3. Apply. The tool asks AntWeb whether an upload or the daily update is running, writes the backup tables
+   `island_countries_backup_<date>_<time>` (every specimen it changes with its old country, region and subregion) and
+   `..._geolocale` (the Rodrigues row), compares the backup with the report's count, and changes everything in one
+   transaction.
+
+```
+# ssh root@165.232.136.170   (staging)
+python3 /root/antweb-next/tools/place/island_countries.py --apply
+```
+
+   Expect "Applied. Backup tables: island_countries_backup_... and ..._geolocale.", "Specimens changed: N." (N = the
+   report's "Specimens to move in all"), "Old-name rows changed: 1.", the rollback command with the table's name, and
+   "Check after the change: specimens still to move or old-name rows still to set: 0 (as expected)". Keep the name of
+   the backup table. "Nothing changed: AntWeb says "busy ..."": an upload or the daily update is running; run it again
+   later. Run twice it says "Nothing to change." and writes no table.
+
+4. Reload the places AntWeb keeps in memory, so the upload knows the Rodrigues row's valid name: sign in as an
+   administrator, Technical page (`technical.do`), "Reload the in-memory lists", "countries and adm1s (geolocales)".
+   (A restart of AntWeb does the same.)
+
+5. The lists and numbers. The species lists of the islands and their parents, Endemic and Introduced, the specimen
+   and image numbers and the maps are built again by the next daily update (05:00); until then the pages show
+   yesterday's numbers and the count check (`countCheck.do`) reports the two parents and the two islands as different.
+   To have them the same day, an administrator runs in the browser, one after the other and each to its end:
+   `utilData.do?action=set2` (lists from specimens, counts, endemic and introduced; about 45 minutes),
+   `utilData.do?action=set4` (images, Not curated, imaging progress; about 15 minutes), then
+   `utilData.do?action=placeViewTotals&param=all` (the totals of the lists).
+
+6. Checks, after step 5 or the next daily update.
+
+```
+# ssh root@165.232.136.170   (staging)
+python3 /root/antweb-next/tools/place/island_countries.py
+```
+
+   Expect for each island "to move: 0" and "already with country <island>" = its specimens; and under "Rows of a
+   parent's list that come from specimens only on the island": "none" (the island-only species have left the lists of
+   United States and Ecuador). The list above it, "For a curator", names the species that stay on the parent's list
+   because a curator, AntCat or another source put them there (`parent_list_rows.csv` in the folder the last line
+   names): Brian or a curator decides about those; nothing is deleted.
+
+```
+# ssh root@165.232.136.170   (staging)
+F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select country, island_country, count(*) from specimen where island_country in ('Hawaii', 'Galapagos Islands') or country in ('Hawaii', 'Galapagos Islands') group by country, island_country; select name, endemic_species_count, specimen_count from geolocale where name in ('Hawaii', 'Galapagos Islands', 'United States', 'Ecuador') and georank = 'country' and is_valid = 1;"
+```
+
+   Expect two lines of specimens, Hawaii / Hawaii and Galapagos Islands / Galapagos Islands (no line with United
+   States or Ecuador), and for Galapagos Islands an endemic count above 0.
+
+```
+# ssh root@165.232.136.170   (staging)
+python3 /root/antweb-next/tools/export/specimen_extract.py --countries "United States"
+```
+
+   Expect in its text "Islands of these countries that are their own country in AntWeb, NOT in this file: Hawaii", and
+   no Hawaii line in the counts per country. Then in the browser: the Hawaii and Galapagos Islands pages (specimens,
+   species, Endemic), a Hawaii specimen's page (one line "Island: Hawaii", no United States), `countCheck.do` (no new
+   real difference), and the end-to-end tests (`tests/e2e/test_island_countries.py`: none skipped any more).
+
+7. Production: the same six steps with `ssh root@165.232.137.86` and `/root/antweb/` in place of `/root/antweb-next/`
+   (step 1's report can be run any time before; step 2 is the merge).
+
+Rollback. First the code (Claude reverts the pull request and it deploys), then the specimens and the Rodrigues row
+(only specimens that still have the values the tool gave them; the tables stay):
+
+```
+# ssh root@165.232.136.170   (staging; on production ssh root@165.232.137.86 and /root/antweb/)
+python3 /root/antweb-next/tools/place/island_countries.py --rollback island_countries_backup_<date>_<time>
+```
+
+   Expect "Rolled back: N of the N specimens of island_countries_backup_... have their old country again; the old-name
+   rows have their old valid names. The tables are kept.", then reload the places (step 4) and let the daily update (or step
+   5) build the lists and numbers again. With the old code live the next CAS upload files the CAS specimens under the
+   parent by itself; the rollback is still needed for the other groups' specimens.
+
 ## One-off image exports
 
 ### Pheidole major-worker heads for Jack Longino (2026-10-27)

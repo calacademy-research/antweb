@@ -59,7 +59,9 @@
 		  <li><b><a href="<%= AntwebProps.getDomainApp() %>/museum.do?name=<%= Html.escAttr(Html.url(locality.getMuseumCode())) %>"><%= Html.esc(locality.getMuseumName()) %></a></b></li>
 		</ul>
 
-		<% if (Utility.displayEmptyOrNotBlank(locality.getCountry())) { %>
+		<%-- 2026-11-11 (Brian Fisher: an oceanic island is its own country): a locality of Hawaii has country Hawaii and
+		     island Hawaii; the Island line below is enough. --%>
+		<% if (Utility.displayEmptyOrNotBlank(locality.getCountry()) && !(locality.getCountry() != null && locality.getCountry().equals(locality.getIslandCountry()))) { %>
 		<ul><li>Country:</li>
 		<%
 		   String countryLink = "";
