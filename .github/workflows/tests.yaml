@@ -868,6 +868,9 @@ jobs:
       - name: Specimen extract for collaborators, complete and verified (tests/unit/test_specimen_extract.py)
         run: python3 tests/unit/test_specimen_extract.py
 
+      - name: The Data extract page writes the tool's format, and an island is its own country (tests/unit/test_data_extract_tool_version.py)
+        run: python3 tests/unit/test_data_extract_tool_version.py
+
       - name: Place fix, the stored country and bioregion against today's upload rule (tests/unit/test_place_fix.py)
         run: python3 tests/unit/test_place_fix.py
 
@@ -1358,10 +1361,11 @@ jobs:
           # failure said in the line with what was written before it, and not thrown.
           # LicenseUpdateDbTest (2026-10-29): the start-up update of stored licence texts to CC BY 4.0 backs up first,
           # is a no-op on a second run and skips a missing license table. Last: it makes its own small tables.
-          # DataExtractDbTest (2026-11-10, dataExtract.do): the extract of three countries and an island filed under one
+          # DataExtractDbTest (2026-11-10, dataExtract.do): the extract of three countries and an island named with them
           # is complete and verified (tabs, line breaks, quotes, accents, NULL, numbers and dates as the database prints
           # them, a zero date, 0/0 coordinates, a name without taxon row all in the file); a database count that differs
-          # is reported; an unknown or outdated country name stops before any file; islands left out; the connection
+          # is reported; an unknown or outdated country name stops before any file; an island is never in its political
+          # parent's extract (Brian Fisher, 2026-11-11: both stored forms, old island names, no specimen in two files); the connection
           # only reads and comes back as it was; 12,000 rows streamed. After the review: every country row that is not
           # valid refused; specimens under an old name of a country included and counted; a country without specimens a
           # warning; two spellings of a country counted apart and verified; read in pages by code, the table free
@@ -1406,7 +1410,7 @@ jobs:
               /t/org/calacademy/antweb/util/OnePlaceJobDbTest.java \
               /t/org/calacademy/antweb/home/GroupSpecimenCountDbTest.java \
               /t/org/calacademy/antweb/util/DataExtractDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3 home.GroupSpecimenCountDbTest:8 util.DataExtractDbTest:18; do
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3 home.GroupSpecimenCountDbTest:8 util.DataExtractDbTest:19; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

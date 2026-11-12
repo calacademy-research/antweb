@@ -17,24 +17,28 @@ database.
    `United States, Canada, Mexico`. Or open "Or pick from AntWeb's countries" and pick them from the list. Capital
    letters do not matter. If AntWeb does not know a name, or keeps it only as an old name (USA, for example),
    nothing starts and the page tells you which name to correct and, for an old name, the valid one.
-2. **Include islands filed under these countries** (ticked unless you clear it). AntWeb treats some islands as
-   countries of their own, Hawaii under the United States for example. With the box ticked their specimens are in
-   the file, and the manifest names the islands that were included.
-3. **Include specimens that are not ants** (not ticked unless you tick it). An extract holds **ants only**: family
+
+   **Islands are countries of their own** (Brian Fisher, 2026-11-11): an oceanic island or archipelago with its own
+   ant fauna, such as Hawaii or the Galapagos Islands, is its own country in AntWeb, and its specimens never count
+   toward the country it belongs to politically. An extract of `United States` has no specimen of Hawaii. To have
+   an island in the file, name it like any country: `United States, Hawaii`. The form lists AntWeb's island
+   countries, and the job's page and the manifest name the islands of your countries that were left out. (Until
+   2026-11-11 the form had a box "Include islands filed under these countries", ticked by default; it is gone.)
+2. **Include specimens that are not ants** (not ticked unless you tick it). An extract holds **ants only**: family
    Formicidae, and the few records with no family given. AntWeb also holds beetles, wasps, spiders and other
    animals found with ants (about 1,300 of the 200,000 specimens of the United States, Canada and Mexico); they
    are left out, and the manifest says how many, by family. Tick the box only when the collaborator wants those
    too.
-4. **Also a file of the specimens that have no country** (not ticked unless you tick it). About 1,600 specimen
+3. **Also a file of the specimens that have no country** (not ticked unless you tick it). About 1,600 specimen
    records on AntWeb have no country at all, so no choice of countries finds them, and some of them belong to
    the countries you ask for. With the box ticked they come in a file of their own
    (`specimens_no_country.csv.gz`: all of AntWeb's, the same columns, ants only unless the box above is ticked),
    for you or the collaborator to look through. The manifest counts them by upload group.
-5. **Species list of a bioregion** (optional). Choose Nearctic, for example, to also get AntWeb's species list of
+4. **Species list of a bioregion** (optional). Choose Nearctic, for example, to also get AntWeb's species list of
    that bioregion, each name with its number of specimens in the extract. The list follows the same choice: ants
    only unless you ticked the box, and the manifest says how many names of other families it leaves out.
-6. **Note** (optional): who the extract is for. It is for your own records; it is not written into the files.
-7. Press **Start the extract**. You are taken to the job's page, which updates itself. A small country takes
+5. **Note** (optional): who the extract is for. It is for your own records; it is not written into the files.
+6. Press **Start the extract**. You are taken to the job's page, which updates itself. A small country takes
    seconds, a large one may take several minutes. You may close the page: the job continues, and you find it again
    under **Uploads and data jobs** or in the list at the bottom of the Data extract page.
 
@@ -50,13 +54,18 @@ The job's page shows one of two things at the top:
 
 Two more things can appear under it:
 
-- **"AntWeb has no specimen for: ..."**: a country you asked for has no specimen at all. The extract is still
-  complete for what AntWeb holds; check that this is the country you meant.
+- **"AntWeb has no specimen for: ..."**: a country you asked for has no specimen the file could hold (no ant
+  specimen, in an extract of ants only). The extract is still complete for what AntWeb holds; check that this is
+  the country you meant.
+- **"Not in this extract: Hawaii"**: an island that is its own country in AntWeb belongs politically to one of
+  your countries and was not named, so its specimens are not in the file. That is the rule, not a fault. If the
+  collaborator wants the island too, start an extract that names it with the countries.
 - **"Specimens still filed under an old country name are included"**: some specimen records still say, for
   example, USA instead of United States. They belong to the country you asked for, so they are in the file; the
   manifest names the old names and counts those specimens ("Filed under an outdated country name").
 
-Below that is the manifest: the countries and islands, the number of specimens in all and by country and by
+Below that is the manifest: the countries, the islands named with them, the islands left out, the number of
+specimens in all and by country and by
 bioregion, how many have no coordinates, how many have a name AntWeb does not know, how many were red-flagged at
 upload, and a line to cite AntWeb. If a country is written in more than one way in the records (Mexico with and
 without an accent, for example), each spelling has its own line and a line names the other spellings; they are all
@@ -68,7 +77,7 @@ in the file.
 |---|---|
 | **Everything in one zip file** | all the files below in one download: the file to send |
 | `specimens.csv.gz` | one line per ant specimen (or per specimen of any family, if you ticked the box): every column of AntWeb's specimen record, then the status, fossil mark, rank, current valid name and author of its name, the name of its upload group, `no_taxon_row` and `has_coordinates` |
-| `specimens_no_country.csv.gz` | only when asked for: every specimen of AntWeb that has no country (same columns) |
+| `specimens_no_country.csv.gz` | only when asked for: every specimen of AntWeb that has no country (same columns). A specimen with no country that is filed under an island you named is in `specimens.csv.gz` and not here, so no specimen is in both files |
 | `genus_summary.csv` | per genus: specimens, names, names with at least one specimen with coordinates (and the same for the chosen bioregion) |
 | `bioregion_list.csv` | only with a bioregion: AntWeb's species list of it, each name with its specimens in the extract. A name with 0 comes from the literature or from a country outside the extract |
 | `manifest.txt` | what was asked for, the counts and the check, to read |
@@ -122,10 +131,19 @@ There are no login names, email addresses or passwords in any file, and your not
 - **While an extract runs** the specimens are read a few thousand at a time. A record that changes at that moment
   is in the file as it was when it was read; if records were added or removed the check says NOT VERIFIED.
 
+### Islands in the file
+
+AntWeb is moving the stored specimens of Hawaii and the Galapagos Islands from the political parent to the island
+(the country column then says Hawaii, not United States). The extract gives the same file before and after that
+move: it reads both the country and the island column. In the manifest's list "By country (country / island
+country)" a specimen not yet moved shows as `United States / Hawaii`, a moved one as `Hawaii / Hawaii`; both
+appear only when Hawaii was named. A specimen marked with an old name of an island (Galapagos, for Galapagos
+Islands) counts as the island's, and the manifest names those old names.
+
 ## For developers
 
 The engine is `DataExtract` (a port of `tools/export/specimen_extract.py`, which stays for use on a server and
-writes the same files), run by `DataExtractJob` as a background job of kind `extract`; the files are handled only by
+writes the same files: format 10, the tool as it is with the island rule of 2026-11-11), run by `DataExtractJob` as a background job of kind `extract`; the files are handled only by
 `DataExtractFiles`. The flow, the folder and the access rules are in
 [../flows/data-extract.md](../flows/data-extract.md). Tests: `DataExtractTest`, `DataExtractDbTest` (CI),
 `tests/e2e/test_data_extract.py` (staging).

@@ -88,7 +88,11 @@ public final class DataExtractFiles {
         public String loginName = "";
         public String note = "";
         public List<String> countries = new ArrayList<>();
-        public boolean islands;
+        /**
+         * From manifest.json: the islands that are their own country in AntWeb, belong politically to one of the
+         * countries and are not in the file (Brian Fisher, 2026-11-11: an island is never part of its parent's extract).
+         */
+        public List<String> islandsLeftOut = new ArrayList<>();
         /** True: also the specimens that are not ants. */
         public boolean allFamilies;
         /** True: with the file of the specimens that have no country. */
@@ -224,7 +228,6 @@ public final class DataExtractFiles {
         m.put("login_name", loginName == null ? "" : loginName);
         m.put("note", note == null ? "" : note);
         m.put("countries", request.countries);
-        m.put("islands", request.islands);
         m.put("all_families", request.allFamilies);
         m.put("no_country", request.noCountry);
         m.put("bioregion", request.bioregion);
@@ -277,7 +280,6 @@ public final class DataExtractFiles {
                 e.loginName = string(request, "login_name");
                 e.note = string(request, "note");
                 e.countries = strings(request, "countries");
-                e.islands = request.has("islands") && request.get("islands").getAsBoolean();
                 e.allFamilies = request.has("all_families") && request.get("all_families").getAsBoolean();
                 e.noCountry = request.has("no_country") && request.get("no_country").getAsBoolean();
                 e.bioregion = string(request, "bioregion");
@@ -292,6 +294,7 @@ public final class DataExtractFiles {
                 e.verified = manifest.get("verified").getAsBoolean();
                 if (e.countries.isEmpty()) e.countries = strings(manifest, "countries");
                 e.emptyCountries = strings(manifest, "countries_without_specimens");
+                e.islandsLeftOut = strings(manifest, "islands_left_out");
             } catch (RuntimeException x) {
                 s_log.warn("read() " + folder + " manifest.json e:" + x);
                 e.specimens = null;

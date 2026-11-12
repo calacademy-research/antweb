@@ -143,7 +143,7 @@ public final class DataExtractJob {
             DBUtil.close(connection, name);
         }
         LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " data extract (job " + job.getId() + ") by " + cleanNote(job.getLoginName())
-            + ": " + String.join(", ", request.countries) + (request.islands ? ", with islands" : ", without islands")
+            + ": " + String.join(", ", request.countries)
             + (request.allFamilies ? ", all families" : ", ants only") + (request.noCountry ? ", with the no-country file" : "")
             + (request.bioregion.isEmpty() ? "" : ", bioregion " + request.bioregion) + "; " + result.specimens + " specimens; "
             + (result.verified ? "verified" : "DIFFERENT from the database's count") + (note == null || note.isEmpty() ? "" : "; note: " + cleanNote(note)));
@@ -200,6 +200,13 @@ public final class DataExtractJob {
         if (empty instanceof List && !((List<Object>) empty).isEmpty()) {
             h.append("<p class=\"aw-warn\" id=\"extract-empty\">AntWeb has no specimen for: <b>").append(Html.esc(join((List<Object>) empty)))
              .append("</b>. Check that these are the countries you meant.</p>");
+        }
+        // Brian Fisher, 2026-11-11: an island that is its own country is never part of its political parent's extract
+        Object islandsLeftOut = m == null ? null : m.get("islands_left_out");
+        if (islandsLeftOut instanceof List && !((List<Object>) islandsLeftOut).isEmpty()) {
+            h.append("<p id=\"extract-islands-left-out\">Not in this extract: <b>").append(Html.esc(join((List<Object>) islandsLeftOut)))
+             .append("</b>. An island that is its own country in AntWeb is not part of the country it belongs to politically.")
+             .append(" To have it in the file, start an extract that names it with the countries.</p>");
         }
         Object outdated = m == null ? null : m.get("outdated_names");
         if (outdated instanceof List && !((List<Object>) outdated).isEmpty()) {

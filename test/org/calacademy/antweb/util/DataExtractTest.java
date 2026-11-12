@@ -70,12 +70,15 @@ public class DataExtractTest extends TestCase {
     /** The manifest the Python reference texts were made from. */
     private static Map<String, Object> manifest() {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("tool_version", "6");
+        m.put("tool_version", "10");
         m.put("made_utc", "2026-11-10 14:49:21");
         m.put("antweb_commit", "abc1234");
         m.put("antweb_version", "");
         m.put("countries", Arrays.asList("United States", "Côte d'Ivoire"));
         m.put("islands", new ArrayList<String>());
+        m.put("islands_left_out", Arrays.asList("Hawaii"));
+        // as the tool has them: in the order the database gave the old names; the text sorts them by island
+        m.put("old_island_names", map("Hawaii", Arrays.asList("Sandwich Islands"), "Galapagos Islands", Arrays.asList("Galapagos", "Galápagos")));
         m.put("outdated_names", Arrays.asList(map("name", "U.S.A.", "valid_name", "United States"), map("name", "USA", "valid_name", "United States")));
         m.put("bioregion", "Nearctic");
         m.put("columns", Arrays.asList("code", "has_coordinates"));
@@ -117,14 +120,16 @@ public class DataExtractTest extends TestCase {
     private static final String PYTHON_TEXT =
         "AntWeb specimen extract\n"
         + "\n"
-        + "Made: 2026-11-10 14:49:21 (UTC)   AntWeb commit: abc1234   tool version 6\n"
+        + "Made: 2026-11-10 14:49:21 (UTC)   AntWeb commit: abc1234   tool version 10\n"
         + "Countries: United States, Côte d'Ivoire\n"
-        + "Islands included: none\n"
+        + "Islands included (named in the countries): none\n"
+        + "Islands of these countries that are their own country in AntWeb, NOT in this file: Hawaii (name an island with the countries to include it)\n"
+        + "Old island names read as the island (a specimen marked with one is the island's): Galapagos, Galápagos = Galapagos Islands; Sandwich Islands = Hawaii\n"
         + "Outdated country names included: U.S.A. (now United States), USA (now United States)\n"
         + "\n"
         + "Specimens in the file: 1,234,567\n"
         + "Check against the database: DIFFERENT, see differences; run again\n"
-        + "WARNING: AntWeb has no specimen for: Côte d'Ivoire (check that these are the countries meant)\n"
+        + "WARNING: AntWeb has no ant specimen for: Côte d'Ivoire (check that these are the countries meant)\n"
         + "\n"
         + "By country (country / island country):\n"
         + "  Côte d'Ivoire                                     2\n"
@@ -148,7 +153,7 @@ public class DataExtractTest extends TestCase {
         + "\n"
         + "AntWeb's Nearctic species list: 1,200 names of ants (130 names of other families left out); 34 of them have no specimen in this extract (literature, or other countries)\n"
         + "\n"
-        + "Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them): 1,623; with coordinates 400; 310 names, 45 of them not in the countries file\n"
+        + "Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them; one filed under an included island is in specimens.csv.gz and not here, so no specimen is in both files): 1,623; with coordinates 400; 310 names, 45 of them not in the countries file\n"
         + "  by upload group: California Academy of Sciences 710, UTEP 167, (none) 3\n"
         + "\n"
         + "Files (sha256):\n"
@@ -171,9 +176,11 @@ public class DataExtractTest extends TestCase {
     private static final String PYTHON_TEXT_VERIFIED =
         "AntWeb specimen extract\n"
         + "\n"
-        + "Made: 2026-11-10 14:49:21 (UTC)   AntWeb commit: abc1234   tool version 6\n"
+        + "Made: 2026-11-10 14:49:21 (UTC)   AntWeb commit: abc1234   tool version 10\n"
         + "Countries: United States, Côte d'Ivoire\n"
-        + "Islands included: Hawaii, Guam\n"
+        + "Islands included (named in the countries): Hawaii, Guam\n"
+        + "Islands of these countries that are their own country in AntWeb, NOT in this file: none\n"
+        + "Old island names read as the island (a specimen marked with one is the island's): none\n"
         + "Outdated country names included: none\n"
         + "\n"
         + "Specimens in the file: 1,234,567\n"
@@ -210,7 +217,7 @@ public class DataExtractTest extends TestCase {
     // Written by Python's json.dump(manifest, indent=1, ensure_ascii=False).
     private static final String PYTHON_JSON =
         "{\n"
-        + " \"tool_version\": \"6\",\n"
+        + " \"tool_version\": \"10\",\n"
         + " \"made_utc\": \"2026-11-10 14:49:21\",\n"
         + " \"antweb_commit\": \"abc1234\",\n"
         + " \"antweb_version\": \"\",\n"
@@ -219,6 +226,18 @@ public class DataExtractTest extends TestCase {
         + "  \"Côte d'Ivoire\"\n"
         + " ],\n"
         + " \"islands\": [],\n"
+        + " \"islands_left_out\": [\n"
+        + "  \"Hawaii\"\n"
+        + " ],\n"
+        + " \"old_island_names\": {\n"
+        + "  \"Hawaii\": [\n"
+        + "   \"Sandwich Islands\"\n"
+        + "  ],\n"
+        + "  \"Galapagos Islands\": [\n"
+        + "   \"Galapagos\",\n"
+        + "   \"Galápagos\"\n"
+        + "  ]\n"
+        + " },\n"
         + " \"outdated_names\": [\n"
         + "  {\n"
         + "   \"name\": \"U.S.A.\",\n"
@@ -355,6 +374,8 @@ public class DataExtractTest extends TestCase {
         m.put("verified", true);
         m.put("differences", new ArrayList<Object>());
         m.put("islands", Arrays.asList("Hawaii", "Guam"));
+        m.put("islands_left_out", new ArrayList<String>());
+        m.put("old_island_names", new LinkedHashMap<String, Object>());
         m.put("outdated_names", new ArrayList<Object>());
         m.put("countries_without_specimens", new ArrayList<String>());
         m.put("filed_under_outdated_name", 0L);
@@ -370,7 +391,31 @@ public class DataExtractTest extends TestCase {
         assertEquals(PYTHON_TEXT_VERIFIED, DataExtract.manifestText(m));
         // what the reference texts hold: the old names, the warning, the other spelling, the count, the spreadsheet line
         assertTrue(PYTHON_TEXT.contains("Outdated country names included: U.S.A. (now United States), USA (now United States)\n"));
-        assertTrue(PYTHON_TEXT.contains("WARNING: AntWeb has no specimen for: Côte d'Ivoire (check that these are the countries meant)\n"));
+        // format 8: the warning counts what the file can hold (ants, when ants only)
+        assertTrue(PYTHON_TEXT.contains("WARNING: AntWeb has no ant specimen for: Côte d'Ivoire (check that these are the countries meant)\n"));
+        Map<String, Object> allFamilies = manifest();
+        allFamilies.put("ants_only", false);
+        allFamilies.put("left_out_not_formicidae", null);
+        assertTrue(DataExtract.manifestText(allFamilies).contains("WARNING: AntWeb has no specimen for: Côte d'Ivoire (check"));
+        // formats 9 and 10 (Brian Fisher, 2026-11-11: an island that is its own country is never part of its political
+        // parent): the islands named in the countries, the islands left out, the old island names (sorted by island)
+        assertTrue(PYTHON_TEXT, PYTHON_TEXT.contains("Countries: United States, Côte d'Ivoire\nIslands included (named in the countries): none\n"
+            + "Islands of these countries that are their own country in AntWeb, NOT in this file: Hawaii (name an island with the countries to include it)\n"
+            + "Old island names read as the island (a specimen marked with one is the island's): Galapagos, Galápagos = Galapagos Islands; Sandwich Islands = Hawaii\n"
+            + "Outdated country names included:"));
+        assertTrue(PYTHON_TEXT_VERIFIED, PYTHON_TEXT_VERIFIED.contains("Islands included (named in the countries): Hawaii, Guam\n"
+            + "Islands of these countries that are their own country in AntWeb, NOT in this file: none\n"
+            + "Old island names read as the island (a specimen marked with one is the island's): none\n"));
+        assertTrue("the JSON keeps the old island names in the order the tool has them", PYTHON_JSON.contains(" \"islands\": [],\n \"islands_left_out\": [\n  \"Hawaii\"\n ],\n"
+            + " \"old_island_names\": {\n  \"Hawaii\": [\n   \"Sandwich Islands\"\n  ],\n  \"Galapagos Islands\": [\n   \"Galapagos\",\n   \"Galápagos\"\n  ]\n },\n \"outdated_names\": ["));
+        for (String text : new String[] {PYTHON_TEXT, PYTHON_TEXT_VERIFIED}) {
+            assertFalse("no text says a country's islands come with it", text.contains("Islands included: "));
+        }
+        // a manifest of before format 9 (no such keys) still reads
+        Map<String, Object> older = manifest();
+        older.remove("islands_left_out");
+        older.remove("old_island_names");
+        assertTrue(DataExtract.manifestText(older).contains("NOT in this file: none\nOld island names read as the island (a specimen marked with one is the island's): none\n"));
         assertTrue(PYTHON_TEXT.contains("Country spellings in the file besides the names asked for (MySQL matches names without accents): Etats Unis\n"));
         assertTrue(PYTHON_TEXT.contains("Filed under an outdated country name: 7\n"));
         assertTrue(PYTHON_TEXT.contains("Spreadsheets: import the columns of specimens.csv as text."));
@@ -384,7 +429,8 @@ public class DataExtractTest extends TestCase {
         assertTrue(PYTHON_TEXT, PYTHON_TEXT.contains("AntWeb's Nearctic species list: 1,200 names of ants (130 names of other families left out); 34 of them have no specimen in this extract (literature, or other countries)\n"));
         assertTrue(PYTHON_TEXT_VERIFIED, PYTHON_TEXT_VERIFIED.contains("AntWeb's Nearctic species list: 1,330 names; 34 of them have no specimen in this extract (literature, or other countries)\n"));
         // the file of the specimens without a country: its line, groups largest first, a group without a name
-        assertTrue(PYTHON_TEXT, PYTHON_TEXT.contains("Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them): "
+        assertTrue(PYTHON_TEXT, PYTHON_TEXT.contains("Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them; "
+            + "one filed under an included island is in specimens.csv.gz and not here, so no specimen is in both files): "
             + "1,623; with coordinates 400; 310 names, 45 of them not in the countries file\n  by upload group: California Academy of Sciences 710, UTEP 167, (none) 3\n"));
         assertFalse(PYTHON_TEXT_VERIFIED.contains("Specimens with no country"));
         // ants only with nothing left out: no list of families
@@ -429,9 +475,35 @@ public class DataExtractTest extends TestCase {
         }
         assertEquals("'Cote d''Ivoire'", DataExtract.sqlString("Cote d'Ivoire"));
         assertEquals("'a\\\\b'", DataExtract.sqlString("a\\b"));
-        assertEquals("(s.country in ('Canada'))", DataExtract.whereSql(Arrays.asList("Canada"), new ArrayList<String>()));
-        assertEquals("(s.country in ('Canada', 'Mexico') or s.island_country in ('Hawaii'))",
-            DataExtract.whereSql(Arrays.asList("Canada", "Mexico"), Arrays.asList("Hawaii")));
+        // The conditions as tools/export/specimen_extract.py (version 10) writes them. Brian Fisher, 2026-11-11: an island
+        // that is its own country is never part of its political parent, so a specimen marked as an island's that was
+        // not asked for is left out whatever its country column says, and a named island is found by both columns.
+        List<String> none = new ArrayList<>();
+        String ants = " and (s.family = 'formicidae' or s.family is null or s.family = '')";
+        assertEquals("(s.country in ('Canada'))", DataExtract.whereSql(Arrays.asList("Canada"), none, false, none));
+        assertEquals("(s.country in ('United States', 'Canada')) and (s.island_country is null or s.island_country not in ('Galapagos Islands', 'Galapagos', 'Hawaii'))" + ants,
+            DataExtract.whereSql(Arrays.asList("United States", "Canada"), none, true, Arrays.asList("Galapagos Islands", "Galapagos", "Hawaii")));
+        assertEquals("(s.country in ('United States', 'Hawaii') or s.island_country in ('Hawaii', 'Sandwich Islands'))"
+            + " and (s.island_country is null or s.island_country not in ('Galapagos Islands'))",
+            DataExtract.whereSql(Arrays.asList("United States", "Hawaii"), Arrays.asList("Hawaii", "Sandwich Islands"), false, Arrays.asList("Galapagos Islands")));
+        // the specimens without a country: not the ones already in the countries file under an included island
+        assertEquals("(s.country is null or s.country = '') and (s.island_country is null or s.island_country not in ('Hawaii'))" + ants,
+            DataExtract.noCountryWhere(Arrays.asList("Hawaii"), true));
+        assertEquals("(s.country is null or s.country = '')", DataExtract.noCountryWhere(none, false));
+        // the count behind the warning: what the file can hold (ants, when ants only); a named island by both columns
+        DataExtract.Islands islands = new DataExtract.Islands();
+        islands.included.addAll(Arrays.asList("Galapagos Islands", "Hawaii"));
+        islands.oldNames.put("Galapagos Islands", Arrays.asList("Galapagos"));
+        assertEquals(Arrays.asList("Galapagos Islands", "Galapagos", "Hawaii"), islands.marked(islands.included));
+        List<Map<String, Object>> outdated = new ArrayList<>();
+        outdated.add(map("name", "USA", "valid_name", "United States"));
+        assertEquals("select 0, count(*) from specimen s where s.country in ('United States', 'USA')" + ants
+            + " union all select 1, count(*) from specimen s where (s.country in ('Hawaii') or s.island_country = 'Hawaii')" + ants
+            + " union all select 2, count(*) from specimen s where (s.country in ('Galapagos Islands') or s.island_country in ('Galapagos Islands', 'Galapagos'))" + ants
+            + " /* per country */",
+            DataExtract.perCountrySql(Arrays.asList("United States", "Hawaii", "Galapagos Islands"), outdated, true, islands));
+        assertEquals("select 0, count(*) from specimen s where s.country in ('Canada') /* per country */",
+            DataExtract.perCountrySql(Arrays.asList("Canada"), new ArrayList<Map<String, Object>>(), false, new DataExtract.Islands()));
         // numbers and dates are taken as the database prints them; text through the driver
         for (int t : new int[] {Types.FLOAT, Types.REAL, Types.DOUBLE, Types.DECIMAL, Types.INTEGER, Types.TINYINT, Types.BIT, Types.BIGINT,
             Types.DATE, Types.TIMESTAMP, Types.TIME}) assertTrue("type " + t, DataExtract.isRawText(t));
@@ -458,10 +530,10 @@ public class DataExtractTest extends TestCase {
     private File finished(LocalDate day, int jobId, boolean verified) throws Exception {
         File folder = DataExtractFiles.create(root, day, jobId);
         DataExtractFiles.writeRequest(folder, jobId, 7, "bfisher", "for the \"Nearctic\" <team>",
-            new DataExtract.Request(Arrays.asList("United States", "Canada"), true, "Nearctic"));
+            new DataExtract.Request(Arrays.asList("United States", "Canada"), "Nearctic"));
         for (String name : DataExtractFiles.DOWNLOADS) {
             Files.write(new File(folder, name).toPath(), (name.equals(DataExtract.MANIFEST_JSON)
-                ? "{\"specimens\": 1234, \"verified\": " + verified + ", \"countries\": [\"United States\", \"Canada\"]}" : "content of " + name)
+                ? "{\"specimens\": 1234, \"verified\": " + verified + ", \"countries\": [\"United States\", \"Canada\"], \"islands_left_out\": [\"Hawaii\"]}" : "content of " + name)
                 .getBytes(StandardCharsets.UTF_8));
         }
         return folder;
@@ -536,7 +608,7 @@ public class DataExtractTest extends TestCase {
         try (ZipInputStream zip = new ZipInputStream(new java.io.ByteArrayInputStream(out.toByteArray()))) {
             for (ZipEntry e = zip.getNextEntry(); e != null; e = zip.getNextEntry()) {
                 names.add(e.getName());
-                assertEquals(e.getName().equals(DataExtract.MANIFEST_JSON) ? "{\"specimens\": 1234, \"verified\": true, \"countries\": [\"United States\", \"Canada\"]}"
+                assertEquals(e.getName().equals(DataExtract.MANIFEST_JSON) ? "{\"specimens\": 1234, \"verified\": true, \"countries\": [\"United States\", \"Canada\"], \"islands_left_out\": [\"Hawaii\"]}"
                     : "content of " + e.getName(), new String(zip.readAllBytes(), StandardCharsets.UTF_8));
             }
         }
@@ -568,7 +640,7 @@ public class DataExtractTest extends TestCase {
         finished(LocalDate.of(2026, 11, 9), 41, true);
         finished(LocalDate.of(2026, 11, 10), 42, false);
         File running = DataExtractFiles.create(root, LocalDate.of(2026, 11, 10), 43);
-        DataExtractFiles.writeRequest(running, 43, 7, "bfisher", "", new DataExtract.Request(Arrays.asList("Mexico"), false, "", true, true));
+        DataExtractFiles.writeRequest(running, 43, 7, "bfisher", "", new DataExtract.Request(Arrays.asList("Mexico"), "", true, true));
         File broken = DataExtractFiles.create(root, LocalDate.of(2026, 11, 10), 44);
         Files.write(new File(broken, DataExtractFiles.REQUEST).toPath(), "not json".getBytes(StandardCharsets.UTF_8));
         List<DataExtractFiles.Entry> list = DataExtractFiles.list(root);
@@ -576,7 +648,7 @@ public class DataExtractTest extends TestCase {
         assertEquals(44, list.get(0).jobId);                      // newest first; an unreadable request does not stop the list
         assertEquals("", list.get(0).loginName);
         DataExtractFiles.Entry e43 = list.get(1), e42 = list.get(2), e41 = list.get(3);
-        assertEquals("bfisher Mexico false", e43.loginName + " " + String.join(",", e43.countries) + " " + e43.islands);
+        assertEquals("bfisher Mexico []", e43.loginName + " " + String.join(",", e43.countries) + " " + e43.islandsLeftOut);
         assertFalse(e43.isFinished());
         assertTrue("all families and the no-country file, as asked", e43.allFamilies && e43.noCountry);
         assertTrue(e43.files.isEmpty());
@@ -587,7 +659,9 @@ public class DataExtractTest extends TestCase {
         assertEquals("for the \"Nearctic\" <team>", e41.note);
         assertEquals(Arrays.asList("United States", "Canada"), e41.countries);
         assertEquals("Nearctic", e41.bioregion);
-        assertTrue(e41.islands);
+        assertEquals("the islands left out, from the manifest", Arrays.asList("Hawaii"), e41.islandsLeftOut);
+        String request = new String(Files.readAllBytes(new File(e41.folder, DataExtractFiles.REQUEST).toPath()), StandardCharsets.UTF_8);
+        assertFalse("no islands switch in the request any more (Brian Fisher, 2026-11-11)", request.contains("islands"));
         assertEquals(7, e41.loginId);
         assertFalse("ants only, no file of the specimens without a country, unless asked", e41.allFamilies || e41.noCountry);
         assertEquals(LocalDate.of(2026, 11, 9), e41.day);
@@ -672,7 +746,7 @@ public class DataExtractTest extends TestCase {
     /** Review L6: half-written files stayed until an admin opened the page; a clean-up could meet a job that just ended. */
     public void testUnfinishedExtractsAreTidiedButNotTheRunningOne() throws Exception {
         File stopped = DataExtractFiles.create(root, LocalDate.of(2026, 11, 9), 51);
-        DataExtractFiles.writeRequest(stopped, 51, 7, "bfisher", "", new DataExtract.Request(Arrays.asList("Mexico"), true, ""));
+        DataExtractFiles.writeRequest(stopped, 51, 7, "bfisher", "", new DataExtract.Request(Arrays.asList("Mexico"), ""));
         Files.write(new File(stopped, DataExtract.SPECIMENS + DataExtract.PART).toPath(), new byte[1000]);
         Files.write(new File(stopped, DataExtract.GENUS_SUMMARY).toPath(), new byte[10]);
         File running = DataExtractFiles.create(root, LocalDate.of(2026, 11, 10), 52);
@@ -755,6 +829,12 @@ public class DataExtractTest extends TestCase {
         assertTrue(bad, bad.contains("file=specimens.csv.gz\">specimens.csv.gz</a>: <b>NOT VERIFIED, do not send</b>"));
         // review M3: a requested country without specimens and the old names included are said on the page
         assertTrue(html, html.contains("<p class=\"aw-warn\" id=\"extract-empty\">AntWeb has no specimen for: <b>Côte d&#39;Ivoire</b>."));
+        // Brian Fisher, 2026-11-11: the islands of the countries are not in the file, and the page says which
+        assertTrue(html, html.contains("<p id=\"extract-islands-left-out\">Not in this extract: <b>Hawaii</b>. An island that is its own country in AntWeb"
+            + " is not part of the country it belongs to politically. To have it in the file, start an extract that names it with the countries.</p>"));
+        Map<String, Object> noIslands = manifest();
+        noIslands.put("islands_left_out", new ArrayList<String>());
+        assertFalse(DataExtractJob.resultHtml(58, new DataExtract.Result(noIslands, text, true, 1, Arrays.asList("manifest.txt")), "", "").contains("extract-islands-left-out"));
         assertTrue(html, html.contains("Specimens still filed under an old country name are included: U.S.A. (now United States), USA (now United States). Specimens filed that way: 7."));
         assertFalse(bad, bad.contains("extract-note"));
 
@@ -769,23 +849,30 @@ public class DataExtractTest extends TestCase {
 
     public void testTheFormKeepsAndEscapesWhatWasTyped() {
         String form = DataExtractAction.formHtml("<input type=\"hidden\" name=\"_csrf\" value=\"t\">", "Mexico, \"><script>x</script>", Arrays.asList("Canada"),
-            "nearctic", true, false, false, "for <Jack>", Arrays.asList("Canada", "Cote d'Ivoire", "Mexico"), Arrays.asList("Nearctic", "Neotropical"), "https://x.org");
+            "nearctic", false, false, "for <Jack>", Arrays.asList("Canada", "Cote d'Ivoire", "Mexico"), Arrays.asList("Hawaii (United States)", "Gal<apagos (Ecuador)"),
+            Arrays.asList("Nearctic", "Neotropical"), "https://x.org");
         assertTrue(form, form.contains("<form class=\"aw-form\" method=\"post\" action=\"https://x.org/dataExtract.do\" id=\"data-extract-form\"><input type=\"hidden\" name=\"_csrf\" value=\"t\">"));
         assertTrue(form, form.contains("value=\"Mexico, &quot;&gt;&lt;script&gt;x&lt;/script&gt;\""));
         assertFalse(form, form.contains("<script>"));
         assertTrue(form, form.contains("<option value=\"Canada\" selected>Canada</option>"));
         assertTrue(form, form.contains("<option value=\"Cote d&#39;Ivoire\">Cote d&#39;Ivoire</option>"));
         assertTrue(form, form.contains("<option value=\"Nearctic\" selected>Nearctic</option>"));
-        assertTrue(form, form.contains("name=\"islands\" value=\"on\" checked>"));
+        // Brian Fisher, 2026-11-11: no box that brings a country's islands with it; the form says how an island is asked for
+        assertFalse(form, form.contains("name=\"islands\""));
+        assertFalse(form, form.contains("Include islands"));
+        assertTrue(form, form.contains("<p class=\"aw-note\" id=\"extract-islands-note\"><b>Islands are countries of their own.</b> An extract of a country does not hold the"
+            + " specimens of an island AntWeb treats as its own country: name the island with the countries to have it in the file."));
+        assertTrue(form, form.contains("AntWeb's island countries, each with the country it belongs to politically: Hawaii (United States), Gal&lt;apagos (Ecuador).</p>"));
+        assertTrue(DataExtractAction.HELP, DataExtractAction.HELP.contains("an extract of United States has no specimen of Hawaii. To have an island in the file, name it with the countries."));
         assertTrue(form, form.contains("value=\"for &lt;Jack&gt;\""));
         assertTrue(form, form.contains("<details id=\"extract-country-list\" open>"));
         // ants only unless the box is ticked; the file of the specimens without a country only when asked for
         assertTrue(form, form.contains("<input type=\"checkbox\" name=\"allFamilies\" value=\"on\"> Include specimens that are not ants</label>"));
         assertTrue(form, form.contains("<input type=\"checkbox\" name=\"noCountry\" value=\"on\"> Also a file of the specimens that have no country</label>"));
-        String ticked = DataExtractAction.formHtml("", "", new ArrayList<String>(), "", true, true, true, "", Arrays.asList("Canada"), Arrays.asList("Nearctic"), "");
+        String ticked = DataExtractAction.formHtml("", "", new ArrayList<String>(), "", true, true, "", Arrays.asList("Canada"), new ArrayList<String>(), Arrays.asList("Nearctic"), "");
         assertTrue(ticked, ticked.contains("name=\"allFamilies\" value=\"on\" checked>") && ticked.contains("name=\"noCountry\" value=\"on\" checked>"));
-        String empty = DataExtractAction.formHtml("", "", new ArrayList<String>(), "", false, false, false, "", Arrays.asList("Canada"), Arrays.asList("Nearctic"), "");
-        assertTrue(empty, empty.contains("name=\"islands\" value=\"on\">"));
+        String empty = DataExtractAction.formHtml("", "", new ArrayList<String>(), "", false, false, "", Arrays.asList("Canada"), new ArrayList<String>(), Arrays.asList("Nearctic"), "");
+        assertTrue("no island country in the database: the note without a list", empty.contains("that were left out.</p>"));
         assertTrue(empty, empty.contains("<details id=\"extract-country-list\">"));
         assertFalse(empty, empty.contains(" selected"));
         for (String page : new String[] {form, DataExtractAction.HELP}) {
@@ -798,17 +885,17 @@ public class DataExtractTest extends TestCase {
         finished(LocalDate.of(2026, 11, 9), 41, true);
         finished(LocalDate.of(2026, 11, 10), 42, false);
         File running = DataExtractFiles.create(root, LocalDate.of(2026, 11, 10), 43);
-        DataExtractFiles.writeRequest(running, 43, 7, "bfisher", "", new DataExtract.Request(Arrays.asList("Mexico"), false, "", true, true));
+        DataExtractFiles.writeRequest(running, 43, 7, "bfisher", "", new DataExtract.Request(Arrays.asList("Mexico"), "", true, true));
         File failed = DataExtractFiles.create(root, LocalDate.of(2026, 11, 10), 44);
-        DataExtractFiles.writeRequest(failed, 44, 7, "bfisher", "", new DataExtract.Request(Arrays.asList("Canada"), true, ""));
+        DataExtractFiles.writeRequest(failed, 44, 7, "bfisher", "", new DataExtract.Request(Arrays.asList("Canada"), ""));
         String html = DataExtractAction.listHtml(DataExtractFiles.list(root), 43, "<input type=\"hidden\" name=\"_csrf\" value=\"t\">", "https://x.org");
         assertTrue(html, html.contains("<h2>Extracts on the server (4)</h2>"));
-        assertTrue(html, html.contains("<tr id=\"extract-41\"><td>2026-11-09</td><td>bfisher</td><td>United States, Canada; with islands; ants only; species list of Nearctic</td>"
+        assertTrue(html, html.contains("<tr id=\"extract-41\"><td>2026-11-09</td><td>bfisher</td><td>United States, Canada; not in the file: Hawaii; ants only; species list of Nearctic</td>"
             + "<td>for the &quot;Nearctic&quot; &lt;team&gt;</td><td class=\"aw-num\">1,234</td><td><span class=\"aw-ok\">VERIFIED</span></td>"));
         assertTrue(html, html.contains("dataExtractFile.do?job=41&amp;file=all.zip"));
         assertTrue(html, html.contains("<tr id=\"extract-42\">") && html.contains("<span class=\"aw-bad\">NOT VERIFIED</span> do not send"));
-        assertTrue(html, html.contains("<td>Mexico; without islands; all families; with the no-country file</td><td></td><td class=\"aw-num\"></td><td>in progress</td><td></td>"));
-        assertTrue(html, html.contains("<td>Canada; with islands; ants only</td><td></td><td class=\"aw-num\"></td><td><span class=\"aw-bad\">did not finish</span></td><td></td>"));
+        assertTrue(html, html.contains("<td>Mexico; all families; with the no-country file</td><td></td><td class=\"aw-num\"></td><td>in progress</td><td></td>"));
+        assertTrue(html, html.contains("<td>Canada; ants only</td><td></td><td class=\"aw-num\"></td><td><span class=\"aw-bad\">did not finish</span></td><td></td>"));
         assertFalse(html, html.contains("job=43&amp;file") || html.contains("job=44&amp;file"));
         assertTrue(html, html.contains("href=\"https://x.org/jobStatus.do?id=44\">44</a>"));
         assertTrue(DataExtractAction.listHtml(new ArrayList<DataExtractFiles.Entry>(), 0, "", "").contains("None yet."));

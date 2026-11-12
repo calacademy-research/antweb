@@ -45,8 +45,8 @@ import java.util.zip.GZIPOutputStream;
  *
  * Files written into one folder:
  *   specimens.csv.gz    every ant specimen (family Formicidae, or no family given; with "all families" also the
- *                       beetles, wasps and other animals AntWeb holds) whose country (or island country) is in the
- *                       list: every column of the specimen table, then taxon_status, taxon_fossil, taxon_rank,
+ *                       beetles, wasps and other animals AntWeb holds) of the countries in the list (an island
+ *                       that is its own country only when it is in the list; see Islands below): every column of the specimen table, then taxon_status, taxon_fossil, taxon_rank,
  *                       taxon_current_valid_name, taxon_author_date, group_name, no_taxon_row and has_coordinates.
  *                       Specimens without coordinates and specimens whose name has no taxon row are in the file,
  *                       marked.
@@ -71,7 +71,20 @@ import java.util.zip.GZIPOutputStream;
  * Which specimens: a requested name must be a valid country row (an old name is refused, with the valid one). The
  * specimens still filed under an old name of a requested country (a country row that is not valid and names the
  * country as valid_name: USA for United States) are included, named and counted in the manifest; a requested
- * country with no specimen at all is a WARNING line.
+ * country with no specimen the file could hold (no ant specimen, when ants only) is a WARNING line.
+ *
+ * Islands (Brian Fisher, 2026-11-11; formats 9 and 10): "An oceanic island or archipelago with its own ant fauna is
+ * its own country in AntWeb. Its specimens never count toward the political parent." (The Nearctic extract of all
+ * ants of the United States held Hawaii, which had to be removed by hand.) So an island AntWeb treats as a country
+ * (a valid geolocale country row with is_island = 1: Hawaii, Galapagos Islands) is in the file only when it is named
+ * with the countries, like any country; the islands that are politically part of a requested country and were not
+ * asked for are named in the manifest ("NOT in this file"). This reverses the rule of 2026-11-10 (until format 8
+ * the islands filed under a country came with it). An island's specimens are found by specimen.island_country and
+ * by specimen.country (the island's own name once the stored specimens are moved: tools/place/island_countries.py);
+ * a specimen marked as the specimen of an island that was not asked for is left out whatever its country column
+ * says. So the file is the same before and after that move. A specimen marked with an old name of an island
+ * (island_country "Galapagos": a country row that is not valid and names the island as its valid name) is the
+ * island's too.
  *
  * Reads only: the connection is set read-only and READ COMMITTED for the run. The specimens are read in pages by
  * primary key (code greater than the last one written, in code order, PAGE_ROWS at a time), each page streamed
@@ -96,8 +109,13 @@ public final class DataExtract {
 
     private static final org.apache.commons.logging.Log s_log = org.apache.commons.logging.LogFactory.getLog(DataExtract.class);
 
-    /** The format of the files; the same number as tools/export/specimen_extract.py while they write the same. */
-    public static final String VERSION = "6";
+    /**
+     * The format of the files; the same number as tools/export/specimen_extract.py while they write the same. 10 is
+     * the tool's number with the island rule of 2026-11-11 (branch feat/island-countries, pull request 345); until
+     * that is merged the tool in the repository is at 8 and still brings a country's islands with it
+     * (tests/unit/test_data_extract_tool_version.py says which state the repository is in).
+     */
+    public static final String VERSION = "10";
 
     /** Rows read by one statement (one page). */
     public static final int PAGE_ROWS = 10000;
@@ -122,8 +140,8 @@ public final class DataExtract {
 
     /** The filters of one extract. countries: names as the geolocale table writes them (resolve()). */
     public static final class Request {
+        /** Country names; an island that is its own country is in the extract only when it is named here. */
         public final List<String> countries;
-        public final boolean islands;
         public final String bioregion;
         /** False (the default): ants only. True: also the specimens of other families. */
         public final boolean allFamilies;
@@ -131,13 +149,12 @@ public final class DataExtract {
         public final boolean noCountry;
 
         /** Ants only, no file of the specimens without a country. */
-        public Request(List<String> countries, boolean islands, String bioregion) {
-            this(countries, islands, bioregion, false, false);
+        public Request(List<String> countries, String bioregion) {
+            this(countries, bioregion, false, false);
         }
 
-        public Request(List<String> countries, boolean islands, String bioregion, boolean allFamilies, boolean noCountry) {
+        public Request(List<String> countries, String bioregion, boolean allFamilies, boolean noCountry) {
             this.countries = new ArrayList<>(countries);
-            this.islands = islands;
             this.bioregion = bioregion == null ? "" : bioregion.trim();
             this.allFamilies = allFamilies;
             this.noCountry = noCountry;
@@ -261,21 +278,66 @@ public final class DataExtract {
     }
 
     /**
-     * The islands AntWeb treats as countries (is_island = 1) whose geolocale row names one of the countries as
-     * parent or country, sorted; the countries themselves are not repeated.
+     * The islands AntWeb treats as countries, for a request (Brian Fisher, 2026-11-11: an island that is its own
+     * country is never part of its political parent's extract).
+     *   included  the requested countries that are islands (valid country rows with is_island = 1);
+     *   other     every other such island: a specimen marked as one of theirs is never in the file;
+     *   leftOut   of those, the ones politically part of a requested country (their row names it as parent or
+     *             country): named in the manifest as not in the file;
+     *   oldNames  island -> its old names (country rows that are not valid and name the island as their valid
+     *             name: Galapagos for Galapagos Islands). A specimen marked with one (island_country) is the island's.
+     *             In the order the tool's manifest has them: by the first old name, as the database sorts names.
      */
-    public static List<String> islands(Connection c, List<String> countries) throws SQLException {
-        String list = sqlList(countries);
-        TreeSet<String> islands = new TreeSet<>();
+    public static final class Islands {
+        public final List<String> included = new ArrayList<>();
+        public final List<String> other = new ArrayList<>();
+        public final List<String> leftOut = new ArrayList<>();
+        public final Map<String, List<String>> oldNames = new LinkedHashMap<>();
+
+        /** The islands and their old names: the island_country values that mean one of the islands. */
+        public List<String> marked(List<String> islands) {
+            List<String> out = new ArrayList<>();
+            for (String island : islands) {
+                out.add(island);
+                List<String> old = oldNames.get(island);
+                if (old != null) out.addAll(old);
+            }
+            return out;
+        }
+    }
+
+    public static Islands islands(Connection c, List<String> countries) throws SQLException {
+        Islands out = new Islands();
+        TreeSet<String> valid = new TreeSet<>();
+        TreeSet<String> leftOut = new TreeSet<>();
         try (Statement stmt = c.createStatement();
-             ResultSet rset = stmt.executeQuery("select name from geolocale where is_island = 1 and (parent in " + list
-                 + " or country in " + list + ")")) {
+             ResultSet rset = stmt.executeQuery("select name, ifnull(parent, ''), ifnull(country, '') from geolocale"
+                 + " where is_island = 1 and is_valid = 1 and georank = 'country'")) {
             while (rset.next()) {
                 String name = rset.getString(1);
-                if (name != null && !countries.contains(name)) islands.add(name);
+                if (name == null || !PLACE_NAME.matcher(name).matches()) continue;
+                valid.add(name);
+                if (!countries.contains(name) && (countries.contains(rset.getString(2)) || countries.contains(rset.getString(3)))) leftOut.add(name);
             }
         }
-        return new ArrayList<>(islands);
+        for (String name : valid) (countries.contains(name) ? out.included : out.other).add(name);
+        out.leftOut.addAll(leftOut);
+        if (!valid.isEmpty()) {
+            Map<String, TreeSet<String>> old = new LinkedHashMap<>();
+            try (Statement stmt = c.createStatement();
+                 ResultSet rset = stmt.executeQuery("select name, valid_name from geolocale where georank = 'country'"
+                     + " and (is_valid is null or is_valid <> 1) and valid_name in " + sqlList(valid) + " order by georank, name")) {
+                while (rset.next()) {
+                    String name = rset.getString(1);
+                    String island = rset.getString(2);
+                    // the database compares names without case or accents: only a row that names the island exactly
+                    if (name == null || !valid.contains(island) || valid.contains(name) || !PLACE_NAME.matcher(name).matches()) continue;
+                    old.computeIfAbsent(island, k -> new TreeSet<>()).add(name);
+                }
+            }
+            for (Map.Entry<String, TreeSet<String>> e : old.entrySet()) out.oldNames.put(e.getKey(), new ArrayList<>(e.getValue()));
+        }
+        return out;
     }
 
     /**
@@ -334,20 +396,35 @@ public final class DataExtract {
     /** Specimens with no country at all: no country filter can find them. */
     public static final String NO_COUNTRY = "(s.country is null or s.country = '')";
 
-    public static String whereSql(List<String> countries, List<String> islands) {
-        return whereSql(countries, islands, false);
-    }
-
-    public static String whereSql(List<String> countries, List<String> islands, boolean antsOnly) {
+    /**
+     * The specimens of an extract. islands: the island_country values of the requested countries that are islands
+     * (a specimen of such an island may still be stored under its political parent); otherIslands: the
+     * island_country values of every other island AntWeb treats as a country: a specimen marked as one of theirs
+     * is not in the file, whatever its country column says (Brian Fisher, 2026-11-11).
+     */
+    public static String whereSql(List<String> countries, List<String> islands, boolean antsOnly, List<String> otherIslands) {
         String w = "s.country in " + sqlList(countries);
         if (!islands.isEmpty()) w += " or s.island_country in " + sqlList(islands);
-        return "(" + w + ")" + (antsOnly ? " and " + ANTS : "");
+        w = "(" + w + ")";
+        if (!otherIslands.isEmpty()) w += " and (s.island_country is null or s.island_country not in " + sqlList(otherIslands) + ")";
+        return w + (antsOnly ? " and " + ANTS : "");
     }
 
     /** Specimens of the countries that are not ants, by family: what the default leaves out. */
-    static String leftOutSql(List<String> countries, List<String> islands) {
-        return "select ifnull(nullif(s.family, ''), '(blank)'), count(*) from specimen s where " + whereSql(countries, islands)
+    static String leftOutSql(List<String> countries, List<String> islands, List<String> otherIslands) {
+        return "select ifnull(nullif(s.family, ''), '(blank)'), count(*) from specimen s where " + whereSql(countries, islands, false, otherIslands)
             + " and not " + ANTS + " group by 1 order by 2 desc, 1 /* left out */";
+    }
+
+    /**
+     * No country, and not in the countries file already: a specimen with no country that is filed under an included
+     * island (country null, island_country Hawaii: AntWeb has such rows) is in specimens.csv.gz; here it would be
+     * a second copy.
+     */
+    public static String noCountryWhere(List<String> islands, boolean antsOnly) {
+        String w = NO_COUNTRY;
+        if (!islands.isEmpty()) w += " and (s.island_country is null or s.island_country not in " + sqlList(islands) + ")";
+        return w + (antsOnly ? " and " + ANTS : "");
     }
 
     /**
@@ -368,20 +445,31 @@ public final class DataExtract {
      * without accents or case ("México" = "Mexico"), so a plain GROUP BY adds two spellings up while the file has
      * them apart. hex(convert(... using utf8mb4)): the bytes are UTF-8 whatever the column's character set.
      */
-    static String countSql(List<String> countries, List<String> islands, boolean antsOnly) {
+    static String countSql(List<String> countries, List<String> islands, boolean antsOnly, List<String> otherIslands) {
         return "select hex(convert(ifnull(s.country, '') using utf8mb4)), hex(convert(ifnull(s.island_country, '') using utf8mb4)), "
-            + "count(*) from specimen s where " + whereSql(countries, islands, antsOnly) + " group by 1, 2 order by 1, 2";
+            + "count(*) from specimen s where " + whereSql(countries, islands, antsOnly, otherIslands) + " group by 1, 2 order by 1, 2";
     }
 
-    /** (index of the country, its specimens in the database, also under its old names): 0 is worth a warning. */
-    static String perCountrySql(List<String> countries, List<Map<String, Object>> outdated) {
+    /**
+     * (index of the country, its specimens in the database, also under its old names): 0 is worth a warning.
+     * antsOnly: the specimens the file can hold (ANTS): without it a country that has only beetles or wasps in AntWeb
+     * got no warning while the file had none of its rows. A requested island also has the specimens marked as its
+     * own (island_country: the island or one of its old names) that are still stored under its political parent.
+     */
+    public static String perCountrySql(List<String> countries, List<Map<String, Object>> outdated, boolean antsOnly, Islands islands) {
         StringBuilder b = new StringBuilder();
         for (int i = 0; i < countries.size(); i++) {
+            String country = countries.get(i);
             List<String> names = new ArrayList<>();
-            names.add(countries.get(i));
-            for (Map<String, Object> o : outdated) if (countries.get(i).equals(o.get("valid_name"))) names.add((String) o.get("name"));
+            names.add(country);
+            for (Map<String, Object> o : outdated) if (country.equals(o.get("valid_name"))) names.add((String) o.get("name"));
+            String place = "s.country in " + sqlList(names);
+            if (islands.included.contains(country)) {
+                List<String> marks = islands.marked(List.of(country));
+                place = "(" + place + " or s.island_country " + (marks.size() == 1 ? "= " + sqlString(country) : "in " + sqlList(marks)) + ")";
+            }
             if (i > 0) b.append(" union all ");
-            b.append("select ").append(i).append(", count(*) from specimen s where s.country in ").append(sqlList(names));
+            b.append("select ").append(i).append(", count(*) from specimen s where ").append(place).append(antsOnly ? " and " + ANTS : "");
         }
         return b.append(" /* per country */").toString();
     }
@@ -670,7 +758,10 @@ public final class DataExtract {
                                  int pageRows) throws SQLException, IOException, BadRequest {
         List<String> countries = resolve(c, request.countries);
         String bioregion = resolveBioregion(c, request.bioregion);
-        List<String> islands = request.islands ? islands(c, countries) : new ArrayList<>();
+        // Brian Fisher, 2026-11-11: an island that is its own country is never part of its political parent's extract
+        Islands islandSets = islands(c, countries);
+        List<String> islands = islandSets.marked(islandSets.included);        // island_country values of the included islands
+        List<String> otherIslands = islandSets.marked(islandSets.other);      // ... of every island not in the file
         // Specimens still filed under an old name of a requested country are part of the extract.
         List<Map<String, Object>> outdated = outdatedNames(c, countries);
         List<String> filter = new ArrayList<>(countries);
@@ -682,13 +773,13 @@ public final class DataExtract {
         boolean antsOnly = !request.allFamilies;
         File specimens = new File(dir, SPECIMENS);
         File part = new File(dir, SPECIMENS + PART);
-        List<String> header = writeSpecimens(c, whereSql(filter, islands, antsOnly), part, stats, progress, pageRows);
+        List<String> header = writeSpecimens(c, whereSql(filter, islands, antsOnly, otherIslands), part, stats, progress, pageRows);
         Files.move(part.toPath(), specimens.toPath(), StandardCopyOption.ATOMIC_MOVE);
         if (afterExport != null) afterExport.run();
 
         // The check uses the same filter as the file (ants only or all families).
         Map<List<String>, Long> database = new TreeMap<>(DataExtract::compareLists);
-        try (Statement stmt = c.createStatement(); ResultSet rset = stmt.executeQuery(countSql(filter, islands, antsOnly))) {
+        try (Statement stmt = c.createStatement(); ResultSet rset = stmt.executeQuery(countSql(filter, islands, antsOnly, otherIslands))) {
             while (rset.next()) database.merge(List.of(unhex(rset.getString(1)), unhex(rset.getString(2))), rset.getLong(3), Long::sum);
         }
         List<Map<String, Object>> diffs = compareCounts(stats.byPlace, database);
@@ -699,7 +790,7 @@ public final class DataExtract {
         if (antsOnly) {
             Map<String, Object> byFamily = new LinkedHashMap<>();
             long total = 0;
-            try (Statement stmt = c.createStatement(); ResultSet rset = stmt.executeQuery(leftOutSql(filter, islands))) {
+            try (Statement stmt = c.createStatement(); ResultSet rset = stmt.executeQuery(leftOutSql(filter, islands, otherIslands))) {
                 while (rset.next()) {
                     byFamily.put(rset.getString(1), rset.getLong(2));
                     total += rset.getLong(2);
@@ -721,7 +812,7 @@ public final class DataExtract {
         // A requested country without a single specimen (also under its old names) is worth a warning.
         List<String> empty = new ArrayList<>();
         Map<Integer, Long> perCountry = new HashMap<>();
-        try (Statement stmt = c.createStatement(); ResultSet rset = stmt.executeQuery(perCountrySql(countries, outdated))) {
+        try (Statement stmt = c.createStatement(); ResultSet rset = stmt.executeQuery(perCountrySql(countries, outdated, antsOnly, islandSets))) {
             while (rset.next()) perCountry.put(rset.getInt(1), rset.getLong(2));
         }
         for (int i = 0; i < countries.size(); i++) if (perCountry.getOrDefault(i, 0L) == 0) empty.add(countries.get(i));
@@ -732,7 +823,7 @@ public final class DataExtract {
         // On request: every specimen of AntWeb with no country, in a file of its own, with the same choice of families.
         Map<String, Object> noCountry = null;
         if (request.noCountry) {
-            String where = NO_COUNTRY + (antsOnly ? " and " + ANTS : "");
+            String where = noCountryWhere(islands, antsOnly);
             Stats none = new Stats("");
             File noCountryFile = new File(dir, SPECIMENS_NO_COUNTRY);
             File noCountryPart = new File(dir, SPECIMENS_NO_COUNTRY + PART);
@@ -806,7 +897,9 @@ public final class DataExtract {
         m.put("antweb_commit", site.commit);
         m.put("antweb_version", site.version);
         m.put("countries", countries);
-        m.put("islands", islands);
+        m.put("islands", islandSets.included);
+        m.put("islands_left_out", islandSets.leftOut);
+        m.put("old_island_names", new LinkedHashMap<>(islandSets.oldNames));
         m.put("outdated_names", outdated);
         m.put("bioregion", bioregion);
         List<String> columns = new ArrayList<>(header);
@@ -996,7 +1089,16 @@ public final class DataExtract {
         lines.add("Made: " + m.get("made_utc") + " (UTC)   AntWeb commit: " + m.get("antweb_commit") + "   tool version " + m.get("tool_version"));
         lines.add("Countries: " + String.join(", ", (List<String>) m.get("countries")));
         List<String> islands = (List<String>) m.get("islands");
-        lines.add("Islands included: " + (islands.isEmpty() ? "none" : String.join(", ", islands)));
+        lines.add("Islands included (named in the countries): " + (islands.isEmpty() ? "none" : String.join(", ", islands)));
+        List<String> islandsLeftOut = m.get("islands_left_out") == null ? new ArrayList<>() : (List<String>) m.get("islands_left_out");
+        lines.add("Islands of these countries that are their own country in AntWeb, NOT in this file: "
+            + (islandsLeftOut.isEmpty() ? "none" : String.join(", ", islandsLeftOut) + " (name an island with the countries to include it)"));
+        Map<String, List<String>> oldIslandNames = m.get("old_island_names") == null ? new TreeMap<>()
+            : new TreeMap<>((Map<String, List<String>>) m.get("old_island_names"));
+        List<String> oldIslands = new ArrayList<>();
+        for (Map.Entry<String, List<String>> e : oldIslandNames.entrySet()) oldIslands.add(String.join(", ", e.getValue()) + " = " + e.getKey());
+        lines.add("Old island names read as the island (a specimen marked with one is the island's): "
+            + (oldIslands.isEmpty() ? "none" : String.join("; ", oldIslands)));
         List<Map<String, Object>> outdated = m.get("outdated_names") == null ? new ArrayList<>() : (List<Map<String, Object>>) m.get("outdated_names");
         List<String> old = new ArrayList<>();
         for (Map<String, Object> o : outdated) old.add(o.get("name") + " (now " + o.get("valid_name") + ")");
@@ -1007,7 +1109,8 @@ public final class DataExtract {
             : "DIFFERENT, see differences; run again"));
         List<String> empty = m.get("countries_without_specimens") == null ? new ArrayList<>() : (List<String>) m.get("countries_without_specimens");
         if (!empty.isEmpty()) {
-            lines.add("WARNING: AntWeb has no specimen for: " + String.join(", ", empty) + " (check that these are the countries meant)");
+            lines.add("WARNING: AntWeb has no " + (Boolean.TRUE.equals(m.get("ants_only")) ? "ant " : "") + "specimen for: " + String.join(", ", empty)
+                + " (check that these are the countries meant)");
         }
         lines.add("");
         lines.add("By country (country / island country):");
@@ -1058,7 +1161,8 @@ public final class DataExtract {
                 groups.add((g.getKey().strip().isEmpty() ? "(none)" : g.getKey().strip()) + " " + n(g.getValue()));
             }
             lines.add("");
-            lines.add("Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them): "
+            lines.add("Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them; "
+                + "one filed under an included island is in specimens.csv.gz and not here, so no specimen is in both files): "
                 + n(nc.get("specimens")) + "; with coordinates " + n(nc.get("with_coordinates")) + "; " + n(nc.get("names")) + " names, "
                 + n(nc.get("names_not_in_the_countries_file")) + " of them not in the countries file");
             lines.add("  by upload group: " + String.join(", ", groups));

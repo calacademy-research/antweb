@@ -41,11 +41,17 @@ import org.calacademy.antweb.util.UtilDataAction;
 
 /**
  * Data extract (dataExtract.do; Brian Fisher, 2026-11-10). Administrators only. Lets an administrator make a
- * complete, verified specimen extract for a collaborator from the website: every specimen of the chosen countries
- * (with the islands AntWeb files under them), a genus summary, a bioregion's species list and a manifest whose
- * counts are checked against the database (DataExtract; the same files as tools/export/specimen_extract.py).
+ * complete, verified specimen extract for a collaborator from the website: every specimen of the chosen countries,
+ * a genus summary, a bioregion's species list and a manifest whose counts are checked against the database
+ * (DataExtract; the same files as tools/export/specimen_extract.py).
  *
- *   GET  /dataExtract.do   the form (countries, bioregion, islands, other families, the specimens without a
+ * Islands (Brian Fisher, 2026-11-11): "An oceanic island or archipelago with its own ant fauna is its own country in
+ * AntWeb. Its specimens never count toward the political parent." So there is no "include the islands" box any
+ * more (until 2026-11-11 the form had one, ticked by default, and United States came with Hawaii): an island is in
+ * the extract when it is named with the countries, like any country. The form names the islands; the job's page
+ * and the list say which islands of the chosen countries were left out.
+ *
+ *   GET  /dataExtract.do   the form (countries, bioregion, other families, the specimens without a
  *                          country, note) and the extracts kept on the server
  *                          (date, who, filters, specimens, verified, download links).
  *   POST /dataExtract.do   (form token) checks the names against the geolocale and bioregion tables and starts
@@ -83,7 +89,6 @@ public final class DataExtractAction extends AntwebAction {
         String bioregion = param(request, "bioregion", 64);
         String note = DataExtractJob.cleanNote(param(request, "note", 1000));
         boolean isPost = HttpUtil.isPost(request);
-        boolean islands = !isPost || "on".equals(request.getParameter("islands"));   // on unless the box was cleared
         boolean allFamilies = "on".equals(request.getParameter("allFamilies"));        // off unless ticked: ants only
         boolean noCountry = "on".equals(request.getParameter("noCountry"));
         String message = null;
@@ -104,7 +109,7 @@ public final class DataExtractAction extends AntwebAction {
                 note = "";
             } else if (isPost) {
                 try {
-                    DataExtract.Request extract = check(connection, countriesText, picked, islands, allFamilies, noCountry, bioregion, note);
+                    DataExtract.Request extract = check(connection, countriesText, picked, allFamilies, noCountry, bioregion, note);
                     String refused = cannotStartNow(root);
                     if (refused != null) throw new DataExtract.BadRequest(refused);
                     BackgroundJobs.Submitted submitted = DataExtractJob.submit(getDataSource(request, "longConPool"),
@@ -120,8 +125,9 @@ public final class DataExtractAction extends AntwebAction {
             // An extract the server stopped in the middle of (a restart) leaves a half-written file: removed here.
             DataExtractFiles.removeUnfinished(root, DataExtractJob::isActive);
             BackgroundJobs.Job active = DataExtractJob.active();
-            html.append(page(request, message, countriesText, picked, bioregion, islands, allFamilies, noCountry, note,
-                countries(connection), bioregions(connection), DataExtractFiles.list(root), active, AntwebProps.getDomainApp()));
+            html.append(page(request, message, countriesText, picked, bioregion, allFamilies, noCountry, note,
+                countries(connection), islandCountries(connection), bioregions(connection), DataExtractFiles.list(root), active,
+                AntwebProps.getDomainApp()));
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
             html.append("<div class=\"aw-msg\">Database error; nothing was started: ").append(Html.esc(e.getMessage())).append("</div>");
@@ -140,7 +146,7 @@ public final class DataExtractAction extends AntwebAction {
     }
 
     /** The request as it will run (names as the database spells them), or a BadRequest saying what to correct. */
-    static DataExtract.Request check(Connection connection, String countriesText, List<String> picked, boolean islands,
+    static DataExtract.Request check(Connection connection, String countriesText, List<String> picked,
                                      boolean allFamilies, boolean noCountry,
                                      String bioregion, String note) throws SQLException, DataExtract.BadRequest {
         Set<String> names = new LinkedHashSet<>(DataExtract.parseCountries(countriesText));
@@ -150,7 +156,7 @@ public final class DataExtractAction extends AntwebAction {
             throw new DataExtract.BadRequest("The note is too long (at most " + DataExtractJob.MAX_NOTE + " characters).");
         }
         List<String> countries = DataExtract.resolve(connection, new ArrayList<>(names));
-        return new DataExtract.Request(countries, islands, DataExtract.resolveBioregion(connection, bioregion), allFamilies, noCountry);
+        return new DataExtract.Request(countries, DataExtract.resolveBioregion(connection, bioregion), allFamilies, noCountry);
     }
 
     /**
@@ -193,6 +199,25 @@ public final class DataExtractAction extends AntwebAction {
         return out;
     }
 
+    /**
+     * The islands AntWeb treats as countries of their own (valid country rows with is_island = 1), each with the
+     * country it belongs to politically: "Hawaii (United States)". For the form's note about islands.
+     */
+    static List<String> islandCountries(Connection connection) throws SQLException {
+        List<String> out = new ArrayList<>();
+        try (Statement stmt = connection.createStatement();
+             ResultSet rset = stmt.executeQuery("select distinct name, ifnull(nullif(parent, ''), ifnull(country, '')) from geolocale"
+                 + " where georank = 'country' and is_valid = 1 and is_island = 1 order by name")) {
+            while (rset.next()) {
+                String name = rset.getString(1);
+                String parent = rset.getString(2);
+                if (name == null) continue;
+                out.add(name + (parent == null || parent.isEmpty() || parent.equals(name) ? "" : " (" + parent + ")"));
+            }
+        }
+        return out;
+    }
+
     static List<String> bioregions(Connection connection) throws SQLException {
         List<String> out = new ArrayList<>();
         try (Statement stmt = connection.createStatement(); ResultSet rset = stmt.executeQuery("select name from bioregion order by name")) {
@@ -206,6 +231,9 @@ public final class DataExtractAction extends AntwebAction {
     public static final String HELP = "<div class=\"aw-intro\" id=\"data-extract-help\">"
         + "<p><b>What it does:</b> makes a complete specimen extract for a collaborator: every ant specimen record AntWeb has for the"
         + " countries you choose (other families too, if you tick the box), and a check that proves nothing is missing. It only reads the database.</p>"
+        + "<p><b>Islands:</b> an oceanic island or archipelago with its own ant fauna (Hawaii, the Galapagos Islands) is its own country in"
+        + " AntWeb. Its specimens are not part of the country it belongs to politically: an extract of United States has no specimen of"
+        + " Hawaii. To have an island in the file, name it with the countries.</p>"
         + "<p><b>The files:</b> <i>specimens.csv.gz</i> (one line per specimen, every specimen column, plus the status, rank,"
         + " current valid name and author of its name and the name of its upload group), <i>genus_summary.csv</i> (specimens and"
         + " names per genus), <i>bioregion_list.csv</i> (if you choose a bioregion: AntWeb's species list of it, with each name's"
@@ -217,8 +245,8 @@ public final class DataExtractAction extends AntwebAction {
         + "</div>";
 
     static String page(HttpServletRequest request, String message, String countriesText, List<String> picked, String bioregion,
-                       boolean islands, boolean allFamilies, boolean noCountry, String note, List<String> countries, List<String> bioregions,
-                       List<DataExtractFiles.Entry> extracts, BackgroundJobs.Job active, String domainApp) {
+                       boolean allFamilies, boolean noCountry, String note, List<String> countries, List<String> islandCountries,
+                       List<String> bioregions, List<DataExtractFiles.Entry> extracts, BackgroundJobs.Job active, String domainApp) {
         StringBuilder h = new StringBuilder(HELP);
         if (message != null) {
             h.append("<div class=\"aw-msg\" id=\"data-extract-message\">").append(Html.esc(message)).append("</div>");
@@ -229,14 +257,14 @@ public final class DataExtractAction extends AntwebAction {
              .append(Html.escAttr(domainApp + "/jobStatus.do?id=" + active.getId())).append("\">job ").append(active.getId()).append(", ")
              .append(Html.esc(active.getTitle())).append("</a>. Extracts run one at a time.</p>");
         }
-        h.append(formHtml(Csrf.field(request), countriesText, picked, bioregion, islands, allFamilies, noCountry, note, countries, bioregions, domainApp));
+        h.append(formHtml(Csrf.field(request), countriesText, picked, bioregion, allFamilies, noCountry, note, countries, islandCountries, bioregions, domainApp));
         h.append(listHtml(extracts, active == null ? 0 : active.getId(), Csrf.field(request), domainApp));
         return h.toString();
     }
 
-    public static String formHtml(String csrfField, String countriesText, List<String> picked, String bioregion, boolean islands,
+    public static String formHtml(String csrfField, String countriesText, List<String> picked, String bioregion,
                                   boolean allFamilies, boolean noCountry, String note,
-                           List<String> countries, List<String> bioregions, String domainApp) {
+                           List<String> countries, List<String> islandCountries, List<String> bioregions, String domainApp) {
         StringBuilder h = new StringBuilder("<div class=\"aw-card\" id=\"data-extract-form-card\"><h2>Start an extract</h2>");
         h.append("<form class=\"aw-form\" method=\"post\" action=\"").append(Html.escAttr(domainApp + "/dataExtract.do")).append("\" id=\"data-extract-form\">")
          .append(csrfField);
@@ -251,9 +279,15 @@ public final class DataExtractAction extends AntwebAction {
              .append(Html.esc(name)).append("</option>");
         }
         h.append("</select></div><p class=\"aw-note\">Hold Ctrl (Windows) or Command (Mac) to pick several. Picked countries are added to the ones typed above.</p></details>");
-        h.append("<div class=\"aw-row\"><label><input type=\"checkbox\" name=\"islands\" value=\"on\"").append(islands ? " checked" : "")
-         .append("> Include islands filed under these countries</label></div>")
-         .append("<p class=\"aw-note\">AntWeb treats some islands as countries of their own (Hawaii, for example, under United States). With the box ticked their specimens are in the extract, and the manifest lists the islands.</p>");
+        // Brian Fisher, 2026-11-11: an island that is its own country is never part of its political parent's extract
+        h.append("<p class=\"aw-note\" id=\"extract-islands-note\"><b>Islands are countries of their own.</b> An extract of a country does not hold the")
+         .append(" specimens of an island AntWeb treats as its own country: name the island with the countries to have it in the file.")
+         .append(" The manifest names the islands of your countries that were left out.");
+        if (!islandCountries.isEmpty()) {
+            h.append(" AntWeb's island countries, each with the country it belongs to politically: ")
+             .append(Html.esc(String.join(", ", islandCountries))).append(".");
+        }
+        h.append("</p>");
         h.append("<div class=\"aw-row\"><label><input type=\"checkbox\" name=\"allFamilies\" value=\"on\"").append(allFamilies ? " checked" : "")
          .append("> Include specimens that are not ants</label></div>")
          .append("<p class=\"aw-note\">Without a tick the extract holds ants only (family Formicidae, and specimens with no family given). AntWeb also holds beetles, wasps, spiders and other animals found with ants; the manifest says how many were left out, by family. Tick the box to have them in the file.</p>");
@@ -293,7 +327,8 @@ public final class DataExtractAction extends AntwebAction {
             + "<th>Check</th><th>Files</th><th>Job</th><th></th></tr>");
         for (DataExtractFiles.Entry e : extracts) {
             total += e.bytes;
-            String filters = String.join(", ", e.countries) + (e.islands ? "; with islands" : "; without islands")
+            String filters = String.join(", ", e.countries)
+                + (e.islandsLeftOut.isEmpty() ? "" : "; not in the file: " + String.join(", ", e.islandsLeftOut))
                 + (e.allFamilies ? "; all families" : "; ants only") + (e.noCountry ? "; with the no-country file" : "")
                 + (e.bioregion.isEmpty() ? "" : "; species list of " + e.bioregion);
             h.append("<tr id=\"extract-").append(e.jobId).append("\"><td>").append(e.day).append("</td><td>").append(Html.esc(e.loginName)).append("</td><td>")

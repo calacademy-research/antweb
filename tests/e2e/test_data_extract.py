@@ -18,7 +18,12 @@ checked against the database), as a background job; the files are downloaded thr
 - format 6 (Brian Fisher, 2026-11-10: ants only by default): the form has the two boxes, both clear; the extract
   holds no specimen of another family, its manifest counts what was left out, and a second extract of the same
   country with "Include specimens that are not ants" holds exactly that many more; the file of the specimens that
-  have no country has as many rows as the manifest and the database say, none with a country.
+  have no country has as many rows as the manifest and the database say, none with a country;
+- the island rule (Brian Fisher, 2026-11-11: an oceanic island or archipelago with its own ant fauna is its own
+  country, and its specimens never count toward the political parent): the form has no "include islands" box; an
+  extract of Ecuador holds no specimen of the Galapagos Islands and says the island was left out; an extract of the
+  Galapagos Islands holds only the island's specimens. True before and after the stored specimens are moved to the
+  island (tools/place/island_countries.py): the extract reads both columns.
 
 The extract only reads the database; it writes its files to the server's extract folder and the test deletes them
 at its end. Skips when staging is busy (the daily update or another extract is running).
@@ -29,6 +34,7 @@ import hashlib
 import io
 import json
 import re
+import unicodedata
 import zipfile
 from pathlib import Path
 
@@ -64,7 +70,7 @@ def test_page_and_download_need_login():
     assert classify(r).category == "login" and not _is_file(r), classify(r)
     r = new_session().get(BASE_URL + FILE + "?job=1&file=all.zip", timeout=TIMEOUT)
     assert classify(r).category == "login" and not _is_file(r), classify(r)
-    r = new_session().post(BASE_URL + PAGE, data={"countries": SMALL_COUNTRIES[0], "islands": "on"}, timeout=TIMEOUT)
+    r = new_session().post(BASE_URL + PAGE, data={"countries": SMALL_COUNTRIES[0]}, timeout=TIMEOUT)
     assert classify(r).category == "login", classify(r)
     assert "jobStatus.do?id=" not in r.url and "Start an extract" not in r.text
 
@@ -143,7 +149,7 @@ def test_source_page_linked_and_folder_private():
 def test_curator_is_refused():
     s, token, _id = login("uploader")
     assert get(s, PAGE).category in ("login", "denied")
-    r = s.post(BASE_URL + PAGE, data={"_csrf": token, "countries": SMALL_COUNTRIES[0], "islands": "on"}, timeout=TIMEOUT)
+    r = s.post(BASE_URL + PAGE, data={"_csrf": token, "countries": SMALL_COUNTRIES[0]}, timeout=TIMEOUT)
     assert classify(r).category in ("login", "denied"), classify(r)
     assert "jobStatus.do?id=" not in r.url, "a curator started an extract"
     for name in ("manifest.txt", "all.zip"):
@@ -164,29 +170,31 @@ def test_admin_page_and_refusals(admin):
     r = s.get(BASE_URL + PAGE, timeout=TIMEOUT)
     assert r.status_code == 200 and classify(r).category == "ok", classify(r)
     for part in ("<h1>Data extract</h1>", 'id="data-extract-page"', 'id="data-extract-form"', 'name="_csrf"', 'name="countries"',
-                 'name="islands" value="on" checked', 'name="bioregion"', 'name="note"', "Start the extract", 'id="data-extract-list"',
+                 'id="extract-islands-note"', "Islands are countries of their own.", 'name="bioregion"', 'name="note"', "Start the extract", 'id="data-extract-list"',
                  # ants only, and no file of the specimens without a country, unless ticked
                  'name="allFamilies" value="on"> Include specimens that are not ants', 'name="noCountry" value="on"> Also a file of the specimens',
                  "has_coordinates = 0", "VERIFIED"):
         assert part in r.text, part
+    # Brian Fisher, 2026-11-11: no box that brings a country's islands with it
+    assert 'name="islands"' not in r.text and "Include islands" not in r.text
     own = r.text.split('id="data-extract-page"', 1)[1].split('id="data-extract-list"', 1)[0]
     assert "nightly" not in own.lower() and "\u2014" not in own, "the page says daily update, and uses no em-dash"
     assert "no-store" in r.headers.get("Cache-Control", "")
     # a country AntWeb does not know: nothing starts, the page says which name, the form keeps what was typed
-    r = s.post(BASE_URL + PAGE, data={"_csrf": token, "countries": "Canada, Atlantis <b>", "islands": "on", "note": "e2e"},
+    r = s.post(BASE_URL + PAGE, data={"_csrf": token, "countries": "Canada, Atlantis <b>", "note": "e2e"},
                timeout=TIMEOUT, allow_redirects=False)
     assert r.status_code == 200, r.status_code
     assert "No extract was started." in r.text and "AntWeb has no country named: Atlantis &lt;b&gt;." in r.text
     assert 'value="Canada, Atlantis &lt;b&gt;"' in r.text
     # review: a GET with the form's parameters starts nothing (it only shows the form filled in)
     before = _latest_job(s)
-    r = s.get(BASE_URL + PAGE, params={"countries": SMALL_COUNTRIES[0], "islands": "on", "note": "by link", "op": "start"},
+    r = s.get(BASE_URL + PAGE, params={"countries": SMALL_COUNTRIES[0], "note": "by link", "op": "start"},
               timeout=TIMEOUT, allow_redirects=False)
     assert r.status_code == 200 and "Location" not in r.headers, (r.status_code, r.headers.get("Location"))
     assert 'id="data-extract-form"' in r.text and f'value="{SMALL_COUNTRIES[0]}"' in r.text
     assert _latest_job(s) == before, "a GET started a job"
     # no country at all
-    r = s.post(BASE_URL + PAGE, data={"_csrf": token, "countries": " ", "islands": "on"}, timeout=TIMEOUT, allow_redirects=False)
+    r = s.post(BASE_URL + PAGE, data={"_csrf": token, "countries": " "}, timeout=TIMEOUT, allow_redirects=False)
     assert r.status_code == 200 and "Give at least one country" in r.text
     # a POST without the form token is refused before the page
     r = s.post(BASE_URL + PAGE, data={"countries": SMALL_COUNTRIES[0]}, timeout=TIMEOUT, allow_redirects=False)
@@ -208,7 +216,7 @@ def _start(s, token, countries=None, **options):
     """Starts an extract of the first small country AntWeb knows (or of the country given), with the form's other
     fields as options; (country, job url). Skips when staging is busy."""
     for country in countries or SMALL_COUNTRIES:
-        r = s.post(BASE_URL + PAGE, data={"_csrf": token, "countries": country, "islands": "on", "note": "e2e test <b>", **options},
+        r = s.post(BASE_URL + PAGE, data={"_csrf": token, "countries": country, "note": "e2e test <b>", **options},
                    timeout=TIMEOUT, allow_redirects=False)
         url = job_url(r)
         if url:
@@ -258,6 +266,10 @@ def test_small_extract_end_to_end(admin):
     manifest = json.loads(download("manifest.json").decode("utf-8"))
     assert manifest["specimens"] == n and manifest["verified"] is True and manifest["differences"] == []
     assert manifest["countries"] == [country]
+    # format 10 (the island rule of 2026-11-11): a small country on the mainland has no island and leaves none out
+    assert manifest["tool_version"] == "10" and manifest["islands"] == [] and manifest["islands_left_out"] == []
+    assert "Islands of these countries that are their own country in AntWeb, NOT in this file: none\n" in manifest_shown
+    assert 'id="extract-islands-left-out"' not in page
     assert sum(p["specimens"] for p in manifest["by_place"]) == n
     assert sum(manifest["by_bioregion"].values()) == n
 
@@ -311,7 +323,8 @@ def test_small_extract_end_to_end(admin):
     assert {r[col["family"]].strip().lower() for r in nc_rows} <= {"formicidae", ""}, "the no-country file follows ants only"
     assert sum(nc["by_group"].values()) == nc["specimens"]
     assert sum(1 for r in nc_rows if r[col["has_coordinates"]] == "1") == nc["with_coordinates"]
-    assert f"Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them): {nc['specimens']:,};" in text
+    assert ("Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them; one filed under an "
+            f"included island is in specimens.csv.gz and not here, so no specimen is in both files): {nc['specimens']:,};") in text
     assert list(manifest["files"]) == FILES[:3]
 
     with zipfile.ZipFile(io.BytesIO(download("all.zip"))) as z:
@@ -323,7 +336,7 @@ def test_small_extract_end_to_end(admin):
     # listed on the page, with who started it and the links
     page = s.get(BASE_URL + PAGE, timeout=TIMEOUT).text
     row = page.split(f'<tr id="extract-{job}">', 1)[1].split("</tr>", 1)[0]
-    assert f"{country}; with islands; ants only; with the no-country file" in row and "e2e test &lt;b&gt;" in row and ">VERIFIED</span>" in row
+    assert f"{country}; ants only; with the no-country file" in row and "e2e test &lt;b&gt;" in row and ">VERIFIED</span>" in row
     assert f"{n:,}</td>" in row and f"dataExtractFile.do?job={job}&amp;file=all.zip" in row
 
     # Review M1: the extract's real folder (its name is in the download's file name) cannot be reached by any address
@@ -370,6 +383,61 @@ def test_small_extract_end_to_end(admin):
     assert f"All families (--all-families): {left_out['specimens']:,} specimens in the file are not Formicidae" in page2
     assert s.get(BASE_URL + FILE + f"?job={job2}&file=specimens_no_country.csv.gz", timeout=TIMEOUT).status_code == 404
     row2 = s.get(BASE_URL + PAGE, timeout=TIMEOUT).text.split(f'<tr id="extract-{job2}">', 1)[1].split("</tr>", 1)[0]
-    assert f"{country}; with islands; all families" in row2 and "no-country" not in row2
+    assert f"{country}; all families" in row2 and "no-country" not in row2
     r = s.post(BASE_URL + PAGE, data={"_csrf": token, "op": "delete", "job": job2}, timeout=TIMEOUT)
     assert f"The files of extract {job2} were removed from the server." in r.text
+
+
+ISLAND, PARENT = "Galapagos Islands", "Ecuador"
+
+
+def _plain(name):
+    """A place name as the database compares it: without case or accents."""
+    return "".join(c for c in unicodedata.normalize("NFKD", name) if not unicodedata.combining(c)).casefold().strip()
+
+
+@needs("admin")
+def test_an_island_is_not_in_its_parents_extract(admin):
+    """Brian Fisher, 2026-11-11: "An oceanic island or archipelago with its own ant fauna is its own country in
+    AntWeb. Its specimens never count toward the political parent." An extract of Ecuador has no specimen of the
+    Galapagos Islands, whether the specimen is stored under the island or still under Ecuador with the island in
+    island_country; the job's page and the manifest name the island as left out. Named, the island is the extract."""
+    s, token, _id = admin
+    note = s.get(BASE_URL + PAGE, timeout=TIMEOUT).text.split('id="extract-islands-note"', 1)[1].split("</p>", 1)[0]
+    if f"{ISLAND} ({PARENT})" not in note:
+        pytest.skip(f"AntWeb here has no island country {ISLAND} of {PARENT}: " + _text(note)[-300:])
+
+    def extract(countries):
+        _country, url = _start(s, token, countries=[countries])
+        job = re.search(r"id=(\d+)", url).group(1)
+        page = wait_for_job(s, url).text
+        assert job_status(page) == "finished" and 'data-verified="true"' in page, _text(page.split('id="job-status-card"', 1)[-1])[:800]
+        r = s.get(BASE_URL + FILE + f"?job={job}&file=manifest.json", timeout=TIMEOUT)
+        assert _is_file(r), r.status_code
+        manifest = json.loads(r.content.decode("utf-8"))
+        r = s.get(BASE_URL + FILE + f"?job={job}&file=specimens.csv.gz", timeout=max(TIMEOUT, 300))
+        assert _is_file(r), r.status_code
+        header, rows = _csv_rows(r.content)
+        r = s.post(BASE_URL + PAGE, data={"_csrf": token, "op": "delete", "job": job}, timeout=TIMEOUT)
+        assert f"The files of extract {job} were removed from the server." in r.text
+        col = {name: i for i, name in enumerate(header)}
+        return page, manifest, [(row[col["code"]], row[col["country"]], row[col["island_country"]]) for row in rows]
+
+    # the political parent alone: nothing of the island, under its name or an old one, in either column
+    page, manifest, rows = extract(PARENT)
+    assert manifest["islands"] == [] and manifest["islands_left_out"] == [ISLAND], manifest["islands_left_out"]
+    marks = {_plain(n) for n in [ISLAND] + manifest["old_island_names"].get(ISLAND, [])}
+    island_rows = [r for r in rows if _plain(r[1]) in marks or _plain(r[2]) in marks]
+    assert not island_rows, f"{len(island_rows)} specimens of {ISLAND} in the extract of {PARENT}: {island_rows[:5]}"
+    assert len(rows) == manifest["specimens"] > 0
+    assert f'id="extract-islands-left-out">Not in this extract: <b>{ISLAND}</b>' in page
+    assert f"NOT in this file: {ISLAND} (name an island with the countries to include it)" in page
+
+    # the island named: only its specimens (stored under the island, or under the parent and marked as the island's)
+    page, manifest, rows = extract(ISLAND)
+    assert manifest["islands"] == [ISLAND] and manifest["islands_left_out"] == []
+    marks = {_plain(n) for n in [ISLAND] + manifest["old_island_names"].get(ISLAND, [])}
+    others = [r for r in rows if _plain(r[1]) not in marks and _plain(r[2]) not in marks]
+    assert not others, f"{len(others)} specimens that are not of {ISLAND} in its extract: {others[:5]}"
+    assert len(rows) == manifest["specimens"] > 0, f"AntWeb has no ant specimen of {ISLAND}"
+    assert 'id="extract-islands-left-out"' not in page

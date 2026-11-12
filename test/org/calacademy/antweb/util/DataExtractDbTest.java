@@ -27,14 +27,21 @@ import org.calacademy.antweb.util.DataExtract;
 
 /**
  * The data extract engine (DataExtract, dataExtract.do; 2026-11-10) against MySQL 8.4, with the cases of the
- * command-line tool's test (tests/unit/test_specimen_extract.py): the extract of three countries and the island
- * filed under one of them is complete and verified; tabs, line breaks, backslashes, quotes, commas and accents
+ * command-line tool's test (tests/unit/test_specimen_extract.py): the extract of three countries and an island
+ * named with them is complete and verified; tabs, line breaks, backslashes, quotes, commas and accents
  * come out as they are in the database and NULL as an empty field; numbers and dates read as the database prints
  * them (37.9, 0, 1.500, a zero date); specimens without coordinates (none, or 0/0) and with a name that has no taxon row
  * stay in the file, marked; a specimen of another country is not in it; a database count that differs from the
  * rows written is reported (not verified, the difference named); an unknown or outdated country name stops before
- * any file is written; islands can be left out; names are spelled as the database spells them; the connection
+ * any file is written; names are spelled as the database spells them; the connection
  * comes back as it was; 12,000 rows are streamed with progress reports.
+ *
+ * Islands (Brian Fisher, 2026-11-11: an oceanic island or archipelago with its own ant fauna is its own country,
+ * and its specimens never count toward the political parent): an island is in the file only when it is named with
+ * the countries, in whichever form its specimens are stored (country = the island, or the parent with the island
+ * in island_country), also under an old name of the island; the manifest names the islands left out; a specimen
+ * with no country under an included island is in one file only. The warning for a country without specimens
+ * counts what the file can hold (ants, when ants only).
  *
  * After the review of 2026-11-10: every country row that is not valid is refused (with or without a valid name);
  * specimens still filed under an old name of a requested country (USA) are in the file, named and counted; a
@@ -162,8 +169,18 @@ public class DataExtractDbTest extends TestCase {
 
     private static final DataExtract.Site SITE = new DataExtract.Site(new Date(1794322161000L), "abc1234", "9.9.9");   // 2026-11-10 14:49:21 UTC
 
-    private static DataExtract.Request three(boolean islands, String bioregion) {
-        return new DataExtract.Request(Arrays.asList("United States", "Canada", "Mexico"), islands, bioregion);
+    private static final List<String> THREE = Arrays.asList("United States", "Canada", "Mexico");
+
+    /** The three countries and Hawaii: an island that is its own country is in the file only when it is named. */
+    private static final List<String> WITH_HAWAII = Arrays.asList("United States", "Canada", "Mexico", "Hawaii");
+
+    /** The three countries alone: no island (Brian Fisher, 2026-11-11). */
+    private static DataExtract.Request three(String bioregion) {
+        return new DataExtract.Request(THREE, bioregion);
+    }
+
+    private static DataExtract.Request withHawaii(String bioregion) {
+        return new DataExtract.Request(WITH_HAWAII, bioregion);
     }
 
     private List<Map<String, String>> csv(String name) throws Exception {
@@ -190,7 +207,7 @@ public class DataExtractDbTest extends TestCase {
     }
 
     private void checkComplete(Connection c) throws Exception {
-        DataExtract.Result result = DataExtract.run(c, dir, three(true, "Nearctic"), SITE, null);
+        DataExtract.Result result = DataExtract.run(c, dir, withHawaii("Nearctic"), SITE, null);
         assertTrue(result.verified);
         assertEquals(5, result.specimens);
         assertTrue(result.text, result.text.contains("Check against the database: VERIFIED, every count equal"));
@@ -237,18 +254,21 @@ public class DataExtractDbTest extends TestCase {
         assertEquals(1L, m.get("no_taxon_row"));
         assertEquals(1L, m.get("flagged"));
         assertEquals(0L, m.get("not_ants"));
+        // Hawaii is in the file because it is named with the countries (Brian Fisher, 2026-11-11)
         assertEquals(Arrays.asList("Hawaii"), m.get("islands"));
+        assertEquals(new ArrayList<>(), m.get("islands_left_out"));
+        assertEquals("{}", m.get("old_island_names").toString());
         assertEquals("[{name=Etats-Unis, valid_name=United States}, {name=Mexique, valid_name=Mexico}, {name=USA, valid_name=United States}]",
             m.get("outdated_names").toString());
         assertEquals(0L, m.get("filed_under_outdated_name"));
         assertEquals(new ArrayList<>(), m.get("countries_without_specimens"));
-        assertEquals("6", m.get("tool_version"));
+        assertEquals("10", m.get("tool_version"));
         assertEquals(Boolean.TRUE, m.get("ants_only"));
         assertEquals("{specimens=0, families=0, by_family={}}", m.get("left_out_not_formicidae").toString());
         assertEquals(0L, m.get("blank_family"));
         assertTrue(m.containsKey("no_country"));
         assertNull(m.get("no_country"));
-        assertEquals(Arrays.asList("United States", "Canada", "Mexico"), m.get("countries"));
+        assertEquals(WITH_HAWAII, m.get("countries"));
         assertEquals("abc1234", m.get("antweb_commit"));
         assertEquals("2026-11-10 14:49:21", m.get("made_utc"));
         assertEquals("{Nearctic=4, Oceania=1}", m.get("by_bioregion").toString());
@@ -287,7 +307,9 @@ public class DataExtractDbTest extends TestCase {
         String text = new String(Files.readAllBytes(new File(dir, DataExtract.MANIFEST_TXT).toPath()), StandardCharsets.UTF_8);
         assertEquals(result.text, text);
         assertTrue(text, text.contains("Specimens in the file: 5\n"));
-        assertTrue(text, text.contains("Islands included: Hawaii\nOutdated country names included: Etats-Unis (now United States), Mexique (now Mexico), USA (now United States)\n"));
+        assertTrue(text, text.contains("Countries: United States, Canada, Mexico, Hawaii\nIslands included (named in the countries): Hawaii\n"
+            + "Islands of these countries that are their own country in AntWeb, NOT in this file: none\n"
+            + "Old island names read as the island (a specimen marked with one is the island's): none\nOutdated country names included: Etats-Unis (now United States), Mexique (now Mexico), USA (now United States)\n"));
         assertTrue(text, text.contains("Ants only (family Formicidae): 0 specimens of other families are left out; --all-families includes them\n"
             + "No family given: 0 (in the file)\nFiled under an outdated country name: 0\nGenera: 3   distinct names: 4\n"));
         assertTrue(text, text.contains("Spreadsheets: import the columns of specimens.csv as text. Values are written as they are in the database,\nalso when they start with =, +, - or @.\n"));
@@ -303,7 +325,7 @@ public class DataExtractDbTest extends TestCase {
         assertTrue(text, text.contains("Cite: AntWeb. Version 9.9.9. California Academy of Sciences, online at https://www.antweb.org. Extract of 2026-11-10."));
         assertFalse(text, text.contains("Differences:"));
         String json = new String(Files.readAllBytes(new File(dir, DataExtract.MANIFEST_JSON).toPath()), StandardCharsets.UTF_8);
-        assertTrue(json, json.startsWith("{\n \"tool_version\": \"6\",\n \"made_utc\": \"2026-11-10 14:49:21\",\n \"antweb_commit\": \"abc1234\","));
+        assertTrue(json, json.startsWith("{\n \"tool_version\": \"10\",\n \"made_utc\": \"2026-11-10 14:49:21\",\n \"antweb_commit\": \"abc1234\","));
         assertTrue(json, json.contains("\n \"specimens\": 5,\n \"verified\": true,\n \"differences\": [],\n"));
     }
 
@@ -334,14 +356,14 @@ public class DataExtractDbTest extends TestCase {
         exec("update specimen set localityname = concat('ant ', convert(unhex('F09F909C') using utf8mb4), ' hill') where code = 'casent2'");
         try (Connection c = connect(url() + APP_SETTINGS)) {
             String before = sessionValue(c, "character_set_results");
-            DataExtract.Result result = DataExtract.run(c, dir, three(true, ""), SITE, null);
+            DataExtract.Result result = DataExtract.run(c, dir, withHawaii(""), SITE, null);
             assertTrue(result.verified);
             assertEquals("ant " + ant + " hill", csv(DataExtract.SPECIMENS).get(1).get("localityname"));
             assertEquals("the session's result character set is put back", before, sessionValue(c, "character_set_results"));
         }
         // and through a connection without those settings
         delete(dir);
-        assertEquals("ant " + ant + " hill", runAndRead(three(true, "")).get(1).get("localityname"));
+        assertEquals("ant " + ant + " hill", runAndRead(withHawaii("")).get(1).get("localityname"));
     }
 
     private void delete(File folder) {
@@ -357,7 +379,7 @@ public class DataExtractDbTest extends TestCase {
 
     public void testADifferentDatabaseCountIsReported() throws Exception {
         // A specimen arrives between the export and the count, as an upload during the extract would bring it.
-        DataExtract.Result result = DataExtract.run(connection, dir, three(true, ""), SITE, null, () -> {
+        DataExtract.Result result = DataExtract.run(connection, dir, withHawaii(""), SITE, null, () -> {
             try (Connection other = connect(url()); Statement s = other.createStatement()) {
                 s.executeUpdate("insert into specimen (code, taxon_name, family, country) values ('casent9', 'myrmicinaestenamma diecki', 'formicidae', 'United States')");
             } catch (SQLException e) {
@@ -386,7 +408,7 @@ public class DataExtractDbTest extends TestCase {
             {"California", "AntWeb has no country named: California."},      // an adm1, not a country
         }) {
             try {
-                DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada", bad[0]), true, ""), SITE, null);
+                DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada", bad[0]), ""), SITE, null);
                 fail("accepted " + bad[0]);
             } catch (DataExtract.BadRequest e) {
                 assertTrue(e.getMessage(), e.getMessage().contains(bad[1]));
@@ -394,13 +416,13 @@ public class DataExtractDbTest extends TestCase {
             assertEquals("no file written for " + bad[0], 0, dir.list().length);
         }
         try {
-            DataExtract.run(connection, dir, new DataExtract.Request(new ArrayList<>(), true, ""), SITE, null);
+            DataExtract.run(connection, dir, new DataExtract.Request(new ArrayList<>(), ""), SITE, null);
             fail("accepted no country");
         } catch (DataExtract.BadRequest e) {
             assertTrue(e.getMessage(), e.getMessage().startsWith("Give at least one country"));
         }
         try {
-            DataExtract.run(connection, dir, three(true, "Atlantic"), SITE, null);
+            DataExtract.run(connection, dir, withHawaii("Atlantic"), SITE, null);
             fail("accepted an unknown bioregion");
         } catch (DataExtract.BadRequest e) {
             assertEquals("AntWeb has no bioregion named: Atlantic.", e.getMessage());
@@ -434,7 +456,7 @@ public class DataExtractDbTest extends TestCase {
     /** Format 6: the bioregion's species list follows the same choice, and says how many names it leaves out. */
     public void testTheBioregionListIsOfAntsOnlyToo() throws Exception {
         others();
-        DataExtract.Result result = DataExtract.run(connection, dir, three(true, "Nearctic"), SITE, null);
+        DataExtract.Result result = DataExtract.run(connection, dir, withHawaii("Nearctic"), SITE, null);
         assertTrue(result.text, result.verified);
         List<Map<String, String>> list = csv(DataExtract.BIOREGION_LIST);
         // the ants, the name without a family and the name without a taxon row; not the beetle or the wasp (species), nor genus rows
@@ -443,7 +465,7 @@ public class DataExtractDbTest extends TestCase {
         assertTrue(result.text, result.text.contains("AntWeb's Nearctic species list: 4 names of ants (2 names of other families left out); 3 of them have no specimen in this extract (literature, or other countries)\n"));
         // all families: the whole list, and nothing said to be left out
         delete(dir);
-        DataExtract.Result all = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("United States", "Canada", "Mexico"), true, "Nearctic", true, false), SITE, null);
+        DataExtract.Result all = DataExtract.run(connection, dir, new DataExtract.Request(WITH_HAWAII, "Nearctic", true, false), SITE, null);
         assertTrue(all.text, all.verified);
         assertEquals(Arrays.asList("not a taxon row", "curculionidaex a", "vespidaey a", "myrmicinaestenamma diecki", "myrmicinaestenamma lit", "myrmicinaestenamma nofamily"),
             column(csv(DataExtract.BIOREGION_LIST), "taxon_name"));
@@ -457,7 +479,7 @@ public class DataExtractDbTest extends TestCase {
      */
     public void testAntsOnlyIsTheDefaultAndSaysWhatItLeftOut() throws Exception {
         others();
-        DataExtract.Result result = DataExtract.run(connection, dir, three(true, ""), SITE, null);
+        DataExtract.Result result = DataExtract.run(connection, dir, withHawaii(""), SITE, null);
         assertTrue(result.text, result.verified);
         // the ants (also written FORMICIDAE) and the two specimens with no family; no beetle, wasp or spider
         assertEquals(Arrays.asList("ant1", "blank1", "blank2", "casent1", "casent2", "casent3", "casent4", "casent5"), column(csv(DataExtract.SPECIMENS), "code"));
@@ -479,7 +501,7 @@ public class DataExtractDbTest extends TestCase {
 
         // all families on request: every specimen of the places, and how many are not ants
         delete(dir);
-        DataExtract.Result all = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("United States", "Canada", "Mexico"), true, "", true, false), SITE, null);
+        DataExtract.Result all = DataExtract.run(connection, dir, new DataExtract.Request(WITH_HAWAII, "", true, false), SITE, null);
         assertTrue(all.text, all.verified);
         assertEquals(Arrays.asList("ant1", "beetle1", "beetle2", "beetle3", "blank1", "blank2", "casent1", "casent2", "casent3", "casent4", "casent5",
             "order1", "spider1", "wasp1"), column(csv(DataExtract.SPECIMENS), "code"));
@@ -494,7 +516,7 @@ public class DataExtractDbTest extends TestCase {
     /** The database takes a family written with an accent for Formicidae; the file then holds a row that is not an ant. */
     public void testARowThatIsNotAnAntInAnAntsOnlyFileIsNotVerified() throws Exception {
         exec("insert into specimen (code, taxon_name, family, country) values ('odd1', 'x', 'formicida" + (char) 0xe9 + "', 'Canada')");
-        DataExtract.Result result = DataExtract.run(connection, dir, three(true, ""), SITE, null);
+        DataExtract.Result result = DataExtract.run(connection, dir, withHawaii(""), SITE, null);
         assertFalse(result.verified);
         assertEquals(1L, result.manifest.get("not_ants"));
         assertEquals("[{file=specimens.csv.gz, not_formicidae_in_an_ants_only_file=1}]", result.manifest.get("differences").toString());
@@ -502,7 +524,7 @@ public class DataExtractDbTest extends TestCase {
         assertTrue(result.text, result.text.contains("Differences:\n  {\"file\": \"specimens.csv.gz\", \"not_formicidae_in_an_ants_only_file\": 1}\n"));
         // with all families it is one more specimen that is not an ant, and the file is verified
         delete(dir);
-        DataExtract.Result all = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("United States", "Canada", "Mexico"), true, "", true, false), SITE, null);
+        DataExtract.Result all = DataExtract.run(connection, dir, new DataExtract.Request(WITH_HAWAII, "", true, false), SITE, null);
         assertTrue(all.verified);
         assertEquals(1L, all.manifest.get("not_ants"));
     }
@@ -518,7 +540,7 @@ public class DataExtractDbTest extends TestCase {
             + " ('none2', 'myrmicinaestenamma diecki', 'formicidae', 'myrmicinae', 'stenamma', null, 'El Paso', null, null, 2),"
             + " ('none3', 'myrmicinaestenamma utah02', null, 'myrmicinae', 'stenamma', null, 'no group', null, null, null),"
             + " ('none4', 'curculionidaex a', 'curculionidae', null, 'x', null, 'a beetle', null, null, 1)");
-        DataExtract.Request request = new DataExtract.Request(Arrays.asList("United States", "Canada", "Mexico"), true, "Nearctic", false, true);
+        DataExtract.Request request = new DataExtract.Request(WITH_HAWAII, "Nearctic", false, true);
         DataExtract.Result result = DataExtract.run(connection, dir, request, SITE, null);
         assertTrue(result.text, result.verified);
         assertEquals(8, result.specimens);      // the main file is as without the option
@@ -531,7 +553,8 @@ public class DataExtractDbTest extends TestCase {
         // groups largest first; of the same size in the order they first appear (CAS, then the one without a name)
         assertEquals("{specimens=4, in_database=4, with_coordinates=1, names=3, names_not_in_the_countries_file=2,"
             + " by_group={Utah, \"Longino\" lab=2, CAS=1, =1}}", result.manifest.get("no_country").toString());
-        assertTrue(result.text, result.text.contains("\nSpecimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them): "
+        assertTrue(result.text, result.text.contains("\nSpecimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them; "
+            + "one filed under an included island is in specimens.csv.gz and not here, so no specimen is in both files): "
             + "4; with coordinates 1; 3 names, 2 of them not in the countries file\n  by upload group: Utah, \"Longino\" lab 2, CAS 1, (none) 1\n\nFiles (sha256):\n"));
         @SuppressWarnings("unchecked")
         Map<String, Map<String, Object>> files = (Map<String, Map<String, Object>>) result.manifest.get("files");
@@ -546,13 +569,13 @@ public class DataExtractDbTest extends TestCase {
 
         // with all families the beetle without a country is in its file too, and pages do not change the file
         delete(dir);
-        DataExtract.Result all = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada"), true, "", true, true), SITE, null, null, 2);
+        DataExtract.Result all = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada"), "", true, true), SITE, null, null, 2);
         assertTrue(all.verified);
         assertEquals(Arrays.asList("casent8", "none1", "none2", "none3", "none4"), column(csv(DataExtract.SPECIMENS_NO_COUNTRY), "code"));
         assertEquals(5L, ((Map<?, ?>) all.manifest.get("no_country")).get("specimens"));
         // without the option: no file, and the manifest says so
         delete(dir);
-        DataExtract.Result without = DataExtract.run(connection, dir, three(true, ""), SITE, null);
+        DataExtract.Result without = DataExtract.run(connection, dir, withHawaii(""), SITE, null);
         assertFalse(new File(dir, DataExtract.SPECIMENS_NO_COUNTRY).exists());
         assertNull(without.manifest.get("no_country"));
         assertFalse(without.text, without.text.contains("Specimens with no country"));
@@ -564,7 +587,7 @@ public class DataExtractDbTest extends TestCase {
             + " ('casent12', 'myrmicinaestenamma diecki', 'formicidae', 'myrmicinae', 'stenamma', 'USA', 'Nearctic'),"
             + " ('casent13', 'myrmicinaestenamma diecki', 'formicidae', 'myrmicinae', 'stenamma', 'Etats-Unis', 'Nearctic'),"
             + " ('casent14', 'myrmicinaestenamma diecki', 'formicidae', 'myrmicinae', 'stenamma', 'USA', 'Nearctic')");
-        DataExtract.Result result = DataExtract.run(connection, dir, three(true, ""), SITE, null);
+        DataExtract.Result result = DataExtract.run(connection, dir, withHawaii(""), SITE, null);
         assertTrue(result.text, result.verified);
         assertEquals(8, result.specimens);
         assertEquals(Arrays.asList("casent1", "casent12", "casent13", "casent14", "casent2", "casent3", "casent4", "casent5"), column(csv(DataExtract.SPECIMENS), "code"));
@@ -574,23 +597,35 @@ public class DataExtractDbTest extends TestCase {
         assertTrue(result.text, result.text.contains(String.format("  %-40s %,10d\n", "Etats-Unis", 1)));
         assertFalse("an old name is listed as such, not as another spelling", result.text.contains("Country spellings"));
         // only the old names of the countries asked for: Canada alone takes none of them
-        DataExtract.Result canada = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada"), true, ""), SITE, null);
+        DataExtract.Result canada = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada"), ""), SITE, null);
         assertEquals(1, canada.specimens);
         assertEquals("[]", canada.manifest.get("outdated_names").toString());
         assertTrue(canada.text, canada.text.contains("Outdated country names included: none\n"));
     }
 
     public void testACountryWithoutSpecimensIsAWarning() throws Exception {
-        DataExtract.Result result = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada", "Cote d'Ivoire", "Brazil"), true, ""), SITE, null);
+        DataExtract.Result result = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada", "Cote d'Ivoire", "Brazil"), ""), SITE, null);
         assertTrue(result.verified);
         assertEquals(2, result.specimens);
         assertEquals(Arrays.asList("Cote d'Ivoire"), result.manifest.get("countries_without_specimens"));
         assertTrue(result.text, result.text.contains("Check against the database: VERIFIED, every count equal\n"
-            + "WARNING: AntWeb has no specimen for: Cote d'Ivoire (check that these are the countries meant)\n"));
+            + "WARNING: AntWeb has no ant specimen for: Cote d'Ivoire (check that these are the countries meant)\n"));
+        // format 8: the warning counts what the file can hold. A country with a beetle and no ant is still a warning
+        // in an ants-only extract (the file has none of its rows), and none when every family is asked for.
+        exec("insert into specimen (code, taxon_name, family, country) values ('beetle9', 'curculionidaex a', 'curculionidae', 'Cote d''Ivoire')");
+        DataExtract.Result beetle = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada", "Cote d'Ivoire", "Brazil"), ""), SITE, null);
+        assertEquals(Arrays.asList("Cote d'Ivoire"), beetle.manifest.get("countries_without_specimens"));
+        assertEquals(2, beetle.specimens);
+        DataExtract.Result everyFamily = DataExtract.run(connection, dir,
+            new DataExtract.Request(Arrays.asList("Canada", "Cote d'Ivoire", "Brazil"), "", true, false), SITE, null);
+        assertEquals(new ArrayList<>(), everyFamily.manifest.get("countries_without_specimens"));
+        assertEquals(3, everyFamily.specimens);
+        assertFalse(everyFamily.text, everyFamily.text.contains("WARNING"));
+        exec("delete from specimen where code = 'beetle9'");
         // a country whose specimens are all under its old name is not empty
         exec("delete from specimen where country = 'Mexico'");
         exec("insert into specimen (code, taxon_name, family, country) values ('casent15', 'x', 'formicidae', 'Mexique')");
-        DataExtract.Result mexico = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Mexico"), true, ""), SITE, null);
+        DataExtract.Result mexico = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Mexico"), ""), SITE, null);
         assertEquals(1, mexico.specimens);
         assertEquals(new ArrayList<>(), mexico.manifest.get("countries_without_specimens"));
         assertFalse(mexico.text, mexico.text.contains("WARNING"));
@@ -607,7 +642,7 @@ public class DataExtractDbTest extends TestCase {
             + " ('casent16', 'myrmicinaestenamma diecki', 'formicidae', 'myrmicinae', 'stenamma', '" + accent + "', 'Nearctic'),"
             + " ('casent17', 'myrmicinaestenamma diecki', 'formicidae', 'myrmicinae', 'stenamma', '" + accent + "', 'Nearctic'),"
             + " ('casent18', 'myrmicinaestenamma diecki', 'formicidae', 'myrmicinae', 'stenamma', 'MEXICO', 'Nearctic')");
-        DataExtract.Result result = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Mexico"), true, ""), SITE, null);
+        DataExtract.Result result = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Mexico"), ""), SITE, null);
         assertTrue(result.text, result.verified);
         assertEquals(4, result.specimens);
         assertEquals("[{country=MEXICO, island_country=, specimens=1}, {country=Mexico, island_country=, specimens=1}, {country=" + accent
@@ -621,11 +656,11 @@ public class DataExtractDbTest extends TestCase {
     /** Review M2: one statement stayed open for the whole extract, so a change of the table waited for all of it. */
     public void testTheSpecimensAreReadInPagesAndTheTableIsFreeBetweenThem() throws Exception {
         // the same file whatever the page size (2 rows a page: pages end inside and at the end of the list)
-        DataExtract.run(connection, dir, three(true, "Nearctic"), SITE, null, null, 2);
+        DataExtract.run(connection, dir, withHawaii("Nearctic"), SITE, null, null, 2);
         byte[] small = gunzip(new File(dir, DataExtract.SPECIMENS));
         for (int pageRows : new int[] {1, 3, 5, 6, 10000}) {
             delete(dir);
-            DataExtract.Result r = DataExtract.run(connection, dir, three(true, "Nearctic"), SITE, null, null, pageRows);
+            DataExtract.Result r = DataExtract.run(connection, dir, withHawaii("Nearctic"), SITE, null, null, pageRows);
             assertTrue(r.verified);
             assertEquals(5, r.specimens);
             assertTrue("page of " + pageRows, Arrays.equals(small, gunzip(new File(dir, DataExtract.SPECIMENS))));
@@ -634,7 +669,7 @@ public class DataExtractDbTest extends TestCase {
         exec("insert into specimen (code, taxon_name, family, country) values ('casent1''b\\\\c" + (char) 0xe9 + "', 'x', 'formicidae', 'Canada'),"
             + " ('casent1z', 'x', 'formicidae', 'Canada')");
         delete(dir);
-        DataExtract.Result odd = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada"), true, ""), SITE, null, null, 1);
+        DataExtract.Result odd = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada"), ""), SITE, null, null, 1);
         assertTrue(odd.verified);
         assertEquals(Arrays.asList("casent1'b\\c" + (char) 0xe9, "casent1z", "casent4"), column(csv(DataExtract.SPECIMENS), "code"));
 
@@ -643,7 +678,7 @@ public class DataExtractDbTest extends TestCase {
         bulk();
         delete(dir);
         List<String> changed = new ArrayList<>();
-        DataExtract.Result result = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada"), true, ""), SITE, rows -> {
+        DataExtract.Result result = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada"), ""), SITE, rows -> {
             if (rows != 5000) return;
             try (Connection other = connect(url()); Statement st = other.createStatement()) {
                 st.execute("set session lock_wait_timeout = 5");
@@ -681,25 +716,116 @@ public class DataExtractDbTest extends TestCase {
         exec("drop table if exists extract_seq");
     }
 
-    public void testIslandsCanBeLeftOut() throws Exception {
-        DataExtract.Result result = DataExtract.run(connection, dir, three(false, ""), SITE, null);
-        assertTrue(result.verified);
+    /**
+     * Brian Fisher, 2026-11-11: "An oceanic island or archipelago with its own ant fauna is its own country in
+     * AntWeb. Its specimens never count toward the political parent." An extract of United States has no specimen
+     * of Hawaii, in whichever of the two forms it is stored (country Hawaii, or still country United States with
+     * the island in island_country), and the manifest names the island as left out. Named with the countries, the
+     * island is in the file, in both forms.
+     */
+    public void testAnIslandIsNotPartOfItsPoliticalParent() throws Exception {
+        // casent5 is stored as the island (country Hawaii); casent20 as before the move: under the parent, marked Hawaii
+        exec("insert into specimen (code, taxon_name, family, subfamily, genus, country, island_country, bioregion) values"
+            + " ('casent20', 'myrmicinaestenamma diecki', 'formicidae', 'myrmicinae', 'stenamma', 'United States', 'Hawaii', 'Oceania')");
+        DataExtract.Result result = DataExtract.run(connection, dir, three(""), SITE, null);
+        assertTrue(result.text, result.verified);
         assertEquals(new ArrayList<>(), result.manifest.get("islands"));
+        assertEquals(Arrays.asList("Hawaii"), result.manifest.get("islands_left_out"));
         assertEquals(Arrays.asList("casent1", "casent2", "casent3", "casent4"), column(csv(DataExtract.SPECIMENS), "code"));
-        assertTrue(result.text, result.text.contains("Islands included: none\n"));
+        assertTrue(result.text, result.text.contains("Countries: United States, Canada, Mexico\nIslands included (named in the countries): none\n"
+            + "Islands of these countries that are their own country in AntWeb, NOT in this file: Hawaii (name an island with the countries to include it)\n"));
+        assertFalse(result.text, result.text.contains("Hawaii /") || result.text.contains("/ Hawaii"));
+        assertEquals(new ArrayList<>(), result.manifest.get("countries_without_specimens"));
+
+        // named with the countries: both forms are in the file, each counted under what it says
+        delete(dir);
+        DataExtract.Result named = DataExtract.run(connection, dir, withHawaii(""), SITE, null);
+        assertTrue(named.text, named.verified);
+        assertEquals(Arrays.asList("casent1", "casent2", "casent20", "casent3", "casent4", "casent5"), column(csv(DataExtract.SPECIMENS), "code"));
+        assertEquals(Arrays.asList("Hawaii"), named.manifest.get("islands"));
+        assertEquals(new ArrayList<>(), named.manifest.get("islands_left_out"));
+        assertTrue(named.text, named.text.contains("  Hawaii / Hawaii                                   1\n"));
+        assertTrue(named.text, named.text.contains("  United States / Hawaii                            1\n"));
+
+        // the island alone: its specimens in both forms, nothing of the parent
+        delete(dir);
+        DataExtract.Result alone = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Hawaii"), ""), SITE, null);
+        assertTrue(alone.text, alone.verified);
+        assertEquals(Arrays.asList("casent20", "casent5"), column(csv(DataExtract.SPECIMENS), "code"));
+        assertEquals(new ArrayList<>(), alone.manifest.get("countries_without_specimens"));
+
+        // an island of another country: the one of Ecuador (casent7: country Ecuador, marked Galapagos Islands)
+        exec("insert into geolocale values (13, 'Ecuador', 'country', 1, null, 0, 'South America', null, 'Neotropical', null)");
+        exec("insert into specimen (code, taxon_name, family, subfamily, genus, country, bioregion) values"
+            + " ('casent21', 'myrmicinaestenamma diecki', 'formicidae', 'myrmicinae', 'stenamma', 'Ecuador', 'Neotropical')");
+        delete(dir);
+        DataExtract.Result ecuador = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Ecuador", "Canada"), ""), SITE, null);
+        assertTrue(ecuador.text, ecuador.verified);
+        assertEquals(Arrays.asList("casent21", "casent4"), column(csv(DataExtract.SPECIMENS), "code"));
+        assertEquals(Arrays.asList("Galapagos Islands"), ecuador.manifest.get("islands_left_out"));
+        // the islands left out are the ones of the countries asked for: Hawaii is no island of Ecuador or Canada
+        assertFalse(ecuador.text, ecuador.text.contains("Hawaii"));
+    }
+
+    /**
+     * Format 10: a specimen marked with an old name of an island (island_country "Galapagos": a country row that is
+     * not valid and names the island as its valid name) is the island's: left out of the parent's extract, in the
+     * island's. And a specimen with no country that is filed under an included island is in the countries file,
+     * not a second time in the file of the specimens without a country.
+     */
+    public void testAnOldIslandNameIsTheIslandAndNoSpecimenIsInBothFiles() throws Exception {
+        exec("insert into geolocale values (13, 'Ecuador', 'country', 1, null, 0, 'South America', null, 'Neotropical', null),"
+            + " (14, 'Galapagos', 'country', 0, 'Galapagos Islands', 0, null, null, null, null),"
+            + " (15, 'Archipielago de Colon', 'country', null, 'Galapagos Islands', 0, null, null, null, null)");
+        exec("insert into specimen (code, taxon_name, family, subfamily, genus, country, island_country, bioregion) values"
+            + " ('casent30', 'myrmicinaestenamma diecki', 'formicidae', 'myrmicinae', 'stenamma', 'Ecuador', 'Galapagos', 'Neotropical'),"
+            + " ('casent31', 'myrmicinaestenamma diecki', 'formicidae', 'myrmicinae', 'stenamma', 'Ecuador', null, 'Neotropical'),"
+            + " ('casent32', 'myrmicinaestenamma diecki', 'formicidae', 'myrmicinae', 'stenamma', null, 'Galapagos Islands', 'Neotropical'),"
+            + " ('casent33', 'myrmicinaestenamma diecki', 'formicidae', 'myrmicinae', 'stenamma', 'Galapagos', null, 'Neotropical')");
+        DataExtract.Islands sets = DataExtract.islands(connection, Arrays.asList("Ecuador"));
+        assertEquals("{Galapagos Islands=[Archipielago de Colon, Galapagos]}", sets.oldNames.toString());
+        assertEquals(Arrays.asList("Galapagos Islands", "Archipielago de Colon", "Galapagos", "Hawaii"), sets.marked(sets.other));
+
+        // Ecuador alone: nothing marked as the island's, under its name or an old one
+        DataExtract.Result ecuador = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Ecuador"), "", false, true), SITE, null);
+        assertTrue(ecuador.text, ecuador.verified);
+        assertEquals(Arrays.asList("casent31"), column(csv(DataExtract.SPECIMENS), "code"));
+        assertEquals(Arrays.asList("Galapagos Islands"), ecuador.manifest.get("islands_left_out"));
+        assertEquals("{Galapagos Islands=[Archipielago de Colon, Galapagos]}", ecuador.manifest.get("old_island_names").toString());
+        assertTrue(ecuador.text, ecuador.text.contains("Old island names read as the island (a specimen marked with one is the island's):"
+            + " Archipielago de Colon, Galapagos = Galapagos Islands\n"));
+        // no island is included, so the specimen with no country stays in the file of the specimens without one
+        assertEquals(Arrays.asList("casent32", "casent8"), column(csv(DataExtract.SPECIMENS_NO_COUNTRY), "code"));
+
+        // the island named: its specimens under its name, its old names and the parent; casent32 only in the countries file
+        delete(dir);
+        DataExtract.Result both = DataExtract.run(connection, dir,
+            new DataExtract.Request(Arrays.asList("Ecuador", "Galapagos Islands"), "", false, true), SITE, null);
+        assertTrue(both.text, both.verified);
+        assertEquals(Arrays.asList("casent30", "casent31", "casent32", "casent33", "casent7"), column(csv(DataExtract.SPECIMENS), "code"));
+        assertEquals(Arrays.asList("casent8"), column(csv(DataExtract.SPECIMENS_NO_COUNTRY), "code"));
+        assertEquals(Arrays.asList("Galapagos Islands"), both.manifest.get("islands"));
+        assertEquals(new ArrayList<>(), both.manifest.get("islands_left_out"));
+        assertEquals("[{name=Archipielago de Colon, valid_name=Galapagos Islands}, {name=Galapagos, valid_name=Galapagos Islands}]",
+            both.manifest.get("outdated_names").toString());
+        assertEquals(new ArrayList<>(), both.manifest.get("countries_without_specimens"));
+        assertEquals(1L, ((Map<?, ?>) both.manifest.get("no_country")).get("specimens"));
     }
 
     public void testNamesAreSpelledAsTheDatabaseSpellsThem() throws Exception {
         assertEquals(Arrays.asList("United States", "Cote d'Ivoire"), DataExtract.resolve(connection, Arrays.asList("united states", "COTE D'IVOIRE")));
         assertEquals("Nearctic", DataExtract.resolveBioregion(connection, " nearctic "));
         assertEquals("", DataExtract.resolveBioregion(connection, ""));
-        // an island country asked for by name is a country of the extract, not listed again as an island
-        assertEquals(new ArrayList<>(), DataExtract.islands(connection, Arrays.asList("United States", "Hawaii")));
-        assertEquals(Arrays.asList("Hawaii"), DataExtract.islands(connection, Arrays.asList("United States")));
-        assertEquals(new ArrayList<>(), DataExtract.islands(connection, Arrays.asList("Cote d'Ivoire")));
+        // the islands of a request: the ones named, every other one, and of those the ones of the countries asked for
+        DataExtract.Islands named = DataExtract.islands(connection, Arrays.asList("United States", "Hawaii"));
+        assertEquals("[Hawaii] [Galapagos Islands] []", named.included + " " + named.other + " " + named.leftOut);
+        DataExtract.Islands parent = DataExtract.islands(connection, Arrays.asList("United States"));
+        assertEquals("[] [Galapagos Islands, Hawaii] [Hawaii]", parent.included + " " + parent.other + " " + parent.leftOut);
+        DataExtract.Islands elsewhere = DataExtract.islands(connection, Arrays.asList("Cote d'Ivoire"));
+        assertEquals("[] [Galapagos Islands, Hawaii] [] {}", elsewhere.included + " " + elsewhere.other + " " + elsewhere.leftOut + " " + elsewhere.oldNames);
         // a quote in a name does not break the queries
         exec("insert into specimen (code, taxon_name, family, country) values ('casent10', 'myrmicinaestenamma diecki', 'formicidae', 'Cote d''Ivoire')");
-        DataExtract.Result result = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("cote d'ivoire"), true, "nearctic"), SITE, null);
+        DataExtract.Result result = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("cote d'ivoire"), "nearctic"), SITE, null);
         assertTrue(result.verified);
         assertEquals(1, result.specimens);
         assertEquals(Arrays.asList("Cote d'Ivoire"), result.manifest.get("countries"));
@@ -709,14 +835,14 @@ public class DataExtractDbTest extends TestCase {
     public void testTheConnectionComesBackAsItWasAndOnlyReads() throws Exception {
         connection.setAutoCommit(false);
         connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
-        DataExtract.run(connection, dir, three(true, ""), SITE, null);
+        DataExtract.run(connection, dir, withHawaii(""), SITE, null);
         assertFalse(connection.getAutoCommit());
         assertFalse(connection.isReadOnly());
         assertEquals(Connection.TRANSACTION_REPEATABLE_READ, connection.getTransactionIsolation());
         connection.setAutoCommit(true);
         // the session's own counters: the extract ran no statement that changes data or tables
         long before = writes();
-        DataExtract.run(connection, dir, three(true, "Nearctic"), SITE, null);
+        DataExtract.run(connection, dir, withHawaii("Nearctic"), SITE, null);
         assertEquals("statements that write, run by the extract", before, writes());
         exec("insert into specimen (code, country) values ('casent11', 'Canada')");   // the connection writes again afterwards
         assertEquals(before + 1, writes());
@@ -737,7 +863,7 @@ public class DataExtractDbTest extends TestCase {
         exec("set session sql_mode = ''");
         exec("insert into specimen (code, taxon_name, family, country, last_modified, day_entered) values"
             + " ('casent0', 'myrmicinaestenamma diecki', 'formicidae', 'Mexico', '0000-00-00 00:00:00', '0000-00-00')");
-        DataExtract.Result result = DataExtract.run(connection, dir, three(true, ""), SITE, null);
+        DataExtract.Result result = DataExtract.run(connection, dir, withHawaii(""), SITE, null);
         assertTrue(result.verified);
         Map<String, String> row = csv(DataExtract.SPECIMENS).get(0);
         assertEquals("casent0", row.get("code"));
@@ -748,7 +874,7 @@ public class DataExtractDbTest extends TestCase {
     public void testManyRowsAreStreamedWithProgress() throws Exception {
         bulk();
         List<Long> reports = new ArrayList<>();
-        DataExtract.Result result = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada"), true, ""), SITE, reports::add);
+        DataExtract.Result result = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada"), ""), SITE, reports::add);
         assertTrue(result.verified);
         assertEquals(12101, result.specimens);
         assertEquals(Arrays.asList(5000L, 10000L), reports);
@@ -762,7 +888,7 @@ public class DataExtractDbTest extends TestCase {
         // a run stopped by its progress callback (the job's disk and time guards) ends with that message
         delete(dir);
         try {
-            DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada"), true, ""), SITE, n -> {
+            DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada"), ""), SITE, n -> {
                 throw new DataExtract.Stopped("stopped at " + n);
             });
             fail("not stopped");
