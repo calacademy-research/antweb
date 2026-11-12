@@ -92,7 +92,12 @@ Numbers are the order in which things happen for `upload.do?action=specimenUploa
      `removeGenusRowsWithoutSpeciesOrSpecimen`, before the list is counted. Until then the rebuild put a genus
      without species or specimens on the list and the daily clean-up took it off, so the list's Genera moved by one
      between an upload and the next daily update. A red-flagged specimen keeps no genus on the list. A genus that
-     was on the list before the rebuild and is off it afterwards is recorded in `list_removal_log`, once);
+     was on the list before the rebuild and is off it afterwards is recorded in `list_removal_log`, once. The
+     rebuild runs on the upload's own connection, in its one transaction (`SpecimenUploadJob`: one commit at the
+     end). An error in the rule that leaves the transaction intact is logged and the list stays as built; a
+     deadlock, after which the database has rolled back the whole upload, is passed on, so the upload fails with
+     "No changes made" instead of committing nothing and reporting success, `DBUtil.transactionRolledBack`,
+     2026-11-12);
    - `TaxonMgr.populate()` (reload the in-memory taxon cache);
    - `ant_group.last_specimen_upload = now()`.
 9. **Backup copy of the file** (`UploadFile.backup()`): `web/upload/<yyyyMMdd-HH:mm:ss>-specimen<groupId>.txt` (for TaxonWorks `-specimenTW<groupId>.txt`). `web/upload` is on Spaces (`/mnt/antweb/web/upload`). Not served directly: curators download it through `uploadFile.do?file=` (link in the report).

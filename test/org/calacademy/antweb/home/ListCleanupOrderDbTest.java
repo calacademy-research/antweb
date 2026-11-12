@@ -67,6 +67,16 @@ import static test.org.calacademy.antweb.util.NumbersTestDb.*;
  *  - the specimen query of that rule can use the index genus_species_idx (EXPLAIN);
  *  - set 2's step commits the data clean-up's work first and rolls back only its own after an error.
  *
+ * Review of PR #347 (2026-11-12):
+ *  - a deadlock in the rule of the genus rows during the rebuild of the AntWeb-wide list is passed on, not swallowed:
+ *    the database has rolled back the whole transaction, which is the upload's own, and the upload must fail instead
+ *    of committing nothing and reporting success; a lock wait timeout, which undoes one statement only, is still
+ *    swallowed and the list stays as built (DBUtil.transactionRolledBack);
+ *  - the two admin jobs say "FAILED: ..." in their answer and roll back when the clean-up met an error;
+ *  - a row the AntCat import puts back every day and the clean-up takes off every day is recorded once in
+ *    list_removal_log, not every day; a curator's row, and a row removed again after a curator's own removal, are
+ *    recorded again (ListRemovalLog.recordWhereOnce).
+ *
  * tests/unit/test_list_cleanup_before_counts.py checks in the source that set 2 calls the clean-up before its first
  * count and that no later set removes list rows. Runs in CI against MySQL 8.4; ANTWEB_TEST_DB_URL overrides.
  */
@@ -111,7 +121,9 @@ public class ListCleanupOrderDbTest extends TestCase {
 
     @Override
     protected void tearDown() throws Exception {
+        ProjTaxonDb.setBeforeGenusRuleForTests(null);
         if (connection != null) {
+            try { connection.rollback(); } catch (java.sql.SQLException e) { /* autocommit: nothing to roll back */ }
             connection.setAutoCommit(true);
             exec(connection, "drop table if exists proj_taxon_gone");
             connection.close();
@@ -386,7 +398,11 @@ public class ListCleanupOrderDbTest extends TestCase {
      * index's first column, with or without the subfamily (EXPLAIN, as PlaceViewTotalDbTest for the place queries).
      */
     public void testTheSpecimenQueryCanUseTheGenusIndex() throws Exception {
-        exec(connection, "alter table specimen add index genus_species_idx (genus, species)");   // as on production
+        // as on production; only when the table does not have it yet (a second run in a schema that kept the table)
+        if (one("select count(*) from information_schema.statistics where table_schema = database() and table_name = 'specimen'"
+                + " and index_name = 'genus_species_idx'") == 0) {
+            exec(connection, "alter table specimen add index genus_species_idx (genus, species)");
+        }
         for (boolean withSubfamily : new boolean[] {true, false}) {
             String sql = ProjTaxonDb.antwebSpecimenOfGenusSql(withSubfamily);
             try (PreparedStatement s = connection.prepareStatement("explain " + sql)) {
@@ -400,6 +416,190 @@ public class ListCleanupOrderDbTest extends TestCase {
                 }
             }
         }
+    }
+
+    // ------------------------------------------------------------------ a deadlock is passed on (review of #347)
+
+    /** Which errors mean the transaction is gone: a deadlock (1213), not a lock wait timeout (1205), also as a cause. */
+    public void testWhichErrorsMeanTheTransactionIsGone() {
+        assertTrue(org.calacademy.antweb.util.DBUtil.transactionRolledBack(new java.sql.SQLException("Deadlock found", "40001", 1213)));
+        assertTrue("as the cause of another error", org.calacademy.antweb.util.DBUtil.transactionRolledBack(
+            new IllegalStateException("x", new RuntimeException(new java.sql.SQLException("Deadlock found", "40001", 1213)))));
+        assertTrue("another serialization failure", org.calacademy.antweb.util.DBUtil.transactionRolledBack(new java.sql.SQLException("x", "40001", 0)));
+        assertFalse("a lock wait timeout undoes one statement (the driver gives it the state 40001 too)",
+            org.calacademy.antweb.util.DBUtil.transactionRolledBack(new java.sql.SQLException("Lock wait timeout exceeded", "40001", 1205)));
+        assertFalse(org.calacademy.antweb.util.DBUtil.transactionRolledBack(new java.sql.SQLException("Unknown column", "42S22", 1054)));
+        assertFalse(org.calacademy.antweb.util.DBUtil.transactionRolledBack(new RuntimeException("x")));
+        assertFalse(org.calacademy.antweb.util.DBUtil.transactionRolledBack(null));
+    }
+
+    /**
+     * A specimen upload is one transaction on one connection: its specimens, then the rebuild of the AntWeb-wide list,
+     * one commit at the end (SpecimenUploadJob). Here the rule of the genus rows meets a real deadlock in the rebuild:
+     * another transaction, larger than the upload's so far, holds the record table and waits for a list row the rebuild
+     * holds; the rebuild then asks for the record table, and the database rolls the upload's transaction back. The
+     * rebuild must pass that on. Swallowed (until 2026-11-12), the upload went on, committed nothing of its specimens
+     * and reported success.
+     */
+    public void testADeadlockInTheRebuildIsPassedOn() throws Exception {
+        exec(connection, "set innodb_lock_wait_timeout = 5");   // no deadlock found: fail in seconds, not wait
+        connection.setAutoCommit(false);
+        Thread[] waiter = new Thread[1];
+        try (Connection other = connect()) {
+            exec(connection, "update project set specimen_count = 4321 where project_name = 'madants'");   // the upload's own writes
+            ProjTaxonDb.setBeforeGenusRuleForTests(() -> {
+                try {
+                    other.setAutoCommit(false);
+                    // a larger transaction than the upload's so far (the database rolls back the smaller of the two)
+                    StringBuilder rows = new StringBuilder();
+                    for (int i = 0; i < 2000; i++) rows.append(i == 0 ? "" : ", ").append("('project', 'weight', 'w").append(i).append("', now())");
+                    exec(other, "insert into " + ListRemovalLog.TABLE + " (list_type, list_key, taxon_name, removed_at) values " + rows);
+                    try (PreparedStatement s = other.prepareStatement("select id from " + ListRemovalLog.TABLE + " for update"); ResultSet r = s.executeQuery()) {
+                        while (r.next()) { /* every row and the gap after them are locked */ }
+                    }
+                    // and it waits for a row the rebuild has just put on the list
+                    waiter[0] = new Thread(() -> {
+                        try {
+                            exec(other, "update proj_taxon set source = 'x' where project_name = '" + ALL + "' and taxon_name = '" + CREMATOGASTER + "'");
+                        } catch (java.sql.SQLException e) {
+                            // the other side lost the deadlock: the rebuild then goes on and the test fails below
+                        }
+                    });
+                    waiter[0].start();
+                    Thread.sleep(700);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            java.sql.SQLException thrown = null;
+            try {
+                new ProjTaxonDb(connection).rebuildAllAntwebList();
+            } catch (java.sql.SQLException e) {
+                thrown = e;
+            }
+            ProjTaxonDb.setBeforeGenusRuleForTests(null);
+            assertNotNull("the rebuild swallowed the deadlock: the upload would go on on an empty transaction", thrown);
+            assertTrue("" + thrown, org.calacademy.antweb.util.DBUtil.transactionRolledBack(thrown));
+            assertEquals(1213, thrown.getErrorCode());
+            // why it must be passed on: the upload's own writes are gone from its transaction
+            assertEquals("the upload's write was rolled back by the database", 5, one("select specimen_count from project where project_name = 'madants'"));
+            waiter[0].join(10000);
+            other.rollback();
+            connection.rollback();
+            assertEquals("the list is as before the rebuild", Arrays.asList(CREMATOGASTER, PHEIDOLE, HYPO), genusRows(ALL));
+        } finally {
+            ProjTaxonDb.setBeforeGenusRuleForTests(null);
+            connection.setAutoCommit(true);
+        }
+    }
+
+    /**
+     * A lock wait timeout in the same place undoes the one statement that waited (the record), not the transaction:
+     * the rebuild logs it and goes on; the list follows the rule and the upload's writes are still in its transaction.
+     */
+    public void testALockWaitTimeoutInTheRebuildIsNotPassedOn() throws Exception {
+        exec(connection, "set innodb_lock_wait_timeout = 1");
+        connection.setAutoCommit(false);
+        try (Connection other = connect()) {
+            other.setAutoCommit(false);
+            exec(other, "insert into " + ListRemovalLog.TABLE + " (list_type, list_key, taxon_name, removed_at) values ('project', 'held', 'h', now())");
+            try (PreparedStatement s = other.prepareStatement("select id from " + ListRemovalLog.TABLE + " for update"); ResultSet r = s.executeQuery()) {
+                while (r.next()) { /* locked */ }
+            }
+            exec(connection, "update project set specimen_count = 4321 where project_name = 'madants'");
+            new ProjTaxonDb(connection).rebuildAllAntwebList();   // does not throw
+            assertEquals("the upload's write is still in its transaction", 4321, one("select specimen_count from project where project_name = 'madants'"));
+            assertEquals("the list follows the rule", Arrays.asList(PHEIDOLE, HYPO), genusRows(ALL));
+            other.rollback();
+            connection.commit();
+            assertEquals("the record that timed out is missing, nothing else", 0, records().size());
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+
+    // ------------------------------------------------------------------ the admin jobs say a failure (review of #347)
+
+    /**
+     * utilData.do?action=verifyProjTaxon and cleanupSpeciesListProxyRecords, by hand. The genus clean-up fails on its
+     * second project (another transaction holds the row, until the lock timeout) after it removed and recorded a row
+     * of the first: the job's answer says FAILED with the error, and what it removed and recorded is rolled back.
+     * Until 2026-11-12 the answer was as after a clean-up that found nothing more. Without an error: the rows by name.
+     */
+    public void testTheJobsByHandSayAFailureAndRollBack() throws Exception {
+        connection.setAutoCommit(false);
+        try (Connection other = connect()) {
+            other.setAutoCommit(false);
+            try (PreparedStatement s = other.prepareStatement("select taxon_name from proj_taxon where project_name = 'madants' and taxon_name = '"
+                    + CREMATOGASTER + "' for update"); ResultSet r = s.executeQuery()) {
+                assertTrue(r.next());
+            }
+            exec(connection, "set innodb_lock_wait_timeout = 1");
+            String answer = UtilDataAction.cleanListsByHand(connection, "verifyProjTaxon");
+            assertTrue(answer, answer.startsWith("verifyProjTaxon Records:; FAILED: genus rows: "));
+            assertTrue(answer, answer.endsWith("; no row removed (rolled back)"));
+            assertFalse("escaped for the job page: " + answer, answer.contains("<") || answer.contains("'"));
+            other.rollback();
+            connection.commit();
+            assertEquals("the row removed from the first project is back", Arrays.asList(CREMATOGASTER, PHEIDOLE, HYPO), genusRows(ALL));
+            assertEquals("and no record of it", 0, records().size());
+
+            // nothing in the way: the rows by project and name, the list totals counted again
+            answer = UtilDataAction.cleanListsByHand(connection, "verifyProjTaxon");
+            assertTrue(answer, answer.startsWith("verifyProjTaxon Records:deleteProjTaxon:2; rows removed from the lists of 2 projects: "
+                + ALL + " 1: " + CREMATOGASTER + "; madants 1: " + CREMATOGASTER + "; list totals counted again for "));
+            assertFalse(answer, answer.contains("FAILED"));
+            answer = UtilDataAction.cleanListsByHand(connection, "cleanupSpeciesListProxyRecords");
+            assertTrue(answer, answer.startsWith("Cleanup Species List Proxy Records:deleteProjTaxon:1; rows removed from the lists of 1 project: madants 1: " + DORYLINAE + "; "));
+            connection.commit();
+            assertEquals(3, records().size());
+            // nothing left to remove
+            assertEquals("verifyProjTaxon Records:null", UtilDataAction.cleanListsByHand(connection, "verifyProjTaxon"));
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+
+    // ------------------------------------------------------------------ a recurring removal is recorded once (review of #347)
+
+    /** The import (or a curator) puts Crematogaster back on madants with this source; the clean-up takes it off; the records then. */
+    private int putBackAndClean(String source) throws Exception {
+        exec(connection, "insert into proj_taxon (project_name, taxon_name, source) values ('madants', '" + CREMATOGASTER + "', '" + source + "')");
+        String line = new ProjTaxonDb(connection).cleanupLists();
+        assertTrue("removed again: " + line, line.endsWith(" s; madants 1: " + CREMATOGASTER));
+        return one("select count(*) from " + ListRemovalLog.TABLE + " where list_key = 'madants' and taxon_name = '" + CREMATOGASTER + "'");
+    }
+
+    /**
+     * The AntCat import puts the same fossil genera without species on the Fossil Ants list every day, and set 2 takes
+     * them off every day (staging 2026-11-12: dissimulodorylus, pseudosirex, formicites, myrmicites). The first removal
+     * is recorded; the same removal on the days after is not recorded again. Recorded again: a row a curator put back
+     * (its source says so), the import's row after that (the newest record is another one), and the import's row after
+     * a curator's own removal.
+     */
+    public void testTheSameRemovalDayAfterDayIsRecordedOnce() throws Exception {
+        new ProjTaxonDb(connection).cleanupLists();
+        assertEquals("day 1: the three rows", 3, records().size());
+        // days 2 and 3: the import puts the row back with the source it had, the clean-up takes it off: no new record
+        assertEquals("day 2", 1, putBackAndClean("specimen"));
+        assertEquals("day 3", 1, putBackAndClean("specimen"));
+        assertEquals(3, records().size());
+        // a curator puts it on the list (Species List Tool); without a species it goes again: recorded, with that source
+        assertEquals("a curator's row", 2, putBackAndClean("speciesListTool"));
+        assertEquals("a curator's row is recorded every time", 3, putBackAndClean("speciesListTool"));
+        assertEquals("the parent row a curator's entry made, too", 4, putBackAndClean("proxyspeciesListTool"));
+        // the import's row again: the newest record is the curator's row, another one: recorded; the day after, not
+        assertEquals("the import's row after the curator's", 5, putBackAndClean("specimen"));
+        assertEquals("and the day after", 5, putBackAndClean("specimen"));
+        // a curator removes the name with the Species List Tool (a record with a login); the import's row after that: recorded
+        exec(connection, "insert into " + ListRemovalLog.TABLE + " (list_type, list_key, taxon_name, source, removed_by_login, reason, removed_at)"
+            + " values ('project', 'madants', '" + CREMATOGASTER + "', 'specimen', 7, 'not in Madagascar', now() + interval 1 second)");
+        assertEquals("after a curator's own removal", 7, putBackAndClean("specimen"));
+        // a row of another source than the recorded one is another removal
+        assertEquals("another source", 8, putBackAndClean("antcat"));
+        // the record itself: the first of the import's rows stands, with its date
+        assertEquals(1, one("select count(*) from (select min(id) from " + ListRemovalLog.TABLE + " where list_key = 'madants' and taxon_name = '"
+            + CREMATOGASTER + "' and source = 'specimen' and removed_by_login is null and removed_at is not null) x"));
     }
 
     // ------------------------------------------------------------------ set 2's step: its own commit and rollback

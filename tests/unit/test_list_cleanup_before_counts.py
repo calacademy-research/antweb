@@ -82,8 +82,8 @@ def test_no_later_set_removes_project_list_rows():
     assert "populateStatistics(" in set_block(src, 4)
     # the two jobs stay available by hand, with the list totals counted again
     for job in ("cleanupSpeciesListProxyRecords", "verifyProjTaxon"):
-        assert 'if (action.equals("%s")) {' % job in src
-    assert src.count("listTotalsAfterRowsRemoved(connection, projTaxonDb)") == 2
+        assert 'action.equals("%s")' % job in src
+    assert src.count("listTotalsAfterRowsRemoved(connection, projTaxonDb)") == 1   # in cleanListsByHand, for both jobs
 
 
 def test_the_cleanup_is_the_two_of_set_5():
@@ -123,7 +123,8 @@ def test_one_rule_for_the_cleanup_and_the_rebuild_of_the_antweb_wide_list():
     assert "deleteProjTaxon(genus[0], projectName, null, record ? job : null, ListRemovalLog.REASON_GENUS_NO_SPECIES);" in body
     # every delete of the clean-ups goes through deleteProjTaxon, which records the row before it deletes it
     delete = method(src, "private String deleteProjTaxon(String taxonName, String projectName, String extraClause, String job, String reason) throws SQLException {")
-    assert delete.index("ListRemovalLog.recordWhere(getConnection(), ListRemovalLog.PROJECT,") < delete.index("stmt.executeUpdate(dml)")
+    # (recordWhereOnce since the review of #347: a row the import puts back every day is not recorded every day)
+    assert delete.index("ListRemovalLog.recordWhereOnce(getConnection(), ListRemovalLog.PROJECT,") < delete.index("stmt.executeUpdate(dml)")
     assert src.count("delete from proj_taxon \" + where") == 1
     assert "ListRemovalLog.JOB_PROXY_NO_CHILDREN, ListRemovalLog.REASON_PROXY_NO_CHILDREN);" in src
     # a red-flagged specimen is no specimen of the genus: the lists' own condition
@@ -139,6 +140,16 @@ def test_one_rule_for_the_cleanup_and_the_rebuild_of_the_antweb_wide_list():
     assert "childrenCountCrawl" not in rebuild and "updateCounts" not in rebuild
     assert rebuild.index("generaBefore.add(r.getString(1));") < rebuild.index("delete from proj_taxon where project_name = 'allantwebants'")
     assert "} catch (SQLException | RuntimeException e) {\n            s_log.error(\"rebuildAllAntwebList() genus rows e:\" + e);" in rebuild
+    # review of #347: a deadlock (the database rolled the upload's transaction back) is passed on, by the rebuild and by
+    # the record of removed rows; nothing else is
+    assert re.search(r"if \(DBUtil\.transactionRolledBack\(e\)\) \{\s*throw e instanceof SQLException \? \(SQLException\) e", rebuild)
+    log = read("src/org/calacademy/antweb/home/ListRemovalLog.java")
+    assert re.search(r"if \(org\.calacademy\.antweb\.util\.DBUtil\.transactionRolledBack\(e\)\) \{\s*throw new IllegalStateException\(", log)
+    util = read("src/org/calacademy/antweb/util/DBUtil.java")
+    rolled = util[util.index("public static boolean transactionRolledBack(Throwable e) {"):]
+    rolled = rolled[:rolled.index("\n    }\n")]
+    assert "sql.getErrorCode() == 1213" in rolled and 'sql.getErrorCode() != 1205' in rolled and "t.getCause()" in rolled
+
     regenerate = method(src, "public void regenerateAllAntweb() throws SQLException {")
     order = ["rebuildAllAntwebList();", 'childrenCountCrawl("allantwebants")', "allAntwebImageCount();", 'updateCounts("allantwebants")']
     positions = [regenerate.index(x) for x in order]
@@ -149,9 +160,23 @@ def test_one_rule_for_the_cleanup_and_the_rebuild_of_the_antweb_wide_list():
         assert "regenerateAllAntweb()" in read(f), f
 
 
+def test_the_jobs_by_hand_say_a_failure_and_roll_back():
+    src = read("src/org/calacademy/antweb/util/UtilDataAction.java")
+    assert re.search(r'if \(action\.equals\("cleanupSpeciesListProxyRecords"\) \|\| action\.equals\("verifyProjTaxon"\)\) \{\s*'
+                     r"message = cleanListsByHand\(connection, action\);", src)
+    start = src.index("public static String cleanListsByHand(Connection connection, String action) {")
+    job = code(src[start:src.index("\n    }\n", start)])
+    assert "if (projTaxonDb.cleanupFailed()) return head + rolledBack(connection, projTaxonDb.cleanupErrorsText());" in job
+    assert job.index("cleanupFailed()") < job.index("listTotalsAfterRowsRemoved(connection, projTaxonDb)")
+    start = src.index("private static String rolledBack(Connection connection, String errors) {")
+    undo = code(src[start:src.index("\n    }\n", start)])
+    assert "connection.rollback();" in undo and 'return "; FAILED: " + Html.esc(errors) + undone;' in undo
+
+
 if __name__ == "__main__":
     test_set_2_cleans_the_project_lists_before_the_first_count()
     test_no_later_set_removes_project_list_rows()
     test_the_cleanup_is_the_two_of_set_5()
     test_one_rule_for_the_cleanup_and_the_rebuild_of_the_antweb_wide_list()
+    test_the_jobs_by_hand_say_a_failure_and_roll_back()
     print("ok")
