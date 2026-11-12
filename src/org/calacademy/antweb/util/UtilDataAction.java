@@ -297,6 +297,37 @@ public class UtilDataAction extends AntwebAction {
         return line;
     }
 
+    /**
+     * Set 2's clean-up of the project lists (ProjTaxonDb.cleanupLists), with its own commit and rollback, as the two
+     * recounts after it. What set 2 did before (the data clean-up) is committed first: a deadlock in here makes the
+     * database roll back the whole open transaction, which was the data clean-up's work too. When one of the two
+     * clean-ups met an error, what this step removed is rolled back (after a deadlock the database has undone part of
+     * it already, so the line could not say truly which rows are gone) and the line says so; the lists are then as
+     * before, the counts that follow count them as they are, and the next daily update cleans them. One line for
+     * compute.log: ProjTaxonDb.cleanupLists' own, or "Project lists cleaned: NOT done, no row removed (...)".
+     */
+    public static String cleanProjectLists(Connection connection) {
+        String line;
+        try {
+            connection.commit();
+            ProjTaxonDb lists = new ProjTaxonDb(connection);
+            line = lists.cleanupLists();
+            if (lists.cleanupFailed()) {
+                connection.rollback();
+                line = ProjTaxonDb.CLEANUP_LOG + ": NOT done, no row removed (rolled back; the next daily update cleans the lists): "
+                    + lists.cleanupErrorsText();
+            } else {
+                connection.commit();
+            }
+        } catch (Exception e) {
+            try { connection.rollback(); } catch (SQLException e2) { s_log.error("cleanProjectLists() rollback e:" + e2); }
+            s_log.error("cleanProjectLists() e:" + e);
+            line = ProjTaxonDb.CLEANUP_LOG + ": NOT done, no row removed (" + e + ")";
+        }
+        LogMgr.appendLog("compute.log", "  " + line, true);
+        return line;
+    }
+
     /** Written to compute.log by set 2 when the AntCat list (worldants) was recounted; the count check's tests read it. */
     public static final String ANTCAT_LIST_RECOUNTED = "AntCat list (worldants) recounted after set 1";
 
@@ -521,9 +552,9 @@ public class UtilDataAction extends AntwebAction {
                 // set 5 removed them, after sets 3 and 4 had stored the project totals and the statistics row, so the
                 // count check found those numbers one or a few rows too high every day on production (staging skips
                 // set 5 and never showed it). ProjTaxonDb.cleanupLists.
-                String listCleanup = new ProjTaxonDb(connection).cleanupLists();
-                LogMgr.appendLog("compute.log", "  " + listCleanup, true);
-                message += " " + listCleanup;
+                // The line names taxa and, after an error, has the database's text: escaped for the job page (cleanProjectLists
+                // writes it to compute.log as it is).
+                message += " " + Html.esc(cleanProjectLists(connection));
                 // The clean-up deletes list rows (morphospecies without specimens, names no longer in the taxon table) from every
                 // project, the Global column (allantwebants) too, which the specimen upload had counted before it and nothing
                 // recounts after it: its genus and subfamily rows then counted more rows than they have (count check 2026-10-27,

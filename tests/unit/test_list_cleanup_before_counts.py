@@ -17,6 +17,10 @@ Source checks (the behaviour is tested against a database by home.ListCleanupOrd
     (until 2026-11-12 the rebuild listed every counted name and the clean-up removed a genus without species, so the
     list's Genera moved by one between an upload and the next daily update);
   - the line names the rows removed (Brian Fisher, 2026-11-03: no job deletes list entries without a record).
+
+Review of PR #346 (2026-11-12): set 2's step commits the data clean-up first and has its own rollback
+(UtilDataAction.cleanProjectLists), and its line is escaped in the job's answer; every row removed is recorded in
+list_removal_log; the specimen test leaves out red-flagged specimens by the lists' own condition.
 """
 import pathlib
 import re
@@ -46,13 +50,20 @@ CLEANUPS = ("cleanupLists", "verifyProjTaxon", "cleanupSpeciesListProxyRecords")
 def test_set_2_cleans_the_project_lists_before_the_first_count():
     src = read("src/org/calacademy/antweb/util/UtilDataAction.java")
     set2 = set_block(src, 2)
-    call = "String listCleanup = new ProjTaxonDb(connection).cleanupLists();"
-    log = 'LogMgr.appendLog("compute.log", "  " + listCleanup, true);'
-    order = ['doAction("dataCleanup"', call, log, "recountGlobal(connection)", "recountAntCatList(connection)", 'doAction("updateTaxonSets"',
+    # the line names taxa and may hold an error's text: escaped in the job's answer (an HTML page)
+    call = 'message += " " + Html.esc(cleanProjectLists(connection));'
+    order = ['doAction("dataCleanup"', call, "recountGlobal(connection)", "recountAntCatList(connection)", 'doAction("updateTaxonSets"',
              'doAction("geolocaleCountCrawl"', "Set 2 done"]
     positions = [set2.index(x) for x in order]
     assert positions == sorted(positions), list(zip(order, positions))
-    assert set2.count("cleanupLists") == 1
+    assert set2.count("cleanProjectLists(") == 1 and "cleanupLists" not in set2
+    # the step: the data clean-up committed first, then the clean-up, committed, or rolled back after an error; its line
+    start = src.index("public static String cleanProjectLists(Connection connection) {")
+    step = code(src[start:src.index("\n    }\n", start)])
+    order = ["connection.commit();", "line = lists.cleanupLists();", "if (lists.cleanupFailed()) {", "connection.rollback();", "NOT done, no row removed",
+             "connection.commit();\n            }", 'LogMgr.appendLog("compute.log", "  " + line, true);']
+    positions = [step.index(x) for x in order]
+    assert positions == sorted(positions), list(zip(order, positions))
     # the Global recount is the first count of a project list in the run after set 1
     assert "new ProjectDb(connection).updateCounts(Project.ALLANTWEBANTS);" in src[src.index("static String recountGlobal(Connection connection)"):]
 
@@ -104,18 +115,30 @@ def test_one_rule_for_the_cleanup_and_the_rebuild_of_the_antweb_wide_list():
     assert "for (String project : projects) removed += %s(project);" % rule in verify
     assert "hasNoChildren" not in verify
     # the method: no species row on the list; on the AntWeb-wide list also no specimen
-    body = method(src, "public int %s(String projectName) throws SQLException {" % rule)
+    assert "return removeGenusRows(projectName, ListRemovalLog.JOB_GENUS_NO_SPECIES, null);" in method(
+        src, "public int %s(String projectName) throws SQLException {" % rule)
+    body = method(src, "private int removeGenusRows(String projectName, String job, Set<String> recordOnly) throws SQLException {")
     assert "GENUS_ROWS_WITHOUT_SPECIES_SQL" in body
     assert "if (Project.ALLANTWEBANTS.equals(projectName) && antwebHasSpecimenOf(genus[1], genus[2])) continue;" in body
-    assert "deleteProjTaxon(genus[0], projectName);" in body
+    assert "deleteProjTaxon(genus[0], projectName, null, record ? job : null, ListRemovalLog.REASON_GENUS_NO_SPECIES);" in body
+    # every delete of the clean-ups goes through deleteProjTaxon, which records the row before it deletes it
+    delete = method(src, "private String deleteProjTaxon(String taxonName, String projectName, String extraClause, String job, String reason) throws SQLException {")
+    assert delete.index("ListRemovalLog.recordWhere(getConnection(), ListRemovalLog.PROJECT,") < delete.index("stmt.executeUpdate(dml)")
+    assert src.count("delete from proj_taxon \" + where") == 1
+    assert "ListRemovalLog.JOB_PROXY_NO_CHILDREN, ListRemovalLog.REASON_PROXY_NO_CHILDREN);" in src
+    # a red-flagged specimen is no specimen of the genus: the lists' own condition
+    sql = method(src, "public static String antwebSpecimenOfGenusSql(boolean withSubfamily) {")
+    assert 'SpecimenDb.notRedFlagged("s")' in sql and "s.genus = ?" in sql
     assert "ct.parent_taxon_name" in src[src.index("GENUS_ROWS_WITHOUT_SPECIES_SQL ="):][:700]
     # the rebuild: the rows in, the disputed ones out, then the rule, and only then the counts
     rebuild = method(src, "public void rebuildAllAntwebList() throws SQLException {")
     order = ["delete from proj_taxon where project_name = 'allantwebants'", "insert into proj_taxon (taxon_name, project_name, source)",
-             "from proj_taxon_dispute", "%s(Project.ALLANTWEBANTS)" % rule]
+             "from proj_taxon_dispute", "removeGenusRows(Project.ALLANTWEBANTS, ListRemovalLog.JOB_REBUILD_GENUS, generaBefore)"]
     positions = [rebuild.index(x) for x in order]
     assert positions == sorted(positions), list(zip(order, positions))
     assert "childrenCountCrawl" not in rebuild and "updateCounts" not in rebuild
+    assert rebuild.index("generaBefore.add(r.getString(1));") < rebuild.index("delete from proj_taxon where project_name = 'allantwebants'")
+    assert "} catch (SQLException | RuntimeException e) {\n            s_log.error(\"rebuildAllAntwebList() genus rows e:\" + e);" in rebuild
     regenerate = method(src, "public void regenerateAllAntweb() throws SQLException {")
     order = ["rebuildAllAntwebList();", 'childrenCountCrawl("allantwebants")', "allAntwebImageCount();", 'updateCounts("allantwebants")']
     positions = [regenerate.index(x) for x in order]

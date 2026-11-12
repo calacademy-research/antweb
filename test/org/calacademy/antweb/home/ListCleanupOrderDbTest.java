@@ -13,12 +13,14 @@ import junit.framework.TestCase;
 
 import org.calacademy.antweb.Overview;
 import org.calacademy.antweb.Project;
+import org.calacademy.antweb.home.ListRemovalLog;
 import org.calacademy.antweb.home.PlaceGenusCurationDb;
 import org.calacademy.antweb.home.PlaceViewTotalDb;
 import org.calacademy.antweb.home.ProjTaxonDb;
 import org.calacademy.antweb.home.ProjectDb;
 import org.calacademy.antweb.home.StatisticsDb;
 import org.calacademy.antweb.util.CountCheck;
+import org.calacademy.antweb.util.UtilDataAction;
 
 import static test.org.calacademy.antweb.util.NumbersTestDb.*;
 
@@ -56,6 +58,15 @@ import static test.org.calacademy.antweb.util.NumbersTestDb.*;
  *    the list; the daily clean-up then removes nothing from that list and its Genera do not move;
  *  - on a project list, whose specimens are those of its listed names, a genus without a species row goes.
  *
+ * Review of PR #346 (2026-11-12):
+ *  - every row the clean-up removes is recorded in list_removal_log (ListRemovalLog; Brian Fisher, 2026-11-03: "no job
+ *    deletes list entries without a record a curator can see"), every one, not only the ten the line names; the
+ *    rebuild records a genus that was on the list before it, once, and not the genus it only put on and took off;
+ *  - a red-flagged specimen keeps no genus on the AntWeb-wide list ("A red-flagged specimen never counts, in any view,
+ *    on any list", claude/antweb-list-design-rules.md);
+ *  - the specimen query of that rule can use the index genus_species_idx (EXPLAIN);
+ *  - set 2's step commits the data clean-up's work first and rolls back only its own after an error.
+ *
  * tests/unit/test_list_cleanup_before_counts.py checks in the source that set 2 calls the clean-up before its first
  * count and that no later set removes list rows. Runs in CI against MySQL 8.4; ANTWEB_TEST_DB_URL overrides.
  */
@@ -85,6 +96,10 @@ public class ListCleanupOrderDbTest extends TestCase {
         exec(connection, PlaceViewTotalDb.createStateTable(null, null));
         StatisticsDb.ensureHomeColumns(connection);
         exec(connection, "alter table taxon add column source varchar(30)");   // read by the rebuild of the AntWeb-wide list
+        // the record of removed list rows, empty
+        ListRemovalLog.forgetSchema();
+        ListRemovalLog.ensureSchema(connection);
+        exec(connection, "delete from " + ListRemovalLog.TABLE);
         // a valid genus without species, and a subfamily that is on madants only as a proxy row of the Species List Tool
         exec(connection, "insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus) values"
             + " ('" + CREMATOGASTER + "', 'genus', 'valid', '" + MYRM + "', 'formicidae', '" + MYRM + "', 'crematogaster'),"
@@ -97,6 +112,7 @@ public class ListCleanupOrderDbTest extends TestCase {
     @Override
     protected void tearDown() throws Exception {
         if (connection != null) {
+            connection.setAutoCommit(true);
             exec(connection, "drop table if exists proj_taxon_gone");
             connection.close();
         }
@@ -192,6 +208,12 @@ public class ListCleanupOrderDbTest extends TestCase {
             one("select count(*) from proj_taxon where taxon_name in ('" + CREMATOGASTER + "', '" + DORYLINAE + "') and project_name <> 'worldants'"));
         assertEquals("the AntCat list keeps every genus", 1, one("select count(*) from proj_taxon where project_name = 'worldants' and taxon_name = '" + CREMATOGASTER + "'"));
         assertEquals("the rows with children stay", 2, one("select count(*) from proj_taxon where project_name = 'madants' and taxon_name in ('" + PHEIDOLE + "', '" + HYPO + "')"));
+        // every removed row has its record, with the row's source, the job and the reason
+        assertEquals(Arrays.asList(
+            ALL + "|" + CREMATOGASTER + "|worldants|" + ListRemovalLog.JOB_GENUS_NO_SPECIES + "|" + ListRemovalLog.REASON_GENUS_NO_SPECIES,
+            "madants|" + DORYLINAE + "|proxyspeciesListTool|" + ListRemovalLog.JOB_PROXY_NO_CHILDREN + "|" + ListRemovalLog.REASON_PROXY_NO_CHILDREN,
+            "madants|" + CREMATOGASTER + "|specimen|" + ListRemovalLog.JOB_GENUS_NO_SPECIES + "|" + ListRemovalLog.REASON_GENUS_NO_SPECIES),
+            records());
 
         counts();
         assertEquals("madants Genera stored = listed", "[2, 2]", Arrays.toString(genera("madants")));
@@ -228,6 +250,10 @@ public class ListCleanupOrderDbTest extends TestCase {
         assertTrue(line, line.contains(", " + MYRM + "genus18 and 4 more; " + ALL + " 1: " + CREMATOGASTER));
         assertFalse("the eleventh row is counted, not named: " + line, line.contains(MYRM + "genus19"));
         assertEquals(db.removedRowsText(), line.substring(line.indexOf(" s; ") + 4));
+        // the record has every row, also the four the line does not name
+        assertEquals(15, records().size());
+        assertEquals(1, one("select count(*) from " + ListRemovalLog.TABLE + " where list_type = 'project' and list_key = 'madants' and taxon_name = '"
+            + MYRM + "genus22' and removed_by_job = '" + ListRemovalLog.JOB_GENUS_NO_SPECIES + "' and removed_at is not null"));
     }
 
     // ------------------------------------------------------------------ the rule at every moment: the AntWeb-wide list's rebuild
@@ -255,6 +281,16 @@ public class ListCleanupOrderDbTest extends TestCase {
             + " ('old1', '" + OLDGENUS + " moved', 'synonym', 'Madagascar', 'formicidae', '" + MYRM + "', 'oldgenus', 1)");
     }
 
+    /** The records of removed rows: "list key|name|source|job|reason", by list and name (a name twice: twice). */
+    private List<String> records() throws Exception {
+        List<String> out = new ArrayList<>();
+        try (PreparedStatement s = connection.prepareStatement("select concat_ws('|', list_key, taxon_name, coalesce(source, ''), removed_by_job, reason) from "
+                + ListRemovalLog.TABLE + " where list_type = 'project' and removed_by_login is null order by list_key, taxon_name, id"); ResultSet r = s.executeQuery()) {
+            while (r.next()) out.add(r.getString(1));
+        }
+        return out;
+    }
+
     private List<String> genusRows(String project) throws Exception {
         List<String> out = new ArrayList<>();
         try (PreparedStatement s = connection.prepareStatement("select l.taxon_name from proj_taxon l join taxon t on t.taxon_name = l.taxon_name"
@@ -277,6 +313,14 @@ public class ListCleanupOrderDbTest extends TestCase {
         new ProjTaxonDb(connection).rebuildAllAntwebList();
         assertEquals("genus rows after the rebuild: not the genus without species or specimens",
             Arrays.asList(LIOPONERA, OLDGENUS, PHEIDOLE, HYPO), genusRows(ALL));
+        // Crematogaster was on the list before this rebuild (setUp) and is not after it: one record (its source is the one
+        // the rebuild gave the row it took off: none here, the test's taxon rows have no source)
+        String crematogaster = ALL + "|" + CREMATOGASTER + "||" + ListRemovalLog.JOB_REBUILD_GENUS + "|" + ListRemovalLog.REASON_GENUS_NO_SPECIES;
+        assertEquals(Arrays.asList(crematogaster), records());
+        // the next upload's rebuild puts it on the list and takes it off again: it was not on the list before, no second record
+        new ProjTaxonDb(connection).rebuildAllAntwebList();
+        assertEquals(Arrays.asList(LIOPONERA, OLDGENUS, PHEIDOLE, HYPO), genusRows(ALL));
+        assertEquals("one record, not one per upload", Arrays.asList(crematogaster), records());
         assertEquals("every other counted name is on the list (the rule is about genus rows only)", 0,
             one("select count(*) from taxon t where t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')"
                 + " and t.taxon_name <> '" + CREMATOGASTER + "' and t.taxon_name not in (select taxon_name from proj_taxon where project_name = '" + ALL + "')"));
@@ -300,11 +344,109 @@ public class ListCleanupOrderDbTest extends TestCase {
         assertTrue(line, line.endsWith(" s; " + ALL + " 1: " + OLDGENUS));
         new ProjTaxonDb(connection).rebuildAllAntwebList();
         assertEquals(Arrays.asList(LIOPONERA, PHEIDOLE, HYPO), genusRows(ALL));
+        assertEquals("Oldgenus: recorded by the clean-up that took it off", 1, one("select count(*) from " + ListRemovalLog.TABLE
+            + " where list_key = '" + ALL + "' and taxon_name = '" + OLDGENUS + "' and removed_by_job = '" + ListRemovalLog.JOB_GENUS_NO_SPECIES + "'"));
         // a name a curator removed from the list (a dispute) is not a species row: its genus goes with it
         exec(connection, "delete from specimen where code = 'lio1'");
         exec(connection, "insert into proj_taxon_dispute (project_name, taxon_name) values ('" + ALL + "', '" + LIOPONERA + " (indet)')");
         new ProjTaxonDb(connection).rebuildAllAntwebList();
         assertEquals(Arrays.asList(PHEIDOLE, HYPO), genusRows(ALL));
+        assertEquals("Lioponera was on the list before that rebuild: recorded by it", 1, one("select count(*) from " + ListRemovalLog.TABLE
+            + " where list_key = '" + ALL + "' and taxon_name = '" + LIOPONERA + "' and removed_by_job = '" + ListRemovalLog.JOB_REBUILD_GENUS + "'"));
+    }
+
+    /**
+     * "A red-flagged specimen never counts, in any view, on any list" (claude/antweb-list-design-rules.md): a genus whose
+     * only specimen in AntWeb is red-flagged, with no name on the list, has no specimen there and goes from the
+     * AntWeb-wide list, by the rebuild and by the clean-up; unflagged, it stays.
+     */
+    public void testARedFlaggedSpecimenKeepsNoGenusOnTheList() throws Exception {
+        moreGenera();
+        exec(connection, "update specimen set flag = 'red' where code = 'old1'");
+        new ProjTaxonDb(connection).rebuildAllAntwebList();
+        assertEquals("Oldgenus has only a red-flagged specimen", Arrays.asList(LIOPONERA, PHEIDOLE, HYPO), genusRows(ALL));
+        // the clean-up, on a list that still has the row
+        exec(connection, "insert into proj_taxon (project_name, taxon_name, source) values ('" + ALL + "', '" + OLDGENUS + "', 'specimen')");
+        ProjTaxonDb db = new ProjTaxonDb(connection);
+        assertEquals(1, db.removeGenusRowsWithoutSpeciesOrSpecimen(ALL));
+        assertEquals(ALL + " 1: " + OLDGENUS, db.removedRowsText());
+        // another flag, or the flag taken off: a specimen of the genus, and the genus stays
+        for (String flag : new String[] {"'yellow'", "null"}) {
+            exec(connection, "update specimen set flag = " + flag + " where code = 'old1'");
+            new ProjTaxonDb(connection).rebuildAllAntwebList();
+            assertEquals("flag " + flag, Arrays.asList(LIOPONERA, OLDGENUS, PHEIDOLE, HYPO), genusRows(ALL));
+        }
+        // the condition is the lists' own
+        assertTrue(ProjTaxonDb.antwebSpecimenOfGenusSql(true).contains(org.calacademy.antweb.home.SpecimenDb.notRedFlagged("s")));
+    }
+
+    /**
+     * The specimen query of the rule, asked once per genus row without a species row at each rebuild of the AntWeb-wide
+     * list (every upload): with production's index genus_species_idx (genus, species) it reads by the genus, the
+     * index's first column, with or without the subfamily (EXPLAIN, as PlaceViewTotalDbTest for the place queries).
+     */
+    public void testTheSpecimenQueryCanUseTheGenusIndex() throws Exception {
+        exec(connection, "alter table specimen add index genus_species_idx (genus, species)");   // as on production
+        for (boolean withSubfamily : new boolean[] {true, false}) {
+            String sql = ProjTaxonDb.antwebSpecimenOfGenusSql(withSubfamily);
+            try (PreparedStatement s = connection.prepareStatement("explain " + sql)) {
+                s.setString(1, "pheidole");
+                if (withSubfamily) s.setString(2, MYRM);
+                try (ResultSet r = s.executeQuery()) {
+                    assertTrue(r.next());
+                    assertEquals("s", r.getString("table"));
+                    assertTrue(sql + ": possible_keys " + r.getString("possible_keys"), String.valueOf(r.getString("possible_keys")).contains("genus_species_idx"));
+                    // (which key is used on a table of a few rows is the optimizer's choice; that it can use this one is the point)
+                }
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ set 2's step: its own commit and rollback
+
+    /**
+     * Set 2 runs in one transaction. Its step commits what the data clean-up did before it starts, so a deadlock in the
+     * list clean-up (the database then rolls back the whole open transaction) cannot undo the data clean-up. Here the
+     * genus clean-up fails (another transaction holds a row it must delete, until the lock timeout) after the proxy row
+     * was removed: the step's own work is rolled back, the line says that no row was removed, no record is left of
+     * rows that are still there, and the data clean-up's work is committed. Then, with nothing in the way, the step
+     * removes, records and commits.
+     */
+    public void testSet2sStepCommitsTheDataCleanupAndRollsBackOnlyItself() throws Exception {
+        connection.setAutoCommit(false);
+        try (Connection other = connect(); Connection reader = connect()) {
+            exec(connection, "update project set specimen_count = 4321 where project_name = 'madants'");   // the data clean-up's work, not committed
+            other.setAutoCommit(false);
+            try (PreparedStatement s = other.prepareStatement("select taxon_name from proj_taxon where project_name = 'madants' and taxon_name = '"
+                    + CREMATOGASTER + "' for update"); ResultSet r = s.executeQuery()) {
+                assertTrue(r.next());
+            }
+            exec(connection, "set innodb_lock_wait_timeout = 1");
+            String line = UtilDataAction.cleanProjectLists(connection);
+            assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": NOT done, no row removed (rolled back; the next daily update cleans the lists): genus rows: "));
+            connection.rollback();   // whatever set 2 would still roll back: nothing of the data clean-up
+            other.rollback();
+            try (PreparedStatement s = reader.prepareStatement("select (select specimen_count from project where project_name = 'madants'),"
+                    + " (select count(*) from proj_taxon where taxon_name in ('" + CREMATOGASTER + "', '" + DORYLINAE + "')),"
+                    + " (select count(*) from " + ListRemovalLog.TABLE + ")"); ResultSet r = s.executeQuery()) {
+                assertTrue(r.next());
+                assertEquals("the data clean-up's work was committed before the step", 4321, r.getInt(1));
+                assertEquals("the proxy row removed before the error is back: no row removed", 4, r.getInt(2));
+                assertEquals("no record of a row that is still on its list", 0, r.getInt(3));
+            }
+            // nothing in the way: removed, recorded, committed
+            line = UtilDataAction.cleanProjectLists(connection);
+            assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 rows removed in "));
+            connection.rollback();
+            try (PreparedStatement s = reader.prepareStatement("select (select count(*) from proj_taxon where taxon_name in ('" + CREMATOGASTER + "', '" + DORYLINAE
+                    + "') and project_name <> 'worldants'), (select count(*) from " + ListRemovalLog.TABLE + ")"); ResultSet r = s.executeQuery()) {
+                assertTrue(r.next());
+                assertEquals("committed by the step", 0, r.getInt(1));
+                assertEquals(3, r.getInt(2));
+            }
+        } finally {
+            connection.setAutoCommit(true);
+        }
     }
 
     /**

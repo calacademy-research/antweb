@@ -192,12 +192,17 @@ def test_set5_skipped_on_staging(run_lines):
         f"no '{SET5_SKIPPED}' between 'Set 4 done' and the steps after the sets:\n" + _quote(run_lines[set4:after + 1]))
 
 
+# The two jobs of the project list clean-up: daily steps since 2026-11-12 (set 2), also admin jobs by hand.
+LIST_CLEANUP_JOBS = ("/utilData.do?action=cleanupSpeciesListProxyRecords", "/utilData.do?action=verifyProjTaxon")
+
+
 def test_project_lists_cleaned_line(run_lines):
     """Set 2 takes the rows off project lists that go once their children are gone (a genus row without species, a
     proxy row without children; ProjTaxonDb.cleanupLists) right after the data clean-up and before the Global recount,
     the first count of a project list, and writes "Project lists cleaned: N rows removed in S s; <project> n: <names>;
     ..." (the rows by project and name, up to ten names per project, then "and N more": Brian Fisher, 2026-11-03, no
-    job deletes list entries without a record; administrators read compute.log in the Log Manager).
+    job deletes list entries without a record; administrators read compute.log in the Log Manager; every row is also
+    recorded in list_removal_log, which the lists' view All specimen names shows).
     Until 2026-11-12 set 5 removed them on production after the counts (count check 11-12: Genera of fossilants 259
     stored, 258 listed; allantwebants 536, 535; proj_taxa 70,419, 70,413), and staging, which skips set 5, never ran
     them. A run from before the change has no such line: skipped then. Once staging's daily update has written it,
@@ -207,7 +212,8 @@ def test_project_lists_cleaned_line(run_lines):
         pytest.skip(f"the nightly run that began {run_lines[0][0]} has no 'Project lists cleaned:' line: it ran before "
                     "the change of 2026-11-12 was deployed")
     line = run_lines[i][1]
-    assert not FAILED.search(line), line[:300]
+    # "Project lists cleaned: NOT done, no row removed (...)" when the step met an error and rolled its work back
+    assert not FAILED.search(line), f"{' and '.join(LIST_CLEANUP_JOBS)}: {line[:300]}"
     m = re.match(r"Project lists cleaned: (\d+) rows removed in \d+ s(?:; (.*))?$", line)
     assert m, line[:300]
     projects = [p for p in (m.group(2) or "").split("; ") if p]

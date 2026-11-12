@@ -822,9 +822,14 @@ and (`removed_at`).
 "nightly clean-up: morphospecies with no specimens", `GeolocaleTaxonDb` and `ProjTaxonDb.deleteUncuratedMorphosWithoutSpecimen`;
 "nightly clean-up: name no longer in AntWeb", `deleteGeolocaleTaxaWithoutTaxon` and the project rows without a taxon;
 the curators' rows of those names are parked first, `taxon_set_parked`, and come back); the orphan tool
-(`OrphansDb.deleteTaxon`: "orphan tool: name deleted"). Not the routine rebuilds (the rows from specimens deleted and
-inserted again each night, the AntCat rows of set 1, the Global list allantwebants, the proxy and childless genus rows
-of set 5). Created at startup when missing (`ListRemovalLog.ensureSchema`, from `LoginMgr`; DDL only when missing, as a
+(`OrphansDb.deleteTaxon`: "orphan tool: name deleted"); since 2026-11-12 the clean-up of the project lists, set 2
+(`ProjTaxonDb.cleanupLists`, every row: "list clean-up: genus with no species row or specimen", "list clean-up:
+Species List Tool proxy row with no children"; until then these rows of set 5 were not recorded), and the rebuild of
+the AntWeb-wide list for a genus that was on the list before it and is off it afterwards ("AntWeb-wide list rebuilt:
+genus with no species row or specimen"). Not the routine rebuilds (the rows from specimens deleted and inserted again
+each night, the AntCat rows of set 1, the rows of the Global list allantwebants that its rebuild puts on the list
+again). A genus the AntCat import puts on the Fossil Ants list every day without a species there is taken off and
+recorded every day. Created at startup when missing (`ListRemovalLog.ensureSchema`, from `LoginMgr`; DDL only when missing, as a
 CREATE commits an open transaction). Record: `db/upgrade/8.115/2026-11-03-list-removal-log.sql`.
 
 **One-off data scripts** that delete list rows write the same record first, with the delete's condition on alias `l`

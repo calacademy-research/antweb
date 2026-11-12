@@ -28,7 +28,8 @@ import org.apache.commons.logging.LogFactory;
  * row keeps the reason too) and by the jobs that remove names, not by the routine rebuilds (the nightly delete and
  * re-insert of the rows from specimens, the AntCat rows of set 1, the Global list): the nightly clean-up of morphospecies
  * without specimens and of names no longer in AntWeb (TaxonSetDb.dataCleanup; the curators' rows are parked first and
- * come back), and the orphan tool (OrphansDb.deleteTaxon). Rows are recorded just before the delete, by the same
+ * come back), the clean-up of the project lists (ProjTaxonDb: a genus row with neither a species row nor a specimen, a
+ * Species List Tool proxy row without children; since 2026-11-12, every row) and the orphan tool (OrphansDb.deleteTaxon). Rows are recorded just before the delete, by the same
  * condition (recordWhere), in one insert per step. Read by the lists' view All specimen names (ListView.loadRemovals:
  * "removed from the list by ... (date): reason").
  *
@@ -56,10 +57,17 @@ public final class ListRemovalLog {
     public static final String JOB_MORPHO_NO_SPECIMEN = "nightly clean-up: morphospecies with no specimens";
     public static final String JOB_NO_TAXON = "nightly clean-up: name no longer in AntWeb";
     public static final String JOB_ORPHAN = "orphan tool: name deleted";
+    /** The clean-up of the project lists (ProjTaxonDb.cleanupLists, the daily update's set 2; also the two admin jobs). */
+    public static final String JOB_GENUS_NO_SPECIES = "list clean-up: genus with no species row or specimen";
+    public static final String JOB_PROXY_NO_CHILDREN = "list clean-up: Species List Tool proxy row with no children";
+    /** The rebuild of the AntWeb-wide list (ProjTaxonDb.rebuildAllAntwebList): a genus that was on the list before it. */
+    public static final String JOB_REBUILD_GENUS = "AntWeb-wide list rebuilt: genus with no species row or specimen";
 
     /** The reasons the jobs give. */
     public static final String REASON_MORPHO_NO_SPECIMEN = "a morphospecies with no specimens left in AntWeb";
     public static final String REASON_NO_TAXON = "the name is no longer in AntWeb; a curator's entry comes back if the name does";
+    public static final String REASON_GENUS_NO_SPECIES = "a genus stays on a list only with a species row of that genus or a specimen of it there";
+    public static final String REASON_PROXY_NO_CHILDREN = "the row stood for the names under it, and none of them is on the list any more";
 
     public static String createTable(String charset, String collation) {
         return "CREATE TABLE IF NOT EXISTS " + TABLE + " ("
