@@ -207,6 +207,24 @@ public class IslandCountryTest extends TestCase {
         assertEquals("Galapagos Islands", RecordPlace.validIsland(countries, "Galápagos").getName());
     }
 
+    /**
+     * Region and subregion of a record filed under such a place (automatic review, 2026-11-11): the place row's value
+     * where it has one, otherwise the record's own; null, a blank and the texts "none" and "null" are no value and are
+     * never stored. The same rule as the one-time update (tools/place/island_countries.py, new_value and blank).
+     */
+    public void testRegionAndSubregionAreTheRowsOrTheRecordsOwn() {
+        assertEquals("Oceania", RecordPlace.rowValueOr("Oceania", "Americas"));
+        assertEquals("Oceania", RecordPlace.rowValueOr("Oceania", null));
+        for (String none : new String[] {null, "", "  ", "none", "None", "null", "NULL", " none "}) {
+            assertTrue("[" + none + "]", RecordPlace.hasNoValue(none));
+            assertEquals("[" + none + "]", "Americas", RecordPlace.rowValueOr(none, "Americas"));
+            assertNull("[" + none + "]", RecordPlace.rowValueOr(none, null));
+            assertNull("the record's own text none is not stored either", RecordPlace.rowValueOr(none, "none"));
+        }
+        assertFalse(RecordPlace.hasNoValue("Nonesuch"));
+        assertFalse(RecordPlace.hasNoValue("North America"));
+    }
+
     /** The parent's page: its islands that are countries of their own, and the line it shows. */
     public void testIslandsOfThePoliticalParentAndThePageNote() {
         List<Country> islands = new ArrayList<>();

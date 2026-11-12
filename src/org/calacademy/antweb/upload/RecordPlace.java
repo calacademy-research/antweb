@@ -28,14 +28,17 @@ import org.calacademy.antweb.geolocale.Country;
  *   2. the adm1 is, in that country, an old name whose valid name is not a state of the country but a valid country:
  *      United States + Oahu (the row Oahu of United States names Hawaii), and Mauritius + Rodrigues once the row
  *      Rodrigues of Mauritius names the country Rodrigues. The target need not be flagged as an island.
- * The record is then filed under that country: its name, and (the caller) its region, subregion and bioregion. The
+ * The record is then filed under that country: its name, and (the caller) its region, subregion and bioregion. Region
+ * and subregion: the place row's value where it has one, otherwise the record keeps the value it has (rowValueOr; the
+ * same rule as tools/place/island_countries.py for the specimens already stored: no value is null, blank, or the
+ * texts "none" and "null" the place table holds for no value; such a text is never stored). The
  * adm1 is dropped when it was the place's own name or one of its old names (aliasNames); any other adm1 is kept as
  * the file wrote it (country Hawaii + adm1 Maui: AntWeb has no adm1 rows under the islands yet, so it is stored and
  * shown on the specimen, and has no page or list of its own). Null when neither rule applies: the record is handled
  * as before.
  *
  * No database: the maps are GeolocaleMgr's (all country names of any validity; adm1 by name and country).
- * Tests: IslandCountryTest. Docs: docs/flows/places.md ("Islands that are their own country").
+ * Tests: IslandCountryTest, IslandParseLineTest (parseLine itself). Docs: docs/flows/places.md ("Islands that are their own country").
  */
 public final class RecordPlace {
 
@@ -110,6 +113,24 @@ public final class RecordPlace {
             }
         }
         return names;
+    }
+
+    /**
+     * The region or subregion to store for a record filed under a place: the place row's value where it has one,
+     * otherwise the value the record has already (from its country as the file wrote it). The place table holds null,
+     * a blank, "none" or "null" for no value; none of them is stored. The one-time update of the stored specimens
+     * (tools/place/island_countries.py, new_value) follows the same rule, so an upload and the update give a specimen
+     * the same values (automatic review, 2026-11-11: the upload removed the value on null and stored the text "none").
+     */
+    public static String rowValueOr(String rowValue, String recordValue) {
+        String value = hasNoValue(rowValue) ? recordValue : rowValue;
+        return hasNoValue(value) ? null : value;
+    }
+
+    public static boolean hasNoValue(String value) {
+        if (value == null) return true;
+        String v = value.trim();
+        return v.isEmpty() || "none".equalsIgnoreCase(v) || "null".equalsIgnoreCase(v);
     }
 
     /** The valid name column also holds the text "none" (and "null") for no valid name. */

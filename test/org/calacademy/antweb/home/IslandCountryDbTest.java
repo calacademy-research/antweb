@@ -39,6 +39,12 @@ import org.calacademy.antweb.home.SpecimenDb;
  * Places: Americas > North America > United States; Americas > South America > Ecuador, Galapagos Islands (island of
  * Ecuador); Oceania > Polynesia > Hawaii (island of United States). Runs in CI against MySQL 8.4 (host "mysql");
  * ANTWEB_TEST_DB_URL overrides.
+ *
+ * The test works in a schema of its own (ant_islandtest), which it makes and drops: it never touches a table of the
+ * schema its address names, so pointed at a real AntWeb database by mistake it changes nothing there (automatic
+ * review, 2026-11-11: it dropped specimen, taxon and geolocale in the address's schema, as the older database tests
+ * of this folder still do). The login needs rights on ant_islandtest (CI grants them to antweb; the statement is in
+ * the failure message).
  */
 public class IslandCountryDbTest extends TestCase {
 
@@ -52,6 +58,9 @@ public class IslandCountryDbTest extends TestCase {
     static final int AMERICAS = 1, NORTH_AMERICA = 2, SOUTH_AMERICA = 3, OCEANIA = 4, POLYNESIA = 5,
                      US = 97, ECUADOR = 103, HAWAII = 423, GALAPAGOS = 1721;
 
+    /** The test's own schema: made in setUp, dropped in tearDown; nothing outside it is read or written. */
+    static final String SCHEMA = "ant_islandtest";
+
     private Connection connection;
 
     @Override
@@ -61,9 +70,17 @@ public class IslandCountryDbTest extends TestCase {
         connection = DriverManager.getConnection(url, System.getenv().getOrDefault("ANTWEB_TEST_DB_USER", "antweb"),
             System.getenv().getOrDefault("ANTWEB_TEST_DB_PASSWORD", "CHANGE_ME"));
         connection.setAutoCommit(true);
-        for (String t : new String[] {"specimen", "image", "taxon", "geolocale", "geolocale_taxon", "place_specimen_name"}) {
-            exec("drop table if exists " + t);
+        try {
+            exec("drop database if exists " + SCHEMA);     // left by a run that stopped in setUp
+            exec("create database " + SCHEMA);
+        } catch (SQLException e) {
+            connection.close();
+            connection = null;
+            throw new SQLException("IslandCountryDbTest works in its own schema and the login may not make it. As root: grant all on "
+                + SCHEMA + ".* to '<the login>'@'%'  (" + e.getMessage() + ")", e);
         }
+        connection.setCatalog(SCHEMA);
+        assertEquals("the test's own schema", l(SCHEMA), column("select database()", 1));
         exec("create table taxon (taxon_name varchar(128) primary key, taxarank varchar(20), status varchar(40), parent_taxon_name varchar(128),"
             + " family varchar(64), subfamily varchar(64), genus varchar(64), species varchar(64), fossil tinyint default 0)");
         exec("create table specimen (code varchar(128) primary key, taxon_name varchar(128), status varchar(40), country varchar(64),"
@@ -119,7 +136,7 @@ public class IslandCountryDbTest extends TestCase {
     @Override
     protected void tearDown() throws Exception {
         if (connection != null) {
-            for (String t : new String[] {"image", "geolocale", "place_specimen_name"}) exec("drop table if exists " + t);
+            exec("drop database if exists " + SCHEMA);     // every table the test made, and nothing else
             connection.close();
         }
     }

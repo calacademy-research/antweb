@@ -26,7 +26,9 @@ What changes (--apply):
               the country Rodrigues (ALIASES below). Only when the row is as described; otherwise it is reported.
 
 What the report shows besides: the islands with their rows; the specimens to move by island, present country and
-upload group; specimens the tool does not change (a specimen under the parent whose adm1 is an old name of the
+upload group; every old state name that files an upload's record under a country (the place rows the upload's
+second rule reads: an adm1 row that is not valid and whose valid name is a valid country, not a state of its own
+country), each marked when it is not one of the names this round expects (EXPECTED_OLD_NAMES): stop and ask then; specimens the tool does not change (a specimen under the parent whose adm1 is an old name of the
 island and that has no island_country: its group's next upload files it); for each island the specimens whose
 coordinates lie outside the island's bounding box (from now on the upload checks an island's specimen against the
 island's box, not the parent's: these would be red-flagged at their next upload: correct the box first); and, for a
@@ -38,9 +40,11 @@ It writes one folder (default /root/antweb-island-countries/<date>-<time>/): rep
 island, present country and group), parent_list_rows.csv, outside_box.csv, and with --apply specimens.csv (every
 specimen changed with its old and new values).
 
---apply: (1) asks AntWeb whether an upload or the daily update is running and stops if so; (2) writes the backup
+--apply: (1) asks AntWeb whether an upload or the daily update is running and stops if so, or if AntWeb does not
+answer (--even-if-busy goes on in both cases: only when AntWeb is known to be stopped); (2) writes the backup
 table island_countries_backup_<date>_<time> (every specimen that will change, with its old country, region and
-subregion and the new ones) and ..._geolocale (the old-name rows it will change); (3) stops, before changing
+subregion and the new ones) and ..._geolocale (the old-name rows it will change, with the valid name it gives them);
+(3) stops, before changing
 anything, when the backup holds another number of specimens than the report counted (an upload ran in between: run
 it again); (4) changes the specimens and the rows in one transaction, a specimen only while it still has the country
 the backup recorded; (5) reads again and expects nothing left. Safe to run twice: a second run finds nothing to
@@ -49,14 +53,17 @@ move and writes no table.
 The AntWeb code that files islands under their own name must be live first: the CAS TaxonWorks upload loads every
 CAS specimen again each morning, and with the old code it would put them back under the parent.
 
-Afterwards: when an old-name row changed, reload the places AntWeb keeps in memory (Technical page, "countries and
-adm1s (geolocales)"). The species lists and every number of the islands and their parents are built again by the
-next daily update (set 2: lists from specimens, counts, endemic and introduced; set 4: images, views, imaging
-progress; set 5: maps); until then the pages show yesterday's numbers.
+Afterwards: when an old-name row changed, reload the places AntWeb keeps in memory (as an administrator,
+util.do?action=reloadAntwebMgr&name=geolocale). The species lists and every number of the islands and their parents
+are built again by the next daily update (set 2: lists from specimens, counts, endemic and introduced; set 4: images,
+views, imaging progress; set 5: maps, and it reloads the places); until then the pages show yesterday's numbers. When
+the sets are run by hand instead, reload the places once more at the end: the pages read their numbers from the
+places held in memory (staging, 2026-11-11: the Galapagos Islands page said Endemic 0 until that reload).
 
 Rollback: --rollback <table> puts back country, region and subregion of every specimen of that table that still has
-the values this tool gave it, and the valid names of the rows it changed. The tables stay until an administrator
-drops them. Roll the code back first (or the next CAS upload moves the CAS specimens again).
+the values this tool gave it, and the old valid name of every row that still has the valid name this tool gave it
+(a row an administrator changed since is left as it is and named). The tables stay until an administrator drops
+them. Roll the code back first (or the next CAS upload moves the CAS specimens again).
 
 The password is read from <project>/etc/db.properties and goes to docker through the environment, never on a
 command line. How to run it: docs/runbook.md, "Islands that are their own country". Tests:
@@ -72,7 +79,7 @@ import subprocess
 import sys
 import urllib.request
 
-VERSION = "1"
+VERSION = "2"
 TABLE_NAME = re.compile(r"^island_countries_backup_\d{8}_\d{4}$")
 
 # Old-name rows to give a valid name: (adm1 name, its country, the valid country it now names).
@@ -83,8 +90,8 @@ ALIASES = [("Rodrigues", "Mauritius", "Rodrigues")]
 
 def blank(value):
     """The place table holds the text "none" (and "null") for no value."""
-    v = (value or "").strip()
-    return v == "" or v.lower() == "none" or v == "null"
+    v = (value or "").strip().lower()
+    return v in ("", "none", "null")
 
 
 class Island:
@@ -181,6 +188,25 @@ BY_ADM1_SQL = ("select " + hx("s.country") + ", " + hx("s.adm1") + ", " + hx("g.
                " and not exists (select 1 from geolocale v where v.georank = 'adm1' and v.name = a.valid_name and v.parent = a.parent and v.is_valid = 1)"
                " group by 1, 2, 3 order by 4 desc")
 
+# Every old state name that files a record under a country (RecordPlace, rule 2): an adm1 row that is not valid, whose
+# valid name is a valid country other than its own, and not a valid state of its own country.
+OLD_NAME_ROWS_SQL = ("select a.id, " + hx("a.name") + ", " + hx("a.parent") + ", " + hx("a.valid_name") + " from geolocale a"
+                     " join geolocale c on c.georank = 'country' and c.is_valid = 1 and c.name = a.valid_name"
+                     " where a.georank = 'adm1' and coalesce(a.is_valid, 0) = 0 and a.valid_name <> a.parent"
+                     " and not exists (select 1 from geolocale b where b.georank = 'adm1' and b.parent = a.parent and b.name = a.valid_name"
+                     " and b.is_valid = 1) order by a.parent, a.name, a.id")
+
+# (adm1, its country, the country the record is filed under) this round expects; any other row: stop and ask
+# (production and staging, 2026-11-11: rows 620, 1017, 2394; Rodrigues once this tool has set its valid name).
+EXPECTED_OLD_NAMES = {("Oahu", "United States", "Hawaii"), ("Galapagos", "Ecuador", "Galapagos Islands"),
+                      ("Galápagos", "Ecuador", "Galapagos Islands"), ("Rodrigues", "Mauritius", "Rodrigues")}
+
+
+def unexpected_old_names(rows):
+    """The rows (id, adm1, country, valid name) that are not among EXPECTED_OLD_NAMES."""
+    return [r for r in rows if (r[1], r[2], r[3]) not in EXPECTED_OLD_NAMES]
+
+
 COORDINATES_SQL = ("select " + hx("g.name") + ", s.decimal_latitude, s.decimal_longitude, count(*) from specimen s join geolocale g on "
                    + OF_ISLAND + " and " + ISLAND_ROW + " where s.decimal_latitude is not null and s.decimal_longitude is not null"
                    " group by 1, 2, 3")
@@ -212,14 +238,16 @@ def new_value(island_column, specimen_column):
     return "if(coalesce(" + island_column + ", '') in ('', 'none', 'null'), " + specimen_column + ", " + island_column + ")"
 
 
-def backup_sql(table, alias_ids):
-    """The backup tables. Statements, in order."""
+def backup_sql(table, aliases):
+    """The backup tables. Statements, in order. aliases: (row id, valid name it will get)."""
     out = ["create table " + table + " as select s.code, s.country as old_country, s.region as old_region, s.subregion as old_subregion, "
            "s.island_country, s.access_group, g.name as new_country, " + new_value("g.region", "s.region") + " as new_region, "
            + new_value("g.subregion", "s.subregion") + " as new_subregion, 0 as applied "
            "from specimen s join geolocale g on " + TO_MOVE + " and " + ISLAND_ROW,
-           "create table " + table + "_geolocale as select id, name, parent, valid_name from geolocale where id in ("
-           + (", ".join(str(i) for i in alias_ids) or "0") + ")"]
+           "create table " + table + "_geolocale as select id, name, parent, valid_name, cast(null as char(250)) as new_valid_name"
+           " from geolocale where id in (" + (", ".join(str(int(i)) for i, _ in aliases) or "0") + ")"]
+    for row_id, valid_name in aliases:
+        out.append("update " + table + "_geolocale set new_valid_name = " + sql_string(valid_name) + " where id = " + str(int(row_id)))
     return out
 
 
@@ -237,14 +265,26 @@ def apply_sql(table, aliases):
     return out
 
 
-def rollback_sql(table, has_geolocale):
-    """The old values back, a specimen only while it still has the country this tool gave it."""
+def given_valid_name_sql(has_column):
+    """The valid name this tool gave a row of the ..._geolocale table b: its column new_valid_name; a table written by
+    version 1 (staging, 2026-11-11) has no such column, and the name is the one ALIASES gives the row."""
+    if has_column:
+        return "b.new_valid_name"
+    return ("case " + " ".join("when b.name = " + sql_string(adm1) + " and b.parent = " + sql_string(country) + " then " + sql_string(target)
+                               for adm1, country, target in ALIASES) + " end")
+
+
+def rollback_sql(table, has_geolocale, has_new_name=True):
+    """The old values back: a specimen only while it still has the country this tool gave it, an old-name row only
+    while it still has the valid name this tool gave it (an administrator may have changed it since). The last
+    statement counts the specimens that have their old country again."""
     out = ["start transaction",
            "update specimen s join " + table + " b on b.code = s.code set s.country = b.old_country, s.region = b.old_region, "
            "s.subregion = b.old_subregion where b.applied = 1 and " + hx("s.country") + " = " + hx("b.new_country")
            + " and " + hx("s.island_country") + " = " + hx("b.island_country")]
     if has_geolocale:
-        out.append("update geolocale g join " + table + "_geolocale b on b.id = g.id set g.valid_name = b.valid_name")
+        out.append("update geolocale g join " + table + "_geolocale b on b.id = g.id set g.valid_name = b.valid_name where "
+                   + hx("g.valid_name") + " = " + hx(given_valid_name_sql(has_new_name)))
     out += ["commit", "select count(*) from specimen s join " + table + " b on b.code = s.code where b.applied = 1 and "
             + hx("s.country") + " = " + hx("b.old_country")]
     return out
@@ -263,6 +303,7 @@ class Found:
         self.outside = []            # (island, lat, lon, n)
         self.parent_rows = []        # (parent, island, taxon, status, source, island specimens)
         self.aliases = []            # (adm1, country, target, row id or None, action, text)
+        self.old_name_rows = []      # (id, adm1, country, valid name): the rows the upload's second rule reads
 
     def moving(self):
         return sum(r[4] for r in self.to_move)
@@ -304,6 +345,13 @@ def report_text(when, commit, f, table=None, changed=None, left=None, aliases_se
     lines += ["", "Old names:"]
     for adm1, country, target, row_id, action, text in f.aliases:
         lines.append("  " + adm1 + " of " + country + " -> the country " + target + ": " + text + (" (row id " + str(row_id) + ")" if row_id else ""))
+    odd = unexpected_old_names(f.old_name_rows)
+    lines += ["", "Old state names that file an upload's record under a country (every such row of the place table):"]
+    lines += ["  " + adm1 + " of " + country + " -> the country " + valid + " (row id " + str(row_id) + ")"
+              + ("" if (row_id, adm1, country, valid) not in odd else "  <-- NOT EXPECTED: stop and ask before the code is deployed")
+              for row_id, adm1, country, valid in f.old_name_rows] or ["  none"]
+    lines.append("  expected: Oahu -> Hawaii; Galapagos and Galápagos -> Galapagos Islands; Rodrigues -> Rodrigues once its valid name is set"
+                 + ("" if not odd else "; " + str(len(odd)) + " NOT EXPECTED"))
     lines += ["", "For a curator: species on a political parent's list with specimens on the island, none in the parent,",
               "and a list row that does not come from specimens (it stays when the lists are built again):"]
     kept = [r for r in f.parent_rows if not from_specimens(r[4])]
@@ -323,10 +371,15 @@ def report_text(when, commit, f, table=None, changed=None, left=None, aliases_se
     return "\n".join(lines) + "\n"
 
 
-AFTER_TEXT = ("NOW: if an old-name row changed, reload the places AntWeb keeps in memory (sign in as an administrator,\n"
-              "technical.do, \"Reload the in-memory lists\": \"countries and adm1s (geolocales)\").\n"
-              "The lists and numbers of the islands and their parents are built again by the next daily update (05:00);\n"
-              "until then the pages show yesterday's numbers and the count check reports the parents and islands as different.\n")
+RELOAD = "util.do?action=reloadAntwebMgr&name=geolocale"
+AFTER_TEXT = ("NOW: 1. Reload the places AntWeb keeps in memory, so the upload knows the changed old-name row: sign in as an\n"
+              "        administrator and open " + RELOAD + "\n"
+              "     2. The lists and numbers of the islands and their parents are built again by the next daily update (05:00),\n"
+              "        which also reloads the places at its end (set 5). Until then the pages show yesterday's numbers and the\n"
+              "        count check reports the parents and islands as different.\n"
+              "     3. If the sets are run by hand instead (utilData.do?action=set2, set4, placeViewTotals&param=all), reload the\n"
+              "        places AGAIN at the end (" + RELOAD + "): the pages read their\n"
+              "        numbers from the places held in memory, and show the old ones (Endemic 0) until that reload.\n")
 
 
 # ---------------------------------------------------------------- the database
@@ -394,6 +447,7 @@ def load(db):
     f.filed = {unhex(r[0]): (int(r[1]), int(r[2] or 0)) for r in run_sql(db, FILED_SQL)}
     f.no_marker = {unhex(r[0]): int(r[1]) for r in run_sql(db, NO_MARKER_SQL)}
     f.by_adm1 = [(unhex(r[0]), unhex(r[1]), unhex(r[2]), int(r[3])) for r in run_sql(db, BY_ADM1_SQL)]
+    f.old_name_rows = [(int(r[0]), unhex(r[1]), unhex(r[2]), unhex(r[3])) for r in run_sql(db, OLD_NAME_ROWS_SQL)]
     boxes = {i.name: i.box for i in f.islands}
     for r in run_sql(db, COORDINATES_SQL):
         name, lat, lon, n = unhex(r[0]), float(r[1]), float(r[2]), int(r[3])
@@ -434,7 +488,8 @@ def main(argv=None):
     a = argparse.ArgumentParser(description="File the specimens of an island that is its own country under the island.")
     a.add_argument("--apply", action="store_true", help="make the changes (default: report only)")
     a.add_argument("--rollback", metavar="TABLE", help="put back the old values kept in this backup table")
-    a.add_argument("--even-if-busy", action="store_true", help="--apply although AntWeb says an upload or a data job is running")
+    a.add_argument("--even-if-busy", action="store_true",
+                   help="--apply although AntWeb says an upload or a data job is running, or does not answer")
     a.add_argument("--project", default=None, help="AntWeb project folder (default /root/antweb or /root/antweb-next)")
     a.add_argument("--container", default="antweb_mysql_1")
     a.add_argument("--database", default="ant")
@@ -459,10 +514,19 @@ def rollback(args, db):
     if table not in tables:
         sys.exit("--rollback: no table " + table + " in this database")
     kept = int(run_sql(db, "select count(*) from " + table + " where applied = 1")[0][0])
-    back = int(run_sql(db, ";\n".join(rollback_sql(table, table + "_geolocale" in tables)))[0][0])
+    has_geolocale = table + "_geolocale" in tables
+    has_new_name = has_geolocale and bool(run_sql(db, "show columns from " + table + "_geolocale like 'new_valid_name'"))
+    back = int(run_sql(db, ";\n".join(rollback_sql(table, has_geolocale, has_new_name)))[0][0])
+    rows = (run_sql(db, "select b.id, " + hx("b.name") + ", " + hx("b.parent") + ", " + hx("g.valid_name") + ", "
+                    + hx("g.valid_name") + " = " + hx("b.valid_name") + " from " + table + "_geolocale b left join geolocale g on g.id = b.id order by b.id")
+            if has_geolocale else [])
     print("Rolled back: " + format(back, ",") + " of the " + format(kept, ",") + " specimens of " + table + " have their old country again"
-          + ("" if back >= kept else " (the others had other values than this tool gave them: a later upload; left as they are)")
-          + "; the old-name rows have their old valid names. The tables are kept.\n")
+          + ("" if back >= kept else " (the others had other values than this tool gave them: a later upload; left as they are)") + ".")
+    for r in rows:
+        print("Old-name row " + unhex(r[1]) + " of " + unhex(r[2]) + " (id " + r[0] + "): "
+              + ("its old valid name is back" if r[4] == "1" else "LEFT AS IT IS: its valid name is now " + (repr(unhex(r[3])) if unhex(r[3]) else "empty")
+                 + ", not the one this tool gave it (changed since by an administrator)"))
+    print("The tables are kept.\n")
     print(AFTER_TEXT)
     return 0
 
@@ -480,14 +544,19 @@ def report_or_apply(args, db, now):
         busy = busy_answer(args.app + "/util.do?action=isBusy")
         if busy.startswith("busy") and not args.even_if_busy:
             sys.exit("Nothing changed: AntWeb says \"" + busy + "\". Run it again when the upload or the daily update has ended.")
-        if not busy:
-            note = "AntWeb did not answer at " + args.app + " (not running?): it was not asked whether an upload is running.\n"
+        answered = busy == "idle" or busy.startswith("busy")      # BusyStatus.current(): "idle" or "busy: ..."
+        if not answered and not args.even_if_busy:
+            sys.exit("Nothing changed: AntWeb did not say at " + args.app + " whether an upload or the daily update is running"
+                     + (" (it answered: " + busy[:60] + ")" if busy else " (no answer)") + ". Run it again when AntWeb is up; "
+                     "with --even-if-busy only when AntWeb is stopped on purpose.")
+        if not answered:
+            note = "AntWeb did not say at " + args.app + " whether an upload is running: --even-if-busy, so the change was made without knowing.\n"
         table = "island_countries_backup_" + now.strftime("%Y%m%d_%H%M")
         if run_sql(db, "show tables like '" + table + "%'"):
             sys.exit("Table " + table + " exists already: wait a minute and run it again.")
         drop = "drop table if exists " + table + ", " + table + "_geolocale"
         try:
-            run_sql(db, ";\n".join(backup_sql(table, [i for i, _ in to_set])))
+            run_sql(db, ";\n".join(backup_sql(table, to_set)))
             kept = int(run_sql(db, "select count(*) from " + table)[0][0])
             if kept != f.moving():
                 run_sql(db, drop)

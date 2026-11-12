@@ -77,11 +77,12 @@ def test_which_specimens_move():
     assert ic.ISLAND_ROW == "g.georank = 'country' and g.is_island = 1 and g.is_valid = 1"
     assert "s.island_country = g.name" in ic.TO_MOVE and "not (s.country <=> g.name)" in ic.TO_MOVE
     assert ic.TO_MOVE in ic.TO_MOVE_SQL and ic.ISLAND_ROW in ic.TO_MOVE_SQL
-    backup = ic.backup_sql(T, [691])
+    backup = ic.backup_sql(T, [(691, "Rodrigues")])
     assert backup[0].startswith("create table " + T + " as select s.code, s.country as old_country, s.region as old_region, s.subregion as old_subregion,")
     assert ic.TO_MOVE in backup[0] and ic.ISLAND_ROW in backup[0] and "g.name as new_country" in backup[0]
     assert "if(coalesce(g.region, '') in ('', 'none', 'null'), s.region, g.region) as new_region" in backup[0], "no region on the island row: unchanged"
-    assert backup[1] == "create table " + T + "_geolocale as select id, name, parent, valid_name from geolocale where id in (691)"
+    assert backup[1] == ("create table " + T + "_geolocale as select id, name, parent, valid_name, cast(null as char(250)) as new_valid_name"
+                         " from geolocale where id in (691)")
     assert ic.backup_sql(T, [])[1].endswith("where id in (0)")
     assert ic.TABLE_NAME.match(T) and not ic.TABLE_NAME.match("specimen") and not ic.TABLE_NAME.match(T + "; drop table x")
     # the names say "dated backup" to the schema check (tools/datamodel/list_tables.py), as the other tools' backups do
@@ -104,12 +105,43 @@ def test_apply_and_rollback_sql():
     assert sql[2] == ("update geolocale set valid_name = 'Rodrigues' where id = 691 and coalesce(is_valid, 0) = 0 "
                       "and coalesce(valid_name, '') in ('', 'none', 'null')")
     assert len(ic.apply_sql(T, [])) == 3
+    # the backup of the old-name rows records the valid name the tool gives each
+    backup = ic.backup_sql(T, [(691, "Rodrigues")])
+    assert backup[2] == "update " + T + "_geolocale set new_valid_name = 'Rodrigues' where id = 691" and len(backup) == 3
+    assert len(ic.backup_sql(T, [])) == 2 and "where id in (0)" in ic.backup_sql(T, [])[1]
     back = ic.rollback_sql(T, True)
     assert back[0] == "start transaction" and back[3] == "commit"
     assert "set s.country = b.old_country, s.region = b.old_region, s.subregion = b.old_subregion where b.applied = 1 and " in back[1]
     assert "hex(convert(ifnull(s.country, '') using utf8mb4)) = hex(convert(ifnull(b.new_country, '') using utf8mb4))" in back[1]
-    assert back[2] == "update geolocale g join " + T + "_geolocale b on b.id = g.id set g.valid_name = b.valid_name"
+    # an old-name row only while it still has the valid name this tool gave it (automatic review, 2026-11-11)
+    assert back[2] == ("update geolocale g join " + T + "_geolocale b on b.id = g.id set g.valid_name = b.valid_name where "
+                       "hex(convert(ifnull(g.valid_name, '') using utf8mb4)) = hex(convert(ifnull(b.new_valid_name, '') using utf8mb4))")
+    # a table of version 1 (staging, 2026-11-11) has no new_valid_name: the name ALIASES gives the row
+    old = ic.rollback_sql(T, True, False)[2]
+    assert "b.new_valid_name" not in old and "case when b.name = 'Rodrigues' and b.parent = 'Mauritius' then 'Rodrigues' end" in old
     assert len(ic.rollback_sql(T, False)) == 4 and "geolocale" not in ic.rollback_sql(T, False)[1]
+
+
+def test_old_state_names_that_file_under_a_country():
+    """The rows the upload's second rule reads; the runbook stops on any row this round does not expect."""
+    rows = [(620, "Galapagos", "Ecuador", "Galapagos Islands"), (1017, "Oahu", "United States", "Hawaii"),
+            (2394, "Galápagos", "Ecuador", "Galapagos Islands"), (691, "Rodrigues", "Mauritius", "Rodrigues")]
+    assert ic.unexpected_old_names(rows) == []
+    odd = [(77, "Corsica", "France", "Corsica"), (78, "Oahu", "Japan", "Hawaii"), (79, "Hawaii", "United States", "Hawaii")]
+    assert ic.unexpected_old_names(rows + odd) == odd
+    sql = ic.OLD_NAME_ROWS_SQL
+    assert "a.georank = 'adm1' and coalesce(a.is_valid, 0) = 0 and a.valid_name <> a.parent" in sql
+    assert "c.georank = 'country' and c.is_valid = 1 and c.name = a.valid_name" in sql
+    assert "not exists (select 1 from geolocale b where b.georank = 'adm1' and b.parent = a.parent and b.name = a.valid_name and b.is_valid = 1)" in sql
+    f = found()
+    f.old_name_rows = rows[:3] + [odd[0]]
+    text = ic.report_text("x", "", f)
+    assert "  Oahu of United States -> the country Hawaii (row id 1017)\n" in text
+    assert "  Corsica of France -> the country Corsica (row id 77)  <-- NOT EXPECTED: stop and ask before the code is deployed" in text
+    assert text.count("NOT EXPECTED") == 2 and "; 1 NOT EXPECTED" in text
+    f.old_name_rows = rows
+    assert "NOT EXPECTED" not in ic.report_text("x", "", f)
+    assert "Old state names that file an upload's record under a country (every such row of the place table):\n  none" in ic.report_text("x", "", ic.Found())
 
 
 def test_parent_list_sql_and_sources():
@@ -171,7 +203,10 @@ def test_report():
     assert "python3 island_countries.py --rollback " + T in applied and "Old-name rows changed: 1." in applied
     empty = ic.report_text("x", "", ic.Found())
     assert "Islands (valid places flagged as islands): none" in empty and "Specimens to move in all: 0" in empty
-    assert "technical.do" in ic.AFTER_TEXT and "daily update" in ic.AFTER_TEXT and "nightly" not in ic.AFTER_TEXT + text
+    # the places are reloaded after the apply and, when the sets are run by hand, again at the end (staging, 2026-11-11:
+    # the pages read their numbers from the places in memory; Endemic 0 until that reload)
+    assert ic.AFTER_TEXT.count("util.do?action=reloadAntwebMgr&name=geolocale") == 2 and "AGAIN at the end" in ic.AFTER_TEXT
+    assert "daily update" in ic.AFTER_TEXT and "nightly" not in ic.AFTER_TEXT + text
 
 
 # ---------------------------------------------------------------- with a database
@@ -269,7 +304,12 @@ def specimens():
                                               "ifnull(subregion, '-'), ifnull(adm1, '-'), ifnull(bioregion, '-') from specimen")}
 
 
-def tool(project, *args, app="http://127.0.0.1:9"):
+NO_ANSWER = "http://127.0.0.1:9"
+IDLE = [NO_ANSWER]      # the address of the test's own "AntWeb" that answers idle (set by test_with_a_database)
+
+
+def tool(project, *args, app=None):
+    app = app or IDLE[0]
     return subprocess.run([sys.executable, TOOL, "--project", project, "--container", CONTAINER, "--database", DATABASE,
                            "--out", os.path.join(project, "out"), "--app", app] + list(args), capture_output=True, text=True, timeout=300)
 
@@ -286,8 +326,10 @@ def drop_run_tables():
 
 
 class Busy(http.server.BaseHTTPRequestHandler):
+    body = b"busy: upload"
+
     def do_GET(self):
-        body = b"busy: upload"
+        body = self.body
         self.send_response(200)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
@@ -297,6 +339,20 @@ class Busy(http.server.BaseHTTPRequestHandler):
         pass
 
 
+class Idle(Busy):
+    body = b"idle"
+
+
+class Starting(Busy):
+    body = b"<html>AntWeb is initializing</html>"
+
+
+def serve(handler):
+    server = http.server.HTTPServer(("127.0.0.1", 0), handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    return server, "http://127.0.0.1:" + str(server.server_address[1])
+
+
 def test_with_a_database():
     if not CONTAINER:
         print("MySQL part skipped (ISLAND_COUNTRIES_DB_CONTAINER not set).")
@@ -304,6 +360,7 @@ def test_with_a_database():
     mysql("drop database if exists " + DATABASE + "; create database " + DATABASE, database="mysql")
     mysql(SCHEMA + DATA)
     before, sp_before = snapshot(), specimens()
+    idle, IDLE[0] = serve(Idle)
     with tempfile.TemporaryDirectory() as d:
         os.makedirs(os.path.join(d, "etc"))
         with open(os.path.join(d, "etc", "db.properties"), "w") as f:
@@ -328,12 +385,23 @@ def test_with_a_database():
                      "Specimens to move in all: 6",
                      "          1  United States / Oahu  ->  Hawaii",          # us3; us2 (MA: an old name of a state) is not listed
                      "  Rodrigues of Mauritius -> the country Rodrigues: its valid name will be set (row id 691)",
+                     # the rows the upload's second rule reads: production's three (MA names a state; 691 names nothing yet)
+                     "  Galapagos of Ecuador -> the country Galapagos Islands (row id 620)\n",
+                     "  Galápagos of Ecuador -> the country Galapagos Islands (row id 2394)\n",
+                     "  Oahu of United States -> the country Hawaii (row id 1017)\n",
                      "          1  on the list of Ecuador, island Galapagos Islands, source curator",
                      "          1  on the list of United States, island Hawaii, source antcat",
                      "          1  on the list of United States, island Hawaii",          # sp only hawaii, source specimen: leaves by itself
                      "Report only: nothing was changed."):
             assert line in out.stdout, (line, out.stdout)
         assert snapshot() == before and not run_tables()
+        assert "NOT EXPECTED" not in out.stdout and "MA of United States" not in out.stdout and "Rodrigues of Mauritius -> the country Rodrigues (row" not in out.stdout
+        # an old state name that points to a country and is not one of this round's: marked, to stop the runbook
+        mysql("insert into geolocale (id, name, georank, parent, is_valid, valid_name) values (9001, 'La Réunion', 'adm1', 'France', 0, 'Reunion')")
+        out = tool(d)
+        assert "  La Réunion of France -> the country Reunion (row id 9001)  <-- NOT EXPECTED: stop and ask" in out.stdout, out.stdout
+        mysql("delete from geolocale where id = 9001")
+        assert snapshot() == before
         with open(os.path.join(d, "out", "parent_list_rows.csv"), newline="", encoding="utf-8") as f:
             rows = list(csv.reader(f))
         # "sp both" has a specimen in the parent (us1, ec1): not listed; a genus row is not a species
@@ -345,12 +413,21 @@ def test_with_a_database():
             assert [r[0] for r in list(csv.reader(f))[1:]] == ["Hawaii"]
 
         # 2. AntWeb says an upload is running: --apply stops before anything is written
-        server = http.server.HTTPServer(("127.0.0.1", 0), Busy)
-        threading.Thread(target=server.serve_forever, daemon=True).start()
-        out = tool(d, "--apply", app="http://127.0.0.1:" + str(server.server_address[1]))
+        server, url = serve(Busy)
+        out = tool(d, "--apply", app=url)
         server.shutdown()
         assert out.returncode != 0 and "AntWeb says \"busy: upload\"" in out.stderr, out.stderr + out.stdout
         assert snapshot() == before and not run_tables()
+        # AntWeb does not answer, or answers something else (starting up): --apply stops too (automatic review,
+        # 2026-11-11: it went on with a note); the report still runs
+        out = tool(d, "--apply", app=NO_ANSWER)
+        assert out.returncode != 0 and "Nothing changed: AntWeb did not say" in out.stderr and "(no answer)" in out.stderr, out.stderr + out.stdout
+        server, url = serve(Starting)
+        out = tool(d, "--apply", app=url)
+        server.shutdown()
+        assert out.returncode != 0 and "(it answered: <html>AntWeb is initializing</html>)" in out.stderr, out.stderr + out.stdout
+        assert snapshot() == before and not run_tables()
+        assert tool(d, app=NO_ANSWER).returncode == 0
 
         # 3. the database refuses a statement in the middle: the whole run is undone, no table is left
         mysql("create trigger island_countries_test before update on geolocale for each row signal sqlstate '45000' set message_text = 'refused for the test'")
@@ -363,7 +440,7 @@ def test_with_a_database():
         out = tool(d, "--apply")
         assert out.returncode == 0, out.stderr + out.stdout
         assert "Specimens changed: 6." in out.stdout and "Old-name rows changed: 1." in out.stdout, out.stdout
-        assert "specimens still to move or old-name rows still to set: 0 (as expected)" in out.stdout and "NOW: if an old-name row changed" in out.stdout
+        assert "specimens still to move or old-name rows still to set: 0 (as expected)" in out.stdout and "NOW: 1. Reload the places" in out.stdout
         sp = specimens()
         # country, island_country, region, subregion, adm1, bioregion
         assert sp["hi1"] == ("Hawaii", "Hawaii", "Oceania", "Polynesia", "-", "Oceania"), sp["hi1"]
@@ -380,7 +457,11 @@ def test_with_a_database():
         assert ic.TABLE_NAME.match(table) and run_tables() == [table, table + "_geolocale"]
         assert mysql("select code, old_country, new_country, old_region, new_region, applied from " + table + " where code in ('hi1', 'xx2') order by code") == [
             ["hi1", "United States", "Hawaii", "Americas", "Oceania", "1"], ["xx2", "NULL", "Hawaii", "NULL", "Oceania", "1"]]
-        assert mysql("select id, name, parent, ifnull(valid_name, '-') from " + table + "_geolocale") == [["691", "Rodrigues", "Mauritius", "-"]]
+        assert mysql("select id, name, parent, ifnull(valid_name, '-'), new_valid_name from " + table + "_geolocale") == [
+            ["691", "Rodrigues", "Mauritius", "-", "Rodrigues"]]
+        # now the row names a country: it is among the rows the upload's second rule reads, and expected
+        out = tool(d)
+        assert "  Rodrigues of Mauritius -> the country Rodrigues (row id 691)\n" in out.stdout and "NOT EXPECTED" not in out.stdout, out.stdout
         with open(os.path.join(d, "out", "specimens.csv"), newline="", encoding="utf-8") as f:
             assert len(list(csv.reader(f))) == 7
         geo_after = [r for r in snapshot()["geolocale"]]
@@ -393,12 +474,22 @@ def test_with_a_database():
         assert "Rodrigues of Mauritius -> the country Rodrigues: it already names Rodrigues" in out.stdout
         assert snapshot() == after and run_tables() == [table, table + "_geolocale"]
 
-        # 6. --rollback: all as before, except a specimen changed since (a later upload: left as it is)
+        # 6. --rollback: all as before, except a specimen changed since (a later upload: left as it is) and an old-name
+        #    row an administrator changed since (automatic review, 2026-11-11: the rollback overwrote it)
         assert tool(d, "--rollback", "specimen").returncode != 0
         mysql("update specimen set country = 'Japan' where code = 'hi2'")
-        out = tool(d, "--rollback", table)
+        mysql("update geolocale set valid_name = 'Rodrigues Island' where id = 691")
+        out = tool(d, "--rollback", table, app=NO_ANSWER)          # a rollback does not ask AntWeb
         assert out.returncode == 0 and "Rolled back: 5 of the 6 specimens" in out.stdout and "a later upload; left as they are" in out.stdout, out.stderr + out.stdout
-        assert specimens()["hi2"][0] == "Japan"
+        assert ("Old-name row Rodrigues of Mauritius (id 691): LEFT AS IT IS: its valid name is now 'Rodrigues Island', not the one this tool "
+                "gave it (changed since by an administrator)") in out.stdout, out.stdout
+        assert specimens()["hi2"][0] == "Japan" and mysql("select valid_name from geolocale where id = 691") == [["Rodrigues Island"]]
+        # with the tool's own value again, a second rollback puts the old one back (here with a table as version 1
+        # wrote it on staging, without the column new_valid_name)
+        mysql("update geolocale set valid_name = 'Rodrigues' where id = 691")
+        mysql("alter table " + table + "_geolocale drop column new_valid_name")
+        out = tool(d, "--rollback", table)
+        assert out.returncode == 0 and "Old-name row Rodrigues of Mauritius (id 691): its old valid name is back" in out.stdout, out.stderr + out.stdout
         mysql("update specimen set country = 'United States', region = 'Americas', subregion = 'North America' where code = 'hi2'")
         assert snapshot() == before
         assert drop_run_tables()
@@ -414,8 +505,10 @@ def test_with_a_database():
         assert mysql(";\n".join(ic.rollback_sql(T, True))) == [["5"]]
         assert specimens()["hi3"][0] == "Mexico" and specimens()["hi1"][0] == "United States"
         assert drop_run_tables()
+    idle.shutdown()
     mysql("drop database " + DATABASE, database="mysql")
-    print("With a database: report, busy AntWeb, failed statement undone, apply, second run, rollback, a specimen changed in between.")
+    print("With a database: report, an old state name not expected, busy or silent AntWeb, failed statement undone, apply, second run, "
+          "rollback (a changed specimen and a changed old-name row left alone; a version 1 table), a specimen changed in between.")
 
 
 def main():

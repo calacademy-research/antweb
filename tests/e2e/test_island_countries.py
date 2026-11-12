@@ -11,7 +11,8 @@ Three stages on a server, and each test skips until its stage is reached:
   1. the code is deployed: the parent's page names the island ("Hawaii has its own page and is not counted here.");
   2. the stored specimens are moved (tools/place/island_countries.py --apply): the API returns the island's specimens
      for country=<island>, each with the island as its country;
-  3. the lists are rebuilt (the daily update, or the set 2 jobs of the runbook): the island has endemic species.
+  3. the lists are rebuilt (the daily update, or the set 2 jobs of the runbook followed by a reload of the places in
+     memory, which the pages read their numbers from): the island has endemic species. Staging, 2026-11-11: 10.
 
 The forms a file can write (United States + adm1 Hawaii or Oahu, Ecuador + adm1 Galapagos or Galápagos, Mauritius +
 adm1 Rodrigues) are tested at the upload's own level: test/org/calacademy/antweb/upload/IslandCountryTest.java.

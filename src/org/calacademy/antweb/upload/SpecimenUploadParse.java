@@ -627,8 +627,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				  country = validCountry.getName();  
 				  String region = validCountry.getRegion();
 				  String subregion = validCountry.getSubregion();
-                  specimenItem.put("region", region);
-                  specimenItem.put("subregion", subregion);			                        
+                  // a country row without a region or subregion: none stored (Hashtable.put(null) threw; 2026-11-11)
+                  putOrRemove(specimenItem, "region", region);
+                  putOrRemove(specimenItem, "subregion", subregion);
 				}
 				boolean isValidCountry = GeolocaleMgr.isValidCountry(country);   // CountryDb.isValid(getConnection(), element);
 				boolean notBlank = Utility.notBlank(country);
@@ -666,8 +667,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             if (ownCountry != null) {
                 country = ownCountry.place.getName();
                 specimenItem.put("country", country);
-                putOrRemove(specimenItem, "region", ownCountry.place.getRegion());
-                putOrRemove(specimenItem, "subregion", ownCountry.place.getSubregion());
+                // the place row's region and subregion where it has them, else the record keeps its own (as the one-time
+                // update of the stored specimens does: RecordPlace.rowValueOr)
+                putOrRemove(specimenItem, "region", RecordPlace.rowValueOr(ownCountry.place.getRegion(), (String) specimenItem.get("region")));
+                putOrRemove(specimenItem, "subregion", RecordPlace.rowValueOr(ownCountry.place.getSubregion(), (String) specimenItem.get("subregion")));
                 adm1 = ownCountry.adm1;
                 putOrRemove(specimenItem, "adm1", adm1);
                 if (ownCountry.isIsland()) islandCountry = ownCountry.place;

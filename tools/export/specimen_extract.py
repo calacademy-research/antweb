@@ -41,7 +41,10 @@ manifest ("not in this file"). Until version 8 they were included by default (th
 --no-islands is still accepted and changes nothing. An island's specimens are found by specimen.island_country and,
 since 2026-11-11, by specimen.country (the island's own name); a specimen marked as a left-out island's is left out
 whatever its country column says, so the file is the same before and after the stored specimens are moved
-(tools/place/island_countries.py).
+(tools/place/island_countries.py). A specimen marked with an old name of an island (island_country "Galapagos": a
+place row that is not valid and names the island as its valid name) is the island's too (version 10; automatic review,
+2026-11-11: it stayed in the parent's file): left out with a left-out island, included with an included one, and the
+manifest names the old names read that way.
 
 Country names: only a valid country row is accepted (an old name is refused, with the valid one). Specimens
 still filed under an old name of a requested country (a geolocale country row that is not valid and whose
@@ -79,7 +82,7 @@ import subprocess
 import sys
 import tempfile
 
-VERSION = "9"
+VERSION = "10"
 TAXON_COLUMNS = ("taxon_status", "taxon_fossil", "taxon_rank", "taxon_current_valid_name", "taxon_author_date",
                  "group_name", "no_taxon_row")
 PLACE_NAME = re.compile(r"^[^\x00-\x1f;\\]{1,64}$")
@@ -131,7 +134,10 @@ def places_sql(countries):
     return ("select name, georank, is_valid, is_island, ifnull(parent, ''), ifnull(country, ''), ifnull(bioregion, ''), "
             "ifnull(alt_bioregion, ''), ifnull(valid_name, '') from geolocale where (georank = 'country' and name in " + c + ") "
             "or (is_island = 1 and (parent in " + c + " or country in " + c + ")) "
-            "or (is_island = 1 and is_valid = 1 and georank = 'country') order by georank, name")
+            "or (is_island = 1 and is_valid = 1 and georank = 'country') "
+            # the old names of the islands (not valid, valid_name = a valid island): island_old_names
+            "or (georank = 'country' and (is_valid is null or is_valid <> 1) and valid_name in (select name from (select name from geolocale "
+            "where is_island = 1 and is_valid = 1 and georank = 'country') v)) order by georank, name")
 
 
 def island_sets(places, countries):
@@ -142,6 +148,22 @@ def island_sets(places, countries):
     other = sorted({p[0] for p in valid_islands if p[0] not in countries})
     left_out = sorted({p[0] for p in valid_islands if p[0] not in countries and (p[4] in countries or p[5] in countries)})
     return included, other, left_out
+
+
+def island_old_names(places):
+    """{island: [its old names]}: country rows that are not valid and name a valid island as their valid name
+    (Galapagos and Galápagos: Galapagos Islands). A specimen marked with one (island_country) is the island's."""
+    valid_islands = {p[0] for p in places if p[1] == "country" and p[2] == "1" and p[3] == "1"}
+    old = {}
+    for p in places:
+        if p[1] == "country" and p[2] != "1" and p[8] in valid_islands and p[0] not in valid_islands:
+            old.setdefault(p[8], set()).add(p[0])
+    return {island: sorted(names) for island, names in old.items()}
+
+
+def with_old_names(islands, old):
+    """The islands and their old names, for the island_country conditions."""
+    return [n for i in islands for n in [i] + old.get(i, [])]
 
 
 # Ants only, the default since version 5 (Brian Fisher, 2026-11-10: "why did you include non ants for an ant
@@ -200,7 +222,7 @@ def outdated_names(countries, rows):
     return [{"name": n, "valid_name": found[n]} for n in sorted(found)]
 
 
-def per_country_sql(countries, outdated, ants_only=False, islands=()):
+def per_country_sql(countries, outdated, ants_only=False, islands=(), old_island_names=None):
     """(index of the country, its specimens in the database, also under its old names): 0 is worth a warning.
     ants_only: the specimens the file can hold, the filter of the export (ANTS). Without it a country that has only
     beetles or wasps in AntWeb counted as having specimens and got no warning, while the file had none of its rows
@@ -209,8 +231,9 @@ def per_country_sql(countries, outdated, ants_only=False, islands=()):
     for i, c in enumerate(countries):
         names = [c] + [o["name"] for o in outdated if o["valid_name"] == c]
         place = "s.country in " + sql_list(names)
-        if c in islands:      # an island's specimen still stored under its political parent
-            place = "(" + place + " or s.island_country = " + sql_string(c) + ")"
+        if c in islands:      # an island's specimen still stored under its political parent, or marked with an old name
+            marks = [c] + (old_island_names or {}).get(c, [])
+            place = "(" + place + " or s.island_country " + ("= " + sql_string(c) if len(marks) == 1 else "in " + sql_list(marks)) + ")"
         parts.append("select %d, count(*) from specimen s where %s%s" % (i, place, " and " + ANTS if ants_only else ""))
     return " union all ".join(parts) + " /* per country */"
 
@@ -471,6 +494,8 @@ def manifest_text(m):
              "Islands included (named in the countries): " + (", ".join(m["islands"]) or "none"),
              "Islands of these countries that are their own country in AntWeb, NOT in this file: "
              + (", ".join(m.get("islands_left_out", [])) + " (name an island with the countries to include it)" if m.get("islands_left_out") else "none"),
+             "Old island names read as the island (a specimen marked with one is the island's): "
+             + ("; ".join(", ".join(names) + " = " + island for island, names in sorted(m.get("old_island_names", {}).items())) or "none"),
              "Outdated country names included: " + (", ".join("%s (now %s)" % (o["name"], o["valid_name"])
                                                              for o in m.get("outdated_names", [])) or "none"),
              "", "Specimens in the file: {:,}".format(m["specimens"]),
@@ -588,11 +613,16 @@ def main(argv=None):
             os.remove(os.path.join(out, name))
     # Brian Fisher, 2026-11-11: an island that is its own country is never part of its political parent's extract
     islands, other_islands, islands_left_out = island_sets(places, countries)
+    # a specimen marked with an old name of an island (island_country Galapagos) is that island's
+    old_island_names = island_old_names(places)
+    islands_marked = with_old_names(islands, old_island_names)             # island_country values of the included islands
+    others_marked = with_old_names(other_islands, old_island_names)        # ... of every island not in the file
     print("Countries: " + ", ".join(countries))
     for p in places:
         print("  %-28s %-8s valid=%s island=%s parent=%s bioregion=%s alt=%s" % (p[0], p[1], p[2], p[3], p[4] or "-", p[6] or "-", p[7] or "-"))
     print("Islands included (named in the countries): " + (", ".join(islands) or "none"))
     print("Islands of these countries, their own country in AntWeb, NOT in the file: " + (", ".join(islands_left_out) or "none"))
+    print("Old island names read as the island: " + ("; ".join(", ".join(n) + " = " + i for i, n in sorted(old_island_names.items())) or "none"))
     # Specimens still filed under an old name of a requested country are part of the extract.
     outdated = outdated_names(countries, run_query(project, outdated_sql(countries), args.container))
     old_names = [o["name"] for o in outdated]
@@ -602,17 +632,17 @@ def main(argv=None):
     spec_path = os.path.join(out, "specimens.csv.gz")
     print("Exporting (read-only) ...", flush=True)
     ants_only = not args.all_families
-    header = write_specimens(stream_query(project, export_sql(countries + old_names, islands, ants_only, other_islands=other_islands),
+    header = write_specimens(stream_query(project, export_sql(countries + old_names, islands_marked, ants_only, other_islands=others_marked),
                                           args.container), spec_path, stats)
-    verified, diffs = compare_counts(stats, run_query(project, count_sql(countries + old_names, islands, ants_only, other_islands), args.container))
+    verified, diffs = compare_counts(stats, run_query(project, count_sql(countries + old_names, islands_marked, ants_only, others_marked), args.container))
     left_out = None
     if ants_only:
-        rows = run_query(project, left_out_sql(countries + old_names, islands, other_islands), args.container)
+        rows = run_query(project, left_out_sql(countries + old_names, islands_marked, others_marked), args.container)
         left_out = {"specimens": sum(int(r[1]) for r in rows), "families": len(rows), "by_family": {r[0]: int(r[1]) for r in rows}}
         if stats.not_ants:      # the file must hold none: the filter and the file disagree
             verified = False
             diffs.append({"file": "specimens.csv.gz", "not_formicidae_in_an_ants_only_file": stats.not_ants})
-    per_country = {int(r[0]): int(r[1]) for r in run_query(project, per_country_sql(countries, outdated, ants_only, islands), args.container)}
+    per_country = {int(r[0]): int(r[1]) for r in run_query(project, per_country_sql(countries, outdated, ants_only, islands, old_island_names), args.container)}
     empty = [c for i, c in enumerate(countries) if per_country.get(i, 0) == 0]
 
     no_country = None
@@ -620,8 +650,8 @@ def main(argv=None):
     if args.with_no_country:
         nc_stats = Stats("")
         nc_path = os.path.join(out, "specimens_no_country.csv.gz")
-        write_specimens(stream_query(project, no_country_export_sql(islands, ants_only), args.container), nc_path, nc_stats)
-        nc_db = int(run_query(project, no_country_count_sql(islands, ants_only), args.container)[0][0])
+        write_specimens(stream_query(project, no_country_export_sql(islands_marked, ants_only), args.container), nc_path, nc_stats)
+        nc_db = int(run_query(project, no_country_count_sql(islands_marked, ants_only), args.container)[0][0])
         groups = collections.Counter()
         with gzip.open(nc_path, "rt", encoding="utf-8", newline="") as f:
             for row in csv.DictReader(f):
@@ -651,7 +681,7 @@ def main(argv=None):
         "tool_version": VERSION, "made_utc": now.strftime("%Y-%m-%d %H:%M:%S"),
         "antweb_commit": read_first_line(os.path.join(project, "etc", "git-commit")) or "unknown",
         "antweb_version": read_first_line(os.path.join(project, ".version")),
-        "countries": countries, "islands": islands, "islands_left_out": islands_left_out, "outdated_names": outdated, "bioregion": args.bioregion,
+        "countries": countries, "islands": islands, "islands_left_out": islands_left_out, "old_island_names": old_island_names, "outdated_names": outdated, "bioregion": args.bioregion,
         "columns": header + ["has_coordinates"], "specimens": stats.rows, "verified": verified, "differences": diffs,
         "by_place": [{"country": k[0], "island_country": k[1], "specimens": n} for k, n in sorted(stats.by_place.items())],
         "by_bioregion": dict(sorted(stats.by_bioregion.items())), "by_taxon_status": dict(sorted(stats.by_status.items())),

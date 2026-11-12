@@ -716,7 +716,11 @@ jobs:
         # calls (review of PR #341). The cases of tests/unit/test_place_fix.py.
         # IslandCountryTest (Brian Fisher, 2026-11-11: an oceanic island is its own country): every form a file writes
         # (United States + Hawaii or Oahu, Ecuador + Galapagos or Galápagos, Mauritius + Rodrigues, the island as the
-        # country) is filed under the island's own name; another adm1 is kept; the parent page's line.
+        # country) is filed under the island's own name; another adm1 is kept; the parent page's line; region and
+        # subregion are the island row's or, where it has none, the record's own (as the one-time update does).
+        # IslandParseLineTest: the same forms through SpecimenUploadParse.parseLine itself (the places, taxa and groups
+        # in memory filled by the test, no database): the specimen it would store, and the bounds check against the
+        # island's own box.
         # See docs/flows/test-gaps-uploads-nightly.md.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" -v "$PWD/web:/web:ro" \
@@ -752,14 +756,15 @@ jobs:
               /t/org/calacademy/antweb/upload/LocalityCodePlainTest.java \
               /t/org/calacademy/antweb/util/CountrySpellingTest.java \
               /t/org/calacademy/antweb/util/PlaceBioregionTest.java \
-              /t/org/calacademy/antweb/upload/IslandCountryTest.java
+              /t/org/calacademy/antweb/upload/IslandCountryTest.java \
+              /t/org/calacademy/antweb/upload/IslandParseLineTest.java
             for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:15 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:19 upload.GenusSynonymRuleTest:16 upload.GenusConceptRuleTest:8 upload.GenusConceptProposalsTest:5 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:16 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
                      util.JobSummaryTest:8 upload.SubfamilyFromGenusTest:9 upload.LocalityCodePlainTest:6 \
-                     util.CountrySpellingTest:8 util.PlaceBioregionTest:9 upload.IslandCountryTest:8; do
+                     util.CountrySpellingTest:8 util.PlaceBioregionTest:9 upload.IslandCountryTest:9 upload.IslandParseLineTest:8; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
@@ -1233,6 +1238,8 @@ jobs:
           [ "$ok" = 1 ] || { docker logs mysql 2>&1 | tail -30; echo "::error::MySQL did not start"; exit 1; }
           # As in production: the antweb login uses mysql_native_password (the driver does not use SSL).
           docker exec mysql mysql -uroot -pci-root -h127.0.0.1 -e "ALTER USER 'antweb'@'%' IDENTIFIED WITH mysql_native_password BY 'CHANGE_ME'"
+          # IslandCountryDbTest works in a schema of its own, which it makes and drops (never the tables of ant).
+          docker exec mysql mysql -uroot -pci-root -h127.0.0.1 -e "GRANT ALL ON ant_islandtest.* TO 'antweb'@'%'"
           docker run --rm --network tzcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/WEB-INF:/w:ro" antweb/antweb:dev -c '
             set -e
             C=/usr/local/antweb/WEB-INF/classes
@@ -1303,6 +1310,7 @@ jobs:
           # image or imaged number of the home page and statsPage (2026-11-09).
           # IslandCountryDbTest (2026-11-11): a specimen stored with country = island_country = the island is the
           # island's, once, and never its political parent's, in every place number, list and download; endemic.
+          # In its own schema ant_islandtest (granted above), dropped when it ends.
           # DownloadGuardsDbTest: a place download holds only the specimens collected there (5,000 cap), the paged
           # search list (COUNT, LIMIT/OFFSET, sort before paging, images/types only), ant specimens only on place pages.
           # PlaceTaxonNotesDbTest (2026-10-29): country and adm1 lists get the genus rows of specimens identified to genus

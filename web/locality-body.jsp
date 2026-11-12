@@ -79,7 +79,7 @@
 		     //A.log("locality-body.jsp adm1:" + adm1 + " country:" + locality.getCountry() + " adm1:" + locality.getAdm1());
 		     if (island != null) {
   	 	       //A.log("locality-body.jsp parent:" + adm1.getParent() + " adm1:" + adm1.getName());
-  			   islandCountryLink = "<a href='" + AntwebProps.getDomainApp() + "/island.do?name=" + island.getName() + "'>" + island.getName() + "</a>";
+  			   islandCountryLink = "<a href='" + AntwebProps.getDomainApp() + "/island.do?name=" + Html.escAttr(Html.url(island.getName())) + "'>" + Html.esc(island.getName()) + "</a>";
   		     } %>
 		<li><b><%= islandCountryLink %></b> </li></ul>
   <% } else {
