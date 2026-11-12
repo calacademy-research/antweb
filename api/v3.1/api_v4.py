@@ -88,7 +88,9 @@ NOT_FOR_V4 = ('up', 'log')
 PAGING = {
     'routes': ['/v4/specimens', '/v4/geoSpecimens', '/v4/taxa'],
     'total': 'metaData.total is the number of records that match the filters, whatever limit is. It is given on the'
-             ' first page (no offset, no afterCode) and on any page with total=true; total=false leaves it out.',
+             ' first page (no offset, no afterCode) and on any page with total=true; total=false leaves it out.'
+             ' A /v4/specimens request without any filter gets no total unless it says total=true (counting every'
+             ' specimen record takes long); metaData.totalNotGiven then says so.',
     'returned': 'metaData.returned is the number of records in this answer.',
     'complete': 'metaData.complete is true when this answer reaches the end of the set.',
     'afterCode': 'On /v4/specimens and /v4/geoSpecimens, afterCode=<specimen code> gives the records after that code'
@@ -146,6 +148,19 @@ ALL_FAMILIES_VALUE_MESSAGE = 'allFamilies must be true or false.'
 FAMILY_ALL_MESSAGE = ('family=all is not the name of a family. For the records of every family send allFamilies=true;'
                       ' without it the answer holds ants only.')
 FAMILIES_HEADER = 'X-AntWeb-Families'
+
+# No total for a /specimens request without a filter, unless it asks (total=true). Review of pull request 348,
+# 2026-11-12: the first page of every such request, with or without a key, made MySQL count the whole view
+# api3_1_specimen (it joins taxon, and the ants-only test reads every row), and only the per-minute limit stood in
+# the way. A request with a filter keeps its total on the first page: that is the number a collaborator needs to
+# know a set is complete, and the filter is what makes the count small. Parameters that page, format or choose the
+# families are not filters; a blank value or * is none either. /geoSpecimens always has its area (coords), and
+# /taxa counts the far smaller taxon table: both keep their totals.
+NO_TOTAL_WITHOUT_FILTER = ('getSpecimen',)
+NOT_FILTERS = frozenset(('limit', 'offset', 'afterCode', 'total', 'ndjson', 'allFamilies'))
+TOTAL_NOT_GIVEN = ('No total is given for a request without a filter: counting every specimen record takes long.'
+                   ' Add total=true to get it, or add a filter (for example country=Madagascar).')
+TOTAL_NOT_GIVEN_HEADER = 'X-AntWeb-Total-Not-Given'
 
 BOTH_PAGINGS_MESSAGE = ('Use afterCode or offset, not both. afterCode=<the last specimen code you received> gives the'
                         ' records after it; offset=<n> leaves out the first n records.')
@@ -401,10 +416,22 @@ def family_rule(endpoint, args):
     return ANTS_ONLY
 
 
+def without_filter(endpoint, args):
+    """True for a /specimens request that names no filter (NO_TOTAL_WITHOUT_FILTER, NOT_FILTERS): its total would be
+    a count of every record."""
+    if endpoint not in NO_TOTAL_WITHOUT_FILTER:
+        return False
+    for k, values in args.lists():
+        if k not in NOT_FILTERS and any(v.strip() not in ('', '*') for v in values):
+            return False
+    return True
+
+
 def run(name, endpoint, admission, has_key, limits):
     """The v3.1 route in an inner request (g.apiV4Inner) with limit = the reserved records; returns (response, records)."""
     filters = {}
     families = family_rule(endpoint, request.args)
+    no_filter = without_filter(endpoint, request.args)      # of the request as it was sent, v4's own filters included
     inner = MultiDict()
     for k, values in request.args.lists():
         if k in EXTRA_PARAMS.get(endpoint, ()):
@@ -422,6 +449,7 @@ def run(name, endpoint, admission, has_key, limits):
         g.apiMaxLimit = admission.reserved
         g.apiV4Filters = filters
         g.apiV4Families = families      # read by ants_only() inside the route
+        g.apiV4NoFilter = no_filter     # read by rows(): no total unless total=true
         inner_response = api.application.full_dispatch_request()
         found = getattr(g, 'apiV4Paging', None)     # set by rows() for the list routes
         body = inner_response.get_data()
@@ -488,6 +516,8 @@ def run(name, endpoint, admission, has_key, limits):
             response.headers[header] = urllib.parse.quote(str(value), safe='')
     if families:
         response.headers[FAMILIES_HEADER] = families
+    if paging and paging.get('totalNotGiven'):
+        response.headers[TOTAL_NOT_GIVEN_HEADER] = 'add total=true'
     return response, count
 
 
@@ -505,6 +535,8 @@ def page_info(paging, records, reserved):
     out = {}
     if 'total' in paging:
         out['total'] = paging['total']
+    if paging.get('totalNotGiven'):
+        out['totalNotGiven'] = paging['totalNotGiven']
     cut = len(records) > reserved
     out['returned'] = min(len(records), reserved)
     out['complete'] = bool(paging.get('complete')) and not cut
@@ -603,7 +635,10 @@ def rows(query, limit, offset, key=None, after_code=False):
       total     the number of records that match the filters. Counted from this same query without its order,
                 limit and offset, so the count and the records cannot use different filters. Only on the first
                 page (offset 0, no afterCode) or with total=true; never with total=false (a count reads every
-                matching row, so later pages leave it out).
+                matching row, so later pages leave it out). Not on the first page of a /specimens request
+                without a filter (flask.g.apiV4NoFilter, without_filter()): that count is of every record, so
+                it is made only with total=true, and metaData.totalNotGiven says how to ask (unless that page
+                already holds every record: then their number is the total).
       complete  whether this page reaches the end: one record more than `limit` is read and not given, so this
                 costs no count and is right on every page.
       lastCode  the specimen code of the last record (after_code routes), for metaData.nextAfterCode.
@@ -617,17 +652,25 @@ def rows(query, limit, offset, key=None, after_code=False):
     unlimited = query.limit(None).offset(None)
     paging = {'byCode': bool(after_code)}
     wanted = f.get('total')
-    if wanted == 'true' or (wanted != 'false' and offset == 0 and not after):
+    first_page = offset == 0 and not after
+    no_filter = bool(getattr(g, 'apiV4NoFilter', False))
+    if wanted == 'true' or (wanted != 'false' and first_page and not no_filter):
         counted = unlimited.order_by(None)
         if key is not None:
             paging['total'] = counted.with_entities(func.count(key)).scalar()
         else:
             paging['total'] = counted.count()
+    elif wanted != 'false' and first_page and no_filter:
+        paging['totalNotGiven'] = TOTAL_NOT_GIVEN
     if after:
         unlimited = unlimited.filter(key > after)
     found = unlimited.limit(limit + 1).offset(offset).all()
     paging['complete'] = len(found) <= limit
     found = found[:limit]
+    if paging.get('totalNotGiven') and paging['complete']:
+        # the first page holds every record: their number is the total, and it cost no count
+        del paging['totalNotGiven']
+        paging['total'] = len(found)
     if after_code and found:
         paging['lastCode'] = getattr(found[-1], key.key)
     g.apiV4Paging = paging

@@ -227,7 +227,7 @@ def test_total_is_the_filtered_count_whatever_the_limit():
             assert m["complete"] is (limit >= N), (limit, m)
         # without limit too, and for every filter: the total is what the filter matches
         assert meta(MADAGASCAR)["total"] == N
-        assert meta("/v4/specimens?limit=3")["total"] == N + 7
+        assert meta("/v4/specimens?limit=3&total=true")["total"] == N + 7      # without a filter: only when asked
         assert meta("/v4/specimens?country=Kenya&limit=3")["total"] == 7
         assert meta(MADAGASCAR + "&species=sp1&limit=2")["total"] == len([i for i in range(N) if i % 3 == 1]) == 13
         assert meta("/v4/specimens?country=Niger&limit=2") == dict(meta("/v4/specimens?country=Niger&limit=2"),
@@ -278,6 +278,71 @@ def test_total_only_on_the_first_page_or_when_asked():
         assert meta(MADAGASCAR + "&limit=5&afterCode=casent0034&total=true")["total"] == N
         r = get(MADAGASCAR + "&limit=5&total=maybe", expect=400)
         assert r.get_json()["error"] == "total must be true or false.", r.get_json()
+
+
+def test_no_total_for_a_request_without_a_filter_unless_asked():
+    """Review of pull request 348 (2026-11-12): the first page of /v4/specimens with no filter, with or without a
+    key, made the database count every record of the specimen view (it joins taxon, and the ants-only test reads
+    every row); only the per-minute limit stood in the way. Now such a request gets no total unless it says
+    total=true, and the answer says that the total is not given and how to ask. A request with a filter keeps its
+    total on the first page."""
+    fresh_usage()
+    with opened():
+        urls = ("/v4/specimens?limit=3", "/v4/specimens?limit=3&offset=0", "/v4/specimens?limit=3&afterCode=",
+                "/v4/specimens?limit=3&allFamilies=true", "/v4/specimens?limit=3&family=", "/v4/specimens?limit=3&genus=*")
+        # with a key or without (without: 5 requests a minute, so the first three)
+        for key, some in (("collaborator", urls), ("registered", urls), (None, urls[:3])):
+            for url in some:
+                del STATEMENTS[:]
+                r = get(url, key)
+                m = r.get_json()["metaData"]
+                assert "total" not in m and "X-AntWeb-Total" not in r.headers, (key, url, m)
+                assert "total=true" in m["totalNotGiven"] and "without a filter" in m["totalNotGiven"], (url, m)
+                assert r.headers["X-AntWeb-Total-Not-Given"] == "add total=true"
+                assert m["returned"] == len(codes_of(r)) > 0 and m["complete"] is False, (url, m)
+                assert not any("count(" in s.lower() for s, _ in STATEMENTS), (url, "the unfiltered request counted")
+        # an answer that holds every record needs no count to know the total (47 records, 500 an answer)
+        del STATEMENTS[:]
+        m = meta("/v4/specimens", key="registered")
+        assert m["total"] == N + 7 == m["returned"] and m["complete"] is True and "totalNotGiven" not in m, m
+        assert not any("count(" in s.lower() for s, _ in STATEMENTS)
+        # a blank value is no filter for the total either; here it finds nothing, so the answer is whole: 0, no count
+        del STATEMENTS[:]
+        m = meta("/v4/specimens?limit=3&country=%20")
+        assert m["total"] == 0 and m["complete"] is True and not any("count(" in s.lower() for s, _ in STATEMENTS), m
+        # asked for: the count of every record (ants only, the default)
+        del STATEMENTS[:]
+        m = meta("/v4/specimens?limit=3&total=true")
+        assert m["total"] == N + 7 and "totalNotGiven" not in m, m
+        assert sum("count(" in s.lower() for s, _ in STATEMENTS) == 1
+        # total=false and later pages say nothing about it, as before
+        for url in ("/v4/specimens?limit=3&total=false", "/v4/specimens?limit=3&offset=3", "/v4/specimens?limit=3&afterCode=casent0002"):
+            m = meta(url)
+            assert "total" not in m and "totalNotGiven" not in m, (url, m)
+        # any filter keeps the total of the first page; a parameter that pages, formats or chooses families is none
+        for url, total in ((MADAGASCAR + "&limit=3", N), ("/v4/specimens?genus=pheidole&limit=3", N + 7),
+                           ("/v4/specimens?family=formicidae&limit=3", N + 7), ("/v4/specimens?localityCode=LOC01&limit=3", N + 7),
+                           ("/v4/specimens?georeferenced=false&limit=3", 17), ("/v4/specimens?specimenCode=casent0001", 1)):
+            m = meta(url)
+            assert m["total"] == total and "totalNotGiven" not in m, (url, m)
+        assert api_v4.NOT_FILTERS == {"limit", "offset", "afterCode", "total", "ndjson", "allFamilies"}
+        # ndjson: no total header, and the header that says how to ask
+        r = get("/v4/specimens?limit=3&ndjson=true")
+        assert "X-AntWeb-Total" not in r.headers and r.headers["X-AntWeb-Total-Not-Given"] == "add total=true"
+        assert r.headers["X-AntWeb-Returned"] == "3"
+        # the other list routes keep their totals: /geoSpecimens always has its area, /taxa counts the taxon table
+        assert "total" in meta("/v4/geoSpecimens?coords=37.77,-122.47&radius=10&limit=2")
+        m = meta("/v4/taxa?limit=2")
+        assert "total" in m and "totalNotGiven" not in m, m
+        # the front door says it
+        assert "total=true" in client.get("/v4/").get_json()["paging"]["total"]
+    if REPO is None:
+        print("  (repository files not mounted, skipped)")
+        return
+    for path in ("web/documentation/api/apiV3_1-body.jsp", "web/llms.txt", "docs/flows/api.md"):
+        with open(os.path.join(REPO, path), encoding="utf-8") as f:
+            page = f.read()
+        assert "total=true" in page and "without a filter" in page, path
 
 
 # --- complete and nextAfterCode --------------------------------------------------------------------------------

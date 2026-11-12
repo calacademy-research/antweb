@@ -95,6 +95,17 @@ def test_settings_file_backed_up_before_change():
     assert text.index('cp -p "$P"') < text.index('>> "$P"')
 
 
+def test_the_api_image_can_sign_in_as_the_usage_login():
+    """The login is made by MySQL 8.4 with its default method, caching_sha2_password; PyMySQL signs in with
+    it only when the cryptography package is installed (staging 2026-11-12: every v4 request was 503,
+    "'cryptography' package is required for sha256_password or caching_sha2_password auth methods")."""
+    req = (SCRIPT.parent.parent.parent / "api" / "v3.1" / "requirements.txt").read_text()
+    names = [line.split("==")[0].split("~=")[0].strip().lower() for line in req.splitlines()
+             if line.strip() and not line.lstrip().startswith("#")]
+    assert "pymysql" in names and "cryptography" in names, names
+    assert "identified with mysql_native_password" not in SCRIPT.read_text().lower()
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
