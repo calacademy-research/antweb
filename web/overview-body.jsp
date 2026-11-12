@@ -143,6 +143,13 @@
      
      if (!"".equals(geolocale.getAlternatives())) out.println("<b>Alternative Place Names:</b>&nbsp;" + geolocale.getAlternatives());
 
+     // Brian Fisher, 2026-11-11: an oceanic island with its own ant fauna is its own country; its specimens never count
+     // toward the political parent. The parent's page says so, with a link (the wording: Country.ownPagesNote).
+     if (geolocale instanceof Country && !geolocale.isIsland()) {
+       String ownPagesNote = Country.ownPagesNote(GeolocaleMgr.getIslandsOf(geolocale.getName()));
+       if (!"".equals(ownPagesNote)) out.println("<p id=\"own-islands-note\">" + ownPagesNote + "</p>");
+     }
+
      mapType = "geolocale";
      if ("country".equals(geolocale.getGeorank())) {
        if (geolocale.isIsland()) {

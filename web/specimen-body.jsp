@@ -211,7 +211,10 @@ if (localityLink != null) { %>
    if (country != null) out.println("<ul><li><b>" + country.getHeading() + ":</b></li><li><a href='" + Html.escAttr(country.getThisPageTarget()) + "'>" + Html.esc(country.getName()) + "</a></li></ul>");
    //A.log("specimen-body.jsp islandCountry:" + GeolocaleMgr.getIsland(specimen.getIslandCountry()));
    Geolocale island = GeolocaleMgr.getIsland(specimen.getIslandCountry());
-   if (island != null) {
+   // 2026-11-11 (Brian Fisher: an oceanic island is its own country): a specimen of Hawaii is stored with country
+   // Hawaii, so the line above is the island's already; the island line only for a specimen still stored under its
+   // political parent (before the one-time update, tools/place/island_countries.py).
+   if (island != null && !island.getName().equals(specimen.getCountry())) {
       out.println("<ul><li><b>" + island.getHeading() + ":</b></li><li><a href='" + Html.escAttr(island.getThisPageTarget()) + "'>" + Html.esc(island.getName()) + "</a></li></ul>");
    }
    //out.println("<ul><li><b>" + specimen.getIslandCountry() + "</b></li><li></ul>");
@@ -231,6 +234,8 @@ if (localityLink != null) { %>
        out.println("<ul><li><b>Adm1: </b></li>" + unrecognizedAdm1Value + "</ul>");
      }
    }
+   // an island's specimen keeps the adm1 its file gave (the islands have no adm1 pages yet): shown as text
+   if (country != null && island != null && Utility.notBlank(specimen.getAdm1())) out.println("<ul><li><b>Adm1: </b></li><li>" + Html.esc(specimen.getAdm1()) + "</li></ul>");
    if (Utility.notBlank(specimen.getAdm2())) out.println("<ul><li><b>Adm2: </b></li><li>" + Html.esc(specimen.getAdm2()) + "</a></li></ul>");
 
    if (Utility.displayEmptyOrNotBlank(specimen.getLocLatitude()) 

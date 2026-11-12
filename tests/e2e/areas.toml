@@ -436,6 +436,7 @@ paths = [
   "src/org/calacademy/antweb/TaxaPage.java",
   "src/org/calacademy/antweb/util/OverviewMgr.java",
   "src/org/calacademy/antweb/util/OldPlaceNames.java",
+  "src/org/calacademy/antweb/upload/RecordPlace.java",
   "web/subregion*",
   "web/museum*",
   "web/project*",
@@ -450,6 +451,7 @@ paths = [
 ]
 tests = [
   "test_place_recalc.py",              # Update statistics on a country and an adm1, as admin (2026-11-03)
+  "test_island_countries.py",          # Hawaii and Galapagos Islands are their own countries: parent's note, API, specimen page, endemics (2026-11-11)
   "test_fossil_page_counts.py",        # Fossil Ants and AntCat list pages name and open their own views (2026-11-11)
   "test_place_pages.py",               # place pages, their lists and species lists (step 2)
   "test_geolocale_edit.py",

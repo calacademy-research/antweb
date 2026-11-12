@@ -16,7 +16,9 @@ Files are written under `web/data/specimenData/` and `web/data/search/` with the
 
 The same specimens the place's numbers count (`SpecimenDb.getDownloadFromWhere`):
 
-- country: `specimen.country`; island: `specimen.island_country`; adm1: `specimen.adm1`;
+- country: `specimen.country`; island: `specimen.island_country`; adm1: `specimen.adm1`. An island that is its own
+  country (Hawaii, Galapagos Islands) is not in its political parent's download (2026-11-11: its specimens are stored
+  under the island's name; flows/places.md);
 - region and subregion: the specimens of their countries (`Geolocale.getSpecimenPlaceJoin`);
 - museum: the museum's own specimens (`specimen.museum`); bioregion: `specimen.bioregion`;
 - project: the specimens of the names on the project's list (`proj_taxon`); allantwebants: all specimens.
