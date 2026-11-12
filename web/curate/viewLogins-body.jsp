@@ -27,7 +27,8 @@
 <div class="admin_left loginListPage">
     <h1>Login Manager</h1>
     <p><a href="<%= secureDomainApp %>/list.do?action=usrAdm">All logins with their permissions</a>
-     | <a href="<%= secureDomainApp %>/list.do?action=usrAdmLastLogin">Logins by last login</a></p>
+     | <a href="<%= secureDomainApp %>/list.do?action=usrAdmLastLogin">Logins by last login</a>
+     | <a href="<%= secureDomainApp %>/passwordResetCampaign.do">Password reset campaign</a> (ask every curator and admin to set a new password: opens a preview; nothing changes and nothing is sent until you confirm)</p>
     <hr></hr>
 
           <li><b>Relevant Queries</b>

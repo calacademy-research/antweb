@@ -503,6 +503,15 @@ public final class PlaceTotals {
      * (PlaceImageCountDb) and the count check.
      */
     public static String listSpecimensFrom(String type, String keyCondition, String extraJoin) {
+        return listSpecimensFrom(type, keyCondition, extraJoin, "specimen");
+    }
+
+    /**
+     * The same statement reading the specimens from specimenTable, a table with the specimen columns the statement
+     * names (alias s). "specimen" gives the statement above, character for character; the daily update's place image
+     * counts pass their working table of the specimens that have images (PlaceImageCountDb, 2026-11-11).
+     */
+    public static String listSpecimensFrom(String type, String keyCondition, String extraJoin, String specimenTable) {
         String l = listTable(type);
         String k = listKey(type);
         String key = keyCondition == null ? "" : " and l." + k + keyCondition;
@@ -511,7 +520,7 @@ public final class PlaceTotals {
             + " union all select l." + k + " pk, l.taxon_name list_name, st.taxon_name src from " + l + " l"
             + " join taxon st on st.current_valid_name = l.taxon_name"
             + " where " + renamedCondition("st") + key + uncurated
-            + ") m join specimen s on s.taxon_name = m.src"
+            + ") m join " + specimenTable + " s on s.taxon_name = m.src"
             + " left join taxon sx on sx.taxon_name = s.taxon_name"
             + (extraJoin == null ? "" : extraJoin)
             + " where (m.src <> m.list_name or coalesce(" + renamedCondition("sx") + ", false) = false"

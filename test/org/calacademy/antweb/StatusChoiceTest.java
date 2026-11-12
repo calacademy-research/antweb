@@ -32,7 +32,9 @@ import org.calacademy.antweb.home.PlaceTotals;
  *    valid, curated, all, fossil.
  * 2. Old address values map to the nearest view (validmorpho, all determined, all indetermined, complete, type -> all;
  *    valid extant -> valid; valid fossil -> fossil); an unknown value gives the default.
- * 3. Default: Curated on every kind of list; the AntCat list and Fossil Ants their own set (Valid (with fossils)).
+ * 3. Default: Curated on every kind of list. The AntCat list and Fossil Ants (2026-11-11): the views Valid, Curated,
+ *    Valid extant, Valid fossil; their Valid and Curated count the fossil names (Valid: status valid; Curated: valid and
+ *    the morphotaxa on the list); the old address value "Valid (with fossils)" opens their Curated.
  * 4. Criteria: valid = valid, not fossil; curated = valid extant or a morphotaxon on a curated entry
  *    (ListView.vettedCondition); all = the five counted statuses, non-species names not hidden; fossil = valid fossil.
  * 5. Headers say what the list shows, the number of the view ("2,700 Species (valid and curated)").
@@ -103,8 +105,9 @@ public class StatusChoiceTest extends TestCase {
         assertEquals(PlaceTotals.PROJECT, StatusSet.placeType(new Project()));
         assertEquals("curated", StatusSet.defaultChoice(PlaceTotals.PROJECT, "madants"));
         assertEquals("curated", StatusSet.defaultChoice(PlaceTotals.PROJECT, Project.ALLANTWEBANTS));
-        assertEquals(StatusSet.VALID_WITH_FOSSIL, StatusSet.defaultChoice(PlaceTotals.PROJECT, Project.WORLDANTS));
-        assertEquals(StatusSet.VALID_WITH_FOSSIL, StatusSet.defaultChoice(PlaceTotals.PROJECT, Project.FOSSILANTS));
+        // 2026-11-11: the AntCat list and Fossil Ants too (until then their own "Valid (with fossils)")
+        assertEquals("curated", StatusSet.defaultChoice(PlaceTotals.PROJECT, Project.WORLDANTS));
+        assertEquals("curated", StatusSet.defaultChoice(PlaceTotals.PROJECT, Project.FOSSILANTS));
     }
 
     public void testChoiceComesFromTheAddressOnly() {
@@ -126,13 +129,17 @@ public class StatusChoiceTest extends TestCase {
         Project worldants = new Project();
         worldants.setName(Project.WORLDANTS);
         params.put("statusSet", "complete");
-        assertEquals(StatusSet.VALID_WITH_FOSSIL, StatusSet.getStatusSet(request, worldants));
+        assertEquals("curated", StatusSet.getStatusSet(request, worldants));
         params.put("statusSet", "validmorpho");
-        assertEquals(StatusSet.VALID_WITH_FOSSIL, StatusSet.getStatusSet(request, worldants));
+        assertEquals("curated", StatusSet.getStatusSet(request, worldants));
+        params.put("statusSet", "Valid (with fossils)");   // the old value of its default view
+        assertEquals("curated", StatusSet.getStatusSet(request, worldants));
+        params.put("statusSet", "valid");
+        assertEquals("valid", StatusSet.getStatusSet(request, worldants));
         params.put("statusSet", "valid fossil");
         assertEquals(StatusSet.VALID_FOSSIL, StatusSet.getStatusSet(request, worldants));
         params.remove("statusSet");
-        assertEquals(StatusSet.VALID_WITH_FOSSIL, StatusSet.getStatusSet(request, worldants));
+        assertEquals("curated", StatusSet.getStatusSet(request, worldants));
         assertEquals(1, session.size());
     }
 
@@ -162,8 +169,8 @@ public class StatusChoiceTest extends TestCase {
         assertTrue(TaxaPage.hidesNonSpecies(new StatusSet(StatusSet.ALL)));
         assertFalse(new StatusSet(StatusSet.VALID).getCriteria().contains("fossil"));
         assertEquals("valid fossil", StatusSet.listStatusSet("valid fossil").getValue());
-        // on the AntCat list "valid" is not one of its choices: its default, valid names with fossils (ownChoice)
-        assertEquals(StatusSet.VALID_WITH_FOSSIL, StatusSet.listStatusSet("valid", Project.WORLDANTS).getValue());
+        // on the AntCat list Valid is every valid name, fossil or not (2026-11-11; until then its default)
+        assertEquals(StatusSet.VALID, StatusSet.listStatusSet("valid", Project.WORLDANTS).getValue());
         assertEquals(StatusSet.VALID_EXTANT, StatusSet.listStatusSet("valid", "madants").getValue());
     }
 
@@ -236,11 +243,11 @@ public class StatusChoiceTest extends TestCase {
         assertEquals("No Valid species", StatusSet.listHeading("valid", 0, "Species", "Species", -1));
         assertEquals("346 Specimens", StatusSet.listHeading(null, 346, "Specimens", "Specimen", -1));
         assertEquals("40 Valid (with fossils) Species", StatusSet.listHeading(StatusSet.VALID_WITH_FOSSIL, 40, "Species", "Species", -1));
-        // the AntCat list keeps its own choices and the old form ("valid" is not one of them: its default)
+        // the AntCat list: Valid and Curated in the words of every list (2026-11-11), Valid extant in the old form
         assertEquals("40 Valid extant Species", StatusSet.listHeading(StatusSet.VALID_EXTANT, 40, "Species", "Species", 6960, Project.WORLDANTS));
-        assertEquals("40 Valid (with fossils) Species", StatusSet.listHeading("valid", 40, "Species", "Species", 6960, Project.WORLDANTS));
+        assertEquals("40 Valid species (of 6,960 species, valid and curated)", StatusSet.listHeading("valid", 40, "Species", "Species", 6960, Project.WORLDANTS));
         assertEquals("346 Specimens", StatusSet.listHeading(null, 346, "Specimens", "Specimen", -1, Project.WORLDANTS));
-        assertEquals("Valid (with fossils)", StatusSet.choiceLabel("valid", "species", Project.WORLDANTS));
+        assertEquals("Valid", StatusSet.choiceLabel("valid", "species", Project.WORLDANTS));
         assertEquals("Valid", StatusSet.choiceLabel("valid", "species", "madants"));
         // the wording no longer depends on the place's fossil subfamilies (2026-11-02)
         assertEquals(StatusSet.listHeading("curated", 8, "Subfamilies", "Subfamily", -1, "algeria", false),
@@ -261,8 +268,10 @@ public class StatusChoiceTest extends TestCase {
         // the AntCat list keeps its own choices
         assertEquals("40 Valid extant Species imaged (out of 98 valid extant species)",
             StatusSet.imagedHeading(StatusSet.VALID_EXTANT, 40, 98, "Species", "Species", Project.WORLDANTS));
-        assertEquals("40 Valid (with fossils) Species imaged (out of 98 valid (with fossils) species)",
+        assertEquals("a value it does not offer: its default, Curated", "40 Species imaged (out of 98 species, valid and curated)",
             StatusSet.imagedHeading("validmorpho", 40, 98, "Species", "Species", Project.WORLDANTS));
+        assertEquals("40 Valid species imaged (out of 98 valid species)",
+            StatusSet.imagedHeading("valid", 40, 98, "Species", "Species", Project.FOSSILANTS));
         // a species' specimens (images.do of a species): no status words
         assertEquals("18 Specimens imaged (out of 56 specimens)", StatusSet.imagedHeading(null, 18, 56, "Specimens", "Specimen", "madants", true));
         // the list header and the images header use the same words for the same view
@@ -276,33 +285,87 @@ public class StatusChoiceTest extends TestCase {
     }
 
     /**
-     * Review of #307 (2026-10-30): the AntCat list (worldants) and Fossil Ants take only their own choices. A value they
-     * do not offer (a list choice of another list, a single status, an unknown value) gives their default, Valid (with
-     * fossils), for the criteria, the header and the selector's label; their own values in any case or spacing are kept.
+     * Review of #307 (2026-10-30): the AntCat list (worldants) and Fossil Ants take only their own views. A value they
+     * do not offer (a view of another list, a single status, an unknown value) gives their default, for the criteria,
+     * the header and the selector's label; their own values in any case or spacing are kept. Since 2026-11-11 the
+     * default is Curated and "valid" is a view of its own.
      */
     public void testOwnStatusSetListsMapOtherValuesToTheirDefault() {
         for (String list : new String[]{Project.WORLDANTS, Project.FOSSILANTS}) {
-            for (String v : new String[]{null, "", "validmorpho", "fossil", "valid", "all", "morphotaxon", "complete", "nonsense"}) {
-                assertEquals(list + " " + v, StatusSet.VALID_WITH_FOSSIL, StatusSet.ownChoice(v));
+            for (String v : new String[]{null, "", "validmorpho", "fossil", "all", "morphotaxon", "complete", "nonsense",
+                    "curated", "Valid (with fossils)", " valid  (WITH fossils) "}) {
+                assertEquals(list + " " + v, StatusSet.LIST_VETTED, StatusSet.ownChoice(v));
                 assertEquals(list + " " + v, StatusSet.VALID_WITH_FOSSIL, StatusSet.listStatusSet(v, list).getValue());
-                assertEquals(list + " " + v, "Valid (with fossils)", StatusSet.choiceLabel(v, "species", list));
-                if (v != null) assertEquals(list + " " + v, "40 Valid (with fossils) Species", StatusSet.listHeading(v, 40, "Species", "Species", -1, list));
+                assertEquals(list + " " + v, "Curated", StatusSet.choiceLabel(v, "species", list));
+                if (v != null) assertEquals(list + " " + v, "40 Species (valid and curated)", StatusSet.listHeading(v, 40, "Species", "Species", -1, list));
             }
             for (String own : StatusSet.OWN_SET_CHOICES) {
                 assertEquals(own, StatusSet.ownChoice(own));
                 assertEquals(own, StatusSet.ownChoice("  " + own.toUpperCase(java.util.Locale.ROOT) + " "));
-                assertEquals(own, StatusSet.listStatusSet(own, list).getValue());
-                assertTrue(java.util.Arrays.asList(StatusSet.OWN_SET_CHOICES).contains(own));
+                assertEquals(own, StatusSet.getStatusSet(own, null, new Project(list)));
             }
             assertEquals("Valid fossil", StatusSet.choiceLabel("valid fossil", "genus", list));
             assertEquals("Valid extant", StatusSet.choiceLabel("Valid  Extant", "genus", list));
             // every label the selector can show is the label of one of its choices
             java.util.Set<String> offered = new java.util.HashSet<>();
             for (String c : StatusSet.choicesFor(list)) offered.add(StatusSet.choiceLabel(c, "species", list));
-            for (String v : new String[]{"validmorpho", "fossil", "Validmorpho", "valid fossil", "x"}) {
+            for (String v : new String[]{"validmorpho", "fossil", "Validmorpho", "valid fossil", "x", "valid", "Valid (with fossils)"}) {
                 assertTrue(v, offered.contains(StatusSet.choiceLabel(v, "species", list)));
             }
         }
+    }
+
+    /**
+     * The views of the AntCat list and Fossil Ants (Brian Fisher, 2026-11-11: "we want valid species first - that is the
+     * rule for all lists, after that is with morpho - like in all the lists"; Fossil Ants showed "Valid species /
+     * subspecies 3" and had no list of its valid names: its default, labelled "Valid (with fossils)", lists its 12
+     * morphospecies too, 868 rows, 856 of them valid). The same two views as every list, in the same order, counted with
+     * the fossil names: Valid = status valid, fossil or not; Curated (the default) = valid and the morphotaxa on the
+     * list, what "Valid (with fossils)" listed; that old address value still opens it; Valid extant and Valid fossil stay.
+     */
+    public void testTheAntCatListAndFossilAntsHaveValidAndCurated() {
+        for (String list : new String[]{Project.WORLDANTS, Project.FOSSILANTS}) {
+            assertEquals("the selector: Valid, Curated, Valid extant, Valid fossil", "[Valid, Curated, Valid extant, Valid fossil]",
+                labels(list).toString());
+            assertEquals("[valid, curated, valid extant, valid fossil]", java.util.Arrays.toString(StatusSet.choicesFor(list)));
+            assertEquals("the default view", StatusSet.LIST_VETTED, StatusSet.defaultChoice(PlaceTotals.PROJECT, list));
+            assertEquals(StatusSet.LIST_VETTED, StatusSet.getStatusSet(null, null, new Project(list)));
+            assertEquals(StatusSet.LIST_VALID, StatusSet.getStatusSet("valid", null, new Project(list)));
+            // Valid: every valid name, fossil or not; no morphotaxa
+            String valid = StatusSet.listStatusSet("valid", list).getCriteria("taxon");
+            assertEquals(" taxon.status = 'valid' ", valid);
+            assertFalse(valid, valid.contains("fossil") || valid.contains("morphotaxon"));
+            assertEquals("no rank condition, as the other views of these lists", "", StatusSet.listStatusSet("valid", list).listRankCondition("species", "taxon"));
+            // Curated: valid names and the morphotaxa on the list, fossil or not
+            String curated = StatusSet.listStatusSet("curated", list).getCriteria("taxon");
+            assertEquals(" taxon.status in ('valid', 'morphotaxon')", curated);
+            assertEquals("the old address value opens Curated", curated, StatusSet.listStatusSet("Valid (with fossils)", list).getCriteria("taxon"));
+            assertEquals(curated, StatusSet.listStatusSet(null, list).getCriteria("taxon"));
+            // Valid extant and Valid fossil as before
+            String extant = StatusSet.listStatusSet("valid extant", list).getCriteria("taxon");
+            assertTrue(extant, extant.contains("status = 'valid'") && extant.contains("fossil = 0"));
+            String fossil = StatusSet.listStatusSet("valid fossil", list).getCriteria("taxon");
+            assertTrue(fossil, fossil.contains("status = 'valid'") && fossil.contains("fossil = 1"));
+            // headers in the words of every list; the Fossil Ants numbers of 2026-11-11
+            assertEquals("856 Valid species (of 868 species, valid and curated)", StatusSet.listHeading("valid", 856, "Species", "Species", 868, list));
+            assertEquals("868 Species (valid and curated)", StatusSet.listHeading("curated", 868, "Species", "Species", 868, list));
+            assertEquals("868 Species (valid and curated)", StatusSet.listHeading("Valid (with fossils)", 868, "Species", "Species", 868, list));
+            assertEquals("258 Genera (valid and curated)", StatusSet.listHeading("curated", 258, "Genera", "Genus", -1, list));
+            assertEquals("256 Valid genera", StatusSet.listHeading("valid", 256, "Genera", "Genus", -1, list));
+            assertEquals("853 Valid fossil Species", StatusSet.listHeading("valid fossil", 853, "Species", "Species", 868, list));
+            assertEquals("3 Valid extant Species", StatusSet.listHeading("valid extant", 3, "Species", "Species", 868, list));
+            assertEquals("700 Species imaged (out of 868 species, valid and curated)", StatusSet.imagedHeading("curated", 700, 868, "Species", "Species", list));
+        }
+        // other lists: nothing changes (Valid = valid, not fossil; the old value "Valid (with fossils)" is their Valid)
+        assertEquals(StatusSet.VALID_EXTANT, StatusSet.listStatusSet("valid", "madants").getValue());
+        assertEquals(StatusSet.LIST_VALID, StatusSet.listChoice("Valid (with fossils)"));
+        assertEquals("[valid, curated, all, fossil]", java.util.Arrays.toString(StatusSet.choicesFor("madants")));
+    }
+
+    private static java.util.List<String> labels(String list) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (String c : StatusSet.choicesFor(list)) out.add(StatusSet.choiceLabel(c, "species", list));
+        return out;
     }
 
     /**
@@ -319,7 +382,7 @@ public class StatusChoiceTest extends TestCase {
         moz.setId(40);
         moz.setName("Mozambique");
         assertEquals(StatusSet.LIST_NOT_CURATED, StatusSet.getStatusSet("notcurated", null, moz));
-        assertEquals("the AntCat list keeps its own sets", StatusSet.VALID_WITH_FOSSIL, StatusSet.getStatusSet("notcurated", null, new Project(Project.WORLDANTS)));
+        assertEquals("the AntCat list keeps its own views", StatusSet.LIST_VETTED, StatusSet.getStatusSet("notcurated", null, new Project(Project.WORLDANTS)));
         StatusSet set = StatusSet.listStatusSet(StatusSet.LIST_NOT_CURATED);
         assertEquals(StatusSet.NOT_CURATED, set.getValue());
         assertEquals(" " + ListView.notCuratedCondition("taxon"), set.getCriteria("taxon"));
@@ -334,7 +397,7 @@ public class StatusChoiceTest extends TestCase {
         assertEquals(StatusSet.LIST_ALL, StatusSet.listChoice("validmorpho"));
     }
 
-    /** Fossil ants (Valid (with fossils)) lists morphotaxa too, as its Genera counts them (2026-11-03, B78 option a). */
+    /** Fossil ants' default (its Curated since 2026-11-11, criteria VALID_WITH_FOSSIL) lists morphotaxa too, as its Genera counts them (2026-11-03, B78 option a). */
     public void testValidWithFossilsListsMorphotaxa() {
         String c = new StatusSet(StatusSet.VALID_WITH_FOSSIL).getCriteria("taxon");
         assertTrue(c, c.contains("'valid'") && c.contains("'morphotaxon'"));

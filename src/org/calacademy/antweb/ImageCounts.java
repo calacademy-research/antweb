@@ -23,7 +23,9 @@ public final class ImageCounts {
     public static final String LABEL = "l";
 
     public static final String DEFINITION = "Images: images of the ant (head, profile, dorsal and other views);"
-        + " label images are counted separately.";
+        + " label images are counted separately."
+        // Brian Fisher, 2026-11-09: images of red-flagged specimens are not counted (StatisticsDb.NOT_RED_FLAGGED_IMAGE)
+        + " Images of red-flagged specimens are not counted in the numbers of names and places.";
     public static final String FILES_DEFINITION = "Image files: every uploaded image file, label images included.";
 
     public static boolean isLabel(String shot) {

@@ -489,6 +489,12 @@ def jsonify(*args, **kwargs):
             for key in ('metaData', '_metaData'):
                 if isinstance(kwargs.get(key), dict):
                     kwargs[key]['limitNotice'] = notice
+        # country= given as an old name (currentCountry): the reply says which country its records are of
+        used = getattr(g, 'countryName', None)
+        if used:
+            for key in ('metaData', '_metaData'):
+                if isinstance(kwargs.get(key), dict):
+                    kwargs[key]['countryName'] = used
     response = flaskJsonify(*args, **kwargs)
     if notice:
         response.headers[LIMIT_HEADER] = notice
@@ -675,6 +681,38 @@ def countryIs(column, name):
     return func.lower(column) == name.lower()
 
 
+# country= given as an old name of a country (2026-11-10, Brian Fisher: AntWeb takes the current country names, and
+# programs keep asking with the old ones): AntWeb keeps an old name as a not-valid country whose valid name is the
+# current country (USA: United States; after a rename, Turkey: Türkiye). The request is answered with the current
+# country's records, and metaData.countryName says so: {"requested": "USA", "used": "United States"} (v4 passes it
+# on). A valid name, a name AntWeb does not have and an old name without a valid name are used as given, as before.
+# Used by every route that takes country= (/specimens, /distinctTaxa, /measurements, /geolocaleTaxa).
+def currentCountry(name):
+    if name is None or name in ('', '*'):
+        return name
+    try:
+        rows = session.query(Geolocale).filter(Geolocale.georank == 'country').filter(countryIs(Geolocale.name, name)) \
+            .order_by(Geolocale.id).all()
+        if not rows or any(isValidPlace(row) for row in rows):
+            return name
+        for old in rows:
+            validName = (old.validName or '').strip()
+            if validName == '' or validName.lower() in ('none', 'null'):
+                continue
+            for current in session.query(Geolocale).filter(Geolocale.georank == 'country') \
+                    .filter(Geolocale.name == validName).order_by(Geolocale.id).all():
+                if isValidPlace(current):
+                    g.countryName = {'requested': name, 'used': current.name}
+                    return current.name
+    except Exception as error:
+        print("currentCountry error:" + str(error))
+    return name
+
+
+def isValidPlace(geolocale):
+    return str(geolocale.isValid) in ('1', 'True', 'true')
+
+
 def addExtraGeolocaleListCriteria(query, geolocaleName):
     # Because we don't want all specimen from all species on the species list.
     # Just all the specimen from all of the species on the species list that are in the Geolocale.
@@ -777,7 +815,7 @@ def getSpecimen():
     code = request.args.get('specimenCode', default='*', type=str)
     region = request.args.get('region', default='*', type=str)
     subregion = request.args.get('subregion', default='*', type=str)
-    country = request.args.get('country', default='*', type=str)
+    country = currentCountry(request.args.get('country', default='*', type=str))
     adm1 = request.args.get('adm1', default='*', type=str)
     bioregion = request.args.get('bioregion', default='*', type=str)
     habitat = request.args.get('habitat', default='*', type=str)
@@ -1315,7 +1353,7 @@ def identifiedToGenus(genus):
 @application.route('/distinctTaxa', methods=['GET'])
 def getDistinctTaxa():
     taxarank = request.args.get('taxarank', default='*', type=str)
-    country = request.args.get('country', default='*', type=str)
+    country = currentCountry(request.args.get('country', default='*', type=str))
     habitat = request.args.get('habitat', default='*', type=str)
     minDate = request.args.get('minDate', default='*', type=str)
     maxDate = request.args.get('maxDate', default='*', type=str)
@@ -1692,7 +1730,7 @@ def getMeasurements():
     subfamily = request.args.get('subfamily', default='*', type=str)
     genus = request.args.get('genus', default='*', type=str)
     species = request.args.get('species', default='*', type=str)
-    country = request.args.get('country', default='*', type=str)
+    country = currentCountry(request.args.get('country', default='*', type=str))
     adm1 = request.args.get('adm1', default='*', type=str)
     bioregion = request.args.get('bioregion', default='*', type=str)
     caste = request.args.get('caste', default='*', type=str)
@@ -1962,6 +2000,7 @@ class Geolocale(Base):
     parent = Column(String)
     georank = Column(String)
     isValid = Column('is_valid', String)
+    validName = Column('valid_name', String)   # of a not-valid place: the place it now is (currentCountry)
     region = Column(String)
     subregion = Column(String)
     country = Column(String)
@@ -2134,7 +2173,7 @@ def getGeolocaleTaxa():
     georank = request.args.get('georank', default='*', type=str)
     region = request.args.get('region', default='*', type=str)
     subregion = request.args.get('subregion', default='*', type=str)
-    country = request.args.get('country', default='*', type=str)
+    country = currentCountry(request.args.get('country', default='*', type=str))
     island = request.args.get('island', default='*', type=str)
     adm1 = request.args.get('adm1', default='*', type=str)
     taxonName = request.args.get('taxonName', default='*', type=str)
@@ -2458,18 +2497,21 @@ def getBioregionTaxa():
 # imageCount (every image file, kept as it was so clients do not break) also has antImageCount and labelImageCount.
 
 LABEL_SHOT_SQL = "lower(trim(coalesce(i.shot_type, ''))) = 'l'"
+# Brian Fisher, 2026-11-09: images of red-flagged specimens are not counted (StatisticsDb.NOT_RED_FLAGGED_IMAGE,
+# SpecimenDb.notRedFlagged in Java). A specimen's own image numbers are unchanged; a name's leave them out.
+NOT_RED_FLAGGED_SQL = "(s.flag is null or s.flag != 'red')"
 
 
 def imageSplitSql(byTaxon, n):
     """One grouped query: key -> images of the ant, label images. byTaxon False: key = specimen code (n codes as
-    :k0 .. :kn-1); True: key = taxon_name, the images of the specimens filed under each name (not the names under it).
-    Runs on MySQL and SQLite (tests/unit/test_api_image_split.py)."""
+    :k0 .. :kn-1); True: key = taxon_name, the images of the specimens filed under each name (not the names under it),
+    red-flagged specimens left out (2026-11-09). Runs on MySQL and SQLite (tests/unit/test_api_image_split.py)."""
     keys = ", ".join(":k%d" % i for i in range(n))
     split = (" sum(case when " + LABEL_SHOT_SQL + " then 0 else 1 end) ant,"
              " sum(case when " + LABEL_SHOT_SQL + " then 1 else 0 end) labels")
     if byTaxon:
         return ("select s.taxon_name k," + split + " from specimen s join image i on i.image_of_id = s.code"
-                " where s.taxon_name in (" + keys + ") group by s.taxon_name")
+                " where s.taxon_name in (" + keys + ") and " + NOT_RED_FLAGGED_SQL + " group by s.taxon_name")
     return "select i.image_of_id k," + split + " from image i where i.image_of_id in (" + keys + ") group by i.image_of_id"
 
 
@@ -2508,10 +2550,12 @@ def shotSplit(shotTypes):
 def imagedTaxaSql(casteClause=""):
     """Names (taxon_name) that are imaged: a specimen of the name has an image of the ant, that is an image
     whose shot type is not 'l' (label). Used by /unimagedGeolocaleTaxa (2026-10-21; before: a specimen with
-    image_count > 1, so a name whose specimens had one image each was "unimaged", and label images counted).
+    image_count > 1, so a name whose specimens had one image each was "unimaged", and label images counted). Images of
+    red-flagged specimens do not count (Brian Fisher, 2026-11-09), as StatisticsDb.ANT_IMAGED_NAMES_SQL in Java.
     casteClause: "" or " and s.caste = '...'" (specimen alias s)."""
     return ("select s.taxon_name from specimen s join image i on i.image_of_id = s.code"
-            " where s.taxon_name is not null and lower(trim(coalesce(i.shot_type, ''))) <> 'l'" + casteClause)
+            " where s.taxon_name is not null and lower(trim(coalesce(i.shot_type, ''))) <> 'l'"
+            " and " + NOT_RED_FLAGGED_SQL + casteClause)
 
 
 @application.route('/unimagedGeolocaleTaxa', methods=['GET'])

@@ -134,6 +134,7 @@ Login Manager, click a login. The page has plain sections, each with a one-line 
 
 Each report page starts with a short box: what it shows, why it matters, and what to do with a hit.
 
+- **Daily update** (`dailyUpdate.do`; first line of Reports since 2026-11-11, decided by Brian Fisher: an admin report; before, the only link was in the header while the daily update ran): each step of the daily update (05:00 Pacific) with its status, start, end, duration and usual duration, and the earlier days. Also linked from the Technical page.
 - **Integrity Check** (`query.do?action=checkIntegrity`): about 30 automatic checks of AntWeb's names, species lists and specimen data. Each check normally finds nothing; each one says what it looks for and how to fix a hit, shows "None." when it finds nothing, and a check that fails says so without stopping the others. Since October 2026 it includes the name checks of the former "Curate AntCat Queries" page: names under a synonym parent (fix the identification in TaxonWorks or the curator's upload file), country and region lists not using the current valid name (fix in the Species List Tool), and names whose parent is not among AntWeb's names (fix the identification, or check AntCat). The check for unrecognized names without specimens was dropped. Most hits are fixed at the source (TaxonWorks, the upload file or AntCat) and clear after the next upload or nightly run.
 - **AntCat import history** (`query.do?name=worldantsUploads`, linked from the Log Manager and the upload reports): the last 60 imports of AntCat names, newest first, with their log files. If the newest is older than a day or reports a failure, open its log; if the AntCat export was not ready, use Import AntCat names now.
 - **Homonym Report**: the homonyms AntWeb holds (names spelled like another ant name, by a different author and year). Each line opens that homonym's own page (the link includes the author and year) and its AntCat entry. If specimens were filed under a homonym by mistake, change their identification to the current valid name in TaxonWorks or the upload file.
@@ -161,6 +162,7 @@ What it does, in order:
 5. Count crawl: adds the counts up the tree (species to genus to subfamily).
 6. Finish: the museum's subfamily, genus and species counts (valid and other countable names), imaged-specimen count, valid-species count, and the data for the two pie charts (taxa and specimens by subfamily).
 7. Reloads the in-memory museum list, so the page shows the new numbers at once.
+8. Counts the museum's Subfamilies, Genera and Species again (since 2026-11-10): these three numbers are the headers of the museum's lists in their default view, Curated, and the page keeps them stored. Before, only the daily update counted them, so after the button the page could say one genus or species more or fewer than the list it opens until the next day.
 
 How long: a few minutes for most museums (the code notes about 4 minutes for ZMHB); a museum with many specimens, such as CASC, takes longer. The page answers when it is done. The nightly run recounts all museums in about 8 to 20 minutes.
 
@@ -168,7 +170,7 @@ When to use it: after a correction that should show on a museum page before tomo
 
 ### Recalculate on region, project and bioregion pages (admins)
 
-Country, adm1, project and bioregion pages have the same **Recalculate** button in their admin area. Each recounts that one page now, including the count crawl that adds the taxon counts up the tree (species to genus to subfamily). Since October 2026 there are no separate "Count Crawl" links on taxon pages or "Project Taxon Child Count Crawl" link on project pages: the project Recalculate now runs that crawl too.
+Country, adm1, project and bioregion pages have the same **Recalculate** button in their admin area. Each recounts that one page now, including the count crawl that adds the taxon counts up the tree (species to genus to subfamily). Since October 2026 there are no separate "Count Crawl" links on taxon pages or "Project Taxon Child Count Crawl" link on project pages: the project Recalculate now runs that crawl too. Since 2026-11-10 the button (now labelled **Update statistics**) also counts the page's Subfamilies, Genera and Species again, on every kind of page that has it (country, island, adm1, project, museum, bioregion), so these numbers equal the headers of the lists they open right after the button; before, they followed only at the next daily update.
 
 ### Technical page (`technical.do`, admins)
 

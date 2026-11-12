@@ -181,6 +181,15 @@ public class SessionRequestFilter implements Filter {
                 afterPopulated = true;
             }
 
+            // An old place name in a link (country.do?name=USA, countryName=Ivory Coast after its rename) goes to the
+            // same address with the current name, for good (301): bookmarks and search engines move (OldPlaceNames).
+            String movedTo = OldPlaceNames.movedTo(request);
+            if (movedTo != null) {
+                response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+                response.setHeader("Location", movedTo);
+                return;
+            }
+
             chain.doFilter(request, response);
 
         } catch (Exception e) {
@@ -373,6 +382,14 @@ public class SessionRequestFilter implements Filter {
       // that did not matter while the container restarted every morning (and re-anchored the
       // timer), but the nightly restart is now off by default (Scheduler.isNightlyRestartOn).
       scheduleNextRun(new Timer());
+      // 25 minutes before the daily update (04:35): the TaxonWorks archive is requested, so that TaxonWorks has built a
+      // fresh one when set 1 reaches the CAS upload (2026-11-10; a request only). Off without etc/taxonworks.properties
+      // (staging). Its own daemon timer: a failure there never touches the daily update's.
+      try {
+        org.calacademy.antweb.upload.TaxonWorksNightly.scheduleEarlyRequest(new Timer("taxonworks-early-request", true), Scheduler.LAUNCHTIME);
+      } catch (RuntimeException e) {
+        s_log.warn("runTask() TaxonWorks early request not scheduled e:" + e);
+      }
       // Hourly: the storage mounts /mnt/antweb and /mnt/backup work (MountCheck, 2026-10-23).
       MountCheck.start();
     }

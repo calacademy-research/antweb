@@ -39,7 +39,7 @@ def _step_keys():
 def test_source_steps_marked_in_order():
     """Each step is marked (start or skip) where the run reaches it, in the order of DailyUpdate.STEPS."""
     keys = _step_keys()
-    assert len(keys) == 15 and keys[0] == "antcatImport" and keys[-1] == "end", keys
+    assert len(keys) == 16 and keys[0] == "antcatImport" and keys[-1] == "end", keys
     sched = _code(SRC / "Scheduler.java")
     util = _code(SRC / "UtilDataAction.java")
     set1 = util[util.index('if ("set1".equals(action))'):util.index('if ("set2".equals(action))')]
@@ -48,10 +48,13 @@ def test_source_steps_marked_in_order():
     assert order == sorted(order), order
     assert set1.index('DailyUpdate.start("taxonWorks")') < set1.index("TaxonWorksNightly.run(")
     assert set1.index('DailyUpdate.start("nameUpdate")') < set1.index("nightlyNameUpdate(")
+    # Set 4's own step (2026-11-08): the imaging progress, after the statistics row
+    set4 = util[util.index('if ("set4".equals(action))'):util.index('if ("set5".equals(action))')]
+    assert set4.index("populateStatistics(") < set4.index('DailyUpdate.start("imagingProgress")') < set4.index('doAction("imagingProgress"')
     # The Scheduler's steps
     marks = []
     for k in keys:
-        if k in ("taxonWorks", "nameUpdate", "set1Finish", "end"):
+        if k in ("taxonWorks", "nameUpdate", "set1Finish", "imagingProgress", "end"):
             continue
         if k == "placeListTotals":   # marked in runPlaceListTotals(), called right after set 4
             marks.append((sched.index("runPlaceListTotals();"), k))
@@ -103,7 +106,7 @@ def test_json_without_login_has_the_agreed_keys():
         assert run["state"] in RUN_STATES, run["state"]
         if run["state"] == "running":
             assert run["ended"] is None
-        assert len(run["steps"]) == 15
+        assert len(run["steps"]) == len(_step_keys())   # 16 since 2026-11-08 (imagingProgress)
         assert run["steps"][0]["name"] == "antcatImport" and run["steps"][-1]["name"] == "end"
         for step in run["steps"]:
             assert STEP_KEYS <= set(step), step

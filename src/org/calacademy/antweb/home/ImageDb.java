@@ -568,7 +568,8 @@ A.log("getFormProps() theQuery:" + theQuery);
           // NULL caste counts as Other (2026-10-21: it fell in no column, so the four did not add up to Total)
           + ", sum(IF(" + ant + " and (caste is null or caste not in ('worker', 'male', 'queen')), 1, 0)) as other"
           + ", sum(IF(" + ant + ", 0, 1)) labels"
-          + " from specimen s, image i where s.code = i.image_of_id group by status"
+          // red-flagged specimens left out (Brian Fisher, 2026-11-09: their images are not counted anywhere)
+          + " from specimen s, image i where s.code = i.image_of_id and " + SpecimenDb.notRedFlagged("s") + " group by status"
           + " order by total desc";
 
         Statement stmt = null;
@@ -610,9 +611,11 @@ A.log("getFormProps() theQuery:" + theQuery);
 
     public HashMap<String, Integer> getImageTaxonStats() throws SQLException {
         HashMap<String, Integer> imageTaxonStats = new HashMap<>();
-        // names with a specimen that has an image of the ant (2026-10-27: label images did count)
+        // names with a specimen that has an image of the ant (2026-10-27: label images did count); not a red-flagged
+        // specimen (2026-11-09)
         String theQuery = "select t.status, count(distinct t.taxon_name) count from taxon t, specimen, image i "
                 + " where t.taxon_name = specimen.taxon_name and specimen.code = i.image_of_id and " + StatisticsDb.ANT_IMAGE
+                + " and " + SpecimenDb.notRedFlagged("specimen")
                 + " group by t.status order by count(distinct t.taxon_name) desc";
 
         Statement stmt = null;

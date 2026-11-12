@@ -366,6 +366,48 @@ def genera_rule_counted():
     return compute_log_has("Set 4 done", GENERA_RULE_LOG)
 
 
+# StatisticsDb.RED_FLAG_IMAGES_RULE_LOG, on the "Set 4 done" line of the nightly run since 2026-11-09. Keep in step with Java.
+RED_FLAG_IMAGES_RULE_LOG = "images of red-flagged specimens not counted, 2026-11-09"
+
+
+def red_flag_images_counted():
+    """True when a nightly run has counted the image numbers without the images of red-flagged specimens (Brian Fisher,
+    2026-11-09: "for counting images exclude them everywhere"), False when compute.log is readable and has no such line
+    (the stored image numbers still count them: pending), None when unreadable."""
+    return compute_log_has("Set 4 done", RED_FLAG_IMAGES_RULE_LOG)
+
+
+_RED_FLAGGED = {}
+
+
+def red_flagged(code):
+    """True when the specimen page says the specimen has a red flag. The API has no flag field, so a recount from the API
+    asks the specimen page, for the specimens it needs only (cached for the run)."""
+    code = (code or "").strip().lower()
+    if not code:
+        return False
+    if code not in _RED_FLAGGED:
+        html = fetch(f"/specimen.do?code={quote_plus(code)}") or ""
+        _RED_FLAGGED[code] = "Red Flag" in html
+    return _RED_FLAGGED[code]
+
+
+# At most this many specimen pages are read to find the red-flagged specimens of one recount.
+MAX_FLAG_LOOKUPS = 40
+
+
+def without_red_flagged(counts, codes=None, max_lookups=MAX_FLAG_LOOKUPS):
+    """Brian Fisher, 2026-11-09: images of red-flagged specimens are not counted (StatisticsDb.NOT_RED_FLAGGED_IMAGE).
+    counts: code -> images (or any number) of an API recount; codes: the codes that count (None: all of counts). Returns
+    (the counts of the codes without a red flag, the red-flagged codes), or None when more than max_lookups specimen
+    pages would be needed. Called only when a page shows less than the API recount, so most runs read no page."""
+    keys = [c for c in (codes if codes is not None else counts.keys()) if counts.get(c, 0)]
+    if len(keys) > max_lookups:
+        return None
+    flagged = [c for c in keys if red_flagged(c)]
+    return {c: n for c, n in counts.items() if c not in flagged}, flagged
+
+
 # ParentRows.LOG, on the "Set 3 done" line of the nightly run since 2026-11-03. Keep in step with Java.
 PARENT_ROWS_LOG = "missing parent rows added (2026-11-03)"
 

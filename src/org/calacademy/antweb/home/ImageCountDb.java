@@ -10,7 +10,8 @@ import org.calacademy.antweb.home.*;
 
 /**
  * Nightly set 4 (imageCountCrawls): the image counts of the taxon tree, then of every species list. Sets
- * specimen.image_count from the image table, each taxon's from the specimens filed under its name, adds
+ * specimen.image_count from the image table, each taxon's from the specimens filed under its name (red-flagged
+ * specimens left out, Brian Fisher 2026-11-09; StatisticsDb.NOT_RED_FLAGGED_IMAGE), adds
  * subspecies to species, species to genera and so up to the family (by parent_taxon_name), then runs the image
  * crawls of the project, geolocale, bioregion and museum lists. Tables image, specimen, taxon and the four list
  * tables. Docs: docs/flows/nightly.md (set 4), docs/numbers.md. Tests: PlaceTotalsDbTest.
@@ -29,19 +30,38 @@ public class ImageCountDb extends AntwebDb {
      public void imageCountCrawls() throws SQLException {
 
          s_log.info("imageCountCrawl()");
+         // The time of each part, on the "completed" line (2026-11-10, Brian Fisher: a faster daily update; production
+         // 11-10: about 8 minutes, and the line said only that it was done).
+         StringBuilder times = new StringBuilder();
+         long t = System.currentTimeMillis();
          countSpecimenImages();
+         t = lap(times, "specimens", t);
          s_log.info("done countSpecimenImages()");
          countSpeciesImages();
+         t = lap(times, "taxa", t);
          s_log.info("done countSpeciesImages()");
          rollUpTaxonImageCounts();
+         t = lap(times, "roll-up", t);
          s_log.info("done rollUpTaxonImageCounts()");
 
          new GeolocaleTaxonCountDb(getConnection()).imageCountCrawl();
+         t = lap(times, "geolocale lists", t);
          new ProjTaxonCountDb(getConnection()).imageCountCrawl();
+         t = lap(times, "project lists", t);
          new BioregionTaxonCountDb(getConnection()).imageCountCrawl();
+         t = lap(times, "bioregion lists", t);
          new MuseumTaxonCountDb(getConnection()).imageCountCrawl();
+         lap(times, "museum lists", t);
 
-  	      LogMgr.appendLog("compute.log", "  Image Count Crawl completed", true);
+  	      LogMgr.appendLog("compute.log", "  Image Count Crawl completed (" + times + ")", true);
+     }
+
+     /** Adds "name N s" to times; returns now. */
+     static long lap(StringBuilder times, String name, long since) {
+         long now = System.currentTimeMillis();
+         if (times.length() > 0) times.append(", ");
+         times.append(name).append(" ").append((now - since) / 1000).append(" s");
+         return now;
      }
 
     /** Sets the image count for each specimen
@@ -77,15 +97,13 @@ public class ImageCountDb extends AntwebDb {
     }
 
     /** Update the number of images for each species using the specimen table
-     * <p>Count is determined by summing the image counts of all specimens with matching taxon_name</p>
+     * <p>Count is determined by summing the image counts of all specimens with matching taxon_name, red-flagged
+     * specimens left out (Brian Fisher, 2026-11-09: their images are not counted anywhere; the specimen's own
+     * image_count, countSpecimenImages, stays: it is still imaged)</p>
      * @throws SQLException
      */
     private void countSpeciesImages() throws SQLException {
-        String query = "update taxon " +
-                "set image_count = " +
-                "(select COALESCE(SUM(specimen.image_count), 0) " +
-                "from specimen " +   // the connection's own database (was ant.specimen)
-                "where taxon.taxon_name = specimen.taxon_name)";
+        String query = SPECIES_IMAGES_SQL;
 
         Statement stmt = null;
 
@@ -102,6 +120,11 @@ public class ImageCountDb extends AntwebDb {
         }
     }
 
+
+    /** countSpeciesImages: each taxon's image_count = the images of the specimens filed under its name, not red-flagged. */
+    public static final String SPECIES_IMAGES_SQL = "update taxon set image_count ="
+        + " (select coalesce(sum(specimen.image_count), 0) from specimen"   // the connection's own database (was ant.specimen)
+        + " where taxon.taxon_name = specimen.taxon_name and " + SpecimenDb.notRedFlagged("specimen") + ")";
 
     /**
      * Ranks whose taxon.image_count is added to their parent's, in this order (2026-10-21). countSpeciesImages()

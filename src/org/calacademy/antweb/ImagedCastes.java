@@ -10,7 +10,8 @@ import org.calacademy.antweb.util.Html;
 /**
  * Which castes of a species are imaged (Brian Fisher, 2026-10-27), for the species page (description.do of a species
  * or subspecies): "Imaged: worker (12 specimens: 9 worker, 3 major/soldier), queen (2), male (1)". A specimen is imaged when it has an image of the
- * ant; a specimen with only label images is not (the rule of StatisticsDb.ANT_IMAGE, Q12). Specimens of the name from
+ * ant; a specimen with only label images is not (the rule of StatisticsDb.ANT_IMAGE, Q12), nor is a red-flagged one
+ * (2026-11-09: its photos are not counted). Specimens of the name from
  * anywhere in AntWeb (images help identification wherever the specimen came from). One grouped query on the name's
  * specimens (index specimen_taxon_name) joined to their images (image_of_id), as StatisticsDb.ANT_IMAGED_NAMES_SQL.
  *
@@ -52,6 +53,7 @@ public final class ImagedCastes {
         return "select lower(trim(coalesce(s.caste, ''))) caste, lower(trim(coalesce(s.subcaste, ''))) subcaste, count(distinct s.code) specimens"
             + " from specimen s join image i on i.image_of_id = s.code"
             + " where s.taxon_name = ? and " + StatisticsDb.ANT_IMAGE
+            + " and " + org.calacademy.antweb.home.SpecimenDb.notRedFlagged("s")   // Brian Fisher, 2026-11-09
             + " group by 1, 2";
     }
 

@@ -37,6 +37,12 @@ def test_python_and_java_log_lines_are_the_same():
     py = read("tests/e2e/numbers_sample.py")
     for name in ("RULES_LOG", "COUNTING_RULES_LOG", "ENDEMIC_RULE_LOG", "GENERA_RULE_LOG"):
         assert java_constant(java, name) == py_constant(py, name), name
+    # 2026-11-09 (Brian Fisher): images of red-flagged specimens are not counted; the count check and the e2e tests
+    # call the image numbers pending until the "Set 4 done" line has it
+    stats = read("src/org/calacademy/antweb/home/StatisticsDb.java")
+    assert java_constant(stats, "RED_FLAG_IMAGES_RULE_LOG") == py_constant(py, "RED_FLAG_IMAGES_RULE_LOG")
+    assert "line.contains(org.calacademy.antweb.home.StatisticsDb.RED_FLAG_IMAGES_RULE_LOG)" in java
+    assert 'return compute_log_has("Set 4 done", RED_FLAG_IMAGES_RULE_LOG)' in py
 
 
 def test_nightly_writes_the_lines():
@@ -47,9 +53,10 @@ def test_nightly_writes_the_lines():
     assert '"  Set 3 done (" + CountInvariants.ENDEMIC_RULE_LOG + "; "' in src
     assert "+ org.calacademy.antweb.home.ParentRows.LOG + \")\"" in src
     assert '"  Set 4 done (" + CountInvariants.RULES_LOG' in src
-    # since 2026-10-30 the genera rule follows COUNTING_RULES_LOG; since 2026-11-09 the adm1 rule (B26) is the last part
+    # since 2026-10-30 the genera rule follows COUNTING_RULES_LOG; since 2026-11-09 the adm1 rule (B26), then the red-flag images rule
     assert ('+ "; " + CountInvariants.COUNTING_RULES_LOG + "; " + CountInvariants.GENERA_RULE_LOG + "; "'
-            ' + CountInvariants.ADM1_RULE_LOG + ")"') in src
+            ' + CountInvariants.ADM1_RULE_LOG') in src
+    assert '+ "; " + StatisticsDb.RED_FLAG_IMAGES_RULE_LOG + ")"' in src
     # set 2's line after the geolocale counts, set 3's after the bioregions
     assert src.index('"  Set 2 done (') > src.index('"geolocaleCountCrawl"')
     assert src.index('"  Set 3 done (') > src.index('"populateBioregion"')

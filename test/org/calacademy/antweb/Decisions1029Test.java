@@ -143,8 +143,9 @@ public class Decisions1029Test extends TestCase {
         assertEquals(StatusSet.LIST_VETTED, StatusSet.getStatusSet(request, null));
         assertEquals(StatusSet.LIST_VETTED, StatusSet.getStatusSet(null, request, null));
         assertEquals(StatusSet.LIST_VETTED, StatusSet.getStatusSet(" ", request, null));
-        assertEquals(StatusSet.VALID_WITH_FOSSIL, StatusSet.defaultChoice(org.calacademy.antweb.home.PlaceTotals.PROJECT, Project.WORLDANTS));
-        assertEquals(StatusSet.VALID_WITH_FOSSIL, StatusSet.defaultChoice(org.calacademy.antweb.home.PlaceTotals.PROJECT, Project.FOSSILANTS));
+        // 2026-11-11: Curated on the AntCat list and Fossil Ants too (their Curated counts the fossil names)
+        assertEquals(StatusSet.LIST_VETTED, StatusSet.defaultChoice(org.calacademy.antweb.home.PlaceTotals.PROJECT, Project.WORLDANTS));
+        assertEquals(StatusSet.LIST_VETTED, StatusSet.defaultChoice(org.calacademy.antweb.home.PlaceTotals.PROJECT, Project.FOSSILANTS));
         // a status in the address still works, and is not kept for the next page
         params.put("statusSet", StatusSet.VALID_EXTANT);
         assertEquals(StatusSet.LIST_VALID, StatusSet.getStatusSet(request, null));

@@ -16,7 +16,8 @@ It writes one folder (default /root/antweb-extracts/<date>-<names>/):
                           WITHOUT coordinates are in the file (has_coordinates says which): a cut by a shape
                           file would lose them. Specimens whose name has no taxon row are in the file too
                           (no_taxon_row = 1; the API's specimen view leaves those out).
-  specimens_no_country.csv.gz   with --with-no-country: every specimen of AntWeb with no country (same columns).
+  specimens_no_country.csv.gz   with --with-no-country: every specimen of AntWeb with no country (same columns),
+                          except those filed under an included island: they are in specimens.csv.gz already.
                           No country filter can find these; some belong to the countries asked for.
   genus_summary.csv       per genus: specimens, names (distinct taxon names), names with at least one
                           specimen with coordinates, and the same for the chosen bioregion.
@@ -38,8 +39,10 @@ listed in the manifest; leave them out with --no-islands.
 Country names: only a valid country row is accepted (an old name is refused, with the valid one). Specimens
 still filed under an old name of a requested country (a geolocale country row that is not valid and whose
 valid_name is the country, USA for United States) are included; the manifest names those old names and counts
-the specimens ("Filed under an outdated country name"). A requested country with no specimen at all is named
-in a WARNING line of the manifest.
+the specimens ("Filed under an outdated country name"). A requested country with no specimen that the file
+could hold is named in a WARNING line of the manifest: in the default mode that is a country with no ant
+specimen (it may have beetles; the file has none of its rows either way), with --all-families a country with no
+specimen at all.
 
 A run starts by removing the files of an earlier run in the same folder; specimens.csv.gz is written as
 specimens.csv.gz.part and renamed when it is complete (a failed run leaves no file that looks finished), and
@@ -50,8 +53,9 @@ keeps it).
 The password is read from <project>/etc/db.properties and goes to docker through the environment, never on
 a command line. Tests: tests/unit/test_specimen_extract.py.
 
-The admin page dataExtract.do writes the same files from the website (src/.../util/DataExtract.java, a port of
-this tool; docs/flows/data-extract.md). Keep the two in step: a change of the columns or the manifest goes into
+An admin page that writes the same files from the website (dataExtract.do, a port of this tool to Java) is not
+part of this change: it comes in a pull request of its own (branch feat/data-extract). It must write the same
+columns and the same manifest and carry the same VERSION as this tool; from then on a change of either goes into
 both, with VERSION raised in both.
 """
 import argparse
@@ -60,13 +64,15 @@ import csv
 import datetime
 import gzip
 import hashlib
+import io
 import json
 import os
 import re
 import subprocess
 import sys
+import tempfile
 
-VERSION = "6"
+VERSION = "8"
 TAXON_COLUMNS = ("taxon_status", "taxon_fossil", "taxon_rank", "taxon_current_valid_name", "taxon_author_date",
                  "group_name", "no_taxon_row")
 PLACE_NAME = re.compile(r"^[^\x00-\x1f;\\]{1,64}$")
@@ -137,14 +143,18 @@ def left_out_sql(countries, islands):
             + " and not " + ANTS + " group by 1 order by 2 desc, 1 /* left out */")
 
 
-def export_sql(countries, islands, ants_only=False):
+def export_sql(countries, islands, ants_only=False, where=None):
+    """The export. where: another condition in place of the countries' (the no-country file).
+    Every column of specimen: all specimen records in AntWeb are public (there is no hidden group), and the columns
+    are what the specimen page and the API show, plus where the row came from (group, login and upload ids, line
+    number, upload file name). The manifest lists the columns of each extract."""
     return ("set session transaction isolation level read committed; "
             "select s.*, t.status as taxon_status, t.fossil as taxon_fossil, t.taxarank as taxon_rank, "
             "t.current_valid_name as taxon_current_valid_name, t.author_date as taxon_author_date, g.name as group_name, "
             "case when t.taxon_name is null then 1 else 0 end as no_taxon_row "
             "from specimen s left join taxon t on t.taxon_name = s.taxon_name "
             "left join ant_group g on g.id = s.access_group "
-            "where " + where_sql(countries, islands, ants_only) + " order by s.code")
+            "where " + (where or where_sql(countries, islands, ants_only)) + " order by s.code")
 
 
 def outdated_sql(countries):
@@ -164,22 +174,39 @@ def outdated_names(countries, rows):
     return [{"name": n, "valid_name": found[n]} for n in sorted(found)]
 
 
-def per_country_sql(countries, outdated):
-    """(index of the country, its specimens in the database, also under its old names): 0 is worth a warning."""
+def per_country_sql(countries, outdated, ants_only=False):
+    """(index of the country, its specimens in the database, also under its old names): 0 is worth a warning.
+    ants_only: the specimens the file can hold, the filter of the export (ANTS). Without it a country that has only
+    beetles or wasps in AntWeb counted as having specimens and got no warning, while the file had none of its rows
+    (review of PR #341, 2026-11-10)."""
     parts = []
     for i, c in enumerate(countries):
         names = [c] + [o["name"] for o in outdated if o["valid_name"] == c]
-        parts.append("select %d, count(*) from specimen s where s.country in %s" % (i, sql_list(names)))
+        parts.append("select %d, count(*) from specimen s where s.country in %s%s" % (i, sql_list(names), " and " + ANTS if ants_only else ""))
     return " union all ".join(parts) + " /* per country */"
 
 
 NO_COUNTRY = "(s.country is null or s.country = '')"
 
 
-def no_country_export_sql(ants_only=False):
+def no_country_where(islands, ants_only=False):
+    """No country, and not in the countries file already. A specimen with no country that is filed under an included
+    island (country null, island_country Hawaii: AntWeb has such rows) is in specimens.csv.gz; here it would be a
+    second copy, and whoever puts the two files together would count it twice (review of PR #341, 2026-11-10)."""
+    w = NO_COUNTRY
+    if islands:
+        w += " and (s.island_country is null or s.island_country not in " + sql_list(islands) + ")"
+    return w + (" and " + ANTS if ants_only else "")
+
+
+def no_country_export_sql(islands, ants_only=False):
     """Specimens with no country at all: no country filter can find them (production 2026-11-10: 1,623, among them
     303 of the University of Utah and 167 of UTEP), so they go in a file of their own for the curators to look through."""
-    return export_sql([], []).replace(where_sql([], []), NO_COUNTRY + (" and " + ANTS if ants_only else ""))
+    return export_sql([], [], where=no_country_where(islands, ants_only))
+
+
+def no_country_count_sql(islands, ants_only=False):
+    return "select count(*) from specimen s where " + no_country_where(islands, ants_only)
 
 
 def count_sql(countries, islands, ants_only=False):
@@ -246,15 +273,22 @@ def run_query(project, sql, container):
 def stream_query(project, sql, container):
     """Lines of a large query, one at a time (the first line is the header)."""
     user, password = db_login(project)
-    p = subprocess.Popen(mysql_command(user, container, header=True), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, env=dict(os.environ, MYSQL_PWD=password))
-    p.stdin.write(sql.encode("utf-8"))
-    p.stdin.close()
-    for raw in p.stdout:
-        yield raw.decode("utf-8", "replace").rstrip("\n")
-    err = p.stderr.read().decode("utf-8", "replace").strip()
-    if p.wait() != 0:
-        sys.exit("mysql failed during the export: " + err)
+    # Errors and warnings go to a file, not a pipe: a pipe nobody reads while the rows stream fills up and stops mysql.
+    with tempfile.TemporaryFile() as errors:
+        p = subprocess.Popen(mysql_command(user, container, header=True), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                             stderr=errors, env=dict(os.environ, MYSQL_PWD=password))
+        p.stdin.write(sql.encode("utf-8"))
+        p.stdin.close()
+        try:
+            for raw in p.stdout:
+                yield raw.decode("utf-8", "replace").rstrip("\n")
+            if p.wait() != 0:
+                errors.seek(0)
+                sys.exit("mysql failed during the export: " + errors.read().decode("utf-8", "replace").strip())
+        finally:
+            if p.poll() is None:        # the reader stopped early (a broken row): the query must not run on
+                p.kill()
+                p.wait()
 
 
 def has_coordinates(lat, lon):
@@ -323,7 +357,10 @@ def write_specimens(lines, path, stats):
     header = None
     part = path + ".part"       # renamed when complete: a failed run leaves no specimens.csv.gz
     try:
-        with gzip.open(part, "wt", encoding="utf-8", newline="") as f:
+        # no file name and no time in the gzip header: the same specimens give the same bytes and the same
+        # sha256 on every run (2026-11-10: two runs a minute apart, same data, had different checksums)
+        with open(part, "wb") as raw, gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0) as gz, \
+                io.TextIOWrapper(gz, encoding="utf-8", newline="") as f:
             w = csv.writer(f)
             for line in lines:
                 fields = line.split("\t")
@@ -408,7 +445,7 @@ def manifest_text(m):
              "", "Specimens in the file: {:,}".format(m["specimens"]),
              "Check against the database: " + ("VERIFIED, every count equal" if m["verified"] else "DIFFERENT, see differences; run again")]
     if m.get("countries_without_specimens"):
-        lines.append("WARNING: AntWeb has no specimen for: " + ", ".join(m["countries_without_specimens"])
+        lines.append("WARNING: AntWeb has no " + ("ant " if m.get("ants_only") else "") + "specimen for: " + ", ".join(m["countries_without_specimens"])
                      + " (check that these are the countries meant)")
     lines += ["", "By country (country / island country):"]
     for p in m["by_place"]:
@@ -437,7 +474,8 @@ def manifest_text(m):
                      "{:,}".format(b["names_without_specimen_in_extract"]))]
     if m.get("no_country"):
         nc = m["no_country"]
-        lines += ["", "Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them): "
+        lines += ["", "Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them; "
+                  "one filed under an included island is in specimens.csv.gz and not here, so no specimen is in both files): "
                   "{:,}; with coordinates {:,}; {:,} names, {:,} of them not in the countries file".format(
                       nc["specimens"], nc["with_coordinates"], nc["names"], nc["names_not_in_the_countries_file"]),
                   "  by upload group: " + ", ".join("%s %s" % (g.strip() or "(none)", "{:,}".format(n)) for g, n in nc["by_group"].items())]
@@ -500,11 +538,6 @@ def main(argv=None):
         sys.exit("--bioregion: not a name: " + repr(args.bioregion))
     now = datetime.datetime.now(datetime.timezone.utc)
     out = args.out or os.path.join("/root/antweb-extracts", now.strftime("%Y-%m-%d") + "-" + slug(countries))
-    os.makedirs(out, exist_ok=True)
-    # The files of an earlier run in this folder go first: no stale bioregion_list.csv, no old manifest beside new data.
-    for name in OUTPUT_FILES + ("specimens.csv.gz.part", "specimens_no_country.csv.gz.part", "manifest.json.part"):
-        if os.path.isfile(os.path.join(out, name)):
-            os.remove(os.path.join(out, name))
 
     places = run_query(project, places_sql(countries), args.container)
     found = {p[0] for p in places if p[1] == "country" and p[2] == "1"}
@@ -515,6 +548,12 @@ def main(argv=None):
         sys.exit("no valid country in AntWeb named: " + ", ".join(
             c + (" (use " + outdated[c] + ")" if outdated.get(c) else "") for c in unknown)
             + " (names as on AntWeb's country pages)")
+    os.makedirs(out, exist_ok=True)
+    # The files of an earlier run in this folder go before anything is written: no stale bioregion_list.csv, no old
+    # manifest beside new data. Only now, with the country names accepted: a mistyped name leaves a good extract alone.
+    for name in OUTPUT_FILES + ("specimens.csv.gz.part", "specimens_no_country.csv.gz.part", "manifest.json.part"):
+        if os.path.isfile(os.path.join(out, name)):
+            os.remove(os.path.join(out, name))
     islands = [] if args.no_islands else sorted({p[0] for p in places if p[3] == "1" and p[0] not in countries})
     print("Countries: " + ", ".join(countries))
     for p in places:
@@ -538,7 +577,7 @@ def main(argv=None):
         if stats.not_ants:      # the file must hold none: the filter and the file disagree
             verified = False
             diffs.append({"file": "specimens.csv.gz", "not_formicidae_in_an_ants_only_file": stats.not_ants})
-    per_country = {int(r[0]): int(r[1]) for r in run_query(project, per_country_sql(countries, outdated), args.container)}
+    per_country = {int(r[0]): int(r[1]) for r in run_query(project, per_country_sql(countries, outdated, ants_only), args.container)}
     empty = [c for i, c in enumerate(countries) if per_country.get(i, 0) == 0]
 
     no_country = None
@@ -546,9 +585,8 @@ def main(argv=None):
     if args.with_no_country:
         nc_stats = Stats("")
         nc_path = os.path.join(out, "specimens_no_country.csv.gz")
-        write_specimens(stream_query(project, no_country_export_sql(ants_only), args.container), nc_path, nc_stats)
-        nc_db = int(run_query(project, "select count(*) from specimen s where " + NO_COUNTRY + (" and " + ANTS if ants_only else ""),
-                              args.container)[0][0])
+        write_specimens(stream_query(project, no_country_export_sql(islands, ants_only), args.container), nc_path, nc_stats)
+        nc_db = int(run_query(project, no_country_count_sql(islands, ants_only), args.container)[0][0])
         groups = collections.Counter()
         with gzip.open(nc_path, "rt", encoding="utf-8", newline="") as f:
             for row in csv.DictReader(f):

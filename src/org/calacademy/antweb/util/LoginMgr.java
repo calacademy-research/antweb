@@ -114,6 +114,20 @@ public class LoginMgr extends Manager {
             s_log.error("startPasswordConversion() statistics home columns not added e:" + e);
           }
           try {
+            // imaging_progress and imaging_unimaged (the imaging progress page, 2026-11-08; its stored list, 2026-11-11):
+            // created here, not in set 4's transaction
+            new org.calacademy.antweb.home.ImagingProgressDb(conn).ensureSchema();
+          } catch (SQLException e) {
+            s_log.error("startPasswordConversion() imaging_progress, imaging_unimaged not created e:" + e);
+          }
+          try {
+            // place_view_total, place_view_total_state (the place pages' Subfamilies, Genera and Species): created here, not
+            // inside the transaction of an admin job that counts one place (2026-11-11)
+            new org.calacademy.antweb.home.PlaceViewTotalDb(conn).ensureSchema();
+          } catch (SQLException e) {
+            s_log.error("startPasswordConversion() place_view_total tables not created e:" + e);
+          }
+          try {
             // list_removal_log and the dispute tables' reason column (Brian Fisher, 2026-11-03: transparency)
             org.calacademy.antweb.home.ListRemovalLog.ensureSchema(conn);
           } catch (SQLException e) {

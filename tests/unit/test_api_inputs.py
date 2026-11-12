@@ -61,8 +61,8 @@ def setup():
                api.TaxaImage(uid=3, taxonName="myrmicinaepheidole a", code="c9", shotType=None, shotNumber="1")])
     s.commit()
     with engine.begin() as c:
-        c.execute(text("create table specimen (code text, taxon_name text, caste text)"))
-        c.execute(text("insert into specimen values ('c1', 'myrmicinaepheidole a', 'worker'), ('x', null, 'worker')"))
+        c.execute(text("create table specimen (code text, taxon_name text, caste text, flag text)"))   # flag: 2026-11-09
+        c.execute(text("insert into specimen values ('c1', 'myrmicinaepheidole a', 'worker', null), ('x', null, 'worker', null)"))
         c.execute(text("insert into image (id, image_of_id, shot_type, shot_number) values (10, 'c1', 'h', 1),"
                        " (11, 'x', 'h', 1)"))
 

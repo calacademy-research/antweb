@@ -73,15 +73,75 @@ public class CountInvariantsTest extends TestCase {
         assertFalse(CountInvariants.rulesCounted(log));
         log.add("2026-10-31 07:40:00   Set 4 done (" + CountInvariants.RULES_LOG + "; " + CountInvariants.COUNTING_RULES_LOG
             + "; " + CountInvariants.GENERA_RULE_LOG + ")");
-        // the adm1 rule of 2026-11-09 too (B26 fixed; the same line since then)
+        // the adm1 rule and the red-flag images rule of 2026-11-09 too (the same line since then)
         assertFalse(CountInvariants.rulesCounted(log));
         log.add("2026-11-10 07:40:00   Set 4 done (" + CountInvariants.RULES_LOG + "; " + CountInvariants.COUNTING_RULES_LOG
-            + "; " + CountInvariants.GENERA_RULE_LOG + "; " + CountInvariants.ADM1_RULE_LOG + ")");
+            + "; " + CountInvariants.GENERA_RULE_LOG + "; " + CountInvariants.ADM1_RULE_LOG
+                    + "; " + org.calacademy.antweb.home.StatisticsDb.RED_FLAG_IMAGES_RULE_LOG + ")");
         assertTrue(CountInvariants.rulesCounted(log));
     }
 
+    /**
+     * Brian Fisher, 2026-11-09: images of red-flagged specimens are not counted anywhere. casent3 (pheidole b, one profile
+     * photo) red-flagged: the numbers stored before (counted with it) differ from the recount; pending until a nightly
+     * run has counted by the rule (rulesCounted), real after; once recounted as nightly set 4 does, every check agrees.
+     */
+    public void testImagesOfARedFlaggedSpecimenAreNotCounted() throws Exception {
+        exec("update specimen set flag = 'red' where code = 'casent3'");
+        // the group numbers as the nightly group recount writes them (red-flagged specimens apart, as before 2026-11-09)
+        exec("update group_count set specimens = 4, flagged = 1, species = 3");
+        CountCheck.Result r = run(false);
+        int real = 0;
+        for (CountCheck.Mismatch m : r.mismatches) if (m.isReal()) ++real;
+        assertTrue("the stored image numbers still count casent3", r.mismatches.size() > 0);
+        assertEquals("before the nightly run: pending" + list(r), 0, real);
+        r = run(true);
+        String all = list(r);
+        assertTrue(all, all.contains("total specimen images stored:2 recount:1"));
+        assertTrue(all, all.contains("specimens imaged stored:2 recount:1"));
+        assertTrue(all, all.contains("myrmicinaepheidole b: image_count stored:1 recount:0"));
+        // recounted as nightly set 4 does: taxon images (ImageCountDb), the statistics row (StatisticsDb)
+        exec(org.calacademy.antweb.home.ImageCountDb.SPECIES_IMAGES_SQL);
+        new org.calacademy.antweb.home.ImageCountDb(connection).rollUpTaxonImageCounts();
+        exec("update statistics set total_images = (" + org.calacademy.antweb.home.StatisticsDb.TOTAL_IMAGES_SQL + "),"
+            + " specimens_imaged = (" + org.calacademy.antweb.home.StatisticsDb.IMAGED_SPECIMENS_SQL + "),"
+            + " species_imaged = (" + org.calacademy.antweb.home.StatisticsDb.IMAGED_SPECIES_SQL + "),"
+            + " valid_species_imaged = (" + org.calacademy.antweb.home.StatisticsDb.VALID_SPECIES_IMAGED_SQL + ")");
+        assertEquals("pheidole a (casent1 h) only", 1, one("select total_images from statistics"));
+        assertEquals(1, one("select specimens_imaged from statistics"));
+        assertEquals(1, one("select species_imaged from statistics"));
+        assertEquals("pheidole b's own row: no image", 0, one("select image_count from taxon where taxon_name = '" + PB + "'"));
+        assertEquals("the genus: pheidole a's 2 (casent1 h, l)", 2, one("select image_count from taxon where taxon_name = '" + PHEIDOLE + "'"));
+        assertEquals("casent3 keeps its own image_count: still imaged", 1, one("select image_count from specimen where code = 'casent3'"));
+        r = run(true);
+        assertEquals(list(r), 0, r.mismatches.size());
+    }
+
+    private long one(String sql) throws Exception {
+        try (java.sql.Statement s = connection.createStatement(); java.sql.ResultSet r = s.executeQuery(sql)) {
+            return r.next() ? r.getLong(1) : -1;
+        }
+    }
+
     public void testRightNumbersGiveNoDifference() throws Exception {
-        CountCheck.Result r = run(true);
+        // place.view.totals (2026-11-11): Madagascar's page has its three list totals, counted today
+        org.calacademy.antweb.geolocale.Country madagascar = new org.calacademy.antweb.geolocale.Country();
+        madagascar.setId(MADAGASCAR);
+        madagascar.setName("Madagascar");
+        madagascar.setGeorank("country");
+        exec("drop table if exists place_view_total");
+        exec(org.calacademy.antweb.home.PlaceViewTotalDb.createTable(null, null));
+        exec("insert into place_view_total (list_type, list_key, taxarank, view_name, n, counted) values ('geolocale', '" + MADAGASCAR
+            + "', 'subfamily', 'curated', 2, now()), ('geolocale', '" + MADAGASCAR + "', 'genus', 'curated', 2, now()), ('geolocale', '"
+            + MADAGASCAR + "', 'species', 'curated', 4, now())");
+        org.calacademy.antweb.util.NumberChecks.setPlaceListForTests(java.util.Arrays.<org.calacademy.antweb.Overview>asList(madagascar));
+        CountCheck.Result r;
+        try {
+            r = run(true);
+        } finally {
+            org.calacademy.antweb.util.NumberChecks.setPlaceListForTests(null);
+            exec("drop table if exists place_view_total");
+        }
         assertEquals(list(r), 0, r.mismatches.size());
         Map<String, int[]> summary = r.invariants.summary();
         assertEquals("every check id of CountInvariants.IDS ran, no other", new java.util.TreeSet<>(java.util.Arrays.asList(CountInvariants.IDS)),

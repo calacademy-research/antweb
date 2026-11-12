@@ -67,3 +67,9 @@ by `ensureHomeColumns`), recounted every morning by the count check (`inv:home`)
 labels" (label images apart; StatisticsDb.TOTAL_IMAGES_SQL, LABEL_IMAGES_SQL; the stored number follows the rule after
 the next nightly run), the statsPage Images table counts images of the ant by status and caste with a Label images
 column, and Imaged Species counts names with an image of the ant. Definitions: docs/numbers.md section 1.
+
+**Red-flagged specimens (2026-11-09, Brian Fisher).** No image or imaged number of either page counts the images of a
+red-flagged specimen ("still a specimen and still imaged, but for counting images exclude them everywhere"):
+species imaged, images of ants, imaged specimens, label images, the statsPage Images table and Imaged Species
+(`StatisticsDb.NOT_RED_FLAGGED_IMAGE`, `SpecimenDb.notRedFlagged`). Both pages say so next to the numbers. The stored
+numbers follow the rule after the next nightly run (pending until then). docs/numbers.md section 5.

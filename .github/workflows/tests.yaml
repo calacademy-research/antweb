@@ -89,8 +89,23 @@ jobs:
       - name: Keys from the registration page fit the pattern the API accepts (tests/unit/test_api_key_format.py)
         run: python3 tests/unit/test_api_key_format.py
 
+      - name: An old place name in a link is redirected before the page runs; place names in JavaScript strings are escaped (tests/unit/test_old_place_names.py)
+        run: python3 tests/unit/test_old_place_names.py
+
       - name: A recount of one bioregion or museum makes the statistics page count again (tests/unit/test_statspage_forget.py)
         run: python3 tests/unit/test_statspage_forget.py
+
+      - name: The daily update recounts every group's stored specimen count as the last statement of set 3 (tests/unit/test_group_specimen_count_daily.py)
+        run: python3 tests/unit/test_group_specimen_count_daily.py
+
+      - name: Rebuilding one place's list counts its stored list totals again (tests/unit/test_recalc_view_totals.py)
+        run: python3 tests/unit/test_recalc_view_totals.py
+
+      - name: The upload still corrects a country's spelling and the server start still schedules the early TaxonWorks request (tests/unit/test_review_341_wiring.py)
+        run: python3 tests/unit/test_review_341_wiring.py
+
+      - name: Every curator and admin page is linked from Curator Tools or Technical, or says where it is reached from (tests/unit/test_curator_pages_are_linked.py)
+        run: python3 tests/unit/test_curator_pages_are_linked.py
 
       - name: Production smoke run and morning check pass, fail and skip as they should (tests/unit/test_prod_smoke_logic.py)
         run: python3 tests/unit/test_prod_smoke_logic.py
@@ -395,7 +410,7 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/DailyUpdateTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.DailyUpdateTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (9 tests)" /tmp/out.txt
+            grep -q "^OK (10 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of small core and util fixes (specimen XML without DOCTYPE, comparators, common names, folder delete keeps link targets)
@@ -661,7 +676,9 @@ jobs:
       - name: Java unit tests of uploads and the nightly TaxonWorks job (transform fixture, job decisions, name rule, nightly name update, password hash)
         # TaxonWorksTransformFixtureTest: test/.../upload/fixtures/taxonworks-data.tsv through the
         # TaxonWorks transform. TaxonWorksNightlyDecisionsTest: wait/skip decisions, one run at a
-        # time, no settings file. NameResolutionRuleTest: statuses that use the current valid name,
+        # time, no settings file; the early request (2026-11-10): 04:35 by the clock, off without the settings file,
+        # its compute.log line, and the request against a local server (zip, 422, error, no server; no file left, no
+        # address in the line). NameResolutionRuleTest: statuses that use the current valid name,
         # indet and morpho names. SpecimenNameUpdateTest: the upload's name rule with a fake taxon table
         # and the nightly name update's decisions, cap, settings and page line. GenusSynonymRuleTest: morphospecies and
         # indets of a synonym genus, names without subfamily ("(formicidae)pyramica ludovici"), combinations AntCat does
@@ -689,6 +706,14 @@ jobs:
         # sentence as its job result ({operation:...} in plain words), and the job page never shows a whole AntWeb page.
         # LocalityCodePlainTest: locality codes are stored as written (not URL-encoded, 2026-10-22), links encode them
         # once in UTF-8, the specimen search for one quoted code takes it whole.
+        # CountrySpellingTest (2026-11-10): the upload stores a country written with other capitals, accents or blanks
+        # (México, MEXICO) under the one valid country it is a spelling of, the rule of tools/place/place_fix.py; another
+        # word, two valid countries with the same spelling, or an island: no change; exact and old names as before; the
+        # report section counts as corrected; the TaxonWorks upload passes such a spelling on instead of dropping it.
+        # PlaceBioregionTest (2026-11-10): the bioregion an upload stores comes from the valid state (the state itself or
+        # the valid state an old name points to) when it has one, else from the country when it has one, else none; an old
+        # state name that points nowhere gives nothing; an old country name takes the valid country's bioregion, whoever
+        # calls (review of PR #341). The cases of tests/unit/test_place_fix.py.
         # DataExtractTest (2026-11-10, dataExtract.do): the extract's CSV, manifest text and manifest JSON read as the
         # command-line tool's (tools/export/specimen_extract.py, Python's csv and json); a download is found only by job
         # number and a name from the fixed list (no path, no link, no unfinished extract); extracts older than 30 days
@@ -729,13 +754,16 @@ jobs:
               /t/org/calacademy/antweb/util/JobSummaryTest.java \
               /t/org/calacademy/antweb/upload/SubfamilyFromGenusTest.java \
               /t/org/calacademy/antweb/upload/LocalityCodePlainTest.java \
+              /t/org/calacademy/antweb/util/CountrySpellingTest.java \
+              /t/org/calacademy/antweb/util/PlaceBioregionTest.java \
               /t/org/calacademy/antweb/util/DataExtractTest.java
-            for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:11 \
+            for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:15 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:19 upload.GenusSynonymRuleTest:16 upload.GenusConceptRuleTest:8 upload.GenusConceptProposalsTest:5 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:16 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
-                     util.JobSummaryTest:8 upload.SubfamilyFromGenusTest:9 upload.LocalityCodePlainTest:6 util.DataExtractTest:19; do
+                     util.JobSummaryTest:8 upload.SubfamilyFromGenusTest:9 upload.LocalityCodePlainTest:6 \
+                     util.CountrySpellingTest:8 util.PlaceBioregionTest:9 util.DataExtractTest:19; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
@@ -842,6 +870,28 @@ jobs:
 
       - name: Place fix, the stored country and bioregion against today's upload rule (tests/unit/test_place_fix.py)
         run: python3 tests/unit/test_place_fix.py
+
+      - name: Place fix against MySQL 8.4, apply and rollback never overwrite newer values (tests/unit/test_place_fix_db.py)
+        # Review of PR #341 (2026-11-10): the tool runs against a database of its own, through the docker exec it uses
+        # on the servers: a specimen changed between the backup and the update is left as it is and counted; a rollback
+        # leaves alone and lists what has other values by now, also from a backup table as versions 1 to 3 wrote it;
+        # a latin1 table (the bytes compared as UTF-8); values as long as the columns allow; a failed apply leaves no table.
+        run: |
+          docker run -d --name pfmysql -e MYSQL_ROOT_PASSWORD=ci-root mysql:8.4
+          ok=0
+          for i in $(seq 1 90); do
+            if docker exec pfmysql mysql -uroot -pci-root -h127.0.0.1 -e "select 1" >/dev/null 2>&1; then ok=1; break; fi
+            sleep 2
+          done
+          [ "$ok" = 1 ] || { docker logs pfmysql 2>&1 | tail -30; echo "::error::MySQL did not start"; exit 1; }
+          PLACE_FIX_TEST_CONTAINER=pfmysql PLACE_FIX_TEST_PASSWORD=ci-root python3 tests/unit/test_place_fix_db.py | tee /tmp/place_fix_db.txt
+          grep -q "^6 tests passed (MySQL 8.4" /tmp/place_fix_db.txt
+          # The image view of the GBIF archive (2026-11-11): the upgrade file and its rollback run against the same
+          # server; ten columns in their order, medium static addresses, nothing else changed, one row per image.
+          GBIF_VIEW_TEST_CONTAINER=pfmysql GBIF_VIEW_TEST_PASSWORD=ci-root python3 tests/unit/test_gbif_image_view.py | tee /tmp/gbif_view.txt
+          grep -q "^5 tests passed (texts)" /tmp/gbif_view.txt
+          grep -q "^2 database tests passed (MySQL 8.4" /tmp/gbif_view.txt
+          docker rm -f pfmysql
 
       - name: Pheidole head export, plan and contact sheets without a database (tests/unit/test_pheidole_export.py)
         run: python3 tests/unit/test_pheidole_export.py
@@ -1036,6 +1086,27 @@ jobs:
             grep -q "^OK (13 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
+      - name: Java unit tests of old place names in links (OldPlaceNamesTest)
+        # 2026-11-10: an old country or adm1 name with a valid name (USA: United States; MA: Massachusetts; Ivory Coast:
+        # Côte d'Ivoire after its rename) resolves to the current name; a valid name, an unknown name and an old name without
+        # a valid name do not. The address a request moves to: the parameters looked at on each page, the new name
+        # URL-encoded, every other parameter as written, the place tools left alone.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/OldPlaceNamesTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.OldPlaceNamesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            grep -v "LogMgr" /tmp/out.txt | tail -3
+            grep -q "^OK (9 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+          '
+
       - name: Java unit tests of the upload and nightly decisions of 2026-10-27 (strict upload dates, day 00 is the 1st, unknown genus without subfamily, TaxonWorks collection notes, failed nightly set stops the run)
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
@@ -1077,8 +1148,10 @@ jobs:
       - name: Java unit tests of the views of lists (2026-11-02; views and labels, old values mapped, Curated the default, criteria, headers; StatusChoiceTest)
         # StatusChoiceTest: four views (valid, curated, all, fossil) labelled Valid, Curated, All specimen names, Fossil on
         # every list and rank; validmorpho (Valid + morphospecies of 2026-10-30), all determined, all indetermined,
-        # complete, type -> all; every list opens with Curated, the AntCat list and Fossil Ants with their own set; the
-        # session is never read; the view Not curated (notcurated, 2026-11-02): not a button, its criteria, label, headers.
+        # complete, type -> all; every list opens with Curated; the AntCat list and Fossil Ants have Valid, Curated, Valid
+        # extant, Valid fossil, counted with their fossil names, and the old value "Valid (with fossils)" opens their
+        # Curated (2026-11-11); the session is never read; the view Not curated (notcurated, 2026-11-02): not a button,
+        # its criteria, label, headers.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
@@ -1092,7 +1165,7 @@ jobs:
             # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.StatusChoiceTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             grep -v "LogMgr" /tmp/out.txt | tail -3
-            grep -q "^OK (11 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+            grep -q "^OK (12 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
       - name: Java unit tests of the views' rules (2026-11-02; curated morphospecies, specimen names of geolocale lists, genus rows, Not curated, species imaged, source icons; ListViewTest)
@@ -1136,6 +1209,9 @@ jobs:
 
       - name: Place pages say Species / subspecies / morphospecies (tests/unit/test_place_species_label.py)
         run: python3 tests/unit/test_place_species_label.py
+
+      - name: The count check has the list totals check and the daily update tells when the counts are not true (tests/unit/test_count_check_alert.py)
+        run: python3 tests/unit/test_count_check_alert.py
 
       - name: Upload and nightly safety (upload flag, refused upload as, stopped upload rolled back, list removals) (tests/unit/test_upload_nightly_safety.py)
         run: python3 tests/unit/test_upload_nightly_safety.py
@@ -1189,7 +1265,13 @@ jobs:
           # concepts by bioregion); the proposal queries and an approved genus_concept_rule row driving the move.
           # CountCheckTest: list counts against a recount from specimens (real and pending differences).
           # PlaceImageCountDbTest: Images, images per view and Imaged specimens of places (labels apart),
-          # per-taxon image counts of a place, and the count check of those numbers.
+          # per-taxon image counts of a place, and the count check of those numbers; red-flagged specimens'
+          # images not counted (2026-11-09). Since 2026-11-11 the daily update counts from a working set of the imaged
+          # specimens (session tables): the new statements are the old ones with another table name, both give the
+          # same rows on a fixture with every rule, the tables written are identical, a run without the working set
+          # uses the old statements, nothing is committed inside the caller's transaction, and the comparison job
+          # (utilData.do?action=placeImageCountCompare) finds a difference and writes nothing. On MySQL here, where a
+          # temporary table cannot be read twice in one statement.
           # RegionCountDbTest: region and subregion numbers count the specimens of their countries only.
           # BackgroundJobDbTest: the background_job table (status pages of uploads and admin jobs; interrupted at start-up).
           # DailyUpdateDbTest (2026-11-07): the daily_update_step table of the Daily update page (start, end, read back in
@@ -1202,7 +1284,8 @@ jobs:
           # country's curator assignments (login_country), in the same transaction; an ambiguous old name carries nothing.
           # SpecimenNameHistoryDbTest: the specimen page's Name History query (applied rows of one specimen, newest first,
           # never report-only rows; index by_code; no history when the table is missing).
-          # CountInvariantsTest: the count check's invariants over every place (docs/numbers.md), each wrong number found.
+          # CountInvariantsTest: the count check's invariants over every place (docs/numbers.md), each wrong number found;
+          # a red-flagged imaged specimen: pending until the nightly run, then real, agreeing once recounted (2026-11-09).
           # NumberChecksTest: the count check's other numbers (statsPage tables, admin pages, API /taxa, endemic flags, B25, the
           # adm1 Specimens recount by country and name: B26 fixed 2026-11-09).
           # PlaceTotalsDbTest: the numbers the nightly run writes (place totals, pies, endemic, museums, taxon images,
@@ -1216,7 +1299,8 @@ jobs:
           # NumberDecisionsDbTest (2026-10-22, Brian Fisher's answers Q7, Q8, Q9, Q12, Port of Entry): statsPage and home
           # count ants only; upload group Species are full names and the groups.do Totals row is distinct over all groups;
           # orphaned images counted as images and codes; unimaged = no photo of the ant anywhere; Port of Entry has no
-          # specimen or image numbers and the count check skips it.
+          # specimen or image numbers and the count check skips it; photos of red-flagged specimens are counted in no
+          # image or imaged number of the home page and statsPage (2026-11-09).
           # DownloadGuardsDbTest: a place download holds only the specimens collected there (5,000 cap), the paged
           # search list (COUNT, LIMIT/OFFSET, sort before paging, images/types only), ant specimens only on place pages.
           # PlaceTaxonNotesDbTest (2026-10-29): country and adm1 lists get the genus rows of specimens identified to genus
@@ -1242,7 +1326,23 @@ jobs:
           # country and name (B26 fixed; same-named state elsewhere, no country: not its), the adm1 and country queries can
           # use country_adm1_idx (EXPLAIN), a country's two parts are its specimens once; only places whose data changed are
           # counted again (unchanged skipped, list or taxon or specimen change counted, specimen names not stored again,
-          # rules change, over 7 days, full count, place gone, a morphospecies curated anywhere), each place committed on its own.
+          # rules change, over 7 days, full count, place gone, a morphospecies curated anywhere), each place committed on its own;
+          # 2026-11-10 (production: every place recounted on a Tuesday): the daily sequence day after day (what the daily
+          # update rewrites before the totals leaves every place unchanged; a morphospecies curated elsewhere counts only
+          # the places that have the name; the stored totals equal the lists every day), the curated part of the
+          # fingerprint against ListView.vettedCondition; one place between two daily updates (staging 2026-11-10: after
+          # "Update statistics" the bioregion Nearctic's genus list had 91 genera, its page said 90): recountPlace makes
+          # the place's stored totals the rows of its lists, for every kind of place by its own key, every row of every
+          # other place stays as it was, the AntWeb-wide list is not counted, a count that fails leaves no totals.
+          # 2026-11-11 (production: Fossil Ants Genera 259, its list 258; "Valid species 3" opening a list of 868): the
+          # site-wide lists (scope GLOBAL: the AntCat list, Fossil Ants) are counted too, in their default view Curated; a
+          # project whose list loses a genus without species in set 5's list check is counted again; for the AntCat list
+          # and Fossil Ants the species rows of their view Valid are stored too (valid < curated when the list has
+          # morphospecies, equal without; never valid_species_count), and the old address value opens Curated.
+          # ImagingProgressDbTest (2026-11-08): the imaging progress page's table (a label-only name is unimaged; a name
+          # imaged elsewhere is imaged but not imaged from here; all of AntWeb = the home page numbers; the unimaged list
+          # and CSV; the count check finds a wrong row; photos of red-flagged specimens do not count, 2026-11-09; the
+          # trend from the statistics rows since 2026-11-09).
           # BlankNameCleanupDbTest (2026-10-29): with specimens of blank name, the old cleanups delete nothing; the
           # blank-safe ones delete the names and list rows no specimen uses (not AntCat's, not curators' rows, not blank
           # rows) and the preview counts them. Last: it makes its own small tables.
@@ -1250,6 +1350,12 @@ jobs:
           # (GET) changes nothing, the button makes the key once (only its SHA-256 and prefix stored); expired, used,
           # cancelled links; 3 a day per email, 100 confirmed and 300 pending a day in all; times in UTC whatever the
           # session's time zone; the admin list (newest first, filters, usage, no-key row) and its changes.
+          # GroupSpecimenCountDbTest (2026-11-11): the daily update writes every group's stored specimen count
+          # (ant_group.upload_specimens; production: group 52, no upload for months, stored 21,099, 21,102 specimens, a real
+          # difference of the count check every day): stale numbers corrected, the others and every other column unchanged,
+          # a group without specimens gets 0, the count check's differences gone, in the set's transaction with no lock
+          # left on the specimen table, a number an upload wrote since the read (or during the set) not overwritten, a
+          # failure said in the line with what was written before it, and not thrown.
           # LicenseUpdateDbTest (2026-10-29): the start-up update of stored licence texts to CC BY 4.0 backs up first,
           # is a no-op on a second run and skips a missing license table. Last: it makes its own small tables.
           # DataExtractDbTest (2026-11-10, dataExtract.do): the extract of three countries and an island filed under one
@@ -1296,8 +1402,11 @@ jobs:
               /t/org/calacademy/antweb/home/ListRemovalDbTest.java \
               /t/org/calacademy/antweb/home/PlaceViewTotalDbTest.java \
               /t/org/calacademy/antweb/home/ApiKeyDbTest.java \
+              /t/org/calacademy/antweb/home/ImagingProgressDbTest.java \
+              /t/org/calacademy/antweb/util/OnePlaceJobDbTest.java \
+              /t/org/calacademy/antweb/home/GroupSpecimenCountDbTest.java \
               /t/org/calacademy/antweb/util/DataExtractDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:13 util.NumberChecksTest:22 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:8 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 util.DataExtractDbTest:18; do
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3 home.GroupSpecimenCountDbTest:8 util.DataExtractDbTest:18; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
@@ -1574,6 +1683,11 @@ jobs:
       - name: The nightly counts the place list totals after set 4, on their own connection (tests/unit/test_place_totals_connection.py)
         # 2026-11-06: inside set 4 they kept its connection past the long pool's 60 minutes; set 4 failed.
         run: python3 tests/unit/test_place_totals_connection.py
+
+      - name: The place image counts read the imaged specimens; the morning check reads their line (tests/unit/test_place_image_working_set.py)
+        # 2026-11-11: the step read every specimen of every place twice (13.6 minutes on production). The working set is
+        # made of temporary tables only, with no statement that commits set 4's transaction or locks specimen rows.
+        run: python3 tests/unit/test_place_image_working_set.py
 
       - name: The e2e link reader reads links as a browser does (tests/unit/test_e2e_link_reader.py, finding F27)
         run: python3 tests/unit/test_e2e_link_reader.py

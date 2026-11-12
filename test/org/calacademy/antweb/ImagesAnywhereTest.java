@@ -180,6 +180,13 @@ public class ImagesAnywhereTest extends TestCase {
         assertEquals(0, ImagesAnywhere.antImagesShown(null));
         assertTrue(StatisticsDb.ANT_IMAGES_OF_SPECIMEN, StatisticsDb.ANT_IMAGES_OF_SPECIMEN.contains(StatisticsDb.ANT_IMAGE));
         assertTrue(StatisticsDb.ANT_IMAGES_OF_SPECIMEN.startsWith(" left join image i on i.image_of_id = s.code"));
+        // Brian Fisher, 2026-11-09: a red-flagged specimen adds no image (in the join, so its row is kept)
+        assertTrue(StatisticsDb.ANT_IMAGES_OF_SPECIMEN, StatisticsDb.ANT_IMAGES_OF_SPECIMEN.endsWith(" and " + org.calacademy.antweb.home.SpecimenDb.notRedFlagged("s")));
+        assertTrue(StatisticsDb.TOTAL_IMAGES_SQL.contains(StatisticsDb.NOT_RED_FLAGGED_IMAGE));
+        assertTrue(StatisticsDb.LABEL_IMAGES_SQL.contains(StatisticsDb.NOT_RED_FLAGGED_IMAGE));
+        assertTrue(StatisticsDb.IMAGED_SPECIMENS_SQL.contains(StatisticsDb.NOT_RED_FLAGGED_IMAGE));
+        assertTrue(StatisticsDb.LIVING_SPECIES_IMAGED_SQL.contains(StatisticsDb.NOT_RED_FLAGGED_IMAGE));
+        assertTrue(StatisticsDb.ANT_IMAGED_NAMES_SQL.contains(org.calacademy.antweb.home.SpecimenDb.notRedFlagged("s")));
     }
 
     /** Brian Fisher 2026-10-27: "5 images + label" for a single specimen (ImageCounts). */
@@ -203,6 +210,7 @@ public class ImagesAnywhereTest extends TestCase {
     public void testImagedCastesQueryLeavesLabelsOut() {
         String sql = ImagedCastes.sql();
         assertTrue(sql, sql.contains(StatisticsDb.ANT_IMAGE));
+        assertTrue("red-flagged specimens are not counted (2026-11-09)", sql.contains(org.calacademy.antweb.home.SpecimenDb.notRedFlagged("s")));
         assertTrue(sql, sql.contains("s.taxon_name = ?"));
         assertTrue(sql, sql.contains("count(distinct s.code)"));
     }

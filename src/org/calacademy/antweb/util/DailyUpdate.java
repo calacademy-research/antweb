@@ -29,7 +29,10 @@ import org.apache.commons.logging.LogFactory;
  * The "Daily update" (the nightly run of the Scheduler, 05:00 Pacific; Brian Fisher, 2026-11-07: pages say "daily
  * update", never "nightly"): which step is running, what comes next, and whether a step is taking much longer than
  * usual or failed. Shown on dailyUpdate.do (DailyUpdateAction; JSON for the morning check), in the site's server
- * message (AntwebMgr) and emailed to antweb@antweb.org when a step fails or runs over twice its usual time.
+ * message (AntwebMgr) and emailed to antweb@antweb.org when a step fails or runs over twice its usual time, and when
+ * the count check at its end finds real differences outside the known findings (2026-11-11, Brian Fisher: "how did we
+ * not get an alert that the counts were not true": the check wrote "Real differences: N" into its job and the step
+ * said done). That step then ends with the result warning: done, shown yellow with the number, one email.
  *
  * The steps are defined once (STEPS). The Scheduler and UtilDataAction mark them where they already write their
  * compute.log lines: start(key) ends the step that was running (ok, or failed / skipped when noted) and starts the next.
@@ -65,6 +68,8 @@ public final class DailyUpdate {
     // Step states (page and JSON) and stored results.
     public static final String DONE = "done", RUNNING = "running", WAITING = "waiting", SKIPPED = "skipped", FAILED = "failed";
     public static final String OK = "ok";
+    /** A step that ran to its end and found something to look at (the count check with real differences): yellow, done. */
+    public static final String WARNING = "warning";
     // Overall states of a run (JSON).
     public static final String RUN_RUNNING = "running", RUN_OK = "ok", RUN_FAILED = "failed";
 
@@ -88,6 +93,7 @@ public final class DailyUpdate {
         new Step("set2", "Set 2: lists and place counts", "data clean-up, country and adm1 lists and their counts"),
         new Step("set3", "Set 3: projects, museums, bioregions, groups", "their lists and counts, type specimens"),
         new Step("set4", "Set 4: images and Not curated", "image counts of names and places, the Not curated column"),
+        new Step("imagingProgress", "Imaging progress", "species imaged by bioregion, country, genus and museum (set 4; imagingProgress.do)"),
         new Step("placeListTotals", "Place list totals", "the Subfamilies, Genera and Species of each place page"),
         new Step("set5", "Set 5: maps and cache reload", "object maps; every cache reloaded (skipped on staging)"),
         new Step("logSizeCheck", "Log size check", "warns when a log or the disk grows too large"),
@@ -160,6 +166,7 @@ public final class DailyUpdate {
         public Long usual;          // usual seconds, null when not known
         public Date estimatedEnd;   // running: started + usual
         public boolean slow;        // yellow
+        public boolean warning;     // yellow: it ended with something to look at (result warning; the message says what)
         public String message;
     }
 
@@ -188,7 +195,10 @@ public final class DailyUpdate {
                 v.message = r.detail;
                 if (FAILED.equals(r.result)) v.state = FAILED;
                 else if (SKIPPED.equals(r.result)) v.state = SKIPPED;
-                else if (r.ended != null) v.state = DONE;
+                else if (r.ended != null) {
+                    v.state = DONE;
+                    v.warning = WARNING.equals(r.result);
+                }
                 else if (active) v.state = RUNNING;
                 else {
                     v.state = FAILED;
@@ -298,6 +308,8 @@ public final class DailyUpdate {
             if (v.started == null) s.add("started", JsonNull.INSTANCE); else s.addProperty("started", iso(v.started));
             if (v.ended == null) s.add("ended", JsonNull.INSTANCE); else s.addProperty("ended", iso(v.ended));
             if (v.usual == null) s.add("usual_seconds", JsonNull.INSTANCE); else s.addProperty("usual_seconds", v.usual);
+            // a step that ended with a warning (the count check with real differences) is "done"; its message says what
+            // (the keys are agreed with the production morning check: none is added)
             s.addProperty("message", v.message == null ? "" : v.message);
             arr.add(s);
         }
@@ -575,6 +587,16 @@ public final class DailyUpdate {
 
     /** The count check job of the run has ended (error null: done). Ends the run once the Scheduler has finished. */
     public static void countCheckFinished(Date runStart, String error) {
+        countCheckFinished(runStart, error, null);
+    }
+
+    /**
+     * As above; warning (CountCheckJob.warning: "N real differences: see Check the counts ...", null when there is none):
+     * the check ran to its end and found real differences. The step ends with the result warning (done, yellow on the
+     * page, the text as its message) and one email goes to the administrators, by the same path as a failed or slow
+     * step (emailOnce: no mail file, no mail). An error wins over a warning.
+     */
+    public static void countCheckFinished(Date runStart, String error, String warning) {
         try {
             synchronized (DailyUpdate.class) {
                 Run run = s_run;
@@ -582,6 +604,9 @@ public final class DailyUpdate {
                 if (error != null) {
                     run.currentResult = FAILED;
                     run.currentDetail = cut(error);
+                } else if (warning != null && !FAILED.equals(run.currentResult)) {
+                    run.currentResult = WARNING;
+                    run.currentDetail = cut(warning);
                 }
                 if (run.countCheckPending) finishLocked(run, null, null);
                 else closeStepLocked(run, nowSeconds());   // the Scheduler ends the run (schedulerFinished)
@@ -621,15 +646,18 @@ public final class DailyUpdate {
         write("end " + key, c -> DailyUpdateDb.end(c, runStart, key, now, result, detail));
         long seconds = (now.getTime() - started.getTime()) / 1000;
         if (FAILED.equals(result)) emailOnce(run, key, "failed", "failed: " + (detail == null ? "" : detail));
-        else if (isOverrun(seconds, run.usual.get(key))) {
-            emailOnce(run, key, "overrun", "took " + duration(seconds) + ", usually " + duration(run.usual.get(key)));
+        else {
+            if (WARNING.equals(result)) emailOnce(run, key, "differences", detail == null ? "" : detail);
+            if (isOverrun(seconds, run.usual.get(key))) {
+                emailOnce(run, key, "overrun", "took " + duration(seconds) + ", usually " + duration(run.usual.get(key)));
+            }
         }
         run.current = null;
         run.currentResult = null;
         run.currentDetail = null;
     }
 
-    /** One email per step and kind (failed, overrun) per run, on a thread of its own. */
+    /** One email per step and kind (failed, overrun, differences) per run, on a thread of its own. */
     private static void emailOnce(Run run, String key, String kind, String what) {
         // A step that ran long and then failed gets both emails; an overrun noticed while it ran is not sent again at its end.
         String id = key + ":" + kind;
@@ -641,9 +669,14 @@ public final class DailyUpdate {
         Step s = step(key);
         String label = s == null ? key : s.label;
         String env = AntwebProps.isStageMode() ? "staging" : "production";
-        String subject = "AntWeb " + env + ": daily update step " + ("failed".equals(kind) ? "failed" : "running long") + ": " + label;
+        boolean differences = "differences".equals(kind);
+        String subject = differences ? "AntWeb " + env + ": the count check after the daily update found differences"
+            : "AntWeb " + env + ": daily update step " + ("failed".equals(kind) ? "failed" : "running long") + ": " + label;
         String body = "Daily update of " + iso(run.start) + " (Pacific), step " + (index(key) + 1) + " of " + STEPS.size()
-            + ", " + label + ": " + what + ".\n\nWhere the daily update is: " + AntwebProps.getDomainApp()
+            + ", " + label + ": " + what + (what.endsWith(".") ? "" : ".") + "\n\n"
+            + (differences ? "The report (administrators): " + AntwebProps.getDomainApp() + "/countCheck.do\n"
+                + "A real difference is a number on the site that does not equal its recount and that no change since the daily update explains.\n\n" : "")
+            + "Where the daily update is: " + AntwebProps.getDomainApp()
             + "/dailyUpdate.do (curators and admins). Details: compute.log (Log Manager).";
         try {
             // On the writer thread (SES can take seconds), without a database connection (the email must go out when
@@ -731,7 +764,7 @@ public final class DailyUpdate {
         s_testEmails.clear();
     }
 
-    /** Tests: "step:failed" or "step:overrun" for each email that would have gone out. */
+    /** Tests: "step:failed", "step:overrun" or "step:differences" for each email that would have gone out. */
     public static List<String> testEmails() {
         return new ArrayList<>(s_testEmails);
     }

@@ -9,7 +9,8 @@ recounted from the API's records:
   row 44  a species row's Images on the place's list (since 2026-10-28 one number, Brian Fisher: the images of the
           name in AntWeb, the allantwebants list row's image_count, nightly set 4; from 10-27 to 10-28 also the
           place's in brackets) = the images of the ant (labels never count, Brian Fisher 2026-10-27) of every
-          specimen of that name in AntWeb, recounted from the API (/taxaImages of the name, shot types other than l,
+          specimen of that name in AntWeb that is not red-flagged (2026-11-09; the flag read from the specimen page,
+          numbers_sample.without_red_flagged), recounted from the API (/taxaImages of the name, shot types other than l,
           of the specimens /specimens files under the name, anywhere), and since 2026-10-28 (decision 3) of the
           specimens filed under its synonyms (/taxa?currentValidName; when the API cannot list them, Images >= the
           recount of the name only). The cell never shows a second number.
@@ -603,6 +604,19 @@ def test_list_images_column_equals_the_api_recount():
                 left_out.append(f"{p} {name}: {images} Images, the AntWeb-wide row is not counted yet on this server"
                                 " (no compute.log line 'AntWeb-wide list Images counted'): pending")
                 continue
+            if recount > images:
+                # Brian Fisher, 2026-11-09: images of red-flagged specimens are not counted. The API has no flag, so the
+                # specimens with images are looked up on their pages (only now, when the list shows fewer).
+                kept = ns.without_red_flagged(ant, codes)
+                if kept is None:
+                    left_out.append(f"{p} {name}: {images} Images < {recount}, too many specimens to look up red flags")
+                    continue
+                if kept[1]:
+                    if ns.red_flag_images_counted() is False:
+                        left_out.append(f"{p} {name}: {images} Images, red-flagged {kept[1]}: pending until the nightly run"
+                                        " counts images without red-flagged specimens")
+                        continue
+                    recount = sum(kept[0].get(c, 0) for c in codes)
             if recount != images:
                 wrong.append(f"{p} {name}: list row {images} Images, the API's {len(codes)} specimens of the name and its synonyms in AntWeb have {recount} images of the ant")
             checked.append(f"{p} {name}")

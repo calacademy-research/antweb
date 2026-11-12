@@ -1,0 +1,21 @@
+-- The image view of the GBIF archive: medium images from static.antweb.org (Brian Fisher, 2026-11-11).
+--
+-- Who reads the view. The Academy's IPT (ipt.calacademy.org, resource antweb) publishes AntWeb to GBIF every Monday
+-- at 12:00 Pacific from two SQL sources, "select * from darwin_core_2" (the specimens) and
+-- "select * from darwin_core_multimedia" (the images, this view). It reads them from a copy of this database kept at
+-- the Academy, restored from the daily dump about a day and a half behind; the views travel with the dump, so a
+-- change here reaches the archive without any change in the IPT. The IPT maps the ten columns of this view by their
+-- position: their number, order and names stay as they were.
+--
+-- What changes: the address only (imageurl, and the order by, which repeats it).
+--   was  https://www.antweb.org/images/<code>/<code>_<shot>_<number>_high.jpg (the large image, behind the bot
+--        shield of www.antweb.org: GBIF got "403" for every image newer than its own copies)
+--   now  https://static.antweb.org/images/<code>/<code>_<shot>_<number>_med.jpg, the address the site's own pages
+--        use (SpecimenImage.getMedium). Brian Fisher: GBIF and Lens get links to the medium images only; who wants a
+--        larger view comes to AntWeb (the references column links to the specimen's page).
+-- Everything else is the definition as it stood on production on 2026-11-11 (SHOW CREATE VIEW), character for
+-- character: the rights holder stays the copyright line of the image (Brian Fisher, 2026-11-11: not changed).
+--
+-- Safe to run twice. Rollback: 2026-11-11-darwin-core-multimedia-medium-rollback.sql (the definition of 2026-11-11).
+
+CREATE OR REPLACE ALGORITHM=UNDEFINED DEFINER=`antweb`@`localhost` SQL SECURITY DEFINER VIEW `darwin_core_multimedia` AS select concat(_utf8mb3'CAS:ANTWEB:',`im`.`image_of_id`) AS `occurrenceid`,`im`.`image_of_id` AS `catalognumber`,concat('https://static.antweb.org/images/',`im`.`image_of_id`,'/',`im`.`image_of_id`,'_',`im`.`shot_type`,'_',`im`.`shot_number`,'_med.jpg') AS `imageurl`,`im`.`shot_type` AS `shot_type`,`im`.`shot_number` AS `shot_number`,concat('https://www.antweb.org/specimenImages.do?name=',`im`.`image_of_id`) AS `references`,concat(`im`.`image_of_id`,convert((case `im`.`shot_type` when 'd' then ' dorsal' when 'h' then ' head' when 'l' then ' label' when 'p' then ' profile' end) using utf8mb3),' view ',`im`.`shot_number`) AS `title`,`li`.`license` AS `license`,nullif(`cr`.`copyright`,'') AS `rightsHolder`,nullif(`ar`.`name`,'') AS `creator` from (((`image` `im` left join `license` `li` on((`im`.`license` = `li`.`id`))) left join `copyright` `cr` on((`im`.`copyright` = `cr`.`id`))) left join `artist` `ar` on((`im`.`artist` = `ar`.`id`))) order by concat('https://static.antweb.org/images/',`im`.`image_of_id`,'/',`im`.`image_of_id`,'_',`im`.`shot_type`,'_',`im`.`shot_number`,'_med.jpg');

@@ -36,6 +36,7 @@ import static test.org.calacademy.antweb.util.NumbersTestDb.*;
  *        to genus); the Totals row of groups.do = all groups' specimens together, not the largest group
  *   Q9   orphanedImages.do: "N images of M specimen codes that are not in AntWeb"
  *   Q12  "Unimaged" = no photo of the ant anywhere in AntWeb; a name with only label photos is unimaged
+ *   2026-11-09  photos of red-flagged specimens are not counted (StatisticsDb.NOT_RED_FLAGGED_IMAGE)
  *   POE  the Port of Entry project is a species list only: no specimen or image numbers, not checked
  *
  * Runs in CI against MySQL 8.4 (host "mysql"); ANTWEB_TEST_DB_URL overrides.
@@ -312,6 +313,61 @@ public class NumberDecisionsDbTest extends TestCase {
         exec("insert into specimen (code, taxon_name, status, country, family, subfamily) values ('elsewhere1', '" + HB + "', 'valid', 'Comoros', 'formicidae', '" + PON + "')");
         exec("insert into image (id, image_of_id, shot_type, upload_date) values (60, 'elsewhere1', 'd', '2020-01-01 10:00:00')");
         assertTrue(StatisticsDb.antImagedNames(connection, Arrays.asList(HB)).contains(HB));
+    }
+
+    /**
+     * Brian Fisher, 2026-11-09: "A red-flagged specimen is still a specimen and still imaged, but for counting images
+     * exclude them everywhere." casent7 (hypoponera b, red flag) has a head and a label photo: no image or imaged number
+     * of the home page and statsPage changes, hypoponera b stays unimaged (label photo only otherwise), the species page's
+     * imaged castes leave it out, and the checks that recount these numbers agree.
+     */
+    public void testPhotosOfRedFlaggedSpecimensAreNotCounted() throws Exception {
+        String[] sqls = {StatisticsDb.TOTAL_IMAGES_SQL, StatisticsDb.LABEL_IMAGES_SQL, StatisticsDb.IMAGED_SPECIMENS_SQL,
+            StatisticsDb.IMAGED_SPECIES_SQL, StatisticsDb.VALID_SPECIES_IMAGED_SQL, StatisticsDb.LIVING_SPECIES_IMAGED_SQL,
+            StatisticsDb.MORPHOSPECIES_IMAGED_SQL};
+        long[] before = new long[sqls.length];
+        for (int i = 0; i < sqls.length; i++) before[i] = one(sqls[i]);
+        org.calacademy.antweb.home.ImageDb imageDb = new org.calacademy.antweb.home.ImageDb(connection);
+        String statsBefore = stats(imageDb.getImageStats());
+        java.util.Map<String, Integer> taxaBefore = imageDb.getImageTaxonStats();
+
+        exec("insert into specimen (code, taxon_name, status, country, museum, family, subfamily, caste, image_count, flag) values"
+            + " ('casent7', '" + HB + "', 'valid', 'Madagascar', 'MCZC', 'formicidae', '" + PON + "', 'worker', 2, 'red')");
+        exec("insert into image (id, image_of_id, shot_type, upload_date) values (61, 'casent7', 'h', '2020-01-01 10:00:00'),"
+            + " (62, 'casent7', 'l', '2020-01-01 10:00:00')");
+
+        for (int i = 0; i < sqls.length; i++) assertEquals(sqls[i], before[i], one(sqls[i]));
+        assertEquals("images of the ant: casent1 h, casent3 p", 2, one(StatisticsDb.TOTAL_IMAGES_SQL));
+        assertEquals("label images: casent1, casent5", 2, one(StatisticsDb.LABEL_IMAGES_SQL));
+        assertEquals("statsPage Images table", statsBefore, stats(imageDb.getImageStats()));
+        assertEquals("statsPage Imaged Species", taxaBefore, imageDb.getImageTaxonStats());
+        assertEquals(new java.util.HashSet<>(Arrays.asList(PA, PB)), StatisticsDb.antImagedNames(connection, Arrays.asList(PA, PB, PAX, HB)));
+        exec("alter table specimen add column subcaste varchar(20)");   // as the live table (the species page's imaged castes read it)
+        assertEquals("imaged castes: no imaged specimen of hypoponera b", 0, imagedCastes(HB));
+        assertEquals("imaged castes of pheidole a: casent1", 1, imagedCastes(PA));
+        // without the flag the head photo counts again (curated and unflagged)
+        exec("update specimen set flag = null where code = 'casent7'");
+        assertEquals(3, one(StatisticsDb.TOTAL_IMAGES_SQL));
+        assertTrue(StatisticsDb.antImagedNames(connection, Arrays.asList(HB)).contains(HB));
+        exec("update specimen set flag = 'red' where code = 'casent7'");
+
+        CountCheck.Result r = check();
+        for (String id : new String[] {"stats.images", "stats.imaged", "imaging.progress", "taxon.images"}) assertEquals(id + list(r), 0, real(r, id));
+        String json = org.calacademy.antweb.util.NumberChecks.json(r.invariants.expected);
+        assertTrue(json, json.contains("\"redFlaggedImages\":2"));
+    }
+
+    /** The imaged specimens of the species page's "Imaged:" line (ImagedCastes), all castes. */
+    private int imagedCastes(String name) throws Exception {
+        int n = 0;
+        for (java.util.Map<String, Integer> sub : org.calacademy.antweb.ImagedCastes.count(connection, name).values()) n += org.calacademy.antweb.ImagedCastes.total(sub);
+        return n;
+    }
+
+    private static String stats(java.util.Map<String, int[]> m) {
+        StringBuilder b = new StringBuilder();
+        for (String k : new java.util.TreeSet<>(m.keySet())) b.append(k).append(Arrays.toString(m.get(k))).append(' ');
+        return b.toString();
     }
 
     // ------------------------------------------------------------------ Port of Entry
