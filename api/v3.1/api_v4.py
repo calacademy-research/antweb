@@ -380,13 +380,21 @@ def check_families(endpoint):
     return None
 
 
+def family_asked(args):
+    """The family /specimens is asked for (family=<name>), or None. A blank family= and family=* name no family: they
+    are as if the parameter was not sent (review of pull request 348, 2026-11-12: a blank family= turned the
+    ants-only default off, and v3.1's own filter then gave only the records whose family is empty)."""
+    family = (args.get('family') or '').strip()
+    return family if family not in ('', '*') else None
+
+
 def family_rule(endpoint, args):
     """Which families a specimen route answers for: 'family' when /specimens is asked for one family (family=<name>,
     v3.1's own filter), 'allFamilies' with allFamilies=true, otherwise 'antsOnly' (the default). None for a route
     whose records are not specimens."""
     if endpoint not in FAMILY_ROUTES:
         return None
-    if endpoint == 'getSpecimen' and args.get('family') not in (None, '*'):
+    if endpoint == 'getSpecimen' and family_asked(args):
         return ONE_FAMILY
     if args.get('allFamilies') == 'true':
         return ALL_FAMILIES
@@ -401,6 +409,8 @@ def run(name, endpoint, admission, has_key, limits):
     for k, values in request.args.lists():
         if k in EXTRA_PARAMS.get(endpoint, ()):
             filters[k] = values[-1]
+        elif k == 'family' and endpoint in FAMILY_ROUTES and not family_asked(request.args):
+            continue        # a blank family= (or family=*) names no family: not handed to v3.1's filter
         elif k != 'limit':
             for v in values:
                 inner.add(k, v)

@@ -885,6 +885,16 @@ def test_all_families_gives_the_others_and_family_gives_one():
         # family=* is no filter in v3.1: the default stays
         r = get(MEXICO + "&family=*&limit=100")
         assert codes_of(r) == ANTS and r.get_json()["metaData"]["families"] == "antsOnly"
+        # a blank family= names no family either (review of pull request 348): the default stays, with every ant
+        # (not only the records whose family is empty, which v3.1's own filter would give), also with allFamilies
+        for blank in ("&family=", "&family=%20", "&family=&family="):
+            r = get(MEXICO + blank + "&limit=100")
+            m = r.get_json()["metaData"]
+            assert codes_of(r) == ANTS and m["families"] == "antsOnly" and m["total"] == 4, (blank, codes_of(r), m)
+            assert r.headers["X-AntWeb-Families"] == "antsOnly"
+        r = get(MEXICO + "&family=&allFamilies=true&limit=100")
+        assert codes_of(r) == sorted(ANTS + OTHERS) and r.get_json()["metaData"]["families"] == "allFamilies"
+        assert api_v4.family_asked({"family": " vespidae "}) == "vespidae" and api_v4.family_asked({}) is None
 
 
 def test_geo_specimens_are_ants_only_too_with_their_distinct_lists():

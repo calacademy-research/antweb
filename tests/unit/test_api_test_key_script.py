@@ -60,6 +60,43 @@ def test_key_fits_the_api_and_only_its_hash_is_kept():
     assert not re.search(r"(write|dump|log)\w*\([^)]*\bkey\b[,)]", SRC.replace("print(key)", "")), "the key goes nowhere else"
 
 
+def test_only_the_test_key_is_ever_deleted():
+    """Review of pull request 348 (2026-11-12): the clean-up also deleted any key with the same first characters
+    (`or prefix = ...`), so a registrant's key that happened to start like the test key would have been removed
+    without a word. The clean-up names the test key by its name or its own hash, nothing else; the script makes
+    sure beforehand that no other key has the prefix (it is unique in the table), and changes nothing if one has."""
+    delete, insert = tk.insert_statements("aw_abcd", "a" * 64)
+    assert delete == ("delete from api_key where name = 'ZZ e2e test key (staging only)' or key_hash = '" + "a" * 64 + "'"), delete
+    assert "prefix" not in delete and "aw_abcd" not in delete
+    assert "'aw_abcd'" in insert, "the prefix is still stored with the new row"
+    for line in SRC.splitlines():
+        if "delete from api_key" in line:
+            assert "prefix" not in line, line
+    assert SRC.count("delete from api_key") == 2, "the clean-up before the insert, and --remove (by name)"
+    # is the prefix free? Asked about the other keys only, before anything is changed
+    taken = tk.prefix_taken_sql("aw_abcd")
+    assert taken == "select 1 from api_key where prefix = 'aw_abcd' and name <> 'ZZ e2e test key (staging only)' limit 1", taken
+    try:
+        tk.prefix_taken_sql("aw_ab'd")
+        raise AssertionError("a prefix that is not one was put into SQL")
+    except ValueError:
+        pass
+    new = SRC[SRC.index("    for _attempt in range(20):"):SRC.index("    put_in_place(prefix, hashed)")]
+    assert "if not prefix_taken(key[:7]):" in new and "nothing was changed" in new
+    restore = SRC[SRC.index("        if args.restore:"):SRC.index("        row = state(saved[1])")]
+    assert restore.index("prefix_taken(saved[0])") < restore.index("put_in_place(*saved)") and "return 1" in restore
+    # one transaction: a failed insert does not leave staging without the test key that was there
+    calls = []
+    original = tk.mysql
+    tk.mysql = lambda sql: calls.append(sql) or []
+    try:
+        tk.put_in_place("aw_abcd", "a" * 64)
+    finally:
+        tk.mysql = original
+    assert len(calls) == 1 and calls[0].startswith("start transaction;\ndelete from api_key") and calls[0].endswith(";\ncommit;"), calls
+    assert "insert_statements(" not in SRC.split("def main(")[1], "main() changes the key only through put_in_place()"
+
+
 def test_one_admin_key_with_its_own_limits():
     delete, insert = tk.insert_statements("aw_abcd", "a" * 64)
     assert delete.startswith("delete from api_key where name = 'ZZ e2e test key (staging only)'")

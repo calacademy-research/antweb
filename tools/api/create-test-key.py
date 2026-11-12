@@ -81,15 +81,17 @@ def q(value):
 
 
 def insert_statements(prefix, hashed):
-    """The SQL that puts the test key in place: any earlier test key (by its name, or the same hash or prefix) is
-    removed first, so there is always exactly one. Pure, unit-tested."""
+    """The SQL that puts the test key in place: any earlier test key (by its name, or the same hash) is removed
+    first, so there is always exactly one. Never by the prefix: the first characters of a key are not its owner, and
+    another person's key that happens to start the same would be deleted (review of pull request 348, 2026-11-12).
+    The prefix is unique in the table, so main() makes sure it is free first (prefix_taken). Pure, unit-tested."""
     if not HASH_RE.fullmatch(hashed) or not PREFIX_RE.fullmatch(prefix):
         raise ValueError("not a key hash and prefix")
     cols = ["prefix", "key_hash", "name", "email", "project", "level", "status", "confirmed", "note"] + sorted(LIMITS)
     values = [q(prefix), q(hashed), q(NAME), q(EMAIL), q(PROJECT), "'admin'", "'active'", "utc_timestamp()", q(NOTE)]
     values += [str(int(LIMITS[k])) for k in sorted(LIMITS)]
     return [
-        f"delete from api_key where name = {q(NAME)} or key_hash = {q(hashed)} or prefix = {q(prefix)}",
+        f"delete from api_key where name = {q(NAME)} or key_hash = {q(hashed)}",
         f"insert into api_key ({', '.join(cols)}) values ({', '.join(values)})",
     ]
 
@@ -143,6 +145,22 @@ def have_table():
     return bool(mysql("select 1 from information_schema.tables where table_schema = database() and table_name = 'api_key'"))
 
 
+def prefix_taken_sql(prefix):
+    """Is the prefix in use by a key that is not the test key? (api_key.prefix is unique.)"""
+    if not PREFIX_RE.fullmatch(prefix):
+        raise ValueError("not a key prefix")
+    return f"select 1 from api_key where prefix = {q(prefix)} and name <> {q(NAME)} limit 1"
+
+
+def prefix_taken(prefix):
+    return bool(mysql(prefix_taken_sql(prefix)))
+
+
+def put_in_place(prefix, hashed):
+    """The delete and the insert as one transaction: if the insert fails, the test key that was there stays."""
+    mysql("start transaction;\n" + ";\n".join(insert_statements(prefix, hashed)) + ";\ncommit;")
+
+
 def state(hashed):
     rows = mysql(f"select id, level, status from api_key where key_hash = {q(hashed)}")
     return rows[0] if rows else None
@@ -176,17 +194,26 @@ def main(argv=None):
             print(f"No saved test key ({SAVED}): nothing to put back. Make one with this script without options.")
             return 0 if args.restore else 1
         if args.restore:
-            mysql(";\n".join(insert_statements(*saved)) + ";")
+            if prefix_taken(saved[0]):
+                print(f"Not put back: another key starts with {saved[0]} too. Make a new test key (this script without"
+                      " options) and put it in the GitHub secret ANTWEB_TEST_API_KEY. No key was changed.")
+                return 1
+            put_in_place(*saved)
         row = state(saved[1])
         ok = row is not None and row[1] == "admin" and row[2] == "active"
         print(f"Test key {saved[0]}...: " + ("in the database, admin, active" if ok else "NOT in the database as an active admin key"))
         return 0 if ok else 1
 
-    key = new_key()
-    if not KEY_RE.fullmatch(key):
-        sys.exit("key generation failed")
+    for _attempt in range(20):       # a key whose first characters no other key has (they are unique in the table)
+        key = new_key()
+        if not KEY_RE.fullmatch(key):
+            sys.exit("key generation failed")
+        if not prefix_taken(key[:7]):
+            break
+    else:
+        sys.exit("no key with unused first characters after 20 tries; nothing was changed")
     prefix, hashed = key[:7], key_hash(key)
-    mysql(";\n".join(insert_statements(prefix, hashed)) + ";")
+    put_in_place(prefix, hashed)
     if state(hashed) is None:
         sys.exit("the key was not saved in api_key")
     write_saved(prefix, hashed)
