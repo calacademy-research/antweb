@@ -292,8 +292,10 @@ public class CountRules20261028Test extends TestCase {
     public void testNumbersArePendingUntilANightlyRunCountsByTheNewRules() {
         List<String> before = Arrays.asList("  Set 4 done (" + CountInvariants.RULES_LOG + "; " + StatisticsDb.ANT_IMAGES_RULE_LOG + ")");
         assertFalse(CountInvariants.rulesCounted(before));
+        // since 2026-11-09 the line also says the image numbers leave out red-flagged specimens
         List<String> after = Arrays.asList("  Set 4 done (" + CountInvariants.RULES_LOG + "; " + StatisticsDb.ANT_IMAGES_RULE_LOG
-            + "; " + CountInvariants.COUNTING_RULES_LOG + "; " + CountInvariants.GENERA_RULE_LOG + "; " + CountInvariants.ADM1_RULE_LOG + ")");
+            + "; " + CountInvariants.COUNTING_RULES_LOG + "; " + CountInvariants.GENERA_RULE_LOG + "; " + CountInvariants.ADM1_RULE_LOG
+                    + "; " + StatisticsDb.RED_FLAG_IMAGES_RULE_LOG + ")");
         assertTrue(CountInvariants.rulesCounted(after));
     }
 }

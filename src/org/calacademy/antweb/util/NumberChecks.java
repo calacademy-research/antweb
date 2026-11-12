@@ -29,6 +29,8 @@ import org.calacademy.antweb.home.PlaceTotals;
  *     wrote them;
  *   - relations that must hold (a part is at most the whole; numbers on two pages that count the same thing).
  *
+ * Since 2026-11-08 also the imaging progress page (imagingProgress.do, table imaging_progress): imagingProgress().
+ *
  * None of these numbers changed rule on 2026-10-21, so no difference is pending for that reason; a difference is
  * pending only when something changed after the number was written (an upload, a list edit, an image upload).
  */
@@ -57,6 +59,8 @@ public final class NumberChecks {
         endemicFlags();
         taxonParents();
         adm1ByCountry();
+        imagingProgress();
+        placeListTotals();
     }
 
     // ------------------------------------------------------------------ helpers
@@ -161,7 +165,7 @@ public final class NumberChecks {
      */
     void statsImages() {
         CountInvariants.Check check = new CountInvariants.Check("stats.images",
-            "statsPage Images table = a recount by status and caste (images of the ant; label images apart); the four castes add up to Total; Sum + labels = all images minus orphan images; orphanedImages.do images and codes = a recount", "13, 14, 15, 99");
+            "statsPage Images table = a recount by status and caste (images of the ant; label images apart; red-flagged specimens left out); the four castes add up to Total; Sum + labels = all images minus orphan images minus images of red-flagged specimens; orphanedImages.do images and codes = a recount", "13, 14, 15, 99");
         inv.check(check, c -> {
             site().put("statsPage", "statsPage.do");
             Map<String, int[]> page = new org.calacademy.antweb.home.ImageDb(inv.connection).getImageStats();
@@ -170,6 +174,7 @@ public final class NumberChecks {
             // 2026-10-27 (Brian Fisher): Total and the castes count images of the ant; label images have their own column.
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(
                     "select s.status, s.caste, " + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGE + " ant, count(*) from image i join specimen s on s.code = i.image_of_id"
+                    + " where " + org.calacademy.antweb.home.SpecimenDb.notRedFlagged("s")   // 2026-11-09: red-flagged specimens' images not counted
                     + " group by s.status, s.caste, ant"))) {
                 while (r.next()) {
                     String status = r.getString(1);
@@ -214,6 +219,8 @@ public final class NumberChecks {
                     orphanCodes = r.getLong(2);
                 }
             }
+            // images of red-flagged specimens: in no row of the table (Brian Fisher, 2026-11-09)
+            long redFlagged = count("select count(*) from image i join specimen s on s.code = i.image_of_id where s.flag = 'red'");
             // orphanedImages.do (row 99, Q9 2026-10-22): "N images of M specimen codes that are not in AntWeb", as the page computes them
             org.calacademy.antweb.OrphanedImages page2 = new org.calacademy.antweb.OrphanedImages();
             page2.setConnection(inv.connection);
@@ -222,13 +229,14 @@ public final class NumberChecks {
             inv.compare(c, "site", "orphanedImages", "orphanedImages.do: images (N images of M specimen codes) = a recount", page2.getImageCount(), orphans, "=", null);
             inv.compare(c, "site", "orphanedImages", "orphanedImages.do: specimen codes (N images of M specimen codes) = a recount", page2.getOrphans().size(), orphanCodes, "=", null);
             inv.compare(c, "site", "statsPage", "Images table: Sum (statuses shown, images of the ant + label images) + images of specimens without a status = all images (" + all
-                + ") minus orphan images (" + orphans + ")", sum[0] + sum[5] + nullStatus, all - orphans, "=", null);
+                + ") minus orphan images (" + orphans + ") minus images of red-flagged specimens (" + redFlagged + ")", sum[0] + sum[5] + nullStatus, all - orphans - redFlagged, "=", null);
             // Images of specimens without a status are in no row of the table (so not in its Sum): a data finding.
             inv.compare(c, "site", "statsPage", "Images table: images of specimens without a status (in no row, not in the Sum)", nullStatus, 0, "=", null);
             Map<String, Object> images = new LinkedHashMap<>();
             for (Map.Entry<String, long[]> e : recount.entrySet()) images.put(e.getKey(), e.getValue());
             expected("statsPage").put("images", images);
             expected("statsPage").put("imagesSum", sum);
+            expected("statsPage").put("redFlaggedImages", redFlagged);
             expected("orphanedImages").put("codes", orphanCodes);
             expected("orphanedImages").put("images", orphans);
         });
@@ -245,7 +253,8 @@ public final class NumberChecks {
             // names with at least one specimen that has an image of the ant (any rank; labels did count until 2026-10-27), by taxon status
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(
                     "select t.status, count(*) from taxon t where t.taxon_name in (select s.taxon_name from specimen s"
-                    + " where s.code in (select i.image_of_id from image i where " + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGE + ")) group by t.status"))) {
+                    + " where s.code in (select i.image_of_id from image i where " + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGE + ")"
+                    + " and " + org.calacademy.antweb.home.SpecimenDb.notRedFlagged("s") + ") group by t.status"))) {   // 2026-11-09
                 while (r.next()) if (r.getString(1) != null) recount.merge(r.getString(1).toLowerCase(java.util.Locale.ROOT), r.getLong(2), Long::sum);
             }
             long countable = 0;
@@ -259,7 +268,8 @@ public final class NumberChecks {
             if (has("statistics", "species_imaged")) {
                 long homeImaged = count("select species_imaged from statistics order by created desc, id desc limit 1");
                 inv.compare(c, "site", "statsPage", "Imaged Species of counted statuses (any rank) >= species + ssp. imaged (home)",
-                    countable, homeImaged, ">=", inv.result.imagesSinceNightly || inv.result.uploadSinceNightly ? "images or specimens were added after the last nightly run" : null);
+                    countable, homeImaged, ">=", inv.result.imagesSinceNightly || inv.result.uploadSinceNightly ? "images or specimens were added after the last nightly run"
+                        : !inv.result.rulesCounted ? CountInvariants.RULES_PENDING : null);   // red-flagged specimens left out since 2026-11-09
             }
             expected("statsPage").put("imagedSpecies", recount);
         });
@@ -484,6 +494,8 @@ public final class NumberChecks {
                     // valid_species_imaged counts ants only since 2026-10-22 (Q7): a row written before equals the old count
                     if (p == null && i == cols.length - 1 && row[i] != live
                             && row[i] == count(org.calacademy.antweb.home.StatisticsDb.VALID_SPECIES_IMAGED_SQL_BEFORE_Q7)) p = CountInvariants.Q7_PENDING;
+                    // red-flagged specimens' images left out since 2026-11-09: pending until a nightly run counted so
+                    if (p == null && i == cols.length - 1 && row[i] != live && !inv.result.rulesCounted) p = CountInvariants.RULES_PENDING;
                     inv.compare(c, "site", "statistics", "statistics.do latest row: " + cols[i], row[i], live, "=", p);
                 }
             }
@@ -1043,6 +1055,235 @@ public final class NumberChecks {
             }
             expected("b26").put("adm1sDiffering", differ);
         });
+    }
+
+    // ------------------------------------------------------------------ place page list totals (2026-11-11)
+
+    /** Tests: the places to check (the place managers are not loaded there); null: PlaceViewTotalDb.places(). */
+    private static volatile java.util.List<org.calacademy.antweb.Overview> s_placeListForTests;
+
+    public static void setPlaceListForTests(java.util.List<org.calacademy.antweb.Overview> places) {
+        s_placeListForTests = places;
+    }
+
+    /**
+     * place.view.totals (row 129; Brian Fisher, 2026-11-11: "how did we not get an alert that the counts were not
+     * true"). Every number on a place page is the header of the list its link opens: Subfamilies, Genera and Species are
+     * the list totals the daily update counts with the list's own code (place_view_total, PlaceViewTotalDb). A place page
+     * without them falls back to the place's stored counts, which another rule counts, and nothing said so: the Fossil
+     * Ants and AntCat list pages were never counted (Genera 259 beside a list of 258) and no check looked. This check:
+     * every place page with a list (PlaceViewTotalDb.places(), the daily update's own list, so the two cannot drift: valid
+     * geolocales with list rows, bioregions, museums, projects including the site-wide ones, not the AntWeb-wide list) has
+     * its list totals (three; four on the AntCat list and Fossil Ants, whose Valid species is a list total too), counted
+     * in the last PlaceViewTotalDb.FRESH_DAYS days. A place without them is a real
+     * difference, never pending: the daily update counts every place it lists, each at least every 7 days.
+     */
+    void placeListTotals() {
+        CountInvariants.Check check = new CountInvariants.Check("place.view.totals",
+            "every place page with a list has its list totals (Subfamilies, Genera, Species: the headers of its lists), counted in the last "
+            + org.calacademy.antweb.home.PlaceViewTotalDb.FRESH_DAYS + " days", "129");
+        inv.check(check, c -> {
+            org.calacademy.antweb.home.PlaceViewTotalDb db = new org.calacademy.antweb.home.PlaceViewTotalDb(inv.connection);
+            java.util.List<org.calacademy.antweb.Overview> places = s_placeListForTests != null ? s_placeListForTests : db.places();
+            // no table: nothing was ever counted, so every place with a list is a difference (not a check left out)
+            Map<String, int[]> stored = has("place_view_total")
+                ? db.storedRanks(org.calacademy.antweb.home.PlaceViewTotalDb.FRESH_DAYS) : new java.util.HashMap<>();
+            for (org.calacademy.antweb.Overview place : places) {
+                String[] tk = org.calacademy.antweb.home.PlaceViewTotalDb.typeAndKey(place);
+                if (tk == null) continue;
+                inv.places.computeIfAbsent(tk[0], x -> CountInvariants.keyMap()).putIfAbsent(tk[1], place.getName());
+                int[] ranks = stored.get(org.calacademy.antweb.home.PlaceViewTotalDb.placeKey(place));
+                // Subfamilies, Genera, Species; the AntCat list and Fossil Ants also their Valid species (2026-11-11)
+                int expected = org.calacademy.antweb.home.PlaceViewTotalDb.expectedTotals(place);
+                String totals = "list totals of the place page (Subfamilies, Genera, Species" + (expected > 3 ? ", Valid species" : "") + ")";
+                String what = ranks == null || ranks[0] == 0
+                    ? totals + ": none stored; the page shows the place's stored counts, not the headers of its lists"
+                        + " (the daily update counts them; an administrator counts them now with utilData.do?action=placeViewTotals)"
+                    : ranks[0] < expected
+                        ? totals + ": only " + ranks[0] + " of " + expected + " stored"
+                        : totals + " counted in the last " + org.calacademy.antweb.home.PlaceViewTotalDb.FRESH_DAYS + " days";
+                inv.compare(c, tk[0], tk[1], what, ranks == null ? 0 : Math.min(ranks[1], expected), expected, "=", null);
+            }
+        });
+    }
+
+    // ------------------------------------------------------------------ imaging progress (2026-11-08)
+
+    /** How many rows of each kind of place (bioregion, country, genus, museum) are recounted each morning. */
+    static final int IMAGING_SAMPLE = 6;
+
+    /**
+     * Which rows of a kind (sorted, largest first) are recounted today: row 0 and others chosen by the day of the
+     * year, IMAGING_SAMPLE in all, or every row when there are fewer. Always ends: the chosen steps of 13 visit only
+     * size / 13 rows when the size is a multiple of 13 (13 museums: 2 rows, never 6; review of #340), so after one
+     * pass the next rows in order fill the sample.
+     */
+    public static java.util.Set<Integer> imagingSample(int day, int size) {
+        java.util.Set<Integer> pick = new java.util.TreeSet<>();
+        if (size <= 0) return pick;
+        int want = Math.min(IMAGING_SAMPLE, size);
+        pick.add(0);
+        for (int i = 0; i < size && pick.size() < want; i++) pick.add(Math.floorMod(day * 7 + i * 13, size));
+        for (int i = 0; i < size && pick.size() < want; i++) pick.add(i);
+        return pick;
+    }
+
+    /**
+     * imagingProgress.do (rows 124 to 128; Brian Fisher, 2026-11-08): every stored row of imaging_progress nests
+     * (imaged from here <= imaged <= total; unimaged with specimens <= not imaged; with a CASC specimen <= with
+     * specimens); the rows of all of AntWeb are recounted and equal the home page's numbers (valid living species
+     * imaged = statistics.living_species_imaged); the unimaged list (CSV), counted now and as stored, has total minus imaged names; and a sample of
+     * places of each kind (the largest and a few chosen by the day) is recounted by a query of its own, name by name
+     * (exists, not the fill's grouped joins). A difference is pending when images, specimens or list rows were added
+     * after the rows were counted.
+     */
+    void imagingProgress() {
+        if (!has(org.calacademy.antweb.home.ImagingProgressDb.TABLE)) return;
+        CountInvariants.Check check = new CountInvariants.Check("imaging.progress",
+            "imagingProgress.do: every row nests (from here <= imaged <= total), all of AntWeb = a recount and the home page's species imaged,"
+            + " the unimaged list = total minus imaged, a sample of places recounted", "124, 125, 126, 127, 128");
+        inv.check(check, c -> {
+            site().put("imagingProgress", "imagingProgress.do");
+            org.calacademy.antweb.home.ImagingProgressDb db = new org.calacademy.antweb.home.ImagingProgressDb(inv.connection);
+            java.sql.Timestamp computed = null;
+            Map<String, java.util.List<org.calacademy.antweb.home.ImagingProgressDb.Row>> stored = new LinkedHashMap<>();
+            for (String kind : org.calacademy.antweb.home.ImagingProgressDb.KINDS) {
+                java.util.List<org.calacademy.antweb.home.ImagingProgressDb.Row> rows = db.read(kind);
+                stored.put(kind, rows);
+                for (org.calacademy.antweb.home.ImagingProgressDb.Row r : rows) {
+                    if (r.computed != null && (computed == null || r.computed.before(computed))) computed = r.computed;
+                    String what = "imaging progress, " + kind + " " + r.label() + ": ";
+                    if (r.imagedHere >= 0) inv.compare(c, "site", "imagingProgress", what + "imaged from here <= imaged", r.imagedHere, r.imaged, "<=", null);
+                    inv.compare(c, "site", "imagingProgress", what + "imaged <= total", r.imaged, r.total, "<=", null);
+                    inv.compare(c, "site", "imagingProgress", what + "unimaged with specimens <= not imaged", r.unimagedWithSpecimens, r.total - r.imaged, "<=", null);
+                    inv.compare(c, "site", "imagingProgress", what + "with a CASC specimen <= unimaged with specimens", r.unimagedCasc, r.unimagedWithSpecimens, "<=", null);
+                }
+            }
+            String p = imagingPending(computed);
+            // All of AntWeb: a recount by the home page's queries (StatisticsDb.HOME_COLUMNS) and by exists.
+            org.calacademy.antweb.home.ImagingProgressDb.Row living = find(stored.get("all"), org.calacademy.antweb.home.ImagingProgressDb.LIVING);
+            org.calacademy.antweb.home.ImagingProgressDb.Row species = find(stored.get("all"), org.calacademy.antweb.home.ImagingProgressDb.LIVING_SPECIES);
+            String imagedName = "exists (select 1 from specimen s join image i on i.image_of_id = s.code where s.taxon_name = t.taxon_name and "
+                + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGE + " and " + org.calacademy.antweb.home.SpecimenDb.notRedFlagged("s") + ")";   // 2026-11-09
+            String livingWhere = org.calacademy.antweb.home.ImagingProgressDb.living("t");
+            long livingTotal = count("select count(*) from taxon t where " + livingWhere);
+            long livingImaged = count("select count(*) from taxon t where " + livingWhere + " and " + imagedName);
+            inv.compare(c, "site", "imagingProgress", "imaging progress headline: valid living species and subspecies = a recount", living == null ? 0 : living.total, livingTotal, "=", p);
+            inv.compare(c, "site", "imagingProgress", "imaging progress headline: imaged = a recount", living == null ? 0 : living.imaged, livingImaged, "=", p);
+            inv.compare(c, "site", "imagingProgress", "imaging progress: valid living species = home page valid living ant species (a recount)",
+                species == null ? 0 : species.total, count(org.calacademy.antweb.home.StatisticsDb.LIVING_SPECIES_SQL), "=", p);
+            inv.compare(c, "site", "imagingProgress", "imaging progress: living species imaged = home page species imaged (a recount)",
+                species == null ? 0 : species.imaged, count(org.calacademy.antweb.home.StatisticsDb.LIVING_SPECIES_IMAGED_SQL), "=", p);
+            if (species != null && has("statistics", "living_species_imaged")) {
+                Long home = null;
+                try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(
+                        "select living_species_imaged from statistics where living_species_imaged is not null order by created desc, id desc limit 1"))) {
+                    if (r.next()) home = r.getLong(1);
+                }
+                if (home != null) inv.compare(c, "site", "imagingProgress", "imaging progress: living species imaged = statistics.living_species_imaged (home page, as shown)",
+                    species.imaged, home, "=", p == null ? null : p + " (or the statistics row is older than the imaging progress)");
+            }
+            if (living != null) {
+                // the list counted now, against the stored counts: pending when data changed since they were counted
+                inv.compare(c, "site", "imagingProgress", "imaging progress: names in the unimaged list (CSV) = total minus imaged",
+                    db.readUnimaged().size(), living.total - living.imaged, "=", p);
+                // the stored list (what the CSV downloads, written with the counts since 2026-11-11): never pending once
+                // it is stored; counts stored before the list table existed have none until the next fill
+                int listed = db.unimaged().size();
+                inv.compare(c, "site", "imagingProgress", "imaging progress: names in the stored unimaged list (the CSV as downloaded) = total minus imaged",
+                    listed, living.total - living.imaged, "=",
+                    listed == 0 && !db.listStored() ? "the list is stored with the counts by the next daily update (imaging_unimaged, 2026-11-11)" : null);
+            }
+            // A sample of each kind: the largest place and some chosen by the day, recounted name by name.
+            int day = java.time.LocalDate.now().getDayOfYear();
+            Map<String, Object> exp = new LinkedHashMap<>();
+            for (String kind : new String[] {"bioregion", "country", "genus", "museum"}) {
+                java.util.List<org.calacademy.antweb.home.ImagingProgressDb.Row> rows = new java.util.ArrayList<>(stored.get(kind));
+                if (rows.isEmpty()) continue;
+                rows.sort((a, b) -> b.total != a.total ? Integer.compare(b.total, a.total) : a.key.compareTo(b.key));
+                for (int i : imagingSample(day, rows.size())) {
+                    org.calacademy.antweb.home.ImagingProgressDb.Row r = rows.get(i);
+                    long[] n = imagingRecount(kind, r.key, imagedName);
+                    String what = "imaging progress, " + kind + " " + r.label() + " (recount): ";
+                    inv.compare(c, "site", "imagingProgress", what + "total", r.total, n[0], "=", p);
+                    inv.compare(c, "site", "imagingProgress", what + "imaged", r.imaged, n[1], "=", p);
+                    if (r.imagedHere >= 0) inv.compare(c, "site", "imagingProgress", what + "imaged from here", r.imagedHere, n[2], "=", p);
+                    inv.compare(c, "site", "imagingProgress", what + "unimaged with specimens", r.unimagedWithSpecimens, n[3], "=", p);
+                    inv.compare(c, "site", "imagingProgress", what + "unimaged with a CASC specimen", r.unimagedCasc, n[4], "=", p);
+                }
+                exp.put(kind, rows.size());
+            }
+            if (living != null) {
+                exp.put("total", living.total);
+                exp.put("imaged", living.imaged);
+            }
+            if (species != null) exp.put("livingSpeciesImaged", species.imaged);
+            expected("imagingProgress").putAll(exp);
+        });
+    }
+
+    private static org.calacademy.antweb.home.ImagingProgressDb.Row find(java.util.List<org.calacademy.antweb.home.ImagingProgressDb.Row> rows, String key) {
+        if (rows != null) for (org.calacademy.antweb.home.ImagingProgressDb.Row r : rows) if (key.equals(r.key)) return r;
+        return null;
+    }
+
+    /** Why the imaging progress may differ from a recount: images, uploads or list rows added after it was counted. */
+    private String imagingPending(Timestamp computed) throws SQLException {
+        if (computed == null) return null;
+        // 2026-11-09: photos of red-flagged specimens no longer count; rows filled before the nightly run that counts so
+        if (!inv.result.rulesCounted) return CountInvariants.RULES_PENDING;
+        if (has("image", "upload_date") && count("select count(*) from image where upload_date > ?", computed) > 0) return "images were added after the imaging progress was counted";
+        if (createdSince("upload", computed)) return "specimens were uploaded after the imaging progress was counted";
+        if (createdSince("geolocale_taxon", computed) || createdSince("bioregion_taxon", computed)) return "a list got a new row after the imaging progress was counted";
+        return null;
+    }
+
+    /**
+     * One place recounted: total, imaged, imaged from here (-1: none), unimaged with specimens, unimaged with a CASC
+     * specimen. The names by the place's own rule, each tested with exists subqueries.
+     */
+    private long[] imagingRecount(String kind, String key, String imagedName) throws SQLException {
+        String names;
+        String here;
+        // a photo of the ant, not of a red-flagged specimen (2026-11-09)
+        String ant = org.calacademy.antweb.home.StatisticsDb.ANT_IMAGE + " and " + org.calacademy.antweb.home.SpecimenDb.notRedFlagged("s");
+        switch (kind) {
+            case "bioregion":
+                names = "select t.taxon_name from taxon t where t.taxon_name in (select l.taxon_name from bioregion_taxon l where l.bioregion_name = ?)"
+                    + " and " + PlaceTotals.VALID_CONDITION;
+                here = "exists (select 1 from specimen s join image i on i.image_of_id = s.code where s.taxon_name = t.taxon_name and s.bioregion = ? and " + ant + ")";
+                break;
+            case "country":
+                names = "select t.taxon_name from taxon t where t.taxon_name in (select l.taxon_name from geolocale_taxon l where l.geolocale_id = ?)"
+                    + " and " + PlaceTotals.VALID_CONDITION;
+                here = "exists (select 1 from specimen s join image i on i.image_of_id = s.code join geolocale g on g.id = ?"
+                    + " where s.taxon_name = t.taxon_name and " + ant
+                    + " and ((coalesce(g.is_island, 0) = 0 and s.country = g.name) or (coalesce(g.is_island, 0) = 1 and s.island_country = g.name)))";
+                break;
+            case "museum":
+                names = "select t.taxon_name from taxon t where t.taxon_name in (select s.taxon_name from specimen s where s.museum = ?)"
+                    + " and " + org.calacademy.antweb.home.ImagingProgressDb.living("t");
+                here = "exists (select 1 from specimen s join image i on i.image_of_id = s.code where s.taxon_name = t.taxon_name and s.museum = ? and " + ant + ")";
+                break;
+            default:   // genus: key = subfamily + genus
+                names = "select t.taxon_name from taxon t where concat(coalesce(t.subfamily, ''), t.genus) = ? and " + org.calacademy.antweb.home.ImagingProgressDb.living("t");
+                here = null;
+        }
+        String withSpecimen = "exists (select 1 from specimen s where s.taxon_name = t.taxon_name)";
+        String withCasc = "exists (select 1 from specimen s where s.taxon_name = t.taxon_name and s.museum = '" + org.calacademy.antweb.home.ImagingProgressDb.CASC + "')";
+        // the names of the place (subquery n), each tested with exists; every parameter is the place key
+        String sql = "select count(*), coalesce(sum(" + imagedName + "), 0), " + (here == null ? "-1" : "coalesce(sum(" + here + "), 0)")
+            + ", coalesce(sum(not " + imagedName + " and " + withSpecimen + "), 0), coalesce(sum(not " + imagedName + " and " + withCasc + "), 0)"
+            + " from (" + names + ") n join taxon t on t.taxon_name = n.taxon_name";
+        try (PreparedStatement stmt = inv.connection.prepareStatement(inv.track(sql))) {
+            stmt.setString(1, key);
+            if (here != null) stmt.setString(2, key);   // both placeholders are the key, so their order does not matter
+            try (ResultSet r = stmt.executeQuery()) {
+                long[] out = new long[5];
+                if (r.next()) for (int i = 0; i < 5; i++) out[i] = r.getLong(i + 1);
+                return out;
+            }
+        }
     }
 
     /** The values for the end-to-end tests as JSON (in a script element of the report; no "</" inside). */

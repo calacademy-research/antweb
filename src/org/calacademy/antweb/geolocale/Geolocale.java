@@ -755,15 +755,26 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
      * " and r.id = ?" the statement has 4 parameters.
      */
     public static String regionSpecimensSql(String rFilter) {
+      return regionSpecimensSql(rFilter, "specimen", "specimen");
+    }
+
+    /**
+     * The same statement reading the specimens from two tables with the specimen columns it names (alias s): byCountry
+     * for the countries (specimen.country), byIsland for the islands (specimen.island_country). "specimen" twice gives
+     * the statement above, character for character. Two names because the daily update's place image counts pass
+     * session-private (TEMPORARY) tables of the specimens that have images, and MySQL cannot read one temporary table
+     * twice in a statement (PlaceImageCountDb, 2026-11-11).
+     */
+    public static String regionSpecimensSql(String rFilter, String byCountry, String byIsland) {
       String rc = "(" + regionCountriesSql(rFilter) + ")";
       String list = " join geolocale_taxon ct on ct.geolocale_id = rc.cid and ct.taxon_name = s.taxon_name";
       String status = " and s.status in " + COUNTABLE;
       return "select rc.rid k, s.code code, s.taxon_name taxon_name from " + rc + " rc"
-          + " join specimen s on s.country = rc.cname" + list
+          + " join " + byCountry + " s on s.country = rc.cname" + list
           + " where rc.island = 0" + status
           + " union all"
           + " select rc.rid k, s.code code, s.taxon_name taxon_name from " + rc + " rc"
-          + " join specimen s on s.island_country = rc.cname" + list
+          + " join " + byIsland + " s on s.island_country = rc.cname" + list
           + " where rc.island = 1" + status;
     }
 

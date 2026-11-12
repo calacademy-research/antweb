@@ -14,7 +14,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.calacademy.antweb.geolocale.Country;
 import org.calacademy.antweb.util.GeolocaleMgr;
 
 import java.io.*;
@@ -301,9 +300,11 @@ public class TaxonWorksTransformer extends Transformer {
             String country = line.get("country");
             // only include if country is recognized by antweb
             // I think it's easier to debug if we don't transform it into the valid country name here
+            // 2026-11-10: also a country written with other capitals, accents or blanks than AntWeb's name (it was
+            // dropped here and the specimen loaded as "country missing"). It is passed on as TaxonWorks wrote it;
+            // the upload of the line stores AntWeb's name and lists it under "Country spelling corrected".
             if (StringUtils.isNotEmpty(country)) {
-                Country c = GeolocaleMgr.getCountry(country);
-                if (c != null) {
+                if (GeolocaleMgr.isCountryOrSpelling(country)) {
                     row.put("Country", line.get("country"));
                 }
             }

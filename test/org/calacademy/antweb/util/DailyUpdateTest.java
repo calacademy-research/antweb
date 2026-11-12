@@ -58,7 +58,7 @@ public class DailyUpdateTest extends TestCase {
         List<String> keys = new ArrayList<>();
         for (DailyUpdate.Step s : DailyUpdate.STEPS) keys.add(s.key);
         assertEquals(Arrays.asList("antcatImport", "taxonWorks", "nameUpdate", "set1Finish", "set2", "set3", "set4",
-            "placeListTotals", "set5", "logSizeCheck", "statsPage", "apiCounts", "cacheReload", "countCheck", "end"), keys);
+            "imagingProgress", "placeListTotals", "set5", "logSizeCheck", "statsPage", "apiCounts", "cacheReload", "countCheck", "end"), keys);
         Set<String> labels = new HashSet<>();
         for (int i = 0; i < DailyUpdate.STEPS.size(); i++) {
             DailyUpdate.Step s = DailyUpdate.STEPS.get(i);
@@ -115,7 +115,7 @@ public class DailyUpdateTest extends TestCase {
         assertEquals(DailyUpdate.RUN_RUNNING, DailyUpdate.overallState(v, true));
         // set 3 is over its usual time (0 left), set 4 24 min, place list totals 60 min, the rest unknown
         assertEquals(Long.valueOf(84), DailyUpdate.minutesLeft(v));
-        assertEquals("Step 6 of 15: Set 3: projects, museums, bioregions, groups, started 05:53 Pacific, usually 9 min;"
+        assertEquals("Step 6 of 16: Set 3: projects, museums, bioregions, groups, started 05:53 Pacific, usually 9 min;"
             + " next: Set 4: images and Not curated", DailyUpdate.hover(v));
         assertEquals("AntWeb is running its daily update (about 84 minutes left).", DailyUpdate.publicLine(84L));
         assertEquals("AntWeb is running its daily update (almost done).", DailyUpdate.publicLine(1L));
@@ -194,7 +194,7 @@ public class DailyUpdateTest extends TestCase {
         DailyUpdate.start("antcatImport");
         assertEquals(DailyUpdate.RUNNING, state("antcatImport"));
         assertEquals(DailyUpdate.WAITING, state("taxonWorks"));
-        assertTrue(DailyUpdate.activeHover().startsWith("Step 1 of 15: AntCat import, started "));
+        assertTrue(DailyUpdate.activeHover().startsWith("Step 1 of 16: AntCat import, started "));
         assertTrue(DailyUpdate.activeHover().endsWith("; next: TaxonWorks upload"));
         assertTrue(DailyUpdate.activePublicLine().startsWith("AntWeb is running its daily update"));
         DailyUpdate.noteFailed("antcatImport", "the AntCat import did not succeed");
@@ -253,6 +253,77 @@ public class DailyUpdateTest extends TestCase {
         assertEquals("unexpected stop: an email", Arrays.asList("set3:overrun", "set2:failed"), DailyUpdate.testEmails());
         DailyUpdate.resetForTest();
         DailyUpdate.testMode(false, null);
+    }
+
+    /**
+     * Brian Fisher, 2026-11-11: "how did we not get an alert that the counts were not true". The count check that ends
+     * the daily update wrote "Real differences: N" into its job and the step said done. Now: real differences outside
+     * the known findings end the step with a warning (done, yellow, the number in its message) and send one email;
+     * none, or only known findings, or only pending differences: done, no email.
+     */
+    public void testCountCheckWithRealDifferencesIsAWarningAndOneEmail() {
+        // the decision (CountCheckJob.warning: real differences, those outside the known findings)
+        assertNull("no real difference", org.calacademy.antweb.util.CountCheckJob.warning(0, 0));
+        assertNull("only the known findings", org.calacademy.antweb.util.CountCheckJob.warning(7, 0));
+        assertEquals("1 real difference: see Check the counts (countCheck.do)", org.calacademy.antweb.util.CountCheckJob.warning(1, 1));
+        assertEquals("3 real differences: see Check the counts (countCheck.do); 7 more are known findings",
+            org.calacademy.antweb.util.CountCheckJob.warning(10, 3));
+
+        DailyUpdate.resetForTest();
+        DailyUpdate.testMode(true, new HashMap<>());
+        // a run whose count check finds two real differences
+        DailyUpdate.beginRun();
+        DailyUpdate.start(DailyUpdate.COUNT_CHECK);
+        Date runStart = DailyUpdate.countCheckSubmitted();
+        DailyUpdate.countCheckFinished(runStart, null, org.calacademy.antweb.util.CountCheckJob.warning(2, 2));
+        StepView step = null;
+        for (StepView v : DailyUpdate.activeView()) if (DailyUpdate.COUNT_CHECK.equals(v.step.key)) step = v;
+        assertEquals("the check ran to its end", DailyUpdate.DONE, step.state);
+        assertTrue("yellow on the page", step.warning);
+        assertEquals("2 real differences: see Check the counts (countCheck.do)", step.message);
+        DailyUpdate.schedulerFinished(true);
+        assertFalse(DailyUpdate.isActive());
+        assertEquals("one email", Arrays.asList("countCheck:differences"), DailyUpdate.testEmails());
+
+        // a run whose count check finds none (or known findings only: warning() is null): done, no email
+        DailyUpdate.testMode(true, new HashMap<>());
+        DailyUpdate.beginRun();
+        DailyUpdate.start(DailyUpdate.COUNT_CHECK);
+        runStart = DailyUpdate.countCheckSubmitted();
+        DailyUpdate.schedulerFinished(true);
+        assertTrue(DailyUpdate.isActive());
+        DailyUpdate.countCheckFinished(runStart, null, org.calacademy.antweb.util.CountCheckJob.warning(4, 0));
+        assertFalse(DailyUpdate.isActive());
+        assertEquals(0, DailyUpdate.testEmails().size());
+
+        // a check that failed is a failure, whatever it counted before: the failure's email, not a second one
+        DailyUpdate.testMode(true, new HashMap<>());
+        DailyUpdate.beginRun();
+        DailyUpdate.start(DailyUpdate.COUNT_CHECK);
+        runStart = DailyUpdate.countCheckSubmitted();
+        DailyUpdate.schedulerFinished(true);
+        DailyUpdate.countCheckFinished(runStart, "the count check failed: x", "2 real differences");
+        assertEquals(Arrays.asList("countCheck:failed"), DailyUpdate.testEmails());
+        DailyUpdate.resetForTest();
+        DailyUpdate.testMode(false, null);
+
+        // the stored step (daily_update_step.result = warning) as the page and the JSON show it afterwards
+        List<Row> done = new ArrayList<>();
+        for (DailyUpdate.Step s : DailyUpdate.STEPS) {
+            boolean check = DailyUpdate.COUNT_CHECK.equals(s.key);
+            done.add(new Row(s.key, t("05:00:00"), t("05:01:00"), check ? DailyUpdate.WARNING : "ok", check ? "2 real differences: see Check the counts (countCheck.do)" : null));
+        }
+        List<StepView> view = DailyUpdate.view(done, null, false, 0);
+        StepView stored = view.get(DailyUpdate.index(DailyUpdate.COUNT_CHECK));
+        assertEquals(DailyUpdate.DONE, stored.state);
+        assertTrue(stored.warning);
+        assertFalse("a warning is not slow", stored.slow);
+        assertFalse("no other step is a warning", view.get(0).warning);
+        assertEquals("the run finished: a warning is not a failure", DailyUpdate.RUN_OK, DailyUpdate.overallState(view, false));
+        JsonObject json = DailyUpdate.runJson(t("05:00:00"), view, false);
+        JsonObject last = json.getAsJsonArray("steps").get(DailyUpdate.index(DailyUpdate.COUNT_CHECK)).getAsJsonObject();
+        assertEquals("done", last.get("state").getAsString());
+        assertEquals("the morning check reads the number in the message", "2 real differences: see Check the counts (countCheck.do)", last.get("message").getAsString());
     }
 
     /** The keys agreed with the production morning check (2026-11-07): exactly these. */

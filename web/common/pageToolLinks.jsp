@@ -52,7 +52,7 @@
             <div class="tool_label"><a href="<%= fieldGuideUrl %>?<%= fieldGuideParams %><%= overview.getParams() %>&rank=<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.url(ptRank)) %><%= coming_from %>">Create Field Guide</a></div>
 <% } %>
 <% if (Utility.notBlank(taxon.getGenus())) { %>
-            <div class="tool_label"><span id="download_data" onclick="loadTabData('<%= util.getDomainApp() %>', 'getSpecimenList.do?<%= overview.getParams() %>&taxonName=<%= taxon.getTaxonName() %>'); return false;">Download Data</span></div>
+            <div class="tool_label"><span id="download_data" onclick="loadTabData('<%= util.getDomainApp() %>', 'getSpecimenList.do?<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.js(overview.getParams())) %>&taxonName=<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.js(taxon.getTaxonName())) %>'); return false;">Download Data</span></div>
 <% }
 
   if (LoginMgr.isAdmin(request)) {

@@ -344,20 +344,46 @@ museum
     /** An image of the ant: shot type not 'l' (label). Alias i. */
     public static final String ANT_IMAGE = "lower(trim(coalesce(i.shot_type, ''))) <> 'l'";
 
+    /**
+     * Images of red-flagged specimens are not counted (Brian Fisher, 2026-11-09: "A red-flagged specimen is still a
+     * specimen and still imaged, but for counting images exclude them everywhere"). The image (alias i) is not of a
+     * red-flagged specimen: for queries without a specimen join; a query that joins the specimen (alias s) uses
+     * SpecimenDb.notRedFlagged("s"), the same condition. An image of a code that is no specimen (an orphan image) is
+     * not of a red-flagged specimen, so this changes no count of orphan images. Every image and imaged number uses one
+     * of the two: the home page and statsPage, the place pages' Images and Imaged specimens (PlaceImageCountDb), the
+     * lists' Images (ANT_IMAGES_OF_SPECIMEN), taxon image_count (ImageCountDb), imaged names (antImagedNames, the API's
+     * imagedTaxaSql), the imaging progress page (ImagingProgressDb) and the count checks that recount them. The specimen's
+     * own image_count and its images on its page are unchanged. docs/numbers.md section 5.
+     */
+    public static final String NOT_RED_FLAGGED_IMAGE = "not exists (select 1 from specimen rf where rf.code = i.image_of_id and rf.flag = 'red')";
+
+    /** An image that counts: of the ant (ANT_IMAGE) and not of a red-flagged specimen (NOT_RED_FLAGGED_IMAGE). Alias i. */
+    public static final String COUNTED_ANT_IMAGE = ANT_IMAGE + " and " + NOT_RED_FLAGGED_IMAGE;
+
+    /** Written to compute.log by nightly set 4 (the "Set 4 done" line) once its image numbers leave out red-flagged
+     *  specimens (2026-11-09); until then CountInvariants.rulesCounted calls the differences pending. */
+    public static final String RED_FLAG_IMAGES_RULE_LOG = "images of red-flagged specimens not counted, 2026-11-09";
+
     /** The images of the ant of specimen s (alias i), labels left out: the Images column of every list counts these
      *  (Brian Fisher, 2026-10-27: "Images columns count ant images only"); count(i.id) per name. A left join, so a
-     *  name whose specimens have no image of the ant still gets its row written (0), as before. */
-    public static final String ANT_IMAGES_OF_SPECIMEN = " left join image i on i.image_of_id = s.code and " + ANT_IMAGE;
+     *  name whose specimens have no image of the ant still gets its row written (0), as before. A red-flagged
+     *  specimen adds no image (2026-11-09; its row is kept, with no image joined). */
+    public static final String ANT_IMAGES_OF_SPECIMEN = " left join image i on i.image_of_id = s.code and " + ANT_IMAGE
+        + " and " + SpecimenDb.notRedFlagged("s");
 
     /** Written to compute.log by nightly set 4 once the lists' Images are counted as ant images (2026-10-27). */
     public static final String ANT_IMAGES_RULE_LOG = "list Images counted as ant images, 2026-10-27";
 
-    /** Specimen codes with an image of the ant, each once (alias x, column image_of_id). */
-    static final String ANT_IMAGED = "(select i.image_of_id from image i where " + ANT_IMAGE + " group by i.image_of_id) x";
+    /** Specimen codes with an image of the ant, each once (alias x, column image_of_id); red-flagged specimens left out
+     *  (2026-11-09). */
+    // The _BEFORE queries below (rules before 2026-10-22 and 2026-10-28) use it too: they tell a row of those old rules
+    // from a wrong one, and a row that still counts red-flagged specimens is pending by CountInvariants.rulesCounted.
+    static final String ANT_IMAGED = "(select i.image_of_id from image i where " + COUNTED_ANT_IMAGE + " group by i.image_of_id) x";
 
     /**
      * "Imaged" for a name (Brian Fisher, 2026-10-22, docs/numbers.md Q6, Q12): a specimen filed under the name, anywhere
-     * in AntWeb, has a photo of the ant; label photos do not count, so a name with only label photos is unimaged. Used by
+     * in AntWeb, has a photo of the ant; label photos do not count, so a name with only label photos is unimaged; nor do
+     * photos of red-flagged specimens (2026-11-09), so a name whose only photos are of red-flagged specimens is unimaged. Used by
      * taxonomicPage.do?isImaged=false (TaxaPage.findUnimaged) and, in Python, by the API's /unimagedGeolocaleTaxa
      * (imagedTaxaSql in api/v3.1/api.py). Returns the names of the given ones that are imaged.
      */
@@ -379,16 +405,18 @@ museum
     }
 
     /** Names with a photo of the ant anywhere in AntWeb (antImagedNames; add "and s.taxon_name in (...)"). */
-    public static final String ANT_IMAGED_NAMES_SQL = "select distinct s.taxon_name from specimen s join image i on i.image_of_id = s.code where " + ANT_IMAGE;
+    public static final String ANT_IMAGED_NAMES_SQL = "select distinct s.taxon_name from specimen s join image i on i.image_of_id = s.code where " + ANT_IMAGE
+        + " and " + SpecimenDb.notRedFlagged("s");
 
-    /** Home and statsPage "specimens imaged". */
-    /** Home and statsPage "total specimen images": images of the ant (labels counted apart; Brian Fisher 2026-10-27). */
-    public static final String TOTAL_IMAGES_SQL = "select count(*) from image i where " + ANT_IMAGE;
+    /** Home and statsPage "total specimen images": images of the ant (labels counted apart; Brian Fisher 2026-10-27),
+     *  not of red-flagged specimens (2026-11-09). */
+    public static final String TOTAL_IMAGES_SQL = "select count(*) from image i where " + COUNTED_ANT_IMAGE;
     /** The same number before 2026-10-27: every image row, labels included. */
     public static final String TOTAL_IMAGES_SQL_BEFORE = "select count(*) from image";
-    /** Label images (shown next to the total as "+ N labels"). */
-    public static final String LABEL_IMAGES_SQL = "select count(*) from image i where not (" + ANT_IMAGE + ")";
+    /** Label images (shown next to the total as "+ N labels"); not of red-flagged specimens (2026-11-09). */
+    public static final String LABEL_IMAGES_SQL = "select count(*) from image i where not (" + ANT_IMAGE + ") and " + NOT_RED_FLAGGED_IMAGE;
 
+    /** Home and statsPage "specimens imaged": specimens with an image of the ant, red-flagged ones left out (2026-11-09). */
     public static final String IMAGED_SPECIMENS_SQL = "select count(*) from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id";
 
     /** Home and statsPage "species + ssp. imaged": ant species and subspecies that are valid names or morphospecies
@@ -524,11 +552,14 @@ museum
         b.append(stat("species-with-specimens", n.getOrDefault("living_species_specimens", 0L),
             "Valid living ant species with at least one specimen record in AntWeb", "species with specimens in AntWeb",
             ofLiving(n.getOrDefault("living_species_specimens", 0L), living)));
+        // linked to the imaging progress page (2026-11-08: by bioregion, country and genus, and the names still to image)
+        b.append("<a class=\"stat-link\" href=\"/imagingProgress.do\" title=\"Imaging progress: by bioregion, country and genus, and the species still to image\">");
         b.append(stat("species-imaged", n.getOrDefault("living_species_imaged", 0L),
-            "Valid living ant species with a photo of the ant (label photos do not count)", "species imaged",
-            ofLiving(n.getOrDefault("living_species_imaged", 0L), living)));
+            "Valid living ant species with a photo of the ant (label photos and photos of red-flagged specimens do not count)", "species imaged",
+            ofLiving(n.getOrDefault("living_species_imaged", 0L), living)).replaceFirst("\n$", ""));
+        b.append("</a>\n");
         b.append("<div class=\"stat-rule\"></div>\n");
-        b.append(stat("images", antImages, "Images of the ant; label images are counted separately",
+        b.append(stat("images", antImages, "Images of the ant; label images are counted separately; images of red-flagged specimens are not counted",
             "images of ants of " + A.commaFormat(imagedSpecimens) + " specimens", "+ " + A.commaFormat(labelImages) + " label images"));
         return b.toString();
     }

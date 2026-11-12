@@ -17,10 +17,11 @@ import api  # noqa: E402
 def database():
     db = sqlite3.connect(":memory:")
     db.executescript("""
-        create table specimen (code text, taxon_name text);
+        create table specimen (code text, taxon_name text, flag text);
         create table image (id int, image_of_id text, shot_type text);
-        insert into specimen values ('s1', 'a'), ('s2', 'a'), ('s3', 'b'), ('s4', 'c');
-        insert into image values (1, 's1', 'h'), (2, 's1', 'p'), (3, 's1', 'l'), (4, 's2', 'L '), (5, 's3', 'd'), (6, 's3', null);
+        insert into specimen values ('s1', 'a', null), ('s2', 'a', 'green'), ('s3', 'b', null), ('s4', 'c', null), ('s5', 'a', 'red');
+        insert into image values (1, 's1', 'h'), (2, 's1', 'p'), (3, 's1', 'l'), (4, 's2', 'L '), (5, 's3', 'd'), (6, 's3', null),
+            (7, 's5', 'h'), (8, 's5', 'l');
     """)
     return db
 
@@ -30,11 +31,13 @@ def run(db):
 
 
 def test_split_by_specimen():
-    got = api.imageSplit(["s1", "s2", "s3", "s4", "nope"], False, run(database()))
-    assert got == {"s1": (2, 1), "s2": (0, 1), "s3": (2, 0)}, got
+    # a red-flagged specimen's own images are still its images (s5)
+    got = api.imageSplit(["s1", "s2", "s3", "s4", "s5", "nope"], False, run(database()))
+    assert got == {"s1": (2, 1), "s2": (0, 1), "s3": (2, 0), "s5": (1, 1)}, got
 
 
 def test_split_by_name():
+    # Brian Fisher, 2026-11-09: a name's images leave out red-flagged specimens (s5 adds nothing to a)
     got = api.imageSplit(["a", "b", "c"], True, run(database()))
     assert got == {"a": (2, 2), "b": (2, 0)}, got
 

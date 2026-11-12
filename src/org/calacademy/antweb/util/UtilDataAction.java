@@ -53,7 +53,7 @@ public class UtilDataAction extends AntwebAction {
         "generateGeolocaleTaxaFromSpecimens", "geolocaleCountCrawl", "geolocaleTaxonFix",
         "fixGeolocaleTaxonParentage", "updateGeolocaleParentHierarchy",
         "projectCountCrawl", "populateMuseum", "populateBioregion", "updateTaxonSets", "crawlForType",
-        "imageCountCrawl", "placeImageCounts", "placeGenusCuration", "placeViewTotals", "deleteConflictedDefaultImages", "genObjectMaps", "cleanupSpeciesListProxyRecords",
+        "imageCountCrawl", "placeImageCounts", "placeImageCountCompare", "placeGenusCuration", "placeViewTotals", "imagingProgress", "deleteConflictedDefaultImages", "genObjectMaps", "cleanupSpeciesListProxyRecords",
         "verifyProjTaxon", "regenerateAllAntweb", "runCountCrawls", "countReport",
         "genGoogleMapFunction", "delGoogleMapFunction", "genGroupObjectMaps",
         "calcCaste", "setIsRestart", "siteWarning", "genRecentContent");
@@ -452,6 +452,8 @@ public class UtilDataAction extends AntwebAction {
         OperationDetails operationDetails = new OperationDetails(action);
         
 		String message = null;
+		// what a job for ONE place adds to its answer when the place's list totals could not be counted (finishOnePlace)
+		String onePlaceNote = "";
 		Date startTime = new Date();
 
         String param = form.getParam();
@@ -554,9 +556,18 @@ public class UtilDataAction extends AntwebAction {
                 // not in its Species number). Each list is now renamed right before it is counted (ProjTaxonCountDb.recount,
                 // MuseumDb.populate, BioregionDb.populate; geolocales in set 2); only the source column is updated here.
                 message += " " + TaxonSetDb.updateTaxonSetSources(connection);
-                // Upload groups: today's numbers of each group's specimens (Brian Fisher, 2026-10-22, Q13).
+                // Upload groups: today's numbers of each group's specimens (Brian Fisher, 2026-10-22, Q13). The groups it
+                // lists are those whose stored specimen count is above 0, as the end of yesterday's set 3 left it (below).
                 message += " " + new GroupCountDb(connection).recountAll();
                 message += " " + doAction("crawlForType", form, accessLogin, accessGroup, connection, request, mapping);
+                // Every group's stored specimen count (ant_group.upload_specimens). Until 2026-11-11 only a group's own
+                // upload wrote it, so any other change of a group's specimens left it stale and the count check reported
+                // it every day (GroupDb.recountUploadSpecimens). The LAST statement of the set, right before its commit
+                // (execute() and runDataJob() commit when doAction returns): the rows it changes are locked until the
+                // commit, and an upload of such a group that ends meanwhile waits for them. Keep it last.
+                String groupSpecimens = new GroupDb(connection).recountUploadSpecimens();
+                LogMgr.appendLog("compute.log", "  " + groupSpecimens, true);
+                message += " " + groupSpecimens;
                 // The e2e tests read this line: tonight's bioregion endemic flags follow the endemic rule of 2026-10-28, and
                 // every list (geolocales in set 2, projects, museums and bioregions here) got its missing parent rows before
                 // it was counted (B76, 2026-11-03: org.calacademy.antweb.home.ParentRows).
@@ -599,13 +610,28 @@ public class UtilDataAction extends AntwebAction {
                     s_log.error("set4 populateStatistics() e:" + e);
                     message += " statistics not written (" + e + ")";
                 }
+                // The imaging progress page (Brian Fisher, 2026-11-08; ImagingProgressDb, imagingProgress.do): after the
+                // statistics row, so its headline and the home page's species imaged are counted from the same data. Its
+                // own step of the daily update and its own try: a failure costs that page's numbers, never the rest of set 4.
+                DailyUpdate.start("imagingProgress");
+                try {
+                    connection.commit();
+                    message += " " + doAction("imagingProgress", form, accessLogin, accessGroup, connection, request, mapping);
+                } catch (Exception e) {
+                    try { connection.rollback(); } catch (SQLException e2) { s_log.error("set4 imagingProgress rollback e:" + e2); }
+                    s_log.error("set4 imagingProgress e:" + e);
+                    DailyUpdate.noteFailed("imagingProgress", String.valueOf(e));
+                    LogMgr.appendLog("compute.log", "  " + org.calacademy.antweb.home.ImagingProgressDb.LOG + ": FAILED (" + e + ")", true);
+                    message += " imaging progress not counted (" + e + ")";
+                }
                 // countCheck.do reads this line: tonight's numbers follow the rules of 2026-10-21 (PlaceTotals).
                 // Since 2026-10-27 also: the lists' Images are ant images (StatisticsDb.ANT_IMAGES_RULE_LOG; CountCheck).
                 // Since 2026-10-28 also: the counting rules of 2026-10-28 (CountInvariants.COUNTING_RULES_LOG; docs/numbers.md section 5).
                 // Since 2026-10-30 also: the genera and subfamilies rule of 2026-10-30 (CountInvariants.GENERA_RULE_LOG; sets 2 and 3 counted by it).
-                // Since 2026-11-09 also: the adm1 rule of 2026-11-09 (B26 fixed: an adm1 by its country and name; CountInvariants.ADM1_RULE_LOG).
+                // Since 2026-11-09 also: the adm1 rule of 2026-11-09 (B26 fixed: an adm1 by its country and name; CountInvariants.ADM1_RULE_LOG), and the image numbers above leave out red-flagged specimens (StatisticsDb.RED_FLAG_IMAGES_RULE_LOG).
                 LogMgr.appendLog("compute.log", "  Set 4 done (" + CountInvariants.RULES_LOG + "; " + StatisticsDb.ANT_IMAGES_RULE_LOG
-                    + "; " + CountInvariants.COUNTING_RULES_LOG + "; " + CountInvariants.GENERA_RULE_LOG + "; " + CountInvariants.ADM1_RULE_LOG + ")", true);
+                    + "; " + CountInvariants.COUNTING_RULES_LOG + "; " + CountInvariants.GENERA_RULE_LOG + "; " + CountInvariants.ADM1_RULE_LOG
+                    + "; " + StatisticsDb.RED_FLAG_IMAGES_RULE_LOG + ")", true);
                 // message += " " + doAction("calcEndemic", form, accessLogin, accessGroup, connection, request, mapping);
                 // message += " " + doAction("calcIntroduced", form, accessLogin, accessGroup, connection, request, mapping);
             }
@@ -770,7 +796,7 @@ public class UtilDataAction extends AntwebAction {
 		  int geolocaleId = form.getNum();
 		  if (geolocaleId > 0) {
 			new GeolocaleDb(connection).updateCounts(geolocaleId);
-			new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.GEOLOCALE, "" + geolocaleId);
+			onePlaceNote = finishOnePlace(connection, PlaceImageCountDb.GEOLOCALE, "" + geolocaleId, GeolocaleMgr.getGeolocale(geolocaleId));
 		  } else {			    
             CountDb.s_isBulk = true;
             try {
@@ -779,7 +805,7 @@ public class UtilDataAction extends AntwebAction {
               CountDb.s_isBulk = false;
             }
 		  }                 
-		  message = "Updated Geolocale Counts. ";
+		  message = "Updated Geolocale Counts. " + onePlaceNote;
 		}
 
 		if (action.equals("updateGeolocaleParentHierarchy")) {
@@ -802,10 +828,13 @@ public class UtilDataAction extends AntwebAction {
 		    bioregion = Formatter.initCap(bioregion);
 			appendStr += ":" + Html.esc(bioregion);
 			new BioregionDb(connection).populate(bioregion);
+			// populate(name) writes the bioregion's Images and Imaged specimens with queries that count red-flagged
+			// specimens' images; the place's image recount writes them by the rule, as "Update statistics" does (2026-11-11)
+			onePlaceNote = finishOnePlace(connection, PlaceImageCountDb.BIOREGION, bioregion, BioregionMgr.getBioregion(bioregion));
 		  } else {
 			new BioregionDb(connection).populate();
 		  }
-		  message = "Bioregion populated" + appendStr;                
+		  message = "Bioregion populated" + appendStr + onePlaceNote;
 		}		  
 
         // ------ Museums ---------
@@ -824,12 +853,14 @@ public class UtilDataAction extends AntwebAction {
 		  if (museumCode != null && !"".equals(museumCode)) {
 			appendStr += ":" + Html.esc(museumCode);
 			museumDb.populate(museumCode);
+			// as the bioregion job: populate(code) counts red-flagged specimens' images; the image recount corrects it (2026-11-11)
+			onePlaceNote = finishOnePlace(connection, PlaceImageCountDb.MUSEUM, museumCode, MuseumMgr.getMuseum(museumCode));
 		  } else {
 			museumDb.populate();
 		  }
 		  museumDb.updateMuseum();
 
-		  message = "Museum populated" + appendStr;                 
+		  message = "Museum populated" + appendStr + onePlaceNote;
 		}
 
         // ------ Project ----------
@@ -852,14 +883,14 @@ public class UtilDataAction extends AntwebAction {
 			  new ProjTaxonCountDb(connection).recount(project);
 			}
 			projectDb.updateCounts(projectName);
-			new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.PROJECT, projectName);
+			onePlaceNote = finishOnePlace(connection, PlaceImageCountDb.PROJECT, projectName, project);
 			appendStr += ":" + Html.esc(projectName);
 		  } else {
 			// The counts on the project species lists (proj_taxon), not only the project totals (2026-10).
 			appendStr += " " + new ProjTaxonCountDb(connection).curatedProjectsCountCrawl();
 			projectDb.updateCounts();
 		  }
-		  message = "Project" + appendStr + " counts updated";
+		  message = "Project" + appendStr + " counts updated" + onePlaceNote;
 		}
 
 		if (action.equals("regenerateAllAntweb")) {
@@ -926,6 +957,18 @@ public class UtilDataAction extends AntwebAction {
 		  LogMgr.appendLog("compute.log", "  " + message, true);
 		}
 
+		// Proof that the place image counts from the imaged specimens (2026-11-11) are those of the old statements:
+		// counts every place both ways and lists every place whose numbers differ (PlaceImageCountDb.compare). Writes
+		// nothing to the site's tables; takes as long as the old step did (10 to 14 minutes). Admins:
+		// utilData.do?action=placeImageCountCompare. One line in compute.log, the whole report on the job's page.
+		if (action.equals("placeImageCountCompare")) {
+		  PlaceImageCountDb.Comparison comparison = new PlaceImageCountDb(connection).compare();
+		  LogMgr.appendLog("compute.log", "  " + comparison.summary(), true);
+		  StringBuilder report = new StringBuilder();
+		  for (String line : comparison.lines) report.append(report.length() > 0 ? "<br>" : "").append(Html.esc(line));
+		  message = report.toString();
+		}
+
 		// The place pages' Genera and Species: the rows of their lists in the default view (Brian Fisher, 2026-11-04;
 		// PlaceViewTotalDb). Nightly: after set 4 (Scheduler.runPlaceListTotals); admins: utilData.do?action=placeViewTotals
 		// (the places whose data changed; &param=all: every place, 2026-11-09). Writes "Place list totals counted".
@@ -933,6 +976,15 @@ public class UtilDataAction extends AntwebAction {
 		  org.calacademy.antweb.home.PlaceViewTotalDb placeViewTotalDb = new org.calacademy.antweb.home.PlaceViewTotalDb(connection);
 		  message = "all".equals(param) ? placeViewTotalDb.fillAll(true) : placeViewTotalDb.fillAll();
 		  LogMgr.appendLog("compute.log", "  " + message, true);
+		}
+
+		// The imaging progress page (Brian Fisher, 2026-11-08): valid living species and subspecies imaged by bioregion,
+		// country, genus and museum (ImagingProgressDb, table imaging_progress). Daily update: set 4, after the statistics
+		// row (step imagingProgress); admins: utilData.do?action=imagingProgress. Writes "Imaging progress counted: ...".
+		if (action.equals("imagingProgress")) {
+		  message = new org.calacademy.antweb.home.ImagingProgressDb(connection).fill();
+		  LogMgr.appendLog("compute.log", "  " + message, true);
+		  if (message.contains("FAILED")) DailyUpdate.noteFailed("imagingProgress", message);
 		}
 
 		// The Not curated column of genus lists (Brian Fisher, 2026-11-02): per place and genus, the specimens collected
@@ -999,14 +1051,16 @@ public class UtilDataAction extends AntwebAction {
 
         // If a species list proxy record is created for a species list species that is then removed... cleanup.
         if (action.equals("cleanupSpeciesListProxyRecords")) {
-            String result = new ProjTaxonDb(connection).cleanupSpeciesListProxyRecords();
-            message = "Cleanup Species List Proxy Records:" + result;
+            ProjTaxonDb projTaxonDb = new ProjTaxonDb(connection);
+            String result = projTaxonDb.cleanupSpeciesListProxyRecords();
+            message = "Cleanup Species List Proxy Records:" + result + listTotalsAfterRowsRemoved(connection, projTaxonDb);
         }
 
         // If a species list proxy record is created for a species list species that is then removed... cleanup.
         if (action.equals("verifyProjTaxon")) {
-            String result = new ProjTaxonDb(connection).verifyProjTaxon();
-            message = "verifyProjTaxon Records:" + result;
+            ProjTaxonDb projTaxonDb = new ProjTaxonDb(connection);
+            String result = projTaxonDb.verifyProjTaxon();
+            message = "verifyProjTaxon Records:" + result + listTotalsAfterRowsRemoved(connection, projTaxonDb);
         }
 
      // --- Map functions
@@ -1164,6 +1218,20 @@ public class UtilDataAction extends AntwebAction {
     }
   
 
+    /**
+     * After a clean-up took rows off project lists (set 5: cleanupSpeciesListProxyRecords, verifyProjTaxon; also run by
+     * hand): the list totals of those projects, counted earlier in the daily update (set 4), are counted again, so the
+     * project page's Genera equal its list (Brian Fisher, 2026-11-11: Fossil Ants Genera 259, its list 258). The text for
+     * the job's message: "" when no list lost a row.
+     */
+    static String listTotalsAfterRowsRemoved(Connection connection, ProjTaxonDb projTaxonDb) {
+        java.util.Set<String> projects = projTaxonDb.getProjectsWithRowsRemoved();
+        if (projects.isEmpty()) return "";
+        java.util.List<String> counted = new org.calacademy.antweb.home.PlaceViewTotalDb(connection).recountProjects(projects);
+        return "; rows removed from the lists of " + projects.size() + " project" + (projects.size() == 1 ? "" : "s")
+            + ", list totals counted again for " + counted.size() + (counted.isEmpty() ? "" : " (" + String.join(", ", counted) + ")");
+    }
+
     /** Preview page of fixGeolocaleTaxonParentage: what the check found, and a button that applies the fix. */
     static String parentagePreviewHtml(String preview, HttpServletRequest request) {
         String url = AntwebProps.getDomainApp() + "/utilData.do?action=fixGeolocaleTaxonParentage&apply=true";
@@ -1173,6 +1241,49 @@ public class UtilDataAction extends AntwebAction {
             + "(country for each adm1 record, parent taxon for each record).</p>"
             + Csrf.postButton(request, url, "Apply the fix", "Change geolocale_taxon records now?");
     }
+
+    /**
+     * The last steps of a job that rebuilt ONE place's list (geolocaleCountCrawl with num, populateBioregion with name,
+     * populateMuseum with code, projectCountCrawl with name), the same two that "Update statistics" on the place's page
+     * runs after its rebuild (OverviewAction), in one method for the four jobs:
+     *
+     *  1. the place's image numbers (PlaceImageCountDb.updatePlace: place_image_count and the place's Images and Imaged
+     *     specimens, by the rule: labels apart, red-flagged specimens' images not counted). The museum and bioregion
+     *     rebuilds write these two numbers themselves with queries that count red-flagged specimens' images
+     *     (MuseumDb.populate, BioregionDb.populate); until 2026-11-11 the jobs for one museum or bioregion stopped
+     *     there, so the place showed them until the next daily update;
+     *  2. the stored totals of the place's lists (recountListTotals).
+     *
+     * Returns what the job adds to its answer: "" when all is counted, else why the list totals are not.
+     */
+    public static String finishOnePlace(Connection connection, String imageType, String imageKey, Overview place) throws SQLException {
+        new PlaceImageCountDb(connection).updatePlace(imageType, imageKey);
+        return recountListTotals(connection, place);
+    }
+
+    /**
+     * After a job rebuilt ONE place's list: the stored totals of that place's lists, which its page shows as
+     * Subfamilies, Genera and Species, are counted again (PlaceViewTotalDb.recountPlace; 2026-11-10: they stayed as the
+     * last daily update counted them, so the page and the rebuilt list disagreed until the next one). Only that place's
+     * rows are written. The forms of these jobs for every place do not call this: the daily update counts the totals in
+     * its own step afterwards (placeViewTotals), which an admin can also run by hand.
+     *
+     * Returns the note for the job's answer (2026-11-11: a count that failed was only a warning in the server log and
+     * the job answered "populated"): "" when the totals are counted, or the place is one that has none (the AntWeb-wide
+     * list); else "; list totals not recounted: <reason>" (escaped, at most 300 characters of the reason).
+     */
+    public static String recountListTotals(Connection connection, Overview place) {
+        if (place == null) return LIST_TOTALS_NOT_RECOUNTED + "the place is not among the places in memory";
+        PlaceViewTotalDb db = new PlaceViewTotalDb(connection);
+        if (db.recountPlace(place) || db.getLastFailure() == null) return "";
+        String reason = db.getLastFailure().replaceAll("\\s+", " ").trim();
+        if (reason.length() > 300) reason = reason.substring(0, 300) + "...";
+        return LIST_TOTALS_NOT_RECOUNTED + Html.esc(reason)
+            + " (the place's page shows its own counts for Subfamilies, Genera and Species until the next daily update)";
+    }
+
+    /** Starts the note a single-place job adds to its answer when the place's list totals could not be counted. */
+    public static final String LIST_TOTALS_NOT_RECOUNTED = "; list totals not recounted: ";
 
     /**
      * A job's own result line in compute.log (2026-11-04: three nightly jobs wrote none, so the morning test

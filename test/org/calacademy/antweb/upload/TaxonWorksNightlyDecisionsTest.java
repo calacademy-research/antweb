@@ -173,4 +173,119 @@ public class TaxonWorksNightlyDecisionsTest extends TestCase {
         assertFalse(((String) w.invoke(null, "bad project_token=abc123")).contains("abc123"));
         assertEquals("", w.invoke(null, (Object) null));
     }
+    // ------------------------------------------------------------------ the early request (2026-11-10)
+
+    private static java.util.Calendar pacific(int year, int month, int day, int hour, int minute, int second) {
+        java.util.Calendar c = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("America/Los_Angeles"));
+        c.clear();
+        c.set(year, month - 1, day, hour, minute, second);
+        return c;
+    }
+
+    private static String pacificText(java.util.Date d) {
+        java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        f.setTimeZone(java.util.TimeZone.getTimeZone("America/Los_Angeles"));
+        return f.format(d);
+    }
+
+    /**
+     * The archive is requested 25 minutes before the daily update (05:00: at 04:35 by the clock), strictly after now:
+     * a server started between 04:35 and 05:00 asks tomorrow (today's update requests the archive itself, as before);
+     * also on the days the clocks change.
+     */
+    public void testEarlyRequestIs25MinutesBeforeTheDailyUpdate() {
+        assertEquals(25, TaxonWorksNightly.EARLY_REQUEST_MINUTES);
+        assertEquals("2026-11-10 04:35:00", pacificText(TaxonWorksNightly.nextEarlyRequestTime(pacific(2026, 11, 10, 0, 10, 0), 5)));
+        assertEquals("2026-11-10 04:35:00", pacificText(TaxonWorksNightly.nextEarlyRequestTime(pacific(2026, 11, 10, 4, 34, 59), 5)));
+        assertEquals("2026-11-11 04:35:00", pacificText(TaxonWorksNightly.nextEarlyRequestTime(pacific(2026, 11, 10, 4, 35, 0), 5)));
+        assertEquals("2026-11-11 04:35:00", pacificText(TaxonWorksNightly.nextEarlyRequestTime(pacific(2026, 11, 10, 4, 50, 0), 5)));
+        assertEquals("2026-11-11 04:35:00", pacificText(TaxonWorksNightly.nextEarlyRequestTime(pacific(2026, 11, 10, 6, 50, 0), 5)));
+        // the clocks go back on 2026-11-01 and forward on 2027-03-14: 04:35 by the clock on those days too
+        assertEquals("2026-11-01 04:35:00", pacificText(TaxonWorksNightly.nextEarlyRequestTime(pacific(2026, 10, 31, 12, 0, 0), 5)));
+        assertEquals("2027-03-14 04:35:00", pacificText(TaxonWorksNightly.nextEarlyRequestTime(pacific(2027, 3, 13, 12, 0, 0), 5)));
+        // before the daily update's own time, whatever the launch hour
+        assertEquals("2026-11-10 05:35:00", pacificText(TaxonWorksNightly.nextEarlyRequestTime(pacific(2026, 11, 10, 0, 10, 0), 6)));
+    }
+
+    /** Off without the settings file or its url (staging, development); not while the upload job runs. */
+    public void testEarlyRequestDecision() {
+        assertEquals("off", TaxonWorksNightly.earlyRequestDecision(false, null, false));
+        assertEquals("off", TaxonWorksNightly.earlyRequestDecision(false, "https://example.org/x", false));
+        assertEquals("off", TaxonWorksNightly.earlyRequestDecision(true, null, false));
+        assertEquals("off", TaxonWorksNightly.earlyRequestDecision(true, "  ", false));
+        assertEquals("busy", TaxonWorksNightly.earlyRequestDecision(true, "https://example.org/x", true));
+        assertEquals("request", TaxonWorksNightly.earlyRequestDecision(true, "https://example.org/x", false));
+        // no settings file on this machine: nothing is requested and there is no line for compute.log
+        if (!new File("/antweb/deploy/etc/taxonworks.properties").isFile()) assertNull(TaxonWorksNightly.earlyRequest());
+    }
+
+    /** The compute.log line: what TaxonWorks answered, the archive's age; a failure says the update goes on as before. */
+    public void testEarlyRequestLine() {
+        long now = java.time.ZonedDateTime.of(2026, 11, 10, 4, 35, 0, 0, java.time.ZoneId.of("America/Los_Angeles")).toInstant().toEpochMilli();
+        assertEquals("TaxonWorks early request: HTTP 200, the archive on offer was built 2026-11-09T13:20 UTC (23.3 hours ago);"
+            + " TaxonWorks builds a new one now if that is over the project's maximum age, for the upload of the daily update",
+            TaxonWorksNightly.earlyRequestLine(200, java.time.LocalDateTime.of(2026, 11, 9, 13, 20), now, null));
+        assertEquals("TaxonWorks early request: HTTP 422, TaxonWorks is building the archive", TaxonWorksNightly.earlyRequestLine(422, null, now, null));
+        assertEquals("TaxonWorks early request: HTTP 500; the daily update requests the archive itself, as before",
+            TaxonWorksNightly.earlyRequestLine(500, null, now, null));
+        assertEquals("TaxonWorks early request: HTTP 200, the answer was not a readable archive; the daily update requests the archive itself, as before",
+            TaxonWorksNightly.earlyRequestLine(200, null, now, null));
+        assertEquals("TaxonWorks early request: FAILED (ConnectException); the daily update requests the archive itself, as before",
+            TaxonWorksNightly.earlyRequestLine(0, null, now, "ConnectException"));
+        for (String line : new String[] {TaxonWorksNightly.earlyRequestLine(200, java.time.LocalDateTime.of(2026, 11, 9, 13, 20), now, null),
+                TaxonWorksNightly.earlyRequestLine(0, null, now, "IOException")}) {
+            assertTrue(line.startsWith(TaxonWorksNightly.EARLY_LOG + ": "));
+            assertFalse("pages say daily update", line.toLowerCase().contains("nightly"));
+            assertFalse(line.contains("http://") || line.contains("https://") || line.contains("token"));
+        }
+    }
+
+    /**
+     * The request against a local server standing in for TaxonWorks: a zip answer gives the archive's build time and
+     * leaves no file behind; "building" (422), an error page and a server that is not there give their lines, never an
+     * exception and never the address (it carries the project token).
+     */
+    public void testEarlyRequestAgainstALocalServer() throws Exception {
+        java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+        try (java.util.zip.ZipOutputStream z = new java.util.zip.ZipOutputStream(bytes)) {
+            java.util.zip.ZipEntry e = new java.util.zip.ZipEntry("data.tsv");
+            e.setTimeLocal(java.time.LocalDateTime.of(2026, 11, 9, 13, 20, 0));
+            z.putNextEntry(e);
+            z.write("occurrenceID\n1\n".getBytes(StandardCharsets.UTF_8));
+            z.closeEntry();
+        }
+        final byte[] zip = bytes.toByteArray();
+        final java.util.concurrent.atomic.AtomicInteger requests = new java.util.concurrent.atomic.AtomicInteger();
+        com.sun.net.httpserver.HttpServer server = com.sun.net.httpserver.HttpServer.create(
+            new java.net.InetSocketAddress(java.net.InetAddress.getLoopbackAddress(), 0), 0);
+        server.createContext("/", exchange -> {
+            requests.incrementAndGet();
+            String path = exchange.getRequestURI().getPath();
+            byte[] body = path.startsWith("/archive") ? zip : "{\"error\":\"building\"}".getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(path.startsWith("/archive") ? 200 : path.startsWith("/building") ? 422 : 500, body.length);
+            try (java.io.OutputStream out = exchange.getResponseBody()) { out.write(body); }
+        });
+        server.start();
+        Path dir = Files.createTempDirectory("twearly");
+        try {
+            String base = "http://127.0.0.1:" + server.getAddress().getPort();
+            String ok = TaxonWorksNightly.earlyRequest(base + "/archive?project_token=secret123", dir, 20);
+            assertTrue(ok, ok.startsWith("TaxonWorks early request: HTTP 200, the archive on offer was built 2026-11-09T13:20 UTC"));
+            assertEquals("one request", 1, requests.get());
+            assertEquals("TaxonWorks early request: HTTP 422, TaxonWorks is building the archive",
+                TaxonWorksNightly.earlyRequest(base + "/building?project_token=secret123", dir, 20));
+            assertEquals("TaxonWorks early request: HTTP 500; the daily update requests the archive itself, as before",
+                TaxonWorksNightly.earlyRequest(base + "/down?project_token=secret123", dir, 20));
+            server.stop(0);
+            String gone = TaxonWorksNightly.earlyRequest(base + "/archive?project_token=secret123", dir, 5);
+            assertTrue(gone, gone.startsWith("TaxonWorks early request: FAILED (") && gone.endsWith("; the daily update requests the archive itself, as before"));
+            String bad = TaxonWorksNightly.earlyRequest("not a url project_token=secret123", dir, 5);
+            for (String line : new String[] {ok, gone, bad}) assertFalse(line, line.contains("secret123") || line.contains("127.0.0.1"));
+            try (java.util.stream.Stream<Path> left = Files.list(dir)) {
+                assertEquals("no file left in the working directory", 0L, left.count());
+            }
+        } finally {
+            server.stop(0);
+        }
+    }
 }

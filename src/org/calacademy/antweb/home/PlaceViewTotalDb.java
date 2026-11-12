@@ -29,8 +29,11 @@ import org.apache.commons.logging.LogFactory;
 
 /**
  * The Genera and Species of a place page equal the header of the place's list in its default view (Brian Fisher,
- * 2026-11-04; claude/antweb-list-design-rules.md, "Place page numbers and the views"): Curated on every kind of list,
- * Valid (with fossils) on the AntCat list and Fossil Ants (StatusSet.defaultChoice). Production 11-04: the place pages
+ * 2026-11-04; claude/antweb-list-design-rules.md, "Place page numbers and the views"): Curated on every kind of list
+ * (StatusSet.defaultChoice; on the AntCat list and Fossil Ants their Curated, which counts the fossil names). For those
+ * two lists the species rows of their view Valid are stored too (taxarank VALID_SPECIES, 2026-11-11): the page's "Valid
+ * species / subspecies" there (Fossil Ants: 856 valid names beside 868 with its morphospecies); every other place's
+ * Valid species stays its stored valid_species_count (valid names that are not fossils). Production 11-04: the place pages
  * counted every genus row and every morphospecies (Afrotropical Species 6,951, its Curated list 2,891; Mozambique
  * Genera 83, list 76), so the numbers and the lists they open disagreed.
  *
@@ -41,14 +44,21 @@ import org.apache.commons.logging.LogFactory;
  * yet keeps its stored total. Nightly set 4, after the Not curated count (the lists read place_specimen_name);
  * admins: utilData.do?action=placeViewTotals. Writes "Place list totals counted: ..." to compute.log.
  * Places: valid geolocales whose list has rows, bioregions, museums, projects; not the AntWeb-wide list (allantwebants,
- * its species list is refused as too expensive), which keeps its stored totals.
+ * its species list is refused as too expensive), which keeps its stored totals. Projects: those of scope PROJECT and,
+ * since 2026-11-11, the site-wide lists of scope GLOBAL with a page of their own (the AntCat list, Fossil Ants;
+ * countedProjects): until then their pages showed the project's stored counts beside lists counted by another rule.
  *
  * Only the places whose data changed are counted again (Brian Fisher, 2026-11-09: the step took 60 minutes on 11-07 and
  * 11-08 and about 4 hours on 11-09, production). Every place has a fingerprint (fingerprint(): counts and checksums of
  * what its lists are built from: its list rows with the taxon rows of their names, the names of the specimens collected
  * there as the Not curated count stored them tonight (place_specimen_name, with the specimens of each name and the taxon
- * row), the names a curator removed there (disputes), and, for every place, the curated morphospecies of AntWeb (a
- * morphospecies on any curator's list entry, ListView.vettedCondition) and the counting rules (RULES)). Specimen dates are no signal: an upload, the
+ * row), the names a curator removed there (disputes), the curated morphospecies among the place's own names (a
+ * morphospecies on any curator's list entry is curated in every place, ListView.vettedCondition; curatedPart) and the
+ * counting rules (RULES)). Until 2026-11-10 the curated part was one checksum of every curated morphospecies of AntWeb,
+ * the same in every place's fingerprint: one curator's entry anywhere, or one curated morphospecies whose specimens were
+ * renamed, and the daily update counted every place again (production 2026-11-10, a Tuesday: "1987 recounted, 0
+ * unchanged", 584 s). A curated morphospecies can only change the lists of the places that have the name, so each place
+ * now takes the curated ones of its own names. Specimen dates are no signal: an upload, the
  * nightly TaxonWorks upload of CAS among them, deletes its group's specimens and loads them again (SpecimenUploadDb
  * .dropSpecimens), so every CAS specimen gets a new last_modified every night. A place is counted again when its
  * fingerprint differs from the one stored with its totals (place_view_total_state), when the specimen names it was
@@ -56,11 +66,31 @@ import org.apache.commons.logging.LogFactory;
  * last count is over 7 days old, when RULES changed, on Sundays (everything, weekly), when its totals are missing, and
  * by the admin action with param=all. Each place commits on its own (autocommit; until 2026-11-09 one transaction per
  * 100 places held metadata locks on specimen, taxon and the lists for minutes, and an online ALTER TABLE timed out
- * waiting for them). The line in compute.log: "Place list totals counted: N places in S s (M recounted, K unchanged)".
+ * waiting for them). The line in compute.log: "Place list totals counted: N places in S s (M recounted, K unchanged)",
+ * then, when places were counted again, why and what took the time ("; recounted because: data changed 12 (list rows
+ * 3, specimen names 10), counted over 7 days ago 1; comparing 20 s, counting 4 s").
  *
- * Tests: home.PlaceViewTotalDbTest (unchanged places skipped, changed ones counted, rules change, commit per place),
+ * One place between two daily updates (2026-11-10): recountPlace counts one place again and stores its totals and its
+ * state, and touches no other place's rows. Called wherever one place's list is rebuilt outside the daily update: the
+ * "Update statistics" button of a place page (OverviewAction, action=recalc) and the admin jobs for one place
+ * (utilData.do?action=geolocaleCountCrawl&num=, populateBioregion&name=, populateMuseum&code=, projectCountCrawl&name=).
+ * Until then they rebuilt the list and left these totals as the last daily update counted them, so the page and the
+ * list it opens disagreed until the next daily update (staging 2026-11-10, bioregion Nearctic after "Update
+ * statistics": the genus list had 91 genera, the page said Genera 90; Indomalaya: species list 3,785, page 3,784).
+ * The daily fill and recountPlace count and store through the same method (countAndStore). recountPlace stores no
+ * fingerprint of the place's data but a mark (ONE_PLACE) that equals no fingerprint, so the next daily update counts the
+ * place once more: a country's or adm1's lists are counted from the specimens as they are now, while the fingerprint's
+ * specimen names are those the last daily update stored, so a fingerprint taken now could equal tomorrow's although the
+ * list was counted from other data (specimens added, the place counted, the specimens taken away again: "unchanged",
+ * and a stale total for up to 7 days). A failed count is said in the answer of the admin jobs (getLastFailure).
+ *
+ * Tests: home.PlaceViewTotalDbTest (unchanged places skipped, changed ones counted, rules change, commit per place, the
+ * daily sequence day after day, the curated part against ListView.vettedCondition; one place counted again, the other
+ * places' rows untouched, a place that is not counted, a count that fails),
  * tests/e2e/test_numbers_live.py (test_list_headers_equal_place_numbers), test_numbers_lists.py
- * (test_list_headers_equal_place_numbers_of_every_kind), test_nightly_jobs_ran.py (test_place_list_totals_counted_every_place).
+ * (test_list_headers_equal_place_numbers_of_every_kind), test_nightly_jobs_ran.py (test_place_list_totals_counted_every_place),
+ * test_place_recalc.py (after "Update statistics" the page's numbers are the headers of its lists),
+ * tests/unit/test_recalc_view_totals.py (every place that rebuilds one list calls recountPlace).
  */
 public class PlaceViewTotalDb {
 
@@ -115,17 +145,28 @@ public class PlaceViewTotalDb {
 
     private static volatile boolean s_schemaChecked = false;
 
+    /**
+     * Creates the two tables when missing, in taxon_name's collation; once at start-up (LoginMgr). Only a table that is
+     * missing is created (asked from information_schema first, as PlaceImageCountDb and ImagingProgressDb): CREATE TABLE,
+     * also IF NOT EXISTS on a table that exists, commits the transaction it runs in, and recountPlace runs inside the
+     * transaction of an admin job (UtilDataAction, autocommit off), whose work so far it committed on the first use
+     * after a restart (2026-11-11).
+     */
     public void ensureSchema() throws SQLException {
         if (s_schemaChecked) return;
-        String charset = null;
-        String collation = null;
-        try (Statement stmt = connection.createStatement()) {
-            try (ResultSet r = stmt.executeQuery("select character_set_name, collation_name from information_schema.columns"
-                    + " where table_schema = database() and table_name = 'taxon' and column_name = 'taxon_name'")) {
-                if (r.next()) { charset = r.getString(1); collation = r.getString(2); }
+        boolean totals = LicenseUpdateDb.tableExists(connection, "place_view_total");
+        boolean state = LicenseUpdateDb.tableExists(connection, "place_view_total_state");
+        if (!totals || !state) {
+            String charset = null;
+            String collation = null;
+            try (Statement stmt = connection.createStatement()) {
+                try (ResultSet r = stmt.executeQuery("select character_set_name, collation_name from information_schema.columns"
+                        + " where table_schema = database() and table_name = 'taxon' and column_name = 'taxon_name'")) {
+                    if (r.next()) { charset = r.getString(1); collation = r.getString(2); }
+                }
+                if (!totals) stmt.executeUpdate(createTable(charset, collation));
+                if (!state) stmt.executeUpdate(createStateTable(charset, collation));
             }
-            stmt.executeUpdate(createTable(charset, collation));
-            stmt.executeUpdate(createStateTable(charset, collation));
         }
         s_schemaChecked = true;
     }
@@ -144,9 +185,24 @@ public class PlaceViewTotalDb {
         return overview != null && !Project.ALLANTWEBANTS.equals(overview.getName());
     }
 
+    /**
+     * The taxarank value of the row with a list's species rows in its view Valid (view_name "valid"), stored for the
+     * AntCat list and Fossil Ants only (storesValidSpecies).
+     */
+    public static final String VALID_SPECIES = "validspecies";
+
+    /** Whether the Valid species of the place's page is a stored list total (the AntCat list and Fossil Ants). */
+    public static boolean storesValidSpecies(Overview overview) {
+        return overview != null && StatusSet.hasOwnStatusSets(overview.getName());
+    }
+
     /** The rows the place's list of this rank shows in its default view, counted by the list page's own code. */
     public int listRows(Overview overview, String rank) throws SQLException {
-        String choice = StatusSet.defaultChoice(overview);
+        return listRows(overview, rank, StatusSet.defaultChoice(overview));
+    }
+
+    /** The rows the place's list of this rank shows in a view (the address value: StatusSet.LIST_VALID, ...). */
+    public int listRows(Overview overview, String rank, String choice) throws SQLException {
         TaxaPage page = new TaxaPage();
         if ((Rank.GENUS.equals(rank) && ListView.readsPlaceSpecimens(overview))
                 || (Rank.SPECIES.equals(rank) && ListView.addsSpecimenNames(overview))) {
@@ -159,9 +215,12 @@ public class PlaceViewTotalDb {
         return page.getChildrenCount();
     }
 
-    /** The stored rows of a place: {genera, species, subfamilies}, -1 where not counted. */
+    /**
+     * The stored rows of a place: {genera, species, subfamilies}, -1 where not counted; for the AntCat list and Fossil
+     * Ants a fourth, the species of their view Valid (storesValidSpecies), -1 when not counted.
+     */
     public int[] read(Overview overview) throws SQLException {
-        int[] out = {-1, -1, -1};
+        int[] out = storesValidSpecies(overview) ? new int[] {-1, -1, -1, -1} : new int[] {-1, -1, -1};
         String[] tk = typeAndKey(overview);
         if (tk == null || !tableExists()) return out;
         try (PreparedStatement stmt = connection.prepareStatement(
@@ -173,6 +232,7 @@ public class PlaceViewTotalDb {
                     if (Rank.GENUS.equals(r.getString(1))) out[0] = r.getInt(2);
                     if (Rank.SPECIES.equals(r.getString(1))) out[1] = r.getInt(2);
                     if (Rank.SUBFAMILY.equals(r.getString(1))) out[2] = r.getInt(2);
+                    if (out.length > 3 && VALID_SPECIES.equals(r.getString(1))) out[3] = r.getInt(2);
                 }
             }
         }
@@ -201,17 +261,25 @@ public class PlaceViewTotalDb {
 
     /** Stores one place's totals (replaces its rows). */
     void store(Overview overview, int genera, int species, int subfamilies) throws SQLException {
+        store(overview, genera, species, subfamilies, -1);
+    }
+
+    /** The same, with the species rows of the view Valid (validSpecies; negative: not stored, every other place). */
+    void store(Overview overview, int genera, int species, int subfamilies, int validSpecies) throws SQLException {
         String[] tk = typeAndKey(overview);
         if (tk == null) return;
         String view = StatusSet.defaultChoice(overview);
+        List<Object[]> rows = new ArrayList<>(java.util.Arrays.asList(new Object[][] {
+            {Rank.GENUS, view, genera}, {Rank.SPECIES, view, species}, {Rank.SUBFAMILY, view, subfamilies}}));
+        if (validSpecies >= 0) rows.add(new Object[] {VALID_SPECIES, StatusSet.LIST_VALID, validSpecies});
         try (PreparedStatement stmt = connection.prepareStatement("replace into place_view_total"
                 + " (list_type, list_key, taxarank, view_name, n, counted) values (?, ?, ?, ?, ?, now())")) {
-            for (Object[] row : new Object[][] {{Rank.GENUS, genera}, {Rank.SPECIES, species}, {Rank.SUBFAMILY, subfamilies}}) {
+            for (Object[] row : rows) {
                 stmt.setString(1, tk[0]);
                 stmt.setString(2, tk[1]);
                 stmt.setString(3, (String) row[0]);
-                stmt.setString(4, view);
-                stmt.setInt(5, (Integer) row[1]);
+                stmt.setString(4, (String) row[1]);
+                stmt.setInt(5, (Integer) row[2]);
                 stmt.addBatch();
             }
             stmt.executeBatch();
@@ -228,7 +296,7 @@ public class PlaceViewTotalDb {
         return out;
     }
 
-    /** Every place with a list: valid geolocales with list rows, bioregions, museums, projects. */
+    /** Every place with a list: valid geolocales with list rows, bioregions, museums, projects (countedProjects). */
     public List<Overview> places() throws SQLException {
         List<Overview> out = new ArrayList<>();
         Set<Integer> withList = geolocalesWithList();
@@ -236,7 +304,29 @@ public class PlaceViewTotalDb {
         if (geolocales != null) for (Geolocale g : geolocales) if (withList.contains(g.getId())) out.add(g);
         if (BioregionMgr.getBioregions() != null) out.addAll(BioregionMgr.getBioregions());
         if (MuseumMgr.getMuseums() != null) out.addAll(MuseumMgr.getMuseums());
-        if (ProjectMgr.getAntProjects() != null) for (Project p : ProjectMgr.getAntProjects()) if (counts(p)) out.add(p);
+        // the projects are loaded at start-up; before that (and in tests) there are none to list
+        if (ProjectMgr.getAllProjectsHash() != null) out.addAll(countedProjects(ProjectMgr.getAntProjects(), ProjectMgr.getGlobalProjects()));
+        return out;
+    }
+
+    /**
+     * The projects whose list totals are counted: the projects of scope PROJECT (ProjectMgr.getAntProjects) and the
+     * site-wide lists of scope GLOBAL (ProjectMgr.getGlobalProjects: the AntCat list worldants, Fossil Ants, ...), each
+     * once, without the AntWeb-wide list (counts()). Until 2026-11-11 only the projects of scope PROJECT were counted, so
+     * the pages of the site-wide lists showed the project's stored counts, which follow another rule than their lists
+     * (production 2026-11-11, Brian Fisher: Fossil Ants Genera 259, its list 258 genera). Their lists are counted in
+     * their default view, Curated (which counts their fossil names), and their species in their view Valid too.
+     */
+    public static List<Project> countedProjects(List<Project> antProjects, List<Project> globalProjects) {
+        List<Project> out = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (List<Project> projects : java.util.Arrays.asList(antProjects, globalProjects)) {
+            if (projects == null) continue;
+            for (Project p : projects) {
+                if (p == null || p.getName() == null || !counts(p) || !seen.add(p.getName())) continue;
+                out.add(p);
+            }
+        }
         return out;
     }
 
@@ -309,28 +399,108 @@ public class PlaceViewTotalDb {
     }
 
     /**
-     * What every place's lists depend on beyond its own rows: the curated morphospecies (a morphospecies on any curator's
-     * list entry is curated in every place, and its morphogenus with it: ListView.vettedCondition) and the rules. Only
-     * names of status morphotaxon: a curator adding a valid name to a list changes no other place. Read once per run.
+     * The curated morphospecies of AntWeb, read once per run: the morphotaxon names on a curator's list entry
+     * (names: taxon.taxon_name, lower case) and the genera with a curated morphospecies or subspecies (genera: subfamily
+     * and genus, lower case). The same rule as ListView.vettedCondition, which the lists are counted with: a name of
+     * status morphotaxon is curated when it is on a geolocale_taxon row or on a proj_taxon row of a project that is not a
+     * system list, with a curator's source (own); a genus row (no space in its name) also when a morphospecies of its
+     * subfamily and genus is (under). Test: testCuratedPartFollowsTheListsRule.
      */
-    String globalFingerprint() throws SQLException {
+    public static final class Curated {
+        final Set<String> names = new HashSet<>();
+        final Set<String> genera = new HashSet<>();
+
+        private static String lower(String v) {
+            return v == null ? "" : v.toLowerCase(java.util.Locale.ROOT);
+        }
+
+        static String genusKey(String subfamily, String genus) {
+            return lower(subfamily) + "\u0000" + lower(genus);
+        }
+
+        /** Whether the lists show this morphotaxon name as curated (ListView.vettedCondition of its taxon row). */
+        public boolean isCurated(String taxonName, String subfamily, String genus) {
+            if (taxonName == null) return false;
+            if (names.contains(lower(taxonName))) return true;
+            return taxonName.indexOf(' ') < 0 && genus != null && !genus.isEmpty() && subfamily != null
+                && genera.contains(genusKey(subfamily, genus));
+        }
+    }
+
+    /** One query: every morphotaxon name on a curator's list entry, with its rank, subfamily and genus. */
+    public Curated loadCurated() throws SQLException {
         String sources = CuratorTaxonSetDb.curatorSourceList();
-        StringBuilder sys = new StringBuilder();
-        for (String p : CuratorTaxonSetDb.SYSTEM_PROJECTS) sys.append(sys.length() == 0 ? "" : ", ").append(org.calacademy.antweb.util.DBUtil.sqlLiteral(p));
         String vetted = "(select taxon_name from geolocale_taxon where source in " + sources
             + " union select pt.taxon_name from proj_taxon pt join project p on p.project_name = pt.project_name"
-            + " where pt.source in " + sources + " and pt.project_name not in (" + sys + ")) v"
+            + " where pt.source in " + sources + " and pt.project_name not in " + CuratorTaxonSetDb.systemProjectList() + ") v"
             + " join taxon t on t.taxon_name = v.taxon_name and t.status = 'morphotaxon'";
-        // genus and subfamily too (review of #336): a curated morphospecies moved to another genus changes which genus
-        // counts as curated without a change of name
-        return "v" + checksum("concat_ws('|', v.taxon_name, t.genus, t.subfamily)", vetted) + ";r" + RULES;
+        Curated out = new Curated();
+        try (Statement stmt = connection.createStatement();
+             ResultSet r = stmt.executeQuery("select t.taxon_name, t.taxarank, t.subfamily, t.genus from " + vetted)) {
+            while (r.next()) {
+                out.names.add(Curated.lower(r.getString(1)));
+                String rank = r.getString(2);
+                // a morphogenus is curated with a curated morphospecies of it (ListView.vettedCondition, "under")
+                if ((Rank.SPECIES.equals(rank) || Rank.SUBSPECIES.equals(rank)) && r.getString(3) != null && r.getString(4) != null
+                        && !r.getString(4).isEmpty()) {
+                    out.genera.add(Curated.genusKey(r.getString(3), r.getString(4)));
+                }
+            }
+        }
+        return out;
     }
 
     /**
-     * A place's fingerprint: its list rows with the taxon rows of their names, the specimen names collected there as
-     * stored tonight (place_specimen_name, with the specimens per name and the taxon row), its disputes, and global.
+     * The curated morphospecies among a place's own names: "n:sum" of the morphotaxon names on its list or among its
+     * stored specimen names that the lists show as curated. One query per place (the place's morphotaxon names, by the
+     * list's key and place_specimen_name's key), compared in memory with the curated names of AntWeb (loadCurated).
+     * A curator's entry for a morphospecies changes this part in the places that have the name, and in no other place.
      */
-    public String fingerprint(Overview overview, String global) throws SQLException {
+    String curatedPart(Overview overview, Curated curated) throws SQLException {
+        StringBuilder q = new StringBuilder();
+        List<Object> params = new ArrayList<>();
+        Object[] list = listOf(overview);
+        if (list != null) {
+            q.append("select t.taxon_name, t.subfamily, t.genus from ").append(list[0]).append(" l join taxon t on t.taxon_name = l.taxon_name"
+                + " where l.").append(list[1]).append(" = ? and t.status = 'morphotaxon'");
+            params.add(list[2]);
+        }
+        String[] names = PlaceGenusCurationDb.typeAndKey(overview);
+        if (names != null && hasTable("place_specimen_name")) {
+            if (q.length() > 0) q.append(" union ");
+            q.append("select t.taxon_name, t.subfamily, t.genus from place_specimen_name p join taxon t on t.taxon_name = p.taxon_name"
+                + " where p.list_type = ? and p.list_key = ? and t.status = 'morphotaxon'");
+            params.add(names[0]);
+            params.add(names[1]);
+        }
+        if (q.length() == 0) return "0:0";
+        Set<String> mine = new HashSet<>();
+        try (PreparedStatement stmt = connection.prepareStatement(q.toString())) {
+            for (int i = 0; i < params.size(); i++) stmt.setObject(i + 1, params.get(i));
+            try (ResultSet r = stmt.executeQuery()) {
+                while (r.next()) {
+                    if (curated.isCurated(r.getString(1), r.getString(2), r.getString(3))) mine.add(Curated.lower(r.getString(1)));
+                }
+            }
+        }
+        long sum = 0;
+        for (String name : mine) {
+            java.util.zip.CRC32 crc = new java.util.zip.CRC32();
+            crc.update(name.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            sum += crc.getValue();
+        }
+        return mine.size() + ":" + sum;
+    }
+
+    /** The parts of a fingerprint, by their first letter (the log line's reasons). */
+    static final String[][] PARTS = {{"l", "list rows"}, {"s", "specimen names"}, {"d", "removed names"}, {"c", "curated morphospecies"}};
+
+    /**
+     * A place's fingerprint: its list rows with the taxon rows of their names (l), the specimen names collected there as
+     * stored tonight (s: place_specimen_name, with the specimens per name and the taxon row), its disputes (d), the
+     * curated morphospecies among its names (c: curatedPart) and the rules (r).
+     */
+    public String fingerprint(Overview overview, Curated curated) throws SQLException {
         StringBuilder f = new StringBuilder();
         List<String> taxon = taxonColumns("t");
         Object[] list = listOf(overview);
@@ -357,8 +527,46 @@ public class PlaceViewTotalDb {
         if (overview instanceof Project && hasTable("proj_taxon_dispute")) {
             f.append(";d").append(checksum("d.taxon_name", "proj_taxon_dispute d where d.project_name = ?", overview.getName()));
         }
-        f.append(";").append(global);
+        f.append(";c").append(curatedPart(overview, curated));
+        f.append(";r").append(RULES);
         return f.length() > 255 ? f.substring(0, 255) : f.toString();
+    }
+
+    /**
+     * Stored as the fingerprint of a place that recountPlace counted between two daily updates: no fingerprint (they
+     * start with "l" and have parts), so the next daily update finds the place's data changed and counts it once more.
+     */
+    public static final String ONE_PLACE = "one place, counted between two daily updates";
+
+    /** The log line's word for such a place ("data changed 1 (counted for one place since the last daily update 1)"). */
+    public static final String ONE_PLACE_REASON = "counted for one place since the last daily update";
+
+    /** The parts of a fingerprint by their letter ("l" -> "12:345"); a part's text has no ';'. */
+    static java.util.Map<String, String> parts(String fingerprint) {
+        java.util.Map<String, String> out = new java.util.HashMap<>();
+        if (fingerprint == null) return out;
+        for (String part : fingerprint.split(";")) if (!part.isEmpty()) out.put(part.substring(0, 1), part.substring(1));
+        return out;
+    }
+
+    /**
+     * Which parts of a place's data changed (the names of PARTS), for the log line; "fingerprint of an earlier version"
+     * for one stored before 2026-11-10 (it has the checksum of all curated morphospecies, "v", and no "c").
+     */
+    static List<String> changedParts(String stored, String now) {
+        List<String> out = new ArrayList<>();
+        if (ONE_PLACE.equals(stored)) {
+            out.add(ONE_PLACE_REASON);
+            return out;
+        }
+        java.util.Map<String, String> a = parts(stored);
+        java.util.Map<String, String> b = parts(now);
+        if (a.containsKey("v") || !a.containsKey("c")) {
+            out.add("fingerprint of an earlier version");
+            return out;
+        }
+        for (String[] part : PARTS) if (!java.util.Objects.equals(a.get(part[0]), b.get(part[0]))) out.add(part[1]);
+        return out;
     }
 
     /** A place's stored state: rules, fingerprint, counted, checked. */
@@ -371,6 +579,41 @@ public class PlaceViewTotalDb {
 
     private static String key(String type, String key) {
         return type + "\u0000" + key;
+    }
+
+    /** The key of a place in storedRanks (typeAndKey's two values), or null for an overview that is not a place. */
+    public static String placeKey(Overview overview) {
+        String[] tk = typeAndKey(overview);
+        return tk == null ? null : key(tk[0], tk[1]);
+    }
+
+    /** The count check: list totals older than this many days are missing (a place is counted at least every 7 days). */
+    public static final int FRESH_DAYS = 8;
+
+    /** How many list totals a place has: Subfamilies, Genera, Species, and Valid species where it is stored. */
+    public static int expectedTotals(Overview overview) {
+        return storesValidSpecies(overview) ? 4 : 3;
+    }
+
+    /**
+     * For the count check (NumberChecks.placeListTotals, 2026-11-11): per place (placeKey) how many of its list totals
+     * (subfamily, genus, species; and VALID_SPECIES, which the AntCat list and Fossil Ants have: expectedTotals) are
+     * stored, and how many of them were counted in the last days days. A place
+     * with a list whose totals are missing or old shows its stored counts, not the headers of its lists; nobody was told
+     * (Fossil Ants and the AntCat list were never counted). One read-only query; an empty map without the table.
+     */
+    public java.util.Map<String, int[]> storedRanks(int days) throws SQLException {
+        java.util.Map<String, int[]> out = new java.util.HashMap<>();
+        if (!tableExists()) return out;
+        try (PreparedStatement stmt = connection.prepareStatement("select list_type, list_key, count(distinct taxarank),"
+                + " count(distinct case when counted >= now() - interval ? day then taxarank end) from place_view_total"
+                + " where taxarank in ('subfamily', 'genus', 'species', '" + VALID_SPECIES + "') group by list_type, list_key")) {
+            stmt.setInt(1, days);
+            try (ResultSet r = stmt.executeQuery()) {
+                while (r.next()) out.put(key(r.getString(1), r.getString(2)), new int[] {r.getInt(3), r.getInt(4)});
+            }
+        }
+        return out;
     }
 
     private java.util.Map<String, State> readStates() throws SQLException {
@@ -390,11 +633,11 @@ public class PlaceViewTotalDb {
     }
 
     /** The places with totals (list_type, list_key). */
-    private Set<String> placesWithTotals() throws SQLException {
-        Set<String> out = new HashSet<>();
+    private java.util.Map<String, Integer> placesWithTotals() throws SQLException {
+        java.util.Map<String, Integer> out = new java.util.HashMap<>();
         try (Statement stmt = connection.createStatement();
              ResultSet r = stmt.executeQuery("select list_type, list_key, count(*) from place_view_total group by list_type, list_key")) {
-            while (r.next()) if (r.getInt(3) >= 3) out.add(key(r.getString(1), r.getString(2)));
+            while (r.next()) out.put(key(r.getString(1), r.getString(2)), r.getInt(3));
         }
         return out;
     }
@@ -426,19 +669,115 @@ public class PlaceViewTotalDb {
     }
 
     /**
+     * Counts one place's lists and stores its totals and its state: the per-place step of the daily fill and of
+     * recountPlace, in one method so the two cannot drift. Only this place's rows are written. The three lists are
+     * counted before anything is stored: when a count fails, nothing of this place was written.
+     */
+    private void countAndStore(Overview place, String[] tk, String fingerprint) throws SQLException {
+        // subfamilies too (2026-11-04: North America showed 15 stored, its Curated list 11)
+        store(place, listRows(place, Rank.GENUS), listRows(place, Rank.SPECIES), listRows(place, Rank.SUBFAMILY),
+            storesValidSpecies(place) ? listRows(place, Rank.SPECIES, StatusSet.LIST_VALID) : -1);
+        writeState(tk, fingerprint, true);
+    }
+
+    /** Removes one place's totals and state (its rows only). */
+    private void removePlace(String[] tk) throws SQLException {
+        for (String table : new String[] {"place_view_total", "place_view_total_state"}) {
+            try (PreparedStatement stmt = connection.prepareStatement("delete from " + table + " where list_type = ? and list_key = ?")) {
+                stmt.setString(1, tk[0]);
+                stmt.setString(2, tk[1]);
+                stmt.executeUpdate();
+            }
+        }
+    }
+
+    /**
+     * Counts ONE place again now and stores its totals and its state (2026-11-10), for the code that rebuilds one
+     * place's list between two daily updates ("Update statistics" on a place page, the admin jobs for one place). Call it
+     * after the place's list and counts are rebuilt. No other place's rows are written or removed: fill() is not used
+     * for this, because it removes the rows of every place that is not in the list it is given.
+     *
+     * Returns true when the place was counted and stored. False, and nothing done, for a place the daily update does not
+     * count either (counts(): the AntWeb-wide list; or not a place with totals). False also when the count fails: never
+     * thrown, so the page that called it is still shown; getLastFailure() then says why. A place whose count failed
+     * loses its totals and its state, as a place that fails in the daily fill does: its page then shows the place's own
+     * stored counts, marked data-view-counted="false" (the number tests wait for the count instead of comparing), and
+     * the next daily update counts it ("new place"). Keeping the totals would show, as counted, numbers from before the
+     * list was rebuilt: the wrong number this method is there to prevent.
+     *
+     * The state stored is the mark ONE_PLACE, not a fingerprint (2026-11-11): the next daily update counts the place
+     * once more, whatever its data is then (see the class comment).
+     *
+     * The statements run on the connection as it is (autocommit or the caller's transaction); nothing is committed here,
+     * and no table is created when both exist (ensureSchema). In a caller's transaction that is rolled back afterwards
+     * the removal is rolled back with everything else of the job: the place then has the totals and the state it had
+     * before the job, which belong to the data as it is again.
+     */
+    public boolean recountPlace(Overview place) {
+        lastFailure = null;
+        String[] tk = typeAndKey(place);
+        if (tk == null || !counts(place)) return false;
+        try {
+            ensureSchema();
+            countAndStore(place, tk, ONE_PLACE);
+            return true;
+        } catch (SQLException | RuntimeException e) {
+            lastFailure = e.getMessage() == null ? e.toString() : e.getMessage();
+            s_log.warn("recountPlace() " + tk[0] + " " + tk[1] + " not counted; its list totals are removed until the next daily update. e:" + e);
+            try {
+                removePlace(tk);
+            } catch (SQLException | RuntimeException e2) {
+                s_log.warn("recountPlace() " + tk[0] + " " + tk[1] + " totals not removed e:" + e2);
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Counts the list totals of the named projects again (recountPlace each) and returns the names counted. For the
+     * clean-ups of set 5 that take rows off project lists after the daily update counted the totals
+     * (ProjTaxonDb.getProjectsWithRowsRemoved): without it the project page keeps, until the next daily update, the
+     * number of a list that has since lost a row. A project the daily update does not count (the AntWeb-wide list) or
+     * whose count fails is not in the answer.
+     */
+    public List<String> recountProjects(java.util.Collection<String> projectNames) {
+        List<String> counted = new ArrayList<>();
+        if (projectNames == null) return counted;
+        for (String name : projectNames) {
+            if (name == null) continue;
+            Project project = ProjectMgr.getProject(name, false);
+            if (project == null) {      // the projects are not loaded (tests): the name is all the lists' queries need
+                project = new Project();
+                project.setName(name);
+            }
+            if (recountPlace(project)) counted.add(name);
+        }
+        return counted;
+    }
+
+    private String lastFailure = null;
+
+    /** Why the last recountPlace of this object did not count its place (the error's message), or null when it did or had nothing to count. */
+    public String getLastFailure() {
+        return lastFailure;
+    }
+
+    /**
      * Why a place is counted again, or null when its totals stand (same rules and fingerprint, counted within
      * MAX_AGE_DAYS, its specimen names stored again since it was last compared, totals present).
      */
     static String recountReason(State st, String fingerprint, boolean hasTotals, java.sql.Timestamp namesFilled, boolean usesNames,
                                 java.sql.Timestamp now) {
-        if (st == null) return "not counted yet";
+        if (st == null) return "new place";
         if (!hasTotals) return "totals missing";
         if (!RULES.equals(st.rules)) return "rules changed";
         if (st.counted == null || now == null || now.getTime() - st.counted.getTime() > MAX_AGE_DAYS * 86_400_000L) return "counted over " + MAX_AGE_DAYS + " days ago";
         if (usesNames && (namesFilled == null || st.checked == null || !namesFilled.after(st.checked))) return "specimen names not stored again since the last count";
-        if (!fingerprint.equals(st.fingerprint)) return "data changed";
+        if (!fingerprint.equals(st.fingerprint)) return DATA_CHANGED;
         return null;
     }
+
+    static final String DATA_CHANGED = "data changed";
 
     /** Tests only: called after each place is done (its list_type and list_key), to see that it is committed. */
     private static volatile java.util.function.BiConsumer<String, String> s_afterPlace = null;
@@ -475,34 +814,44 @@ public class PlaceViewTotalDb {
         int failedCount = 0;
         List<String> failed = new ArrayList<>();
         Set<String> handled = new HashSet<>();
+        // why places were counted again, and which part of their data changed (the log line)
+        java.util.Map<String, Integer> reasons = new java.util.LinkedHashMap<>();
+        java.util.Map<String, Integer> changed = new java.util.LinkedHashMap<>();
+        long comparing = 0;
+        long counting = 0;
         try {
             // autocommit: every statement its own transaction, so no lock is held from one place to the next
             if (!auto) {
                 connection.commit();
                 connection.setAutoCommit(true);
             }
-            String global = globalFingerprint();
+            Curated curated = loadCurated();
             java.sql.Timestamp now = dbNow();
             java.util.Map<String, State> states = readStates();
-            Set<String> withTotals = placesWithTotals();
+            java.util.Map<String, Integer> withTotals = placesWithTotals();
             java.util.Map<String, java.sql.Timestamp> filled = namesFilled();
             for (Overview place : placeList) {
                 String[] tk = typeAndKey(place);
                 if (tk == null) continue;
                 String k = key(tk[0], tk[1]);
                 try {
-                    String fingerprint = fingerprint(place, global);
+                    long t0 = System.currentTimeMillis();
+                    String fingerprint = fingerprint(place, curated);
                     String[] names = PlaceGenusCurationDb.typeAndKey(place);
-                    String reason = all ? "full count" : recountReason(states.get(k), fingerprint, withTotals.contains(k),
+                    State st = states.get(k);
+                    String reason = all ? "full count" : recountReason(st, fingerprint, withTotals.getOrDefault(k, 0) >= expectedTotals(place),
                         names == null ? null : filled.get(names[0]), names != null, now);
+                    comparing += System.currentTimeMillis() - t0;
                     if (reason == null) {
                         writeState(tk, fingerprint, false);
                         ++unchanged;
                     } else {
-                        // subfamilies too (2026-11-04: North America showed 15 stored, its Curated list 11)
-                        store(place, listRows(place, Rank.GENUS), listRows(place, Rank.SPECIES), listRows(place, Rank.SUBFAMILY));
-                        writeState(tk, fingerprint, true);
+                        long t1 = System.currentTimeMillis();
+                        countAndStore(place, tk, fingerprint);
                         ++recounted;
+                        counting += System.currentTimeMillis() - t1;
+                        reasons.merge(reason, 1, Integer::sum);
+                        if (DATA_CHANGED.equals(reason)) for (String part : changedParts(st.fingerprint, fingerprint)) changed.merge(part, 1, Integer::sum);
                     }
                     handled.add(k);
                     if (s_afterPlace != null) s_afterPlace.accept(tk[0], tk[1]);
@@ -524,7 +873,29 @@ public class PlaceViewTotalDb {
         // none counted: FAILED, so the morning check reports it (2026-11-05: every place failed and the line read "0 places")
         return LOG + ": " + (done == 0 && !failed.isEmpty() ? "FAILED, " : "") + done + " places in " + (System.currentTimeMillis() - start) / 1000 + " s"
             + " (" + recounted + " recounted, " + unchanged + " unchanged)"
+            + because(reasons, changed) + (done == 0 ? "" : "; comparing " + comparing / 1000 + " s, counting " + counting / 1000 + " s")
             + (failed.isEmpty() ? "" : "; FAILED for " + failedCount + " places (their stored totals are shown), e.g. " + String.join(", ", failed));
+    }
+
+    /**
+     * The log line's reasons: "; recounted because: data changed 12 (list rows 3, specimen names 10), counted over 7 days
+     * ago 1", or "" when no place was counted again. A place whose data changed can be in several parts.
+     */
+    static String because(java.util.Map<String, Integer> reasons, java.util.Map<String, Integer> changed) {
+        if (reasons.isEmpty()) return "";
+        StringBuilder b = new StringBuilder("; recounted because: ");
+        boolean first = true;
+        for (java.util.Map.Entry<String, Integer> e : reasons.entrySet()) {
+            if (!first) b.append(", ");
+            first = false;
+            b.append(e.getKey()).append(" ").append(e.getValue());
+            if (DATA_CHANGED.equals(e.getKey()) && !changed.isEmpty()) {
+                List<String> parts = new ArrayList<>();
+                for (java.util.Map.Entry<String, Integer> c : changed.entrySet()) parts.add(c.getKey() + " " + c.getValue());
+                b.append(" (").append(String.join(", ", parts)).append(")");
+            }
+        }
+        return b.toString();
     }
 
     /** Deletes a table's rows of the places not in keep; returns the rows deleted. One place per statement. */

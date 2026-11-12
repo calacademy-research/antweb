@@ -16,7 +16,8 @@ species. Specimen counts stay per place; images help identification wherever the
      (decision 3), of its synonyms (/taxa?currentValidName; /taxaImages, shot types other than l); "No Images" only when N = 0; never a second number or "from <place>"; the definition under the
      list says what the number counts and that the place's specimens come first on the images page.
   5. The species page's line "Imaged: worker (12 specimens), queen (2), male (1)" (row 120) = the API recount: the
-     name's specimens with an image of the ant (/taxaImages, label images left out), by caste (/specimens).
+     name's specimens with an image of the ant (/taxaImages, label images left out), by caste (/specimens), red-flagged
+     specimens left out (2026-11-09; the flag read from the specimen page).
 
 Read-only, anonymous. The data on staging is a copy of production; a test skips with a reason when its sample has no
 data. List rows are those of the last nightly run (set 4); after an upload they can be pending.
@@ -233,6 +234,18 @@ def test_list_images_column_shows_the_images_in_antweb():
                 # own number (any kind of place) until it has (2026-10-28, staging after a refresh or a skipped set 4)
                 left_out.append(f"{p} {name}: {text!r}, {ALLANTWEB_PENDING}")
                 continue
+            if recount > total:
+                # Brian Fisher, 2026-11-09: images of red-flagged specimens are not counted (flag read from the specimen page)
+                kept = ns.without_red_flagged(ant, codes)
+                if kept is None:
+                    left_out.append(f"{p} {name}: {text!r} < {recount}, too many specimens to look up red flags")
+                    continue
+                if kept[1]:
+                    if ns.red_flag_images_counted() is False:
+                        left_out.append(f"{p} {name}: {text!r}, red-flagged {kept[1]}: pending until the nightly run counts"
+                                        " images without red-flagged specimens")
+                        continue
+                    recount = sum(kept[0].get(c, 0) for c in codes)
             if recount != total:
                 wrong.append(f"{p} {name}: {text!r}, the API's specimens of the name and its synonyms have {recount} images of the ant")
             checked.append(f"{p} {name}")
@@ -312,6 +325,16 @@ def test_species_page_imaged_castes_equal_a_recount():
                 continue
             caste = (r.get("caste") or "").strip().lower()
             recount[caste if caste in CASTES else "unknown"] += 1
+        if shown != recount:
+            # Brian Fisher, 2026-11-09: a red-flagged specimen is not counted as imaged (ImagedCastes counts live, so no
+            # nightly wait); the API has no flag, so the imaged specimens are looked up on their pages, only now
+            kept = ns.without_red_flagged({c: 1 for c in imaged})
+            if kept is None:
+                continue
+            for r in rows:
+                if ns.specimen_code(r) in kept[1] and (r.get("antwebTaxonName") or "").lower() == name:
+                    caste = (r.get("caste") or "").strip().lower()
+                    recount[caste if caste in CASTES else "unknown"] -= 1
         if shown != recount:
             wrong.append(f"{path} ({name}): the page says {shown}, the API recount {recount}")
         checked.append(name)

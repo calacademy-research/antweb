@@ -52,6 +52,7 @@
 <div class="aw-card aw-admin" id="curate-reports">
     <h2>Reports<span class="aw-badge">Admin</span></h2>
     <ul class="aw-links">
+      <li><a href="<%= domainApp %>/dailyUpdate.do">Daily update</a> (today's daily update, 05:00 Pacific, step by step: status, start, end and duration of each step, and the earlier days)</li>
       <li><a href="<%= domainApp %>/query.do?action=checkIntegrity">Integrity Check</a> (automatic checks of names, species lists and specimen data, including the name checks against AntCat; each says what to fix)</li>
       <li><a href="<%= domainApp %>/query.do?action=homonyms">Homonym Report</a> (names spelled like another ant name; specimens may be filed under the wrong one)</li>
       <li><a href="<%= domainApp %>/query.do?action=events">Curator activity log</a> (edits to the images, videos and overview text of taxon pages)</li>

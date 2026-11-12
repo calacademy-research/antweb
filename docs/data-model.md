@@ -146,6 +146,7 @@ erDiagram
     specimen }o--|| geolocale : "country, adm1 (names)"
     taxon ||--o{ description_edit : "taxon_name"
     geolocale ||--o{ place_image_count : "place_key"
+    geolocale ||--o{ imaging_progress : "place_key (country)"
     taxon {
         varchar taxon_name "key"
         varchar taxarank
@@ -217,6 +218,8 @@ unused and backup is a search of the code for SQL that names the table (2026-10-
 | `image_upload_refused` | [6](#image_upload_refused) | in use (2026-10-18) |
 | `image_like` | [6](#image_like) | in use |
 | `place_image_count` | [6](#place_image_count) | in use (2026-10-20) |
+| `imaging_progress` | [6](#imaging_progress) | in use (2026-11-08) |
+| `imaging_unimaged` | [6](#imaging_unimaged) | in use (2026-11-11) |
 | `artist` | [6](#artist) | in use |
 | `copyright` | [6](#copyright) | in use |
 | `license` | [6](#license) | unused |
@@ -539,9 +542,10 @@ latest row; the admin page `statistics.do` shows the history.
 2026-10-21, every night in set 4 (`UtilDataAction`).
 
 **Read by.** `AntwebMgr.populateStats` (home page, `genInc/statistics.jsp`), `StatisticsAction` (`statistics.do`),
-`CountInvariants` (check `home`).
+`CountInvariants` (check `home`), `ImagingProgressDb.trend` (the trend of `imagingProgress.do`: the last row of each
+day since 2026-10-28).
 
-**Numbers.** #1 to #5, #7 to #10, #97.
+**Numbers.** #1 to #5, #7 to #10, #97, #128.
 
 **Status.** In use.
 
@@ -733,18 +737,27 @@ transaction). Created by the application; record and undo in `db/upgrade/8.115/2
 ### `place_view_total`
 
 **Purpose.** The place page's Subfamilies, Genera and Species (Brian Fisher, 2026-11-04): the rows each place's subfamily, genus and species
-lists show in their default view (Curated; Valid (with fossils) on the AntCat list and Fossil Ants), counted with the
+lists show in their default view (Curated; on the AntCat list and Fossil Ants their Curated, which counts the fossil
+names), counted with the
 list page's own code (`TaxaPage.fetchChildren`, `loadCollected`, `findGenusRows`), so each number equals the header of
 the list it opens.
 
 **Key.** (`list_type`, `list_key`, `taxarank`). `list_type`: `geolocale` (key the geolocale id), `bioregion` (name),
-`museum` (code), `project` (name), as `PlaceImageCountDb`; `taxarank`: `subfamily`, `genus` or `species`.
+`museum` (code), `project` (name), as `PlaceImageCountDb`; `taxarank`: `subfamily`, `genus` or `species`; for the
+AntCat list and Fossil Ants also `validspecies` (2026-11-11): the species rows of their view Valid (`view_name`
+`valid`), the page's "Valid species / subspecies" there.
 
 **Key columns.** `view_name` (the view counted), `n`, `counted`.
 
 **Written by.** Set 4 and `utilData.do?action=placeViewTotals` (`PlaceViewTotalDb.fillAll`, after `placeGenusCuration`).
 Since 2026-11-09 only the places whose data changed are counted again (`place_view_total_state`), each place committed
-on its own; `&param=all` and Sundays count every place. Created by the application; record and undo in
+on its own; `&param=all` and Sundays count every place. One place between two daily updates (2026-11-10):
+`PlaceViewTotalDb.recountPlace`, called by the "Update statistics" button of a place page (`OverviewAction`,
+`action=recalc`) and by the admin jobs for one place (`utilData.do?action=geolocaleCountCrawl&num=`,
+`populateBioregion&name=`, `populateMuseum&code=`, `projectCountCrawl&name=`): that place's rows only; a count that
+fails removes them, and the admin job's answer says "list totals not recounted: ..." with the reason (2026-11-11).
+Created by the application (`PlaceViewTotalDb.ensureSchema`, at start-up in `LoginMgr`; only a missing table is
+created, so a count inside a job's transaction runs no CREATE TABLE and commits nothing); record and undo in
 `db/upgrade/8.116/2026-11-04-place-view-total.sql`.
 
 **Read by.** Place pages (`OverviewAction.setPlaceImages`, overview-body.jsp), the Valid species list header
@@ -757,14 +770,20 @@ on its own; `&param=all` and Sundays count every place. Created by the applicati
 **Purpose.** What each place's `place_view_total` rows were counted from (2026-11-09, Brian Fisher: the nightly step
 took 60 minutes to 4 hours counting every place every night): the counting rules (`PlaceViewTotalDb.RULES`) and a
 fingerprint (counts and crc32 checksums of the place's list rows with their taxon rows, the specimen names stored for it
-in `place_specimen_name` with their specimens, its disputes, and AntWeb's curated morphospecies). A place whose
+in `place_specimen_name` with their specimens, its disputes, and the curated morphospecies among the place's own names:
+part `c`, since 2026-11-10; before, one checksum of all of AntWeb's curated morphospecies, part `v`, which changed every
+place's fingerprint at once). The parts are `l`, `s`, `d`, `c`, `r`, separated by `;`. A place whose
 fingerprint and rules are the same, counted within 7 days and whose specimen names were stored again since it was last
 compared, keeps its totals.
 
 **Key.** (`list_type`, `list_key`), as `place_view_total`. **Key columns.** `rules`, `fingerprint`, `counted` (last
 counted), `checked` (last compared).
 
-**Written by.** `PlaceViewTotalDb.fill` (nightly after set 4, `utilData.do?action=placeViewTotals`). Created by the
+**Written by.** `PlaceViewTotalDb.fill` (nightly after set 4, `utilData.do?action=placeViewTotals`) and, for one place,
+`PlaceViewTotalDb.recountPlace` (2026-11-10: "Update statistics" on a place page, the admin jobs for one place; the
+place's row is written with its totals, or removed with them when its count fails; its `fingerprint` is then the mark
+"one place, counted between two daily updates", which equals no fingerprint, so the next daily update counts the place
+once more, 2026-11-11). Created by the
 application (`PlaceViewTotalDb.ensureSchema`); record and undo in `db/upgrade/9.3.1/2026-11-09-place-view-total-state.sql`.
 Rows of places not counted that night go with their totals.
 
@@ -912,11 +931,85 @@ specimens with at least one: "Imaged specimens"), `*label_only` (specimens whose
 specimens belong to a place is the same as for the place's Specimens number (class comment of `PlaceImageCountDb`).
 Created by the application; record and undo in `db/upgrade/8.113/2026-10-20-place-image-count.sql`.
 
+**Working tables (since 2026-11-11).** While set 4 counts, the step holds the specimens that have an image (about
+67,000 of 917,000; the nine `specimen` columns the counting reads: `code`, `taxon_name`, `status`, `country`, `adm1`,
+`island_country`, `museum`, `bioregion`, `flag`) in three session-private TEMPORARY tables with the same rows,
+`tmp_place_image_specimen_a`, `_b` and `_c` (MySQL cannot read one temporary table twice in a statement, and the
+regions count reads the specimens three times). They are made at the start of the step, dropped at its end, seen by no
+other session, and are not part of the schema (no upgrade script, not in the schema check). The numbers written are
+those of the statements that read `specimen` itself; `utilData.do?action=placeImageCountCompare` (admins, read-only)
+counts both ways and lists every place that differs.
+
 **Read by.** Place pages (`PlaceImageCountDb.read`), `CountInvariants` (`place.images`).
 
 **Numbers.** #27 to #32, #75, #76, #109.
 
 **Status.** In use.
+
+### `imaging_progress`
+
+**Purpose.** The imaging progress page (`imagingProgress.do`, Brian Fisher, 2026-11-08): valid living ant species and
+subspecies imaged (a photo of the ant anywhere in AntWeb; label photos never count), for all of AntWeb and by
+bioregion, country, genus and museum, with the unimaged names that have specimens in AntWeb (the imaging labs' work
+queue). One row per place.
+
+**Key.** (`place_type`, `place_key`). `place_type`: `all` (keys `living`, the headline: valid living species and
+subspecies; `living-species`, species only, equal to `statistics.living_species` and `living_species_imaged`;
+`fossil`), `bioregion` (its name), `country` (the geolocale id), `genus` (subfamily + genus, the genus taxon_name),
+`museum` (its code).
+
+**Key columns.** `place_name`, `parent_name` (country: name and bioregion; genus: genus and subfamily), `total` (the
+valid living species and subspecies: of the place's list in the Valid view for bioregions and countries, of the genus,
+with a specimen at the museum), `imaged`, `imaged_here` (a photo of the ant of a specimen collected there:
+`specimen.bioregion`, `specimen.country` or `island_country` for island countries, the museum's own specimens; null
+for `all` and `genus`), `unimaged_with_specimens` (not imaged, at least one specimen record in AntWeb),
+`unimaged_casc` (of those, a specimen with museum CASC), `computed`.
+
+**Written by.** The daily update, set 4, after the statistics row (step `imagingProgress` of `dailyUpdate.do`;
+`ImagingProgressDb.fill`: one grouped query per kind of place, then the rows replaced in one transaction, with the
+unimaged list, `imaging_unimaged`); admins: `utilData.do?action=imagingProgress`. The rows of kind `all` and `genus`
+are written only together with the list, and only when the list has total minus imaged names (below). Created by the
+application (`ImagingProgressDb.ensureSchema`, at start-up in `LoginMgr` and before the fill); record and undo in
+`db/upgrade/9.4.0/2026-11-08-imaging-progress.sql`.
+
+**Read by.** `ImagingProgressAction` (`imagingProgress.do`: the page, the genus view `genus=`, the CSV
+`format=csv`; the unimaged list from `imaging_unimaged`), `NumberChecks.imagingProgress` (count check
+`imaging.progress`).
+
+**Numbers.** #124 to #128.
+
+**Status.** In use.
+
+### `imaging_unimaged`
+
+**Purpose.** The unimaged list of the imaging progress page as of the last fill (review of PR #341, 2026-11-11): one
+row per valid living ant species or subspecies with no photo of the ant, in the list's order (names with CASC specimens
+first, then most specimens, then name). Stored so that the page's "Still to image" and the rows of its CSV are always
+of the same moment. Until then the list was read live at the first request after a fill and kept in memory only, so
+after a restart or a deploy it was read again with whatever had changed since the counts (staging 2026-11-10: page
+"Still to image: 2,773", CSV 2,780 names).
+
+**Key.** `pos` (the place in the list, from 1).
+
+**Key columns.** `taxon_name`, `subfamily`, `genus`, `species`, `taxarank`, `specimens` (specimen records of the name
+anywhere in AntWeb), `casc_specimens`, `museums` (codes, alphabetical, separated by a blank), `computed`.
+
+**Written by.** `ImagingProgressDb.fill`, in the transaction that replaces the rows of `imaging_progress`: the rows
+of all of AntWeb (kind `all`), the genus rows and the list (`UNIMAGED_SQL`) are counted one after the other, compared
+(`listDifference`: the list has total minus imaged names; each genus has its total minus imaged names), counted again
+when data changed in between (3 tries) and written together. When the list and the headline still differ, none of the
+three is written: yesterday's rows and list stay, which agree, and the compute.log line says FAILED. Created by the
+application (`ImagingProgressDb.ensureSchema`, at start-up); record and undo in
+`db/upgrade/9.4.0/2026-11-11-imaging-unimaged.sql`.
+
+**Read by.** `ImagingProgressAction` (the CSV `format=csv` and the genus view `genus=`, `ImagingProgressDb.unimaged`),
+`NumberChecks.imagingProgress` (the stored list has total minus imaged names). Where the stored list is not the list
+of the stored counts (`ImagingProgressDb.listStored`: counts stored before this table existed), the page says the
+progress is not counted yet and the CSV answers 503, until the next fill.
+
+**Numbers.** #126.
+
+**Status.** In use (2026-11-11).
 
 ### `artist`
 
@@ -1161,15 +1254,24 @@ pages (`ObjectMapDb.getMap`: `BigMapAction`, `OverviewAction`, `AdvancedSearchAc
 **Purpose.** Curator groups (institutions or teams that upload specimens and images). Renamed from `groups` in
 `db/upgrade/8.0/2020-02-12.sql`.
 
-**Key columns.** `id`, `name`, `abbrev`, `admin_login_id`, `upload_specimens`, `first_specimen_upload`,
+**Key columns.** `id`, `name`, `abbrev`, `admin_login_id`, `upload_specimens` (the group's specimen records:
+`specimen.access_group` = its id; a group counts as one with specimens when it is above 0), `first_specimen_upload`,
 `last_specimen_upload`, `upload_count`.
 
 **Written by.** The Groups manager (`GroupDb.saveGroup`, `updateGroup`, `deleteById`), uploads
-(`SpecimenUploadDb.updateSpecimenUploadDate`, `UploadDb.updateGroup`), `UploaderOnboarding`.
+(`SpecimenUploadDb.updateSpecimenUploadDate`, `UploadDb.updateGroup`; `upload_specimens` of the uploading group,
+`GroupDb.updateUploadSpecimens`), `UploaderOnboarding`, and since 2026-11-11 the daily update, as the last statement
+of set 3 (`GroupDb.recountUploadSpecimens`: `upload_specimens` of every group, written only where the stored number
+is still the one the set read, so a number an upload wrote meanwhile stays; until then a change of a group's
+specimens outside its own upload left the number stale until its next upload).
 
 **Read by.** Group pages (`groups.do`, `group.do`), searches and admin queries that show the group name, the upload.
+`upload_specimens > 0`: the upload groups in memory (`GroupMgr`, the group menu of the advanced search), the groups
+`groups.do` lists and the group counts count (`GroupDb.getUploadGroups`, `GroupCountDb.LISTED_GROUPS_SQL`; the group
+counts run in set 3 before the recount, so they list by the numbers of the day before), and the count check
+(`admin.statistics`: each such group's number = its specimens).
 
-**Numbers.** #85.
+**Numbers.** #85, #98.
 
 **Status.** In use. Created in the repository only by `db/upgrade/8.115` (from production's columns). `name` is
 varchar(100) on production; `upload.group_name` was varchar(64) until 2026-10-23, when it was widened to
@@ -1393,8 +1495,12 @@ Older API view (`db/upgrade/7.9`, redefined in `8.56`). No reader. Unused; candi
 
 ### `darwin_core_2`
 
-Darwin Core view for an export (`db/upgrade/7.0`). Only a commented-out test in `api.py` mentions it. Unused, unless
-an outside service reads the database directly (none is known); candidate to drop after checking.
+Darwin Core view of the specimens (`db/upgrade/7.0`). **In use, by a reader outside this repository:** the Academy's
+IPT (ipt.calacademy.org, resource `antweb`) publishes AntWeb to GBIF every Monday at 12:00 Pacific from
+`select * from darwin_core_2` (44 columns) and `select * from darwin_core_multimedia`, read from a copy of this
+database kept at the Academy (restored from the daily dump, about a day and a half behind; found 2026-11-11). The
+IPT maps the columns by position: do not drop the view, and do not change the number, order or names of its columns.
+No code in the repository reads it (a commented-out test in `api.py` mentions it).
 
 ### `darwin_core_3`
 
@@ -1402,7 +1508,14 @@ As `darwin_core_2` (`db/upgrade/8.77`). No reader. Unused.
 
 ### `darwin_core_multimedia`
 
-Darwin Core multimedia view (`db/upgrade/8.77`). No reader. Unused.
+Darwin Core multimedia view: one row per image (`db/upgrade/8.77`, redefined by
+`db/upgrade/9.4.0/2026-11-11-darwin-core-multimedia-medium.sql`). **In use:** the image rows of the GBIF archive, read
+by the Academy's IPT as `darwin_core_2` above (ten columns, mapped by position). Since 2026-11-11 (Brian Fisher) the
+address is the medium image at static.antweb.org (`.../<code>_<shot>_<number>_med.jpg`, as `SpecimenImage.getMedium`;
+it was the `_high.jpg` address of www.antweb.org, which the bot shield refused to GBIF); who wants a larger view comes
+to AntWeb through the link to the specimen's page. Nothing else changed: the rights holder is the image's copyright
+line. Test:
+`tests/unit/test_gbif_image_view.py`.
 
 ### `tempgeoview`
 

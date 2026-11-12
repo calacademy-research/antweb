@@ -249,6 +249,27 @@ def test_no_key_fifty_a_day():
     assert "about 14 hours" in r.get_json()["error"]
 
 
+def test_old_country_name_gives_the_current_country_and_the_answer_says_so():
+    """2026-11-10 (api.currentCountry): v4 answers country=<an old name> with the current country's records, and its
+    metaData names the name asked for and the name used."""
+    fresh_usage()
+    s = api.session()
+    s.add_all([api.Geolocale(id="901", name="Madagascar", georank="country", isValid="1"),
+               api.Geolocale(id="902", name="Malagasy Republic", georank="country", isValid="0", validName="Madagascar")])
+    s.commit()
+    try:
+        r = get("/v4/specimens?limit=3&country=Malagasy%20Republic", KEYS["admin"])
+        j = r.get_json()
+        assert r.status_code == 200 and len(j["specimens"]) == 3, (r.status_code, r.get_data(as_text=True)[:300])
+        assert j["metaData"]["countryName"] == {"requested": "Malagasy Republic", "used": "Madagascar"}, j["metaData"]
+        assert j["metaData"]["parameters"] == [{"limit": "3", "country": "Malagasy Republic"}], j["metaData"]["parameters"]
+        j = get("/v4/specimens?limit=3&country=Madagascar", KEYS["admin"]).get_json()
+        assert len(j["specimens"]) == 3 and "countryName" not in j["metaData"], j["metaData"]
+    finally:
+        s.query(api.Geolocale).filter(api.Geolocale.id.in_(["901", "902"])).delete(synchronize_session=False)
+        s.commit()
+
+
 def test_no_key_twenty_five_records_an_answer():
     fresh_usage()
     at(5)

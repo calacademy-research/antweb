@@ -14,7 +14,7 @@ import java.util.Map;
 
 /**
  * The table daily_update_step: one row per step of each daily update (DailyUpdate, 2026-11-07), with its start, end,
- * result (ok, failed, skipped; null while it runs) and a short detail. Key (run_start, step). The step "end" marks the
+ * result (ok, failed, skipped, warning; null while it runs) and a short detail. Key (run_start, step). The step "end" marks the
  * end of a run; a run with that row is completed.
  *
  * Created by the application when missing (ensureSchema, at start-up from LoginMgr.startPasswordConversion and before
@@ -128,7 +128,7 @@ public final class DailyUpdateDb {
         String sql = "select s.step, timestampdiff(second, s.started, s.ended) from daily_update_step s"
             + " join (select run_start from daily_update_step where step = 'end'" + (before == null ? "" : " and run_start < ?")
             + " order by run_start desc limit ?) r on r.run_start = s.run_start"
-            + " where s.result = 'ok' and s.started is not null and s.ended is not null";
+            + " where s.result in ('ok', 'warning') and s.started is not null and s.ended is not null";
         Map<String, List<Long>> values = new HashMap<>();
         try (PreparedStatement p = c.prepareStatement(sql)) {
             int i = 1;

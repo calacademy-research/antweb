@@ -96,7 +96,7 @@
         </table>
         <p><b>Parameter names:</b> parameter names are case sensitive. A request with a parameter the function does not know (for example a misspelt name) is answered with HTTP 400 and a JSON message listing the accepted parameters, instead of ignoring it. When a close name exists, the message suggests it ("did you mean").</p>
         <p id="license"><b>Licence</b> (since 2026-10-29): <jsp:include page="/common/licenseStatement.jsp" flush="true"/> Every reply has the HTTP header <code>Link: &lt;https://creativecommons.org/licenses/by/4.0/&gt;; rel="license"</code>, and every JSON reply with data has a top-level <b>license</b> object: <code>{"name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/", "citation": "..."}</code>. ndjson replies and error replies carry the header only.</p>
-        <p id="image-counts"><b>Image counts</b> (since 2026-10-27): on AntWeb "Images" means images of the ant (head, profile, dorsal and other views); label images are counted separately. <b>imageCount</b> keeps its meaning (every image file, label images included) so existing programs keep working. <b>antImageCount</b> and <b>labelImageCount</b> are added: on /specimens and /geoSpecimens the specimen's images of the ant and label images; on /taxa the images of the specimens filed under the name (imageCount there also counts the names under it); in the metaData of /images and /taxaImages the images of the ant and label images of the reply. On /geolocales, /bioregions, /geolocaleTaxa and /bioregionTaxa, imageCount is the place's number: every image file of a place (imagedSpecimenCount counts specimens with an image of the ant), and on the lists' rows the images of the ant.</p>
+        <p id="image-counts"><b>Image counts</b> (since 2026-10-27): on AntWeb "Images" means images of the ant (head, profile, dorsal and other views); label images are counted separately. <b>imageCount</b> keeps its meaning (every image file, label images included) so existing programs keep working. <b>antImageCount</b> and <b>labelImageCount</b> are added: on /specimens and /geoSpecimens the specimen's images of the ant and label images; on /taxa the images of the specimens filed under the name (imageCount there also counts the names under it); in the metaData of /images and /taxaImages the images of the ant and label images of the reply. On /geolocales, /bioregions, /geolocaleTaxa and /bioregionTaxa, imageCount is the place's number: every image file of a place (imagedSpecimenCount counts specimens with an image of the ant), and on the lists' rows the images of the ant. Since 2026-11-09 the numbers of a name or a place (not of one specimen) leave out the images of red-flagged specimens.</p>
         <h2 id="v4">Version 4</h2>
         <p><b>Base URL:</b> <a href="https://www.antweb.org/v4/">https://www.antweb.org/v4/</a></p>
         <p>Version 4 retains the routes, query parameters, and response structure documented for version 3.1, except for the changes listed here. Existing examples on this page use version 3.1; to use version 4, replace <code>/v3.1/</code> with <code>/v4/</code> and apply the field-name changes below. When version 4 opens, version 3.1 data endpoints will return <b>HTTP 410 (Gone)</b>.</p>
@@ -179,7 +179,7 @@
             </tr>
             <tr>
                 <td><b>Country</b></td>
-                <td>The whole country name, in any case (country=Niger returns Niger, not Nigeria; country=madagascar works). Since 2026-10-27; before, any country containing the text matched.</td>
+                <td>The whole country name, in any case (country=Niger returns Niger, not Nigeria; country=madagascar works). Since 2026-10-27; before, any country containing the text matched. An old name of a country that AntWeb knows (country=USA) gives the records of the current country (United States), and metaData.countryName in the answer names both.</td>
             </tr>
             <tr>
                 <td><b>Adm1</b></td>
@@ -407,7 +407,7 @@
             </tr>
             <tr>
                 <td><b>Country</b></td>
-                <td>The whole country name, in any case (country=Niger returns Niger, not Nigeria). Since 2026-10-27; before, any country containing the text matched.</td>
+                <td>The whole country name, in any case (country=Niger returns Niger, not Nigeria). Since 2026-10-27; before, any country containing the text matched. An old name of a country that AntWeb knows (country=USA) gives the records of the current country (United States), and metaData.countryName in the answer names both.</td>
             </tr>
             <tr>
                 <td><b>Habitat</b></td>
@@ -613,7 +613,7 @@
             </tr>            
             <tr>
                 <td><b>Country</b></td>
-                <td>Query on the country: the whole country name, in any case</td>
+                <td>Query on the country: the whole country name, in any case. An old name of a country that AntWeb knows (country=USA) gives the records of the current country (United States), and metaData.countryName in the answer names both.</td>
             </tr>
             <tr>
                 <td><b>Adm1</b></td>
@@ -812,7 +812,7 @@
         <h2>Unimaged Geolocale Taxa</h2>
             <br>
          	<b>Function:</b> Query for taxa (subfamily, genus, species, subspecies) found in given geolocale that are not imaged.
-            <br><b>Unimaged</b> means no photo of the ant anywhere in AntWeb, from any place: no specimen filed under the name has an image other than a label photo. A name whose specimens have only label photos is unimaged. With byCaste=1, the same for each caste (worker, queen, male).
+            <br><b>Unimaged</b> means no photo of the ant anywhere in AntWeb, from any place: no specimen filed under the name has an image other than a label photo. A name whose specimens have only label photos is unimaged, and so is a name whose only photos are of red-flagged specimens (since 2026-11-09). With byCaste=1, the same for each caste (worker, queen, male).
             <p><b>Parameters:</b>
         <table class="arguments">
             <tr>

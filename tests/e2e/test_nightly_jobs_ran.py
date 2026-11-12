@@ -21,10 +21,13 @@ Which line proves which job (checked in the Java source, 2026-11-04):
   "Regions populated"), follows the AntCat list line; "Set 2 done" ends the set;
 - set 3: projectCountCrawl "Project species-list counts crawled:" and "Projects counts computed",
   populateMuseum "Museums populated", populateBioregion "Bioregions populated", the group counts
-  "Group counts:", crawlForType "Types Crawl completed", then "Set 3 done";
+  "Group counts:", crawlForType "Types Crawl completed", the group specimen counts "Group specimen counts:" (since
+  2026-11-11, GroupDb.recountUploadSpecimens, the set's last statement; see test_group_specimen_counts_line), then
+  "Set 3 done";
 - set 4: imageCountCrawl "AntWeb-wide list Images counted" (ProjTaxonCountDb) and "Image Count Crawl
-  completed" (ImageCountDb), placeImageCounts "Place image counts:", placeGenusCuration "Not curated
-  counted:", then "Set 4 done"; then, outside set 4 (Scheduler.runPlaceListTotals, since 2026-11-06),
+  completed" (ImageCountDb), placeImageCounts "Place image counts:" (since 2026-11-11 it goes on "imaged specimens N
+  in S s (read ...", test_place_image_counts_used_the_working_set), placeGenusCuration "Not curated
+  counted:", imagingProgress "Imaging progress counted:" (since 2026-11-08), then "Set 4 done"; then, outside set 4 (Scheduler.runPlaceListTotals, since 2026-11-06),
   placeViewTotals "Place list totals counted:";
 - set 5 is skipped in staging's nightly ("set5 skipped on staging (memory)", Scheduler); on production it
   runs but writes no line of its own. This test runs on staging only, so set 5 and its jobs
@@ -73,6 +76,8 @@ RUN_LINES = [
     "Image Count Crawl completed",
     "Place image counts:",
     "Not curated counted:",
+    # the imaging progress page (2026-11-08), after the statistics row
+    "Imaging progress counted:",
     "Set 4 done",
     # after set 4, on its own connection (Scheduler.runPlaceListTotals, 2026-11-06)
     "Place list totals counted:",
@@ -110,6 +115,7 @@ JOB_LINES = {
     "/utilData.do?action=placeImageCounts": "Place image counts:",
     "/utilData.do?action=placeGenusCuration": "Not curated counted:",
     "/utilData.do?action=placeViewTotals": "Place list totals counted:",
+    "/utilData.do?action=imagingProgress": "Imaging progress counted:",
 }
 
 # Words a job writes on its line when it did not do its work.
@@ -184,6 +190,27 @@ def test_set5_skipped_on_staging(run_lines):
         f"no '{SET5_SKIPPED}' between 'Set 4 done' and the steps after the sets:\n" + _quote(run_lines[set4:after + 1]))
 
 
+def test_group_specimen_counts_line(run_lines):
+    """Set 3 recounts every group's stored specimen count (ant_group.upload_specimens, GroupDb.recountUploadSpecimens,
+    2026-11-11: a stale number was a real difference of the count check every day, production group 52) and writes
+    "Group specimen counts: N groups recounted, M numbers changed (...)[, K left as stored (...)] in S s" as its last
+    statement, after the type crawl and before "Set 3 done" (the rows it changes are locked until the set
+    commits). A run from before the change has no such line: skipped then. Once staging's daily update has written
+    it, the line can join RUN_LINES (before "Set 3 done")."""
+    i = _find(run_lines, "Group specimen counts:")
+    if i is None:
+        pytest.skip(f"the nightly run that began {run_lines[0][0]} has no 'Group specimen counts:' line: it ran before "
+                    "the change of 2026-11-11 was deployed")
+    line = run_lines[i][1]
+    assert not FAILED.search(line), line[:300]
+    m = re.match(r"Group specimen counts: (\d+) groups recounted, (\d+) numbers changed", line)
+    assert m and int(m.group(1)) > 0 and int(m.group(2)) <= int(m.group(1)), line[:300]
+    before, after = _find(run_lines, "Types Crawl completed"), _find(run_lines, "Set 3 done")
+    # (that nothing of the set runs between it and the commit is checked in the source: tests/unit/test_group_specimen_count_daily.py)
+    assert before is not None and after is not None and before < i < after, (
+        "the line is not between 'Types Crawl completed' and 'Set 3 done':\n" + _quote(run_lines[max(0, i - 3):i + 4]))
+
+
 def test_each_job_wrote_its_line(run_lines):
     """Each catalog job of the nightly has its result line in the run, and the line does not report a failure."""
     problems = []
@@ -199,13 +226,38 @@ def test_each_job_wrote_its_line(run_lines):
 def test_place_list_totals_counted_every_place(run_lines):
     """The nightly count of the place pages' Subfamilies, Genera and Species ("/utilData.do?action=placeViewTotals",
     PlaceViewTotalDb) counted places and none failed. 2026-11-05: every place failed with the same error and the line
-    read "Place list totals counted: 0 places ...; not counted: Aargau (...)", which the presence check let through."""
+    read "Place list totals counted: 0 places ...; not counted: Aargau (...)", which the presence check let through.
+    Since 2026-11-10 the line goes on after the counts: "(M recounted, K unchanged); recounted because: data changed 12
+    (list rows 3, ...), new place 1; comparing 20 s, counting 4 s" (the reason "not counted yet" is now "new place"); a
+    place that fails adds "; FAILED for N places ...". Only the number of places and the word FAILED are read here;
+    tests/unit/test_place_totals_connection.py runs these patterns against the line as the Java code builds it."""
     i = _find(run_lines, "Place list totals counted:")
     assert i is not None, "no 'Place list totals counted:' line in the nightly run:\n" + _quote(run_lines)
     line = run_lines[i][1]
     m = re.match(r"Place list totals counted: (?:FAILED, )?(\d+) places", line)
     assert m and int(m.group(1)) > 0, f"no place counted: {line[:300]}"
     assert "FAILED" not in line and "not counted:" not in line, f"places not counted: {line[:400]}"
+
+
+# Since 2026-11-11 the place image counts read the specimens from a working set of the specimens that have images
+# (PlaceImageCountDb.openWorkingSet); when the working set cannot be made the old statements run (same numbers, about
+# ten minutes more) and the line says so.
+WORKING_SET = re.compile(r"Place image counts: imaged specimens (\d+) in [0-9.]+ s \(read ")
+WORKING_SET_NOT_USED = "imaged specimens: working set not used"
+
+
+def test_place_image_counts_used_the_working_set(run_lines):
+    """The daily update counted the place images from the imaged specimens, not with the old statements over every
+    specimen: the line begins "Place image counts: imaged specimens N in S s (read ...". Skips for a run before the
+    change (a line without "imaged specimens")."""
+    i = _find(run_lines, "Place image counts:")
+    assert i is not None, "no 'Place image counts:' line in the daily update's run:\n" + _quote(run_lines)
+    line = run_lines[i][1]
+    if "imaged specimens" not in line:
+        pytest.skip("this run was before the place image counts read the imaged specimens (2026-11-11)")
+    assert WORKING_SET_NOT_USED not in line, f"the working set was not used, the old statements ran: {line[:400]}"
+    m = WORKING_SET.match(line)
+    assert m and int(m.group(1)) > 0, f"no imaged specimens in the working set: {line[:300]}"
 
 
 # The long pool (longConPool, WEB-INF/struts-configDbAnt.xml) closes a connection held over 60 minutes
