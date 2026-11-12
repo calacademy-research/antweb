@@ -702,6 +702,68 @@ Undo: `mv taxonworks.properties.off-<date> taxonworks.properties`. Without the f
 
 **Stop all outgoing mail** (for example a mail loop): rename `mail.properties` the same way (`mv mail.properties mail.properties.off-$(date +%Y%m%d)`). Messages are then only written to `logbak/emails.log`.
 
+## Open API v4, end v3.1 (the one switch)
+
+Decided by Brian Fisher 2026-11-09: when v4 opens, v3.1 ends. How it works: [flows/api.md](flows/api.md), "The switch". Staging first; production only after a clean full end-to-end run on staging with the switch on.
+
+**Before the switch, on that server:**
+
+- The island work is live there (the code of `feat/island-countries` and `tools/place/island_countries.py --apply`): v4's texts say that an island that is its own country is not part of its political parent (Brian Fisher, 2026-11-11), and that is true only once the stored specimens are moved. Staging: the weekly refresh from production (Sundays 02:30) undoes the move until production has it too; run the tool's `--apply` on staging again after a refresh, or wait until production is done.
+- This branch is deployed (the test key script comes with it).
+- Staging only: the test key and the GitHub secret (steps 2 and 3). Production has no test key: the production smoke run sends none.
+- Production only: Cloudflare (last part of this section).
+
+**1. v4 is configured and closed** (expected answer: `closed`; `not configured` means the usage login is missing: run `bash /root/antweb-next/tools/api/setup-usage-login.sh`, then `docker restart antweb_api_1`, and ask again):
+
+```
+# ssh root@165.232.136.170   (staging)
+curl -sk --resolve staging.antweb.org:443:127.0.0.1 https://staging.antweb.org/v4/ | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])"
+```
+
+**2. The test key (staging only).** The command prints the key once (a line starting with `aw_`). It is a secret: do not paste the output into a chat, a document or an email. Copy that one line for step 3, then run `clear`.
+
+```
+# ssh root@165.232.136.170   (staging)
+python3 /root/antweb-next/tools/api/create-test-key.py
+```
+
+**3. The GitHub secret.** In the browser: github.com/calacademy-research/antweb, Settings, Secrets and variables, Actions, New repository secret. Name `ANTWEB_TEST_API_KEY`, value: the key line. Brian pastes it there himself. Then check on the server (this output is safe to share: it shows the first characters only; expected "in the database, admin, active"):
+
+```
+# ssh root@165.232.136.170   (staging)
+python3 /root/antweb-next/tools/api/create-test-key.py --check
+```
+
+**4. The switch.** The file holds passwords: never `cat` it. The first command must print 0 (no such line yet):
+
+```
+# ssh root@165.232.136.170   (staging)
+grep -c '^v4Open=' /root/antweb-next/etc/api-db.properties
+```
+
+```
+# ssh root@165.232.136.170   (staging)
+cp -p /root/antweb-next/etc/api-db.properties /root/antweb-next/etc/api-db.properties.bak-v4open && printf '\nv4Open=true\n' >> /root/antweb-next/etc/api-db.properties && docker restart antweb_api_1 && sleep 20 && docker logs antweb_api_1 --since 1m 2>&1 | grep "API v4 open"
+```
+
+Expected: `API v4 open: True`. Then step 1's command answers `open`, and a v3.1 data route answers 410:
+
+```
+# ssh root@165.232.136.170   (staging)
+curl -sk -o /dev/null -w '%{http_code}\n' --resolve staging.antweb.org:443:127.0.0.1 "https://staging.antweb.org/v3.1/taxa?genus=camponotus&limit=1&up=1"
+```
+
+**5. The full end-to-end run on staging** (workflow "End-to-end tests", full): the API tests now go through `/v4/` with the test key. `test_api.py::test_the_tests_can_reach_the_api` fails with what to do when the secret is missing or refused.
+
+**Rollback (either server):** remove the line and restart; v3.1 is then closed as before (503, `up=1` works again).
+
+```
+# ssh root@165.232.136.170   (staging)
+sed -i '/^v4Open=/d' /root/antweb-next/etc/api-db.properties && docker restart antweb_api_1 && sleep 20 && docker logs antweb_api_1 --since 1m 2>&1 | grep "API v4 open"
+```
+
+**Production** (after staging is clean, with Brian's yes): steps 1 and 4 with `ssh root@165.232.137.86`, `/root/antweb/` in place of `/root/antweb-next/` and `www.antweb.org` in place of `staging.antweb.org`; no steps 2 and 3. Before step 4, in the Cloudflare console for antweb.org (a settings change: Brian's yes first): the rule that keeps `/v3.1/` out of Under Attack Mode and the API rate rule must also cover the path `/v4/` (add `or starts_with(http.request.uri.path, "/v4/")` to each rule's expression; keep `/v3.1/` in both, its front door and its 410 answers are still read). Check from outside afterwards: `https://www.antweb.org/v4/` answers JSON with `"status": "open"`, not a challenge page. The production smoke run and morning check accept both states.
+
 ## One-off data repairs
 
 ### Locality codes stored URL-encoded

@@ -289,6 +289,27 @@ def test_the_tests_can_reach_the_api():
     assert r.status_code == 200 and len(r.json()["taxa"]) == 1, (r.status_code, r.text[:200])
 
 
+def test_an_island_is_not_part_of_its_political_parent():
+    """Brian Fisher, 2026-11-11: "An oceanic island or archipelago with its own ant fauna is its own country in AntWeb.
+    Its specimens never count toward the political parent." country=Hawaii returns Hawaii's specimens, each with the
+    island as its country; the same specimen asked for with country=United States is not there. Skips until the stored
+    specimens are moved on the server (tools/place/island_countries.py --apply)."""
+    s = new_session()
+    for island, parent in (("Hawaii", "United States"), ("Galapagos Islands", "Ecuador")):
+        r = s.get(BASE_URL + "/v3.1/specimens?up=1&limit=3&country=" + island.replace(" ", "%20"), timeout=max(TIMEOUT, 120))
+        assert r.status_code == 200, (island, r.status_code, r.text[:200])
+        specimens = r.json().get("specimens") or []
+        if not specimens:
+            pytest.skip(f"{island}: the stored specimens are not moved yet (tools/place/island_countries.py --apply)")
+        for specimen in specimens:
+            assert specimen["country"] == island, (specimen["specimenCode"], specimen["country"])
+            code = specimen["specimenCode"]
+            r = s.get(BASE_URL + f"/v3.1/specimens?up=1&specimenCode={code}&country=" + parent.replace(" ", "%20"),
+                      timeout=max(TIMEOUT, 120))
+            assert r.status_code == 200, (code, r.status_code, r.text[:200])
+            assert (r.json().get("specimens") or []) == [], f"{code} of {island} is returned for country={parent}"
+
+
 def test_unknown_route_is_json_404():
     r = new_session().get(BASE_URL + "/v3.1/noSuchRoute?up=1", timeout=max(TIMEOUT, 120))
     assert r.status_code == 404, r.status_code

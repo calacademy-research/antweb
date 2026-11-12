@@ -694,6 +694,85 @@ def test_rows_outside_v4_is_the_query_as_it_was():
     assert apisrc.count("data = api_v4.rows(") == 4, "specimens, geoSpecimens (records and distinct), taxa"
 
 
+# --- countries and islands --------------------------------------------------------------------------------------
+
+def test_an_island_is_its_own_country():
+    """Brian Fisher, 2026-11-11: "An oceanic island or archipelago with its own ant fauna is its own country in AntWeb.
+    Its specimens never count toward the political parent." (Reverses the rule of 2026-11-10: Hawaii was part of
+    United States.) country= compares the stored country and nothing else: Hawaii's specimens are stored with country
+    Hawaii (tools/place/island_countries.py), so country=United States has none of them, in the records and in the
+    total, and country=Hawaii has them all."""
+    islands = ["hawaii%02d" % i for i in range(3)] + ["galap01"]
+    try:
+        for c in islands[:3]:
+            add(c, country="Hawaii")
+        add("galap01", country="Galapagos Islands")
+        for i in range(2):
+            add("usa%02d" % i, country="United States")
+        add("ecu01", country="Ecuador")
+        s = api.session()
+        s.add_all([api.Geolocale(id="20", name="United States", georank="country", isValid="1"),
+                   api.Geolocale(id="21", name="Hawaii", georank="country", isValid="1", parent="United States"),
+                   api.Geolocale(id="22", name="Ecuador", georank="country", isValid="1"),
+                   api.Geolocale(id="23", name="Galapagos Islands", georank="country", isValid="1", parent="Ecuador")])
+        s.commit()
+        api.session.remove()
+        with opened():
+            for country, expected in (("United States", ["usa00", "usa01"]), ("Hawaii", islands[:3]),
+                                      ("hawaii", islands[:3]), ("Ecuador", ["ecu01"]), ("Galapagos Islands", ["galap01"])):
+                r = get("/v4/specimens?country=" + country.replace(" ", "%20") + "&limit=100")
+                assert codes_of(r) == expected, (country, codes_of(r))
+                m = r.get_json()["metaData"]
+                assert m["total"] == len(expected) and m["complete"] is True, (country, m)
+            # the specimens of a place by its name (geolocaleName, georank country) follow the same stored country
+            del STATEMENTS[:]
+            get("/v4/specimens?geolocaleName=United%20States&limit=5")
+            sql = " ".join(st for st, _p in STATEMENTS).lower()
+            assert "country) = " in sql and "island" not in sql, sql[-400:]
+            # paged with afterCode the parent's set still has no island record
+            got, _pages = walk_after("/v4/specimens?country=United%20States", 1)
+            assert got == ["usa00", "usa01"], got
+            # one island record asked for inside its political parent: not there
+            assert codes_of(get("/v4/specimens?country=United%20States&specimenCode=hawaii00")) == []
+            assert codes_of(get("/v4/specimens?country=Hawaii&specimenCode=hawaii00")) == ["hawaii00"]
+    finally:
+        for c in islands + ["usa00", "usa01", "ecu01"]:
+            delete(c)
+        with data_engine.begin() as c:
+            c.execute(text("delete from geolocale where id in ('20', '21', '22', '23')"))
+        api.session.remove()
+
+
+def test_the_country_filter_never_reads_the_island_column():
+    """The rule is the stored country alone. A filter that also took specimens by an island column would put an
+    island back into its political parent (the rule of 2026-11-10, reversed on 2026-11-11)."""
+    apisrc = open(api.__file__, encoding="utf-8").read()
+    assert "island_country" not in apisrc and "islandCountry" not in apisrc, "api.py reads the island column"
+    v4src = open(api_v4.__file__, encoding="utf-8").read()
+    assert "island_country" not in v4src and "islandCountry" not in v4src, "api_v4.py reads the island column"
+
+
+def test_front_door_and_documentation_say_an_island_is_its_own_country():
+    j = client.get("/v4/").get_json()
+    c = j["countries"]
+    assert "country=Hawaii" in c["islands"] and "never part of its political parent" in c["islands"], c
+    assert "country=United States gives no record of Hawaii" in c["islands"], c
+    assert "no country" in c["noCountry"], c
+    if REPO is None:
+        print("  (repository files not mounted, skipped)")
+        return
+    for path in ("web/documentation/api/apiV3_1-body.jsp", "web/llms.txt", "docs/flows/api.md"):
+        with open(os.path.join(REPO, path), encoding="utf-8") as f:
+            page = f.read()
+        assert "Hawaii" in page and "political parent" in page, path
+        if path.startswith("docs/"):
+            assert "reverses the rule of 2026-11-10" in page, "the flow doc does not say which rule this replaces"
+            continue
+        # the public texts never say the rule of 2026-11-10 (an island is part of the country it is filed under)
+        for old in ("islands filed under", "islands are included", "Hawaii under United States", "including its islands"):
+            assert old not in page, (path, old)
+
+
 # --- the front door and the documentation ----------------------------------------------------------------------
 
 def test_front_door_describes_paging():

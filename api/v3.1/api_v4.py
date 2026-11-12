@@ -27,6 +27,10 @@ and whether it reaches the end (complete). /specimens and /geoSpecimens take aft
 after that code in specimen code order, so a set fetched page by page neither skips nor repeats a record when
 records are added or removed meanwhile; metaData.nextAfterCode is the code to send next.
 
+Countries and islands (Brian Fisher, 2026-11-11; COUNTRY below): country= is the stored country of the specimen and
+nothing else. An oceanic island that is its own country in AntWeb (Hawaii, Galapagos Islands) is asked for by its own
+name and is never part of its political parent.
+
 The key is never written to a log, an error or a reply: the inner request has no key header, and nothing here prints
 headers. Docs: docs/flows/api.md, section "v4 and API keys". Tests: tests/unit/test_api_v4.py.
 """
@@ -82,6 +86,21 @@ PAGING = {
                  ' afterCode for the next one, until complete is true. Use afterCode or offset, not both.',
     'ndjson': 'With ndjson=true the same values are in the headers X-AntWeb-Total, X-AntWeb-Returned,'
               ' X-AntWeb-Complete and X-AntWeb-Next-After-Code (URL-encoded).',
+}
+# What country= means (the v4 front door and docs/flows/api.md). Brian Fisher, 2026-11-11: "An oceanic island or
+# archipelago with its own ant fauna is its own country in AntWeb. Its specimens never count toward the political
+# parent." This reverses the rule of 2026-11-10 (an island filed under a country was part of that country, Hawaii
+# under United States). Nothing in the query does it: country= compares the stored specimen.country (api.countryIs),
+# which is the island's own name for an island's specimens (tools/place/island_countries.py); the island column is
+# never read. So the rule holds on a server once that tool has moved the stored specimens.
+COUNTRY = {
+    'country': 'country=<name> gives the specimen records whose country in AntWeb is that country: the whole name, in'
+               ' any case. An old name AntWeb knows (USA) gives the current country (United States), and'
+               ' metaData.countryName names both.',
+    'islands': 'An oceanic island or archipelago with its own ant fauna is its own country in AntWeb (Hawaii,'
+               ' Galapagos Islands). Ask for it by its own name (country=Hawaii). Its records are never part of its'
+               ' political parent: country=United States gives no record of Hawaii.',
+    'noCountry': 'A record with no country is in no country search.',
 }
 BOTH_PAGINGS_MESSAGE = ('Use afterCode or offset, not both. afterCode=<the last specimen code you received> gives the'
                         ' records after it; offset=<n> leaves out the first n records.')
@@ -188,6 +207,7 @@ def front():
         'name': 'Antweb API v4', 'status': st, 'message': messages[st],
         'getAKey': api_keys.GET_A_KEY_URL, 'keyHeader': api_keys.KEY_HEADER, 'limits': lim,
         'routes': ['/v4/' + r for r in sorted(routes())], 'fieldNames': FIELDS, 'paging': PAGING,
+        'countries': COUNTRY,
         'documentation': api.API_DOCS_URL, 'terms': api.API_TERMS_URL, 'guideForPrograms': api.LLMS_URL,
         'terms_of_use': api.API_TERMS, 'contact': api_keys.CONTACT, 'citation': api.CITATION,
         'license': api.LICENSE,

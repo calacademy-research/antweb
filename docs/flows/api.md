@@ -87,7 +87,7 @@ Decisions by Brian Fisher, 2026-11-08. The keyed API is **v4** at `https://www.a
 - Two small hooks in `api.py`, inert outside v4: `setGlobals()` reads `g.apiMaxLimit`, and `getSpecimen()` calls `api_v4.specimen_filters()` (`g.apiV4Filters`).
 - `V4_OPEN` in `api.py` is the one switch, read at start from the server's settings file (next section). While False (the default): v4 answers admin keys only (everyone else 503 "not open yet", `Retry-After: 86400`), `/v4/` says `"status": "closed"`, and v3.1 is as described above (503 without `up=1`; `up=1` works, the staging tests use it). v4's inner requests never use `up=1` (`g.apiV4Inner`), in either state.
 - Caddy: `@api_v4 path /v4 /v4/*` with `handle` (not `handle_path`: the API sees `/v4/...`), in `docker/caddy/Caddyfile` and `Caddyfile.common`. Caddy writes request headers into its access log, so both files drop `X-Api-Key` from the log (`format filter`, `request>headers>X-Api-Key delete`; checked with Caddy 2.10: without the filter the header is logged). They also drop the `token` value from the logged address (`request>uri query { delete token }`), so the one-time links apiKeyConfirm.do?token=... of the registration emails never reach the log (checked with Caddy 2.10: the rest of the address is kept).
-- Cloudflare: not changed by code. `/v4/` must be excepted from Under Attack Mode and covered by the API rate rule in the Cloudflare console before v4 opens (Brian's yes first; the steps are in the switch-on runbook of the pull request "Open v4, end v3.1").
+- Cloudflare: not changed by code. `/v4/` must be excepted from Under Attack Mode and covered by the API rate rule in the Cloudflare console before v4 opens (Brian's yes first; the steps are in [runbook.md](../runbook.md), "Open API v4, end v3.1").
 
 ### The switch: v4 opens, v3.1 ends (2026-11-09)
 
@@ -147,6 +147,16 @@ Setup on a server (staging first): `bash /root/antweb-next/tools/api/setup-usage
 
 `collectionCode` is renamed wherever it appears in a v4 reply (JSON and `ndjson=true`). `localityCode` is added to every specimen record of `/v4/specimens` and `/v4/geoSpecimens` (read from `specimen.localitycode`: the `api3_1_specimen` view has no locality code). `/v4/specimens` also takes `collectingEventCode=` and `localityCode=` as filters. v4 does not take `up` or `log`. Everything else (parameters, filters, other fields, order, paging) is as in v3.1 above, with the totals and `afterCode` of the next section added.
 
+### Countries and islands in v4 (2026-11-11)
+
+Brian Fisher, 2026-11-11: "An oceanic island or archipelago with its own ant fauna is its own country in AntWeb. Its specimens never count toward the political parent." This reverses the rule of 2026-11-10 (an island filed under a country was part of it: Hawaii under United States).
+
+- **The rule in the API is the stored country and nothing else.** `country=` (and `geolocaleName=` of a country) compares `specimen.country` by the whole name (`countryIs()`); neither `api.py` nor `api_v4.py` reads the island column. `country=United States` returns no record of Hawaii, in the records and in `metaData.total`; `country=Hawaii` returns Hawaii's. The same for Ecuador and Galapagos Islands. A record with no country is in no country search.
+- **It depends on the stored data.** The rule is true on a server once the island work (`feat/island-countries`: the upload files an island's record under the island, and `tools/place/island_countries.py --apply` has moved the stored specimens) is live there. Before that a specimen of Hawaii is stored with country United States and is returned for `country=United States`. So v4 is switched on (next section) only on a server where that work is done.
+- **Where it is said:** the API page (`#v4-countries` in the section "Version 4"), `/llms.txt`, and the v4 front door (`/v4/`, `countries`: `api_v4.COUNTRY`).
+- **Not in v4:** v4 returns the records of every family (ants and the other animals AntWeb holds); the data extract (`dataExtract.do`, `tools/export/specimen_extract.py`) is of ants only unless asked otherwise. `metaData.total` is given on the first page and with `total=true` (below).
+- Tests: `tests/unit/test_api_paging.py` (`test_an_island_is_its_own_country`, `test_the_country_filter_never_reads_the_island_column`, `test_front_door_and_documentation_say_an_island_is_its_own_country`); on a server `tests/e2e/test_api.py::test_an_island_is_not_part_of_its_political_parent` (skips until the stored specimens are moved).
+
 ### Complete sets: totals and afterCode (2026-11-10)
 
 Why: a collaborator's extract of March 2026 was incomplete (Stenamma: 14 of 42 species) and nothing in the API's answers showed it. `metaData.count` is the number of records on the page; nothing said how many records matched. v4 only; v3.1 is unchanged while v4 is closed (no new metaData, no new parameters, the same SQL).
@@ -173,7 +183,7 @@ Why `afterCode` and not `offset` for a large set: `offset=1000` means "leave out
 
 **How a collaborator pulls a large set** (for example every specimen of three countries; a collaborator key with `max_records` 10,000 and `records_per_day` raised on apiKeys.do; nothing in the limits changed with this work):
 
-1. One country at a time (`country=` takes one name). First request: `GET /v4/specimens?country=Madagascar&limit=10000` with the key in `X-API-Key`. Note `metaData.total`.
+1. One country at a time (`country=` takes one name; an island that is its own country, Hawaii for example, is a request of its own and is not in its political parent's set). First request: `GET /v4/specimens?country=Madagascar&limit=10000` with the key in `X-API-Key`. Note `metaData.total`.
 2. While `metaData.complete` is false: the same request with `&afterCode=<metaData.nextAfterCode>` (URL-encode the code).
 3. At the end, the number of records received equals the `total` of the first request. If it does not, records were added or removed while the set was fetched (compare the specimen codes, or fetch again after the daily update); it is no longer a silent gap.
 4. `metaData.recordsLeftToday` and HTTP 429 with `Retry-After` say when the day's records are used up. A page cut by the day's limit is short, says `"complete": false` and gives `nextAfterCode`; go on from that code the next day (days are UTC).
