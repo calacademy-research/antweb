@@ -1252,22 +1252,29 @@ For a locality name without code (this name has special characters):
    
     public String getLocatedAtLink() {
         Museum museum = MuseumMgr.getInferredMuseum(locatedAt);
-        return museum == null ? Html.esc(locatedAt) : locatedAtLink(locatedAt, museum.getCode(), museum.getLink());
+        if (museum == null) return Html.esc(locatedAt);
+        String href = AntwebProps.getDomainApp() + "/museum.do?code=" + Html.escAttr(Html.url(museum.getCode()));
+        return locatedAtLink(locatedAt, museum.getCode(), museum.getName(), href);
     }
 
     /**
-     * "Located at" on the specimen page: the text as the curator's file wrote it (the field is free text). When the
-     * text is exactly a museum's code, the museum's name and link stand for it, as before. When it only contains a
-     * code ("can't find at JTLC", "MCZC, on loan"), the text is shown as written, followed by the museum's link.
-     * Until 2026-11-12 any text that contained a museum code was replaced by the museum's name, so a note in the
-     * field never showed (Jack Longino, 2026-11-12). museumLink is the museum's link as HTML (Museum.getLink).
-     * Test: LocatedAtLinkTest.
+     * "Located at" on the specimen page and in the specimen lists: the text as the curator's file wrote it (the field
+     * is free text). When the text is exactly a museum's code or its name, the museum's name and link stand for it,
+     * as before ("JTLC", "JTLC, Longino"). Any other text that contains a museum's code is shown as written, with the
+     * code in it linked to the museum ("can't find at JTLC", "MCZC, on loan"). Until 2026-11-12 any text that
+     * contained a museum code was replaced by the museum's name, so a note in the field never showed (Jack Longino,
+     * 2026-11-12). href is the address of the museum's page, already escaped for an attribute. Test: LocatedAtLinkTest.
      */
-    public static String locatedAtLink(String locatedAt, String museumCode, String museumLink) {
-        String text = Html.esc(locatedAt);
-        if (locatedAt == null || museumCode == null || museumLink == null) return text;
-        if (locatedAt.trim().equalsIgnoreCase(museumCode)) return museumLink;
-        return text + " (" + museumLink + ")";
+    public static String locatedAtLink(String locatedAt, String museumCode, String museumName, String href) {
+        if (locatedAt == null || museumCode == null || museumCode.isEmpty() || href == null) return Html.esc(locatedAt);
+        String text = locatedAt.trim();
+        if (text.equalsIgnoreCase(museumCode) || (museumName != null && text.equalsIgnoreCase(museumName.trim()))) {
+            return "<a href='" + href + "'>" + Html.esc(museumName == null || museumName.trim().isEmpty() ? museumCode : museumName) + "</a>";
+        }
+        int at = locatedAt.indexOf(museumCode);
+        if (at < 0) return Html.esc(locatedAt);
+        return Html.esc(locatedAt.substring(0, at)) + "<a href='" + href + "'>" + Html.esc(museumCode) + "</a>"
+            + Html.esc(locatedAt.substring(at + museumCode.length()));
     }
 
 
