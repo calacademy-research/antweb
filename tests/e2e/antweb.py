@@ -40,9 +40,9 @@ TITLE = re.compile(r"<title>\s*(.*?)\s*</title>", re.I | re.S)
 # up, with the test key in the X-API-Key header, whenever the server says v4 is open (/v3.1/ -> "v4": {"status":
 # "open"}). A request to /v3.1/ without up=1 is never changed (tests of v3.1's own answers). The replies differ only in
 # the v4 field names: collectingEventCode (v3.1 collectionCode), specimenCode in /taxaImages (v3.1 code), localityCode.
-# v4's specimen routes answer for ants only unless asked otherwise (2026-11-12); v3.1 answers for every family. So a
-# /specimens or /geoSpecimens request goes to v4 with allFamilies=true: the tests compare the API with the site's
-# numbers, which count every specimen, and must mean the same in both states.
+# v4's routes that read specimens by place answer for ants only unless asked otherwise (2026-11-12); v3.1 answers
+# for every family. So a request to one of them (V4_ANTS_ONLY_ROUTES) goes to v4 with allFamilies=true: the tests
+# compare the API with the site's numbers, which count every specimen, and must mean the same in both states.
 #
 # The key: ANTWEB_TEST_API_KEY in the environment (GitHub Actions secret of that name, staging only), an admin key
 # made on staging by tools/api/create-test-key.py. Never in the repository, never printed. Without it (or when the
@@ -76,12 +76,13 @@ def v4_open() -> bool:
     return is_open
 
 
-V4_ANTS_ONLY_ROUTES = ("specimens", "geoSpecimens")   # api_v4.FAMILY_ROUTES: ants only unless allFamilies=true
+# api_v4.FAMILY_ROUTES: ants only unless allFamilies=true
+V4_ANTS_ONLY_ROUTES = ("specimens", "geoSpecimens", "geoSpeciesStats", "distinctTaxa", "measurements")
 
 
 def api_v4_url(url: str):
     """The /v4/ address of a "/v3.1/<route>?...up=1" request (up removed), or None when the address is not one.
-    The specimen routes get allFamilies=true, so the answer is of every family as v3.1's is."""
+    The routes that are of ants only in v4 get allFamilies=true, so the answer is of every family as v3.1's is."""
     parts = urllib.parse.urlsplit(url)
     if not parts.path.startswith("/v3.1/") or parts.path == "/v3.1/":
         return None

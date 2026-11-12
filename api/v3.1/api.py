@@ -1164,6 +1164,7 @@ def getGeoSpeciesStats():
     # queenErgatoidCount and maleErgatoidCount count the ergatoids of their caste (2026-10-22: both counted every
     # ergatoid specimen, so a male ergatoid was also a queen ergatoid). Every subcaste count counts only within its
     # caste, as the ergatoids do (decided by Brian Fisher 2026-10-27).
+    # api_v4.ants_only(...): v4 only, ants unless allFamilies=true (2026-11-12); in v3.1 the text is as it was.
     query = "select s.taxon_name, s.genus, s.species " \
             + " , count(case when caste='queen' then 1 end)" \
             + " , count(case when caste='queen' and subcaste='ergatoid' then 1 end)" \
@@ -1180,7 +1181,7 @@ def getGeoSpeciesStats():
             + "   and gt.geolocale_id = g.id and " \
             + extraClause \
             + " and g.id = :geolocaleId" \
-            + "  and s.status = 'valid'" \
+            + api_v4.ants_only("  and s.status = 'valid'", 's') \
             + " group by s.taxon_name, s.genus, s.species" \
             + " order by s.taxon_name" \
             + " limit :limit offset :offset"
@@ -1405,6 +1406,7 @@ def getDistinctTaxa():
     query = boundsFilter(query, minDate, maxDate, minElevation, maxElevation)
     if status != '*':
         query = query.filter(Specimen.status == status)
+    query = api_v4.ants_only(query, Specimen)          # v4 only: ants unless allFamilies=true (2026-11-12)
 
     # A fixed order so paging with offset neither repeats nor skips (F8).
     if 'subfamily' == taxarank:
@@ -1792,6 +1794,7 @@ def getMeasurements():
         query = query.filter(Specimen.caste == caste)
     if taxonStatus != '*':
         query = query.filter(Specimen.status == taxonStatus)
+    query = api_v4.ants_only(query, Specimen)          # v4 only: ants unless allFamilies=true (2026-11-12)
 
     query = query.order_by(Measurement.id)
     query = query.limit(limit)

@@ -320,7 +320,8 @@ def test_v4_specimens_are_ants_only_unless_asked():
     the country", the same definition as the data extract. A v4 specimen answer holds ants only (family Formicidae
     and the records with no family given) and says so in metaData.families; allFamilies=true gives the others; a
     record of another family asked for by its code is there only then; the total of its country is larger with
-    allFamilies=true. Needs the staging test key (v4 answers an admin key also while it is closed)."""
+    allFamilies=true. /distinctTaxa, /geoSpeciesStats and /measurements follow the same rule; a route that does not
+    read specimens by place has none. Needs the staging test key (v4 answers an admin key also while it is closed)."""
     if IS_PRODUCTION:
         pytest.skip("the test key is a staging key")
     if not api_test_key():
@@ -328,8 +329,8 @@ def test_v4_specimens_are_ants_only_unless_asked():
     import requests
     headers = {API_KEY_HEADER: api_test_key(), "User-Agent": new_session().headers["User-Agent"]}
 
-    def v4(query):
-        r = requests.get(BASE_URL + "/v4/specimens?" + query, timeout=max(TIMEOUT, 120), headers=headers, allow_redirects=False)
+    def v4(query, route="specimens"):
+        r = requests.get(BASE_URL + "/v4/" + route + "?" + query, timeout=max(TIMEOUT, 120), headers=headers, allow_redirects=False)
         if r.status_code == 401:
             pytest.skip("the server refused the test key: make a new one with tools/api/create-test-key.py")
         assert r.status_code == 200, (query, r.status_code, r.text[:200])
@@ -363,6 +364,31 @@ def test_v4_specimens_are_ants_only_unless_asked():
         ants = v4("limit=1&country=" + country.replace(" ", "%20"))["metaData"]["total"]
         everything = v4("limit=1&allFamilies=true&country=" + country.replace(" ", "%20"))["metaData"]["total"]
         assert everything > ants, f"{country}: {everything} records of every family, {ants} of ants"
+
+    # the other routes that read specimens by place follow the same rule and say so (the requests of API_CASES)
+    for route, query in (("distinctTaxa", "country=Madagascar&taxarank=genus&limit=5"),
+                         ("geoSpeciesStats", "geolocaleName=California&limit=5"), ("measurements", "genus=camponotus&limit=5")):
+        assert v4(query, route)["metaData"]["families"] == "antsOnly", route
+        assert v4(query + "&allFamilies=true", route)["metaData"]["families"] == "allFamilies", route
+    # the names of the specimens of the other record's country: its genus is named only with every family, unless ants
+    # of that genus name exist there too (then it is in both lists)
+    genus = (other.get("genus") or "").lower()
+    if country and genus:
+        def genera(extra):
+            names, offset = set(), 0
+            while True:
+                page = v4(f"taxarank=genus&limit=500&offset={offset}{extra}&country=" + country.replace(" ", "%20"), "distinctTaxa")["genera"]
+                names.update((g or "").lower() for g in page)
+                if len(page) < 500 or offset >= 5000:
+                    return names
+                offset += 500
+        every, ants_only = genera("&allFamilies=true"), genera("")
+        assert ants_only <= every, sorted(ants_only - every)[:5]
+        assert genus in every, f"{genus} of {code} is not among the genera of {country} with allFamilies=true"
+    # a route without the rule says nothing about families and does not take the parameter
+    assert "families" not in v4("genus=camponotus&limit=1", "taxa")["metaData"]
+    r = requests.get(BASE_URL + "/v4/taxa?allFamilies=true", timeout=max(TIMEOUT, 120), headers=headers, allow_redirects=False)
+    assert r.status_code == 400 and r.json()["unknownParameters"] == ["allFamilies"], (r.status_code, r.text[:200])
 
     # bad values are refused
     for query in ("allFamilies=yes", "family=all"):

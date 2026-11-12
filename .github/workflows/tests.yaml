@@ -206,7 +206,7 @@ jobs:
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" -v "$PWD/docker/caddy:/caddy:ro" \
             antweb/api:dev /t/test_api_v4.py
 
-      - name: API v4 complete sets (metaData.total, returned and complete; afterCode paging that neither skips nor repeats when records change; afterCode with offset is 400; v3.1 unchanged while v4 is closed; ants only by default with the data extract's condition, allFamilies=true, metaData.families) (tests/unit/test_api_paging.py)
+      - name: API v4 complete sets (metaData.total, returned and complete; afterCode paging that neither skips nor repeats when records change; afterCode with offset is 400; v3.1 unchanged while v4 is closed; ants only by default on every route that reads specimens by place, one definition (the data extract's) and one helper, allFamilies=true, metaData.families) (tests/unit/test_api_paging.py)
         run: |
           docker run --rm --entrypoint python -e REPO_DIR=/repo -v "$PWD/tests/unit:/t:ro" \
             -v "$PWD/web/documentation/api/apiV3_1-body.jsp:/repo/web/documentation/api/apiV3_1-body.jsp:ro" \

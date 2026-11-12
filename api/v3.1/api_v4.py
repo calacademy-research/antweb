@@ -31,9 +31,11 @@ Countries and islands (Brian Fisher, 2026-11-11; COUNTRY below): country= is the
 nothing else. An oceanic island that is its own country in AntWeb (Hawaii, Galapagos Islands) is asked for by its own
 name and is never part of its political parent.
 
-Ants only (Brian Fisher, 2026-11-10; FAMILIES below): the specimen records of /specimens and /geoSpecimens are of
-ants unless more is asked for, with the same test the data extract uses (family Formicidae, or no family given).
-allFamilies=true gives every family, family=<name> on /specimens that family; metaData.families says which was used.
+Ants only (Brian Fisher, 2026-11-10; FAMILIES below): every route that reads specimens and takes a place filter
+(/specimens, /geoSpecimens, /geoSpeciesStats, /distinctTaxa, /measurements) answers for ants unless more is asked for,
+with the same test the data extract uses (family Formicidae, or no family given): one definition (ANTS), one helper
+(ants_only()). allFamilies=true gives every family, family=<name> on /specimens that family; metaData.families says
+which was used.
 
 The key is never written to a log, an error or a reply: the inner request has no key header, and nothing here prints
 headers. Docs: docs/flows/api.md, section "v4 and API keys". Tests: tests/unit/test_api_v4.py.
@@ -42,7 +44,7 @@ import json
 import urllib.parse
 
 from flask import Flask, Response, g, request
-from sqlalchemy import bindparam, column, create_engine, func, or_, select, table, text
+from sqlalchemy import bindparam, column, create_engine, func, select, table, text
 from sqlalchemy.engine import URL
 from werkzeug.datastructures import MultiDict
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
@@ -71,6 +73,8 @@ FIELDS = [
 # allFamilies (ants_only()) is a v4 name too.
 EXTRA_PARAMS = {'getSpecimen': ('collectingEventCode', 'localityCode', 'afterCode', 'total', 'allFamilies'),
                 'getGeoSpecimens': ('afterCode', 'total', 'allFamilies'),
+                'getGeoSpeciesStats': ('allFamilies',), 'getDistinctTaxa': ('allFamilies',),
+                'getMeasurements': ('allFamilies',),
                 'getTaxa': ('total',)}
 # Old or Darwin Core names, pointed to the v4 name in the 400 reply.
 HINTS = {'collectionCode': 'collectingEventCode', 'catalogNumber': 'specimenCode', 'eventID': 'collectingEventCode',
@@ -113,22 +117,30 @@ COUNTRY = {
 # (after his question about the first Nearctic file: "why did you include non ants for an ant study?"). AntWeb also
 # holds beetles, wasps, spiders and other animals found with ants (production: 1,289 of the 200,075 specimens of United
 # States, Canada and Mexico). The test is the extract's own, word for word (tools/export/specimen_extract.py ANTS,
-# DataExtract.ANTS): family Formicidae, or no family given; ants_condition() below, and tests/unit/test_api_paging.py
-# compares the two. The name of the choice is the extract's too (--all-families, the form's allFamilies).
+# DataExtract.ANTS): family Formicidae, or no family given. ANTS below is that text with the table's name left open,
+# the one definition every route uses through ants_only(), and tests/unit/test_api_paging.py compares it with the
+# extract's. The name of the choice is the extract's too (--all-families, the form's allFamilies).
+# Where: every route that reads specimens and takes a place filter (FAMILY_ROUTES). Not /images and /taxaImages
+# (images by specimen code or name, no place filter), and not the routes that give names and lists from other tables
+# (/taxa, /geolocales, /geolocaleTaxa, /unimagedGeolocaleTaxa, /bioregions, /bioregionTaxa).
 # v3.1 is not changed: it answers for every family, as before.
+ANTS = "({s}.family = 'formicidae' or {s}.family is null or {s}.family = '')"     # {s}: the specimen table or its alias
 ANTS_ONLY, ALL_FAMILIES, ONE_FAMILY = 'antsOnly', 'allFamilies', 'family'
-FAMILY_ROUTES = ('getSpecimen', 'getGeoSpecimens')       # the routes whose records are specimens (SPECIMEN_LISTS)
+FAMILY_ROUTES = ('getSpecimen', 'getGeoSpecimens', 'getGeoSpeciesStats', 'getDistinctTaxa', 'getMeasurements')
 FAMILIES = {
-    'routes': ['/v4/specimens', '/v4/geoSpecimens'],
-    'antsOnly': 'The specimen records of these routes are of ants only unless you ask for more: family Formicidae,'
-                ' and the records with no family given. The same holds for metaData.total and for the lists of'
-                ' names of /v4/geoSpecimens with distinct=. AntWeb also holds beetles, wasps, spiders and other'
-                ' animals found with ants; the default leaves them out.',
+    'routes': ['/v4/specimens', '/v4/geoSpecimens', '/v4/geoSpeciesStats', '/v4/distinctTaxa', '/v4/measurements'],
+    'antsOnly': 'These routes answer from the specimen records of ants only unless you ask for more: family'
+                ' Formicidae, and the records with no family given. That holds for the records, for metaData.total,'
+                ' for the lists of names (/v4/distinctTaxa, /v4/geoSpecimens with distinct=), for the counts of'
+                ' /v4/geoSpeciesStats and for the specimens whose measurements /v4/measurements gives. AntWeb also'
+                ' holds beetles, wasps, spiders and other animals found with ants; the default leaves them out.',
     'allFamilies': 'allFamilies=true gives the records of every family.',
     'family': 'On /v4/specimens, family=<name> gives the records of that one family (family=vespidae).',
     'metaData': 'metaData.families says which was used: antsOnly, allFamilies or family. With ndjson=true it is in'
                 ' the header X-AntWeb-Families.',
-    'otherRoutes': 'The other routes are not changed by this: they answer for every family.',
+    'otherRoutes': 'The other routes have no family rule: /v4/images and /v4/taxaImages give images by specimen code'
+                   ' or name, and the taxon, geolocale and bioregion routes give names and lists, not specimen'
+                   ' records.',
 }
 ALL_FAMILIES_VALUE_MESSAGE = 'allFamilies must be true or false.'
 FAMILY_ALL_MESSAGE = ('family=all is not the name of a family. For the records of every family send allFamilies=true;'
@@ -612,21 +624,24 @@ def rows(query, limit, offset, key=None, after_code=False):
     return found
 
 
-def ants_condition(Specimen):
-    """Ants only, as the data extract has it (tools/export/specimen_extract.py ANTS and DataExtract.ANTS:
-    "(s.family = 'formicidae' or s.family is null or s.family = '')"): family Formicidae, or no family given.
-    Specimen.family is specimen.family (the view api3_1_specimen passes it through). MySQL compares the name without
-    case, as in the extract."""
-    return or_(Specimen.family == 'formicidae', Specimen.family.is_(None), Specimen.family == '')
+def ants_only(query, specimen):
+    """v4 only: the ants-only default, on the query of every route that reads specimens and takes a place filter
+    (FAMILY_ROUTES). The one place the rule is applied, with the one definition (ANTS: the data extract's test, family
+    Formicidae or no family given; MySQL compares the name without case, as in the extract).
 
-
-def ants_only(query, Specimen):
-    """v4 only: the ants-only default on the queries of /specimens and /geoSpecimens (records, total and distinct
-    lists alike, since they are all made from this query). Nothing outside v4 (v3.1 answers for every family), with
-    allFamilies=true, or when /specimens is asked for one family."""
+    query     the route's SQLAlchemy query and specimen its mapped class (api.Specimen: the view api3_1_specimen
+              passes specimen.family through), or
+              the WHERE text of a route that writes its SQL as text (/geoSpeciesStats) and specimen the alias of
+              the specimen table in it ('s'): " and <the test>" is added.
+    Returns the query unchanged outside v4 (v3.1 answers for every family), with allFamilies=true, and when
+    /specimens is asked for one family. The records, the totals and the distinct lists of a route are made from the
+    one query this is applied to, so they cannot differ. With an outer join (/measurements) a measurement without a
+    specimen record stays: it has no family."""
     if not getattr(g, 'apiV4Inner', False) or getattr(g, 'apiV4Families', None) != ANTS_ONLY:
         return query
-    return query.filter(ants_condition(Specimen))
+    if isinstance(query, str):
+        return query + ' and ' + ANTS.format(s=specimen)
+    return query.filter(text(ANTS.format(s=specimen.__tablename__)))
 
 
 def specimen_filters(query, Specimen):

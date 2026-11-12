@@ -16,7 +16,8 @@ answers showed it; metaData gave only the number of records on the page. Now, in
   record whose country in AntWeb is the country", the same definition as the data extract): /specimens and
   /geoSpecimens answer for family Formicidae and the records with no family given, in the records, the total and the
   distinct lists; allFamilies=true gives every family, family=<name> that family; metaData.families says which; the
-  condition is the extract's own; v3.1 answers for every family as before
+  condition is the extract's own; v3.1 answers for every family as before. The same rule, by the same helper, on the
+  other routes that read specimens and take a place filter: /geoSpeciesStats, /distinctTaxa, /measurements
 
 The data routes run against a small SQLite database, the counters against another (no MySQL needed). Run inside the
 API image (CI, .github/workflows/tests.yaml):
@@ -109,8 +110,13 @@ def add(code, **kw):
     s = api.session()
     s.add(specimen(code, **kw))
     s.commit()
+    # the specimen table itself (the localityCode lookup of v4, and the SQL of /geoSpeciesStats)
     with data_engine.begin() as c:
-        c.execute(text("insert into specimen values (:c, 'LOC01', :t)"), {"c": code, "t": "myrmicinaepheidole sp1"})
+        c.execute(text("insert into specimen (code, localitycode, taxon_name, genus, species, caste, status, country, family)"
+                       " values (:c, 'LOC01', :t, :g, :s, 'worker', 'valid', :country, :f)"),
+                  {"c": code, "t": kw.get("taxon", "myrmicinaepheidole sp1"), "g": kw.get("genus", "pheidole"),
+                   "s": kw.get("species", "sp0"), "country": kw.get("country", "Madagascar"),
+                   "f": kw.get("family", "formicidae")})
     api.session.remove()
 
 
@@ -128,7 +134,8 @@ def delete(code):
 
 def setup():
     with data_engine.begin() as c:
-        c.execute(text("create table specimen (code text primary key, localitycode text, taxon_name text)"))
+        c.execute(text("create table specimen (code text primary key, localitycode text, taxon_name text, genus text,"
+                       " species text, caste text, subcaste text, status text, country text, family text)"))
     s = api.session()
     s.add(api.Taxon(taxonName="myrmicinaepheidole sp1", subfamily="myrmicinae", genus="pheidole", species="sp1",
                     taxarank="species"))
@@ -787,20 +794,41 @@ MEXICO = "/v4/specimens?country=Mexico"
 NEAR = "/v4/geoSpecimens?coords=10,10&radius=1"
 
 
+ANT_NAME, BEETLE_NAME, WASP_NAME = "myrmicinaestenamma mx1", "curculionidaebeetlegenus mx1", "vespidaewaspgenus mx1"
+
+
 @contextlib.contextmanager
 def other_families():
-    """Six specimens of Mexico at 10,10: two ants, two with no family given, a beetle and a wasp."""
+    """Six specimens of Mexico at 10,10: two ants, two with no family given, a beetle and a wasp. Mexico is a place
+    with the three names on its list (/geoSpeciesStats), and four specimens have a measurement, as has a code with no
+    specimen record (/measurements)."""
     try:
-        add("mxant01", country="Mexico", lat=10, lon=10)
-        add("mxant02", country="Mexico", lat=10, lon=10, species="sp1")
-        add("mxnofam01", country="Mexico", lat=10, lon=10, family=None, genus="stenamma")
-        add("mxnofam02", country="Mexico", lat=10, lon=10, family="", genus="stenamma")
-        add("mxbeetle01", country="Mexico", lat=10, lon=10, family="curculionidae", genus="beetlegenus")
-        add("mxwasp01", country="Mexico", lat=10, lon=10, family="vespidae", genus="waspgenus")
+        add("mxant01", country="Mexico", lat=10, lon=10, taxon=ANT_NAME, genus="stenamma", species="mx1")
+        add("mxant02", country="Mexico", lat=10, lon=10, taxon=ANT_NAME, genus="stenamma", species="mx1")
+        add("mxnofam01", country="Mexico", lat=10, lon=10, family=None, genus="pheidole", species="mx2")
+        add("mxnofam02", country="Mexico", lat=10, lon=10, family="", genus="pheidole", species="mx2")
+        add("mxbeetle01", country="Mexico", lat=10, lon=10, family="curculionidae", taxon=BEETLE_NAME, genus="beetlegenus", species="mx1")
+        add("mxwasp01", country="Mexico", lat=10, lon=10, family="vespidae", taxon=WASP_NAME, genus="waspgenus", species="mx1")
+        s = api.session()
+        s.add(api.Geolocale(id="30", name="Mexico", georank="country", isValid="1"))
+        for name, genus in ((ANT_NAME, "stenamma"), (BEETLE_NAME, "beetlegenus"), (WASP_NAME, "waspgenus")):
+            s.add(api.Taxon(taxonName=name, genus=genus, species="mx1", taxarank="species"))
+            s.add(api.GeolocaleTaxon(geolocaleId=30, taxonName=name))
+        for i, code in enumerate(("mxant01", "mxnofam01", "mxbeetle01", "mxwasp01", "mxghost01"), start=900):
+            s.add(api.Measurement(id=i, code=code, trait="WL"))
+        s.commit()
+        api.session.remove()
         yield
     finally:
+        api.session.remove()
         for c in ANTS + OTHERS:
             delete(c)
+        with data_engine.begin() as c:
+            c.execute(text("delete from measurement where id >= 900"))
+            c.execute(text("delete from geolocale_taxon where geolocale_id = 30"))
+            c.execute(text("delete from taxon where taxon_name in (:a, :b, :w)"), {"a": ANT_NAME, "b": BEETLE_NAME, "w": WASP_NAME})
+            c.execute(text("delete from geolocale where id = '30'"))
+        api.session.remove()
 
 
 def test_ants_only_is_the_default_and_the_answer_says_so():
@@ -881,20 +909,86 @@ def test_geo_specimens_are_ants_only_too_with_their_distinct_lists():
         assert r.headers["X-AntWeb-Families"] == "antsOnly" and r.headers["X-AntWeb-Total"] == "4"
 
 
-def test_other_routes_have_no_family_rule():
-    """Only the two routes whose records are specimens. The other routes answer as before, and do not take the
-    parameter (an unknown parameter is refused, with the name it could be on the routes that have it)."""
+def test_distinct_taxa_geo_species_stats_and_measurements_follow_the_same_rule():
+    """Every route that reads specimens and takes a place filter (the coordinator's decision of 2026-11-12, after the
+    first two): the names of a country's specimens, the caste counts of a place's species and the measurements of a
+    country's specimens are of ants only unless allFamilies=true, and each answer says which."""
     fresh_usage()
     with other_families(), opened():
-        m = meta("/v4/taxa?genus=camponotus&limit=2")
-        assert "families" not in m, m
-        r = get("/v4/taxa?genus=camponotus&limit=2")
-        assert "X-AntWeb-Families" not in r.headers
-        j = get("/v4/taxa?allFamilies=true", expect=400).get_json()
-        assert j["unknownParameters"] == ["allFamilies"], j
-        # /distinctTaxa reads the specimens of every family, as in v3.1 (said on the front door)
+        # /distinctTaxa: the names of the specimens of a country
         j = get("/v4/distinctTaxa?country=Mexico&taxarank=genus").get_json()
-        assert j["genera"] == ["beetlegenus", "pheidole", "stenamma", "waspgenus"] and "families" not in j["metaData"], j
+        assert j["genera"] == ["pheidole", "stenamma"] and j["metaData"]["families"] == "antsOnly", j
+        r = get("/v4/distinctTaxa?country=Mexico&taxarank=genus&allFamilies=true")
+        assert r.get_json()["genera"] == ["beetlegenus", "pheidole", "stenamma", "waspgenus"], r.get_json()
+        assert r.get_json()["metaData"]["families"] == "allFamilies" and r.headers["X-AntWeb-Families"] == "allFamilies"
+        j = get("/v4/distinctTaxa?country=Mexico&taxarank=species").get_json()
+        assert j["taxarank"] == ["Pheidole mx2", "Stenamma mx1"], j
+        j = get("/v4/distinctTaxa?country=Mexico&taxarank=species&allFamilies=true").get_json()
+        assert j["taxarank"] == ["Beetlegenus mx1", "Pheidole mx2", "Stenamma mx1", "Waspgenus mx1"], j
+
+        # /geoSpeciesStats: the species of a place with their specimens by caste (the SQL is text; the same helper)
+        j = get("/v4/geoSpeciesStats?geolocaleName=Mexico").get_json()
+        assert [(x["taxonName"], x["workerCount"]) for x in j["geoSpeciesStats"]] == [(ANT_NAME, 2)], j
+        assert j["metaData"]["families"] == "antsOnly", j["metaData"]
+        j = get("/v4/geoSpeciesStats?geolocaleName=Mexico&allFamilies=true").get_json()
+        assert [(x["taxonName"], x["workerCount"]) for x in j["geoSpeciesStats"]] == [
+            (BEETLE_NAME, 1), (ANT_NAME, 2), (WASP_NAME, 1)], j
+        assert j["metaData"]["families"] == "allFamilies", j["metaData"]
+
+        # /measurements: of ants, and of a code with no specimen record (it has no family; as before it has no place)
+        j = get("/v4/measurements?trait=WL").get_json()
+        assert [m["specimenCode"] for m in j["measurements"]] == ["mxant01", "mxnofam01", "mxghost01"], j
+        assert j["metaData"]["families"] == "antsOnly", j["metaData"]
+        j = get("/v4/measurements?trait=WL&country=Mexico").get_json()
+        assert [m["specimenCode"] for m in j["measurements"]] == ["mxant01", "mxnofam01"], j
+        j = get("/v4/measurements?trait=WL&country=Mexico&allFamilies=true").get_json()
+        assert [m["specimenCode"] for m in j["measurements"]] == ["mxant01", "mxnofam01", "mxbeetle01", "mxwasp01"], j
+        assert j["metaData"]["families"] == "allFamilies", j["metaData"]
+
+        # these three have no family= of their own; a bad allFamilies is refused on each
+        for url in ("/v4/distinctTaxa?taxarank=genus", "/v4/geoSpeciesStats?geolocaleName=Mexico", "/v4/measurements?trait=WL"):
+            j = get(url + "&allFamilies=maybe", expect=400).get_json()
+            assert j["error"] == "allFamilies must be true or false.", (url, j)
+            assert get(url + "&family=vespidae", expect=400).get_json()["unknownParameters"] == ["family"], url
+
+
+def test_one_definition_and_one_helper_for_every_route():
+    """The rule is written once (api_v4.ANTS) and applied by one function (api_v4.ants_only), called by exactly the
+    routes of api_v4.FAMILY_ROUTES; no route has a family test of its own."""
+    import inspect
+    import re
+    apisrc = open(api.__file__, encoding="utf-8").read()
+    v4src = open(api_v4.__file__, encoding="utf-8").read()
+    callers = sorted(name for name, fn in inspect.getmembers(api, inspect.isfunction)
+                     if fn.__module__ == api.__name__ and "api_v4.ants_only(" in inspect.getsource(fn))
+    assert callers == sorted(api_v4.FAMILY_ROUTES), callers
+    assert apisrc.count("api_v4.ants_only(") == len(api_v4.FAMILY_ROUTES) + 1       # the line and a comment in /geoSpeciesStats
+    assert "formicidae" not in re.sub(r"#.*", "", apisrc).replace('"(formicidae)"', ""), "api.py has a family test of its own"
+    assert v4src.count("= 'formicidae'") == 1 and "def ants_condition" not in v4src, "one definition: api_v4.ANTS"
+    assert sorted(api_v4.FAMILIES["routes"]) == sorted("/v4/" + r for r, e in api_v4.routes().items() if e in api_v4.FAMILY_ROUTES)
+    # every one of them takes allFamilies, and no other route does
+    for route, endpoint in api_v4.routes().items():
+        assert ("allFamilies" in api_v4.accepted(endpoint)) is (endpoint in api_v4.FAMILY_ROUTES), route
+    # a route that reads specimens and has a country filter is on the list (a new one must be added to it)
+    for name, fn in inspect.getmembers(api, inspect.isfunction):
+        src = inspect.getsource(fn) if fn.__module__ == api.__name__ else ""
+        if name.startswith("get") and "request.args.get('country'" in src and "Specimen.country" in src:
+            assert name in api_v4.FAMILY_ROUTES, name + " filters specimens by country and has no family rule"
+
+
+def test_other_routes_have_no_family_rule():
+    """The routes that give images by specimen code or name, and names and lists from other tables, answer as before
+    and do not take the parameter (an unknown parameter is refused)."""
+    fresh_usage()
+    with other_families(), opened():
+        for url in ("/v4/taxa?genus=camponotus&limit=2", "/v4/images?limit=2", "/v4/taxaImages?limit=2",
+                    "/v4/geolocales?limit=2", "/v4/geolocaleTaxa?limit=2", "/v4/bioregions?limit=2", "/v4/bioregionTaxa?limit=2"):
+            r = get(url)
+            j = r.get_json()
+            meta_ = j.get("metaData") or j.get("_metaData") or {}
+            assert "families" not in meta_ and "X-AntWeb-Families" not in r.headers, url
+            j = get(url + "&allFamilies=true", expect=400).get_json()
+            assert j["unknownParameters"] == ["allFamilies"], (url, j)
 
 
 def test_bad_family_values_are_400_before_anything_is_counted():
@@ -928,9 +1022,20 @@ def test_v31_answers_for_every_family_as_before():
         assert "family = " not in sql and "family is null" not in sql, sql[-300:]
         r = client.get("/geoSpecimens?coords=10,10&radius=1&limit=100&up=1")
         assert [s["specimenCode"] for s in r.get_json()["specimens"]] == sorted(ANTS + OTHERS)
-        j = client.get("/specimens?allFamilies=true&up=1")
-        assert j.status_code == 400 and j.get_json()["unknownParameters"] == ["allFamilies"], j.get_data(as_text=True)[:200]
-        assert "allFamilies" not in api.acceptedParams("getSpecimen") + api.acceptedParams("getGeoSpecimens")
+        j = client.get("/distinctTaxa?country=Mexico&taxarank=genus&up=1").get_json()
+        assert j["genera"] == ["beetlegenus", "pheidole", "stenamma", "waspgenus"] and "families" not in j["metaData"], j
+        del STATEMENTS[:]
+        j = client.get("/geoSpeciesStats?geolocaleName=Mexico&up=1").get_json()
+        assert [x["taxonName"] for x in j["geoSpeciesStats"]] == [BEETLE_NAME, ANT_NAME, WASP_NAME], j
+        assert "family" not in " ".join(st for st, _p in STATEMENTS if "caste" in st).lower(), "v3.1 /geoSpeciesStats SQL changed"
+        j = client.get("/measurements?trait=WL&country=Mexico&up=1").get_json()
+        assert [m["specimenCode"] for m in j["measurements"]] == ["mxant01", "mxnofam01", "mxbeetle01", "mxwasp01"], j
+        for route in ("/specimens?", "/geoSpecimens?coords=10,10&", "/distinctTaxa?", "/geoSpeciesStats?geolocaleName=Mexico&",
+                      "/measurements?"):
+            j = client.get(route + "allFamilies=true&up=1")
+            assert j.status_code == 400 and j.get_json()["unknownParameters"] == ["allFamilies"], (route, j.get_data(as_text=True)[:200])
+        for endpoint in api_v4.FAMILY_ROUTES:
+            assert "allFamilies" not in api.acceptedParams(endpoint), endpoint
         # and v4 through an admin key while v4 is closed is v4: ants only
         fresh_usage()
         assert codes_of(get(MEXICO + "&limit=100", key="admin")) == ANTS
@@ -938,10 +1043,8 @@ def test_v31_answers_for_every_family_as_before():
 
 def test_the_ants_only_condition_is_the_data_extracts():
     """The same test the data extract uses for "ants only", not one of the API's own: family Formicidae, or no family
-    given (tools/export/specimen_extract.py ANTS; DataExtract.ANTS in the page's engine)."""
-    from sqlalchemy.dialects import mysql
-    ours = str(api_v4.ants_condition(api.Specimen).compile(dialect=mysql.dialect(), compile_kwargs={"literal_binds": True}))
-    ours = "(" + ours.replace("api3_1_specimen.", "s.").replace(" OR ", " or ").replace(" IS NULL", " is null") + ")"
+    given (tools/export/specimen_extract.py ANTS; DataExtract.ANTS in the page's engine). Word for word."""
+    ours = api_v4.ANTS.format(s="s")
     assert ours == "(s.family = 'formicidae' or s.family is null or s.family = '')", ours
     if REPO is None:
         print("  (repository files not mounted, skipped)")
@@ -953,14 +1056,21 @@ def test_the_ants_only_condition_is_the_data_extracts():
     if os.path.isfile(engine):      # the Data extract page, when it is in the repository
         with open(engine, encoding="utf-8") as f:
             assert ('ANTS = "' + ours + '"') in f.read(), "DataExtract.ANTS is not " + ours
-    # the view the API reads gives the specimen's own family
-    assert api.Specimen.__table__.c.family.name == "family"
+    # the view the API reads gives the specimen's own family, and the SQL sent has the same words
+    assert api.Specimen.__table__.c.family.name == "family" and api.Specimen.__tablename__ == "api3_1_specimen"
+    fresh_usage()
+    with opened():
+        del STATEMENTS[:]
+        get("/v4/specimens?country=Madagascar&limit=1")
+        sent = [st for st, _p in STATEMENTS if "api3_1_specimen" in st and "count(" not in st.lower()]
+        assert sent and api_v4.ANTS.format(s="api3_1_specimen") in sent[0], sent
 
 
 def test_front_door_and_documentation_say_ants_only():
     j = client.get("/v4/").get_json()
     f = j["families"]
-    assert f["routes"] == ["/v4/specimens", "/v4/geoSpecimens"], f
+    assert f["routes"] == ["/v4/specimens", "/v4/geoSpecimens", "/v4/geoSpeciesStats", "/v4/distinctTaxa", "/v4/measurements"], f
+    assert "/v4/images" in f["otherRoutes"] and "no family rule" in f["otherRoutes"], f
     assert "ants only" in f["antsOnly"] and "no family given" in f["antsOnly"] and "metaData.total" in f["antsOnly"], f
     assert "allFamilies=true" in f["allFamilies"] and "family=<name>" in f["family"], f
     assert "metaData.families" in f["metaData"] and "X-AntWeb-Families" in f["metaData"], f
@@ -972,7 +1082,7 @@ def test_front_door_and_documentation_say_ants_only():
     for path in ("web/documentation/api/apiV3_1-body.jsp", "web/llms.txt", "docs/flows/api.md"):
         with open(os.path.join(REPO, path), encoding="utf-8") as fh:
             page = fh.read()
-        for word in ("allFamilies=true", "metaData.families", "no family given"):
+        for word in ("allFamilies=true", "metaData.families", "no family given", "geoSpeciesStats", "distinctTaxa", "measurements"):
             assert word in page, (path, word)
         assert "ants only" in page.lower(), path
         # no text says any more that v4 answers for every family by default
