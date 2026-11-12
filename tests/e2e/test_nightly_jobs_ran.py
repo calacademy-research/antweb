@@ -195,7 +195,9 @@ def test_set5_skipped_on_staging(run_lines):
 def test_project_lists_cleaned_line(run_lines):
     """Set 2 takes the rows off project lists that go once their children are gone (a genus row without species, a
     proxy row without children; ProjTaxonDb.cleanupLists) right after the data clean-up and before the Global recount,
-    the first count of a project list, and writes "Project lists cleaned: N rows removed (project n, ...) in S s".
+    the first count of a project list, and writes "Project lists cleaned: N rows removed in S s; <project> n: <names>;
+    ..." (the rows by project and name, up to ten names per project, then "and N more": Brian Fisher, 2026-11-03, no
+    job deletes list entries without a record; administrators read compute.log in the Log Manager).
     Until 2026-11-12 set 5 removed them on production after the counts (count check 11-12: Genera of fossilants 259
     stored, 258 listed; allantwebants 536, 535; proj_taxa 70,419, 70,413), and staging, which skips set 5, never ran
     them. A run from before the change has no such line: skipped then. Once staging's daily update has written it,
@@ -206,13 +208,19 @@ def test_project_lists_cleaned_line(run_lines):
                     "the change of 2026-11-12 was deployed")
     line = run_lines[i][1]
     assert not FAILED.search(line), line[:300]
-    m = re.match(r"Project lists cleaned: (\d+) rows removed( \(([^)]*)\))? in \d+ s$", line)
+    m = re.match(r"Project lists cleaned: (\d+) rows removed in \d+ s(?:; (.*))?$", line)
     assert m, line[:300]
-    if m.group(3):   # the projects' rows add up to the total
-        per_project = [int(x.rsplit(" ", 1)[1]) for x in m.group(3).split(", ")]
-        assert sum(per_project) == int(m.group(1)), line[:300]
-    else:
-        assert int(m.group(1)) == 0, line[:300]
+    projects = [p for p in (m.group(2) or "").split("; ") if p]
+    removed = 0
+    for part in projects:   # "<project> <n>: <name>, <name> and <k> more"
+        p = re.match(r"(\w+) (\d+): (.+)$", part)
+        assert p, f"not '<project> <n>: <names>': {part[:200]!r} in {line[:300]!r}"
+        n, names = int(p.group(2)), p.group(3)
+        more = re.search(r" and (\d+) more$", names)
+        named = len((names[:more.start()] if more else names).split(", "))
+        assert named + (int(more.group(1)) if more else 0) == n and named <= 10, f"{part[:200]!r}: {n} rows, {named} named"
+        removed += n
+    assert removed == int(m.group(1)), line[:300]   # the projects' rows add up to the total
     before, after = _find(run_lines, "Data cleanup done"), _find(run_lines, "Global column recounted after the clean-up")
     assert before is not None and after is not None and before < i < after, (
         "the line is not between 'Data cleanup done' and 'Global column recounted after the clean-up':\n"

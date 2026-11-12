@@ -699,7 +699,11 @@ Found while doing this (2026-10-26, end-to-end tests of rows 24 to 53; each has 
   subfamily rows are one over per deleted genus, and the count check calls it real (the rows were deleted before the end
   of the run). (Fixed 2026-11-12: the two clean-ups run in set 2, before any project list is counted,
   `ProjTaxonDb.cleanupLists`; production 11-12 had shown fossilants Genera 259 stored and 258 listed, allantwebants 536
-  and 535, and the statistics row's proj_taxa 70,419 against 70,413; test `junit:ListCleanupOrderDbTest`.) Queries (read-only):
+  and 535, and the statistics row's proj_taxa 70,419 against 70,413. The genus rows follow the rule of 2026-11-02, "A
+  genus stays on a place's list only with a species row of that genus or a specimen of it there", by one method for the
+  clean-up and for the rebuild of the AntWeb-wide list at each upload, `removeGenusRowsWithoutSpeciesOrSpecimen`: that
+  list's Genera no longer move by one between an upload and the next daily update. Test `junit:ListCleanupOrderDbTest`.)
+  Queries (read-only):
   `select t.taxon_name, t.status, t.fossil, t.parent_taxon_name, pt.taxarank, pt.status, (select count(*) from proj_taxon x
   where x.project_name = 'fossilants' and x.taxon_name = t.parent_taxon_name) parent_on_list from proj_taxon l join taxon t
   on t.taxon_name = l.taxon_name left join taxon pt on pt.taxon_name = t.parent_taxon_name where l.project_name =

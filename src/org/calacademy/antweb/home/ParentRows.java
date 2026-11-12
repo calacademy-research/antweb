@@ -35,7 +35,8 @@ import org.calacademy.antweb.geolocale.Geolocale;
  * The new rows follow the conventions of the rows the lists already derive from others: source "proxy" + the child's
  * source (as GeolocaleTaxonDb.insert and ProjTaxonDb give the parent rows of an entry; the best source of the children,
  * Source.aTrumpsB), insert_method "parentRow" where the table has the column; museum lists have no source. Rows are
- * never removed here: the rebuilds of the lists (set 2, set 3) and the clean-ups of set 5 (genus rows without children)
+ * never removed here: the rebuilds of the lists (set 2, set 3) and the clean-up of the project lists (set 2 since
+ * 2026-11-12, set 5 before: genus rows without a species row, ProjTaxonDb.removeGenusRowsWithoutSpeciesOrSpecimen)
  * already do that. One query per step and place, the inserts batched.
  */
 public final class ParentRows {

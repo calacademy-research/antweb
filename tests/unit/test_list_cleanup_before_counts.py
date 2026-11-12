@@ -9,7 +9,14 @@ Source checks (the behaviour is tested against a database by home.ListCleanupOrd
   - set 2, which every run reaches on production and staging, calls ProjTaxonDb.cleanupLists right after the data
     clean-up and before the first count of a project list (the Global recount), and writes its line to compute.log;
   - no later step of the sets removes project list rows: sets 3, 4 and 5 call neither clean-up;
-  - the clean-up is the two that set 5 ran, and the AntCat list is still left alone.
+  - the clean-up is the two that set 5 ran, and the AntCat list is still left alone;
+  - the rule of the genus rows (agreed with Brian Fisher, 2026-11-02: "A genus stays on a place's list only with a
+    species row of that genus or a specimen of it there") is in one method, which the daily clean-up uses for every
+    project and the rebuild of the AntWeb-wide list (each specimen upload, the name update) for its list, after the
+    rows are in and before they are counted: the builder and the clean-up cannot read the rule differently again
+    (until 2026-11-12 the rebuild listed every counted name and the clean-up removed a genus without species, so the
+    list's Genera moved by one between an upload and the next daily update);
+  - the line names the rows removed (Brian Fisher, 2026-11-03: no job deletes list entries without a record).
 """
 import pathlib
 import re
@@ -77,13 +84,51 @@ def test_the_cleanup_is_the_two_of_set_5():
     assert '"; FAILED: "' in cleanup
     for word in ("commit(", "rollback(", "setAutoCommit("):
         assert word not in cleanup, word
-    # the AntCat list keeps every genus row; rows removed are counted per project
-    assert "\"   and pt.project_name != 'worldants'\"" in src
+    # the AntCat list keeps every genus row; rows removed are counted and named per project
+    assert "from proj_taxon where project_name != 'worldants' order by project_name" in src
     assert "rowsRemoved.merge(projectName, c, Integer::sum);" in src
+    assert "namesRemoved.computeIfAbsent(projectName, k -> new ArrayList<>()).add(taxonName);" in src
+    assert 'String named = removedRowsText();' in cleanup
+
+
+def method(src, signature):
+    start = src.index(signature)
+    return code(src[start:src.index("\n    }\n", start)])
+
+
+def test_one_rule_for_the_cleanup_and_the_rebuild_of_the_antweb_wide_list():
+    src = read("src/org/calacademy/antweb/home/ProjTaxonDb.java")
+    rule = "removeGenusRowsWithoutSpeciesOrSpecimen"
+    # the daily clean-up: every project but the AntCat list, by the method
+    verify = method(src, "public String verifyProjTaxon() throws SQLException {")
+    assert "for (String project : projects) removed += %s(project);" % rule in verify
+    assert "hasNoChildren" not in verify
+    # the method: no species row on the list; on the AntWeb-wide list also no specimen
+    body = method(src, "public int %s(String projectName) throws SQLException {" % rule)
+    assert "GENUS_ROWS_WITHOUT_SPECIES_SQL" in body
+    assert "if (Project.ALLANTWEBANTS.equals(projectName) && antwebHasSpecimenOf(genus[1], genus[2])) continue;" in body
+    assert "deleteProjTaxon(genus[0], projectName);" in body
+    assert "ct.parent_taxon_name" in src[src.index("GENUS_ROWS_WITHOUT_SPECIES_SQL ="):][:700]
+    # the rebuild: the rows in, the disputed ones out, then the rule, and only then the counts
+    rebuild = method(src, "public void rebuildAllAntwebList() throws SQLException {")
+    order = ["delete from proj_taxon where project_name = 'allantwebants'", "insert into proj_taxon (taxon_name, project_name, source)",
+             "from proj_taxon_dispute", "%s(Project.ALLANTWEBANTS)" % rule]
+    positions = [rebuild.index(x) for x in order]
+    assert positions == sorted(positions), list(zip(order, positions))
+    assert "childrenCountCrawl" not in rebuild and "updateCounts" not in rebuild
+    regenerate = method(src, "public void regenerateAllAntweb() throws SQLException {")
+    order = ["rebuildAllAntwebList();", 'childrenCountCrawl("allantwebants")', "allAntwebImageCount();", 'updateCounts("allantwebants")']
+    positions = [regenerate.index(x) for x in order]
+    assert positions == sorted(positions), list(zip(order, positions))
+    # every caller of the rebuild goes through regenerateAllAntweb (uploads, the name update, the parent repair, the admin job)
+    for f in ("src/org/calacademy/antweb/upload/SpecimenUpload.java", "src/org/calacademy/antweb/upload/SpeciesListUpload.java",
+              "src/org/calacademy/antweb/util/UtilDataAction.java"):
+        assert "regenerateAllAntweb()" in read(f), f
 
 
 if __name__ == "__main__":
     test_set_2_cleans_the_project_lists_before_the_first_count()
     test_no_later_set_removes_project_list_rows()
     test_the_cleanup_is_the_two_of_set_5()
+    test_one_rule_for_the_cleanup_and_the_rebuild_of_the_antweb_wide_list()
     print("ok")

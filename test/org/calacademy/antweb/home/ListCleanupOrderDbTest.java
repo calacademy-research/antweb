@@ -40,7 +40,21 @@ import static test.org.calacademy.antweb.util.NumbersTestDb.*;
  *  - the order until 2026-11-12 (counts, then the clean-up): the three kinds of difference production showed;
  *  - the order now (the clean-up, then the counts): no row the clean-up removed is in any stored number, and the count
  *    check finds nothing; the AntCat list keeps its row; the line names the rows removed per project;
- *  - a second clean-up removes nothing; a database error is in the line and not thrown.
+ *  - a second clean-up removes nothing; a database error is in the line and not thrown;
+ *  - the line names every row removed, by project and name, up to ten names per project, then "and N more" (Brian
+ *    Fisher, 2026-11-03: no job deletes list entries without a record; administrators read compute.log in the Log
+ *    Manager, logMgr.do).
+ *
+ * The rule of the genus rows (agreed with Brian Fisher, 2026-11-02: "A genus stays on a place's list only with a
+ * species row of that genus or a specimen of it there") holds at every moment: the rebuild of the AntWeb-wide list at
+ * each specimen upload (ProjTaxonDb.rebuildAllAntwebList) applies the method the daily clean-up uses
+ * (removeGenusRowsWithoutSpeciesOrSpecimen). Until 2026-11-12 the rebuild put every counted name on the list, a genus
+ * without species among them, and the clean-up took it off: the list's Genera moved by one between an upload and the
+ * next daily update (production: 536, 535).
+ *  - after a rebuild the genus without species or specimens is not on the list, a genus whose only name is "<Genus>
+ *    (indet)" (specimens identified only to genus) is, and so is a genus that has a specimen in AntWeb but no name on
+ *    the list; the daily clean-up then removes nothing from that list and its Genera do not move;
+ *  - on a project list, whose specimens are those of its listed names, a genus without a species row goes.
  *
  * tests/unit/test_list_cleanup_before_counts.py checks in the source that set 2 calls the clean-up before its first
  * count and that no later set removes list rows. Runs in CI against MySQL 8.4; ANTWEB_TEST_DB_URL overrides.
@@ -70,6 +84,7 @@ public class ListCleanupOrderDbTest extends TestCase {
         exec(connection, PlaceViewTotalDb.createTable(null, null));
         exec(connection, PlaceViewTotalDb.createStateTable(null, null));
         StatisticsDb.ensureHomeColumns(connection);
+        exec(connection, "alter table taxon add column source varchar(30)");   // read by the rebuild of the AntWeb-wide list
         // a valid genus without species, and a subfamily that is on madants only as a proxy row of the Species List Tool
         exec(connection, "insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus) values"
             + " ('" + CREMATOGASTER + "', 'genus', 'valid', '" + MYRM + "', 'formicidae', '" + MYRM + "', 'crematogaster'),"
@@ -151,7 +166,7 @@ public class ListCleanupOrderDbTest extends TestCase {
         counts();
         assertEquals("nothing differs before the clean-up: " + differences(), 0, differences().size());
         String line = new ProjTaxonDb(connection).cleanupLists();
-        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 rows removed (madants 2, " + ALL + " 1) in "));
+        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 rows removed in "));
         // the three numbers of production 2026-11-12, here one or two rows too high each
         assertEquals("madants Genera stored, listed", "[3, 2]", Arrays.toString(genera("madants")));
         assertEquals(ALL + " Genera stored, listed", "[3, 2]", Arrays.toString(genera(ALL)));
@@ -168,7 +183,9 @@ public class ListCleanupOrderDbTest extends TestCase {
     public void testCleanupThenCountsLeavesNoRemovedRowInAnyStoredNumber() throws Exception {
         int rows = one("select count(*) from proj_taxon");
         String line = new ProjTaxonDb(connection).cleanupLists();
-        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 rows removed (madants 2, " + ALL + " 1) in "));
+        // the line names each row removed, by project (madants first: its proxy row went before the genus rows)
+        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 rows removed in "));
+        assertTrue(line, line.endsWith(" s; madants 2: " + DORYLINAE + ", " + CREMATOGASTER + "; " + ALL + " 1: " + CREMATOGASTER));
         assertFalse(line, line.contains("FAILED"));
         assertEquals(rows - 3, one("select count(*) from proj_taxon"));
         assertEquals("the genus without species and the proxy row are off the two lists", 0,
@@ -186,9 +203,129 @@ public class ListCleanupOrderDbTest extends TestCase {
 
         // the next day: nothing to remove, and the numbers stand
         line = new ProjTaxonDb(connection).cleanupLists();
-        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 0 rows removed in "));
+        assertTrue(line, line.matches(ProjTaxonDb.CLEANUP_LOG + ": 0 rows removed in \\d+ s"));
         counts();
         assertEquals("the count check: " + differences(), 0, differences().size());
+    }
+
+    /** More rows of one project than the line names: ten names, then "and N more"; the number is of all. */
+    public void testTheLineNamesTheRowsRemovedUpToTenPerProject() throws Exception {
+        StringBuilder taxa = new StringBuilder();
+        StringBuilder rows = new StringBuilder();
+        for (int i = 11; i <= 22; i++) {
+            String name = MYRM + "genus" + i;
+            taxa.append(i == 11 ? "" : ", ").append("('").append(name).append("', 'genus', 'valid', '").append(MYRM).append("', 'formicidae', '")
+                .append(MYRM).append("', 'genus").append(i).append("')");
+            rows.append(i == 11 ? "" : ", ").append("('madants', '").append(name).append("', 'specimen')");
+        }
+        exec(connection, "insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus) values " + taxa);
+        exec(connection, "insert into proj_taxon (project_name, taxon_name, source) values " + rows);
+        ProjTaxonDb db = new ProjTaxonDb(connection);
+        String line = db.cleanupLists();
+        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 15 rows removed in "));
+        // madants: the proxy row, Crematogaster and the twelve genera = 14 rows, ten named
+        assertTrue(line, line.contains("; madants 14: " + DORYLINAE + ", " + CREMATOGASTER + ", " + MYRM + "genus11, "));
+        assertTrue(line, line.contains(", " + MYRM + "genus18 and 4 more; " + ALL + " 1: " + CREMATOGASTER));
+        assertFalse("the eleventh row is counted, not named: " + line, line.contains(MYRM + "genus19"));
+        assertEquals(db.removedRowsText(), line.substring(line.indexOf(" s; ") + 4));
+    }
+
+    // ------------------------------------------------------------------ the rule at every moment: the AntWeb-wide list's rebuild
+
+    static final String LIOPONERA = "dorylinaelioponera";
+    static final String OLDGENUS = "myrmicinaeoldgenus";
+
+    /**
+     * Three more genera in the taxon table, each of a counted status, as the rebuild finds them:
+     *   Crematogaster  no name under it, no specimen                      neither half of the rule: not on the list
+     *   Lioponera      only "Lioponera (indet)", the name of specimens identified only to genus, with a specimen:
+     *                  a species row of the genus                           on the list
+     *   Oldgenus       its only name is a synonym (not a counted status, so not on the list), with a specimen of
+     *                  the genus in AntWeb                                  on the list: a specimen of it there
+     */
+    private void moreGenera() throws Exception {
+        exec(connection, "insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus, species) values"
+            + " ('" + DORYLINAE + "x', 'subfamily', 'synonym', '" + FAMILY + "', 'formicidae', 'dorylinaex', null, null),"
+            + " ('" + LIOPONERA + "', 'genus', 'valid', '" + DORYLINAE + "', 'formicidae', '" + DORYLINAE + "', 'lioponera', null),"
+            + " ('" + LIOPONERA + " (indet)', 'species', 'indetermined', '" + LIOPONERA + "', 'formicidae', '" + DORYLINAE + "', 'lioponera', '(indet)'),"
+            + " ('" + OLDGENUS + "', 'genus', 'valid', '" + MYRM + "', 'formicidae', '" + MYRM + "', 'oldgenus', null),"
+            + " ('" + OLDGENUS + " moved', 'species', 'synonym', '" + OLDGENUS + "', 'formicidae', '" + MYRM + "', 'oldgenus', 'moved')");
+        exec(connection, "insert into specimen (code, taxon_name, status, country, family, subfamily, genus, access_group) values"
+            + " ('lio1', '" + LIOPONERA + " (indet)', 'indetermined', 'Madagascar', 'formicidae', '" + DORYLINAE + "', 'lioponera', 1),"
+            + " ('old1', '" + OLDGENUS + " moved', 'synonym', 'Madagascar', 'formicidae', '" + MYRM + "', 'oldgenus', 1)");
+    }
+
+    private List<String> genusRows(String project) throws Exception {
+        List<String> out = new ArrayList<>();
+        try (PreparedStatement s = connection.prepareStatement("select l.taxon_name from proj_taxon l join taxon t on t.taxon_name = l.taxon_name"
+                + " where l.project_name = ? and t.taxarank = 'genus' order by l.taxon_name")) {
+            s.setString(1, project);
+            try (ResultSet r = s.executeQuery()) {
+                while (r.next()) out.add(r.getString(1));
+            }
+        }
+        return out;
+    }
+
+    /**
+     * An upload rebuilds the AntWeb-wide list. The list it leaves follows the rule, so the daily clean-up finds nothing
+     * to remove there and the list's Genera are the same after the upload and after the next daily update (production
+     * 2026-11-12: 536 after an upload, 535 after the daily update).
+     */
+    public void testTheRebuiltAntWebWideListFollowsTheRuleOfTheGenusRows() throws Exception {
+        moreGenera();
+        new ProjTaxonDb(connection).rebuildAllAntwebList();
+        assertEquals("genus rows after the rebuild: not the genus without species or specimens",
+            Arrays.asList(LIOPONERA, OLDGENUS, PHEIDOLE, HYPO), genusRows(ALL));
+        assertEquals("every other counted name is on the list (the rule is about genus rows only)", 0,
+            one("select count(*) from taxon t where t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')"
+                + " and t.taxon_name <> '" + CREMATOGASTER + "' and t.taxon_name not in (select taxon_name from proj_taxon where project_name = '" + ALL + "')"));
+        assertEquals("no name of another status", 0,
+            one("select count(*) from proj_taxon l join taxon t on t.taxon_name = l.taxon_name where l.project_name = '" + ALL + "' and t.status = 'synonym'"));
+        counts();
+        int afterUpload = genera(ALL)[0];
+        assertEquals("Genera stored = listed after the upload", "[4, 4]", Arrays.toString(genera(ALL)));
+
+        // the next daily update: the clean-up takes nothing off that list (madants loses its two rows as before)
+        String line = new ProjTaxonDb(connection).cleanupLists();
+        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 2 rows removed in "));
+        assertFalse("nothing removed from the AntWeb-wide list: " + line, line.contains(ALL));
+        counts();
+        assertEquals("Genera do not move between the upload and the daily update", afterUpload, genera(ALL)[0]);
+        assertEquals(Arrays.asList(LIOPONERA, OLDGENUS, PHEIDOLE, HYPO), genusRows(ALL));
+
+        // the specimen of Oldgenus goes (a correction): no species row, no specimen: the next rebuild or clean-up drops it
+        exec(connection, "delete from specimen where code = 'old1'");
+        line = new ProjTaxonDb(connection).cleanupLists();
+        assertTrue(line, line.endsWith(" s; " + ALL + " 1: " + OLDGENUS));
+        new ProjTaxonDb(connection).rebuildAllAntwebList();
+        assertEquals(Arrays.asList(LIOPONERA, PHEIDOLE, HYPO), genusRows(ALL));
+        // a name a curator removed from the list (a dispute) is not a species row: its genus goes with it
+        exec(connection, "delete from specimen where code = 'lio1'");
+        exec(connection, "insert into proj_taxon_dispute (project_name, taxon_name) values ('" + ALL + "', '" + LIOPONERA + " (indet)')");
+        new ProjTaxonDb(connection).rebuildAllAntwebList();
+        assertEquals(Arrays.asList(PHEIDOLE, HYPO), genusRows(ALL));
+    }
+
+    /**
+     * A project list is no place: its specimens are those filed under its listed names (Project.getCountSpecimensQuery),
+     * which are the genus's species rows. So a genus row without a species row goes from a project list, whatever
+     * specimens AntWeb has of the genus; with its "(indet)" name listed it stays. The AntCat list is never cleaned.
+     */
+    public void testOnAProjectListAGenusNeedsASpeciesRow() throws Exception {
+        moreGenera();
+        exec(connection, "insert into proj_taxon (project_name, taxon_name, source) values ('madants', '" + OLDGENUS + "', 'specimen'),"
+            + " ('madants', '" + LIOPONERA + "', 'specimen'), ('madants', '" + LIOPONERA + " (indet)', 'specimen'),"
+            + " ('worldants', '" + OLDGENUS + "', 'worldants')");
+        ProjTaxonDb db = new ProjTaxonDb(connection);
+        assertEquals("Crematogaster and Oldgenus", 2, db.removeGenusRowsWithoutSpeciesOrSpecimen("madants"));
+        assertEquals(Arrays.asList(LIOPONERA, PHEIDOLE, HYPO), genusRows("madants"));
+        assertEquals("madants 2: " + CREMATOGASTER + ", " + OLDGENUS, db.removedRowsText());
+        new ProjTaxonDb(connection).verifyProjTaxon();
+        assertEquals("the AntCat list keeps every genus", Arrays.asList(CREMATOGASTER, OLDGENUS), genusRows("worldants"));
+        // on the AntWeb-wide list Oldgenus stays: AntWeb has a specimen of it
+        exec(connection, "insert into proj_taxon (project_name, taxon_name, source) values ('" + ALL + "', '" + OLDGENUS + "', 'specimen')");
+        assertEquals(0, new ProjTaxonDb(connection).removeGenusRowsWithoutSpeciesOrSpecimen(ALL));
     }
 
     /** A database error (here: no proj_taxon table) is in the line and not thrown: set 2 goes on. */
@@ -197,7 +334,7 @@ public class ListCleanupOrderDbTest extends TestCase {
         String line = new ProjTaxonDb(connection).cleanupLists();
         exec(connection, "alter table proj_taxon_gone rename to proj_taxon");
         assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 0 rows removed in "));
-        assertTrue(line, line.contains("; FAILED: proxy rows: ") && line.contains("; genus rows: "));
+        assertTrue(line, line.matches(ProjTaxonDb.CLEANUP_LOG + ": 0 rows removed in \\d+ s; FAILED: proxy rows: .*; genus rows: .*"));
         assertEquals("no row was removed", 4, one("select count(*) from proj_taxon where taxon_name in ('" + CREMATOGASTER + "', '" + DORYLINAE + "')"));
     }
 }

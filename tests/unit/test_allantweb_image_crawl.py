@@ -25,8 +25,11 @@ def main():
     # their Images must be counted again at once, not at the next nightly set 4.
     with open(os.path.join(os.path.dirname(SRC), "ProjTaxonDb.java"), encoding="utf-8") as f:
         ptdb = f.read()
-    regen = ptdb[ptdb.index("public void regenerateAllAntweb()"):ptdb.index("public void finishRegenerateAllAntweb()")]
-    assert regen.index("allAntwebImageCount()") > regen.index("insert into proj_taxon"), "regenerateAllAntweb must recount the AntWeb-wide Images after re-inserting the rows"
+    # (2026-11-12: the rows are re-inserted by rebuildAllAntwebList, which regenerateAllAntweb calls first)
+    regen = ptdb[ptdb.index("public void regenerateAllAntweb()"):ptdb.index("public void rebuildAllAntwebList()")]
+    rebuild = ptdb[ptdb.index("public void rebuildAllAntwebList()"):ptdb.index("public void finishRegenerateAllAntweb()")]
+    assert "insert into proj_taxon" in rebuild and "allAntwebImageCount()" not in rebuild
+    assert regen.index("allAntwebImageCount()") > regen.index("rebuildAllAntwebList();"), "regenerateAllAntweb must recount the AntWeb-wide Images after re-inserting the rows"
     # Decision 3 (2026-10-28): the AntWeb-wide Images count a synonym's specimens under the valid name, the rule of the
     # museum, bioregion and curated project lists (staging run 40795139086: floridakeysants Camponotus inaequalis 32,
     # allantwebants 29). Set 4 and regenerateAllAntweb both go through Project.getTaxonImageCountQuery.

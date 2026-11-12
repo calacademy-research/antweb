@@ -514,8 +514,9 @@ public class UtilDataAction extends AntwebAction {
             if ("set2".equals(action)) {
                 message = "set2 - ";
                 message += doAction("dataCleanup", form, accessLogin, accessGroup, connection, request, mapping);
-                // Project list rows that go once their children are gone (a genus row without species on the list, a proxy
-                // row of the Species List Tool without children): removed here, after the data clean-up took its rows and
+                // Project list rows that go once their children are gone (a genus row with neither a species row on the list
+                // nor, on the AntWeb-wide list, a specimen: the rule of 2026-11-02; a proxy row of the Species List Tool
+                // without children): removed here, after the data clean-up took its rows and
                 // before anything counts a project list (the Global recount right below is the first). Until 2026-11-12
                 // set 5 removed them, after sets 3 and 4 had stored the project totals and the statistics row, so the
                 // count check found those numbers one or a few rows too high every day on production (staging skips
@@ -1236,8 +1237,10 @@ public class UtilDataAction extends AntwebAction {
         java.util.Set<String> projects = projTaxonDb.getProjectsWithRowsRemoved();
         if (projects.isEmpty()) return "";
         java.util.List<String> counted = new org.calacademy.antweb.home.PlaceViewTotalDb(connection).recountProjects(projects);
+        // the rows by project and name (Brian Fisher, 2026-11-03: no job deletes list entries without a record)
         return "; rows removed from the lists of " + projects.size() + " project" + (projects.size() == 1 ? "" : "s")
-            + ", list totals counted again for " + counted.size() + (counted.isEmpty() ? "" : " (" + String.join(", ", counted) + ")");
+            + ": " + Html.esc(projTaxonDb.removedRowsText())
+            + "; list totals counted again for " + counted.size() + (counted.isEmpty() ? "" : " (" + String.join(", ", counted) + ")");
     }
 
     /** Preview page of fixGeolocaleTaxonParentage: what the check found, and a button that applies the fix. */

@@ -85,7 +85,13 @@ Numbers are the order in which things happen for `upload.do?action=specimenUploa
    - if no line was processed: `AntwebException("No records processed")`, caught at line 243 and only written into the report (see section 7.1);
    - report sections: bad ranks, multiple bioregions for non-introduced taxa (link to `list.do?action=multiBioregionTaxaList`), morpho genera (`compileMessages()` line 394);
    - orphaned species of this group's source (`specimen<groupId>`) are deleted unless they have page text, but only if fewer than 100 would go; otherwise the report gets "Warning. Please check the inserted specimens count to verify that the full file was uploaded." (`OrphansDb.deleteOrphanedSpeciesFromSource()`);
-   - `ProjTaxonDb.regenerateAllAntweb()` (the `allantwebants` project list, rebuilt from the taxon table);
+   - `ProjTaxonDb.regenerateAllAntweb()` (the `allantwebants` project list, rebuilt from the taxon table: every name of
+     a counted status, without the names a curator removed, and, since 2026-11-12, by the rule of the genus rows
+     agreed with Brian Fisher on 2026-11-02, "A genus stays on a place's list only with a species row of that genus
+     or a specimen of it there": `rebuildAllAntwebList` applies the daily clean-up's own method,
+     `removeGenusRowsWithoutSpeciesOrSpecimen`, before the list is counted. Until then the rebuild put a genus
+     without species or specimens on the list and the daily clean-up took it off, so the list's Genera moved by one
+     between an upload and the next daily update);
    - `TaxonMgr.populate()` (reload the in-memory taxon cache);
    - `ant_group.last_specimen_upload = now()`.
 9. **Backup copy of the file** (`UploadFile.backup()`): `web/upload/<yyyyMMdd-HH:mm:ss>-specimen<groupId>.txt` (for TaxonWorks `-specimenTW<groupId>.txt`). `web/upload` is on Spaces (`/mnt/antweb/web/upload`). Not served directly: curators download it through `uploadFile.do?file=` (link in the report).
