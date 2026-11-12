@@ -310,6 +310,72 @@ def test_an_island_is_not_part_of_its_political_parent():
             assert (r.json().get("specimens") or []) == [], f"{code} of {island} is returned for country={parent}"
 
 
+# Families other than ants that AntWeb holds (animals found with ants), most frequent first: the test asks for one
+# record of each until it finds one, so no specimen code is written here.
+OTHER_FAMILIES = ("curculionidae", "vespidae", "staphylinidae", "apidae", "salticidae", "carabidae")
+
+
+def test_v4_specimens_are_ants_only_unless_asked():
+    """Brian Fisher's definition of 2026-11-10: "Country search: every ant specimen record whose country in AntWeb is
+    the country", the same definition as the data extract. A v4 specimen answer holds ants only (family Formicidae
+    and the records with no family given) and says so in metaData.families; allFamilies=true gives the others; a
+    record of another family asked for by its code is there only then; the total of its country is larger with
+    allFamilies=true. Needs the staging test key (v4 answers an admin key also while it is closed)."""
+    if IS_PRODUCTION:
+        pytest.skip("the test key is a staging key")
+    if not api_test_key():
+        pytest.skip(f"{API_KEY_ENV} is not set: v4 cannot be asked")
+    import requests
+    headers = {API_KEY_HEADER: api_test_key(), "User-Agent": new_session().headers["User-Agent"]}
+
+    def v4(query):
+        r = requests.get(BASE_URL + "/v4/specimens?" + query, timeout=max(TIMEOUT, 120), headers=headers, allow_redirects=False)
+        if r.status_code == 401:
+            pytest.skip("the server refused the test key: make a new one with tools/api/create-test-key.py")
+        assert r.status_code == 200, (query, r.status_code, r.text[:200])
+        return r.json()
+
+    # the default: ants only, and the answer says so
+    body = v4("genus=camponotus&limit=3")
+    assert body["metaData"]["families"] == "antsOnly", body["metaData"]
+    assert all((s.get("family") or "").lower() in ("formicidae", "") for s in body["specimens"]), body["specimens"]
+
+    # a record of another family: found by asking for the family
+    other = None
+    for family in OTHER_FAMILIES:
+        body = v4(f"family={family}&limit=1")
+        assert body["metaData"]["families"] == "family", body["metaData"]
+        if body["specimens"]:
+            other = body["specimens"][0]
+            assert (other.get("family") or "").lower() == family, other.get("family")
+            break
+    if other is None:
+        pytest.skip("AntWeb here has no specimen of " + ", ".join(OTHER_FAMILIES))
+    code = other["specimenCode"]
+    body = v4(f"specimenCode={code}")
+    assert body["specimens"] == [] and body["metaData"]["total"] == 0, f"{code} ({family}) is in an ants-only answer"
+    body = v4(f"specimenCode={code}&allFamilies=true")
+    assert [s["specimenCode"] for s in body["specimens"]] == [code] and body["metaData"]["families"] == "allFamilies", body["metaData"]
+
+    # its country: more records with every family than with ants only
+    country = other.get("country")
+    if country:
+        ants = v4("limit=1&country=" + country.replace(" ", "%20"))["metaData"]["total"]
+        everything = v4("limit=1&allFamilies=true&country=" + country.replace(" ", "%20"))["metaData"]["total"]
+        assert everything > ants, f"{country}: {everything} records of every family, {ants} of ants"
+
+    # bad values are refused
+    for query in ("allFamilies=yes", "family=all"):
+        r = requests.get(BASE_URL + "/v4/specimens?" + query, timeout=max(TIMEOUT, 120), headers=headers, allow_redirects=False)
+        assert r.status_code == 400 and "allFamilies" in r.json()["error"], (query, r.status_code, r.text[:200])
+
+    # v3.1 answers for every family, as before (while it has not ended)
+    if not v4_open():
+        r = new_session().get(BASE_URL + f"/v3.1/specimens?up=1&specimenCode={code}", timeout=max(TIMEOUT, 120))
+        assert r.status_code == 200 and len(r.json()["specimens"]) == 1, (r.status_code, r.text[:200])
+        assert "families" not in r.json()["metaData"]
+
+
 def test_unknown_route_is_json_404():
     r = new_session().get(BASE_URL + "/v3.1/noSuchRoute?up=1", timeout=max(TIMEOUT, 120))
     assert r.status_code == 404, r.status_code

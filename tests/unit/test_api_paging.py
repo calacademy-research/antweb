@@ -12,6 +12,11 @@ answers showed it; metaData gave only the number of records on the page. Now, in
 - afterCode with offset is HTTP 400; v4's unknown-parameter answer knows the new names
 - a total is not a record: the records-a-day count is as before
 - v3.1 is unchanged while v4 is closed (no new metaData, no new parameters, the same SQL)
+- ants only by default (2026-11-12; Brian Fisher's definition of 2026-11-10: "Country search: every ant specimen
+  record whose country in AntWeb is the country", the same definition as the data extract): /specimens and
+  /geoSpecimens answer for family Formicidae and the records with no family given, in the records, the total and the
+  distinct lists; allFamilies=true gives every family, family=<name> that family; metaData.families says which; the
+  condition is the extract's own; v3.1 answers for every family as before
 
 The data routes run against a small SQLite database, the counters against another (no MySQL needed). Run inside the
 API image (CI, .github/workflows/tests.yaml):
@@ -93,9 +98,10 @@ def fresh_usage():
                       cols)
 
 
-def specimen(code, species="sp0", country="Madagascar", lat=None, lon=None, taxon="myrmicinaepheidole sp1"):
-    return api.Specimen(occurrenceId="o-" + code, code=code, taxonName=taxon, genus="pheidole",
-                        subfamily="myrmicinae", species=species, family="formicidae", country=country,
+def specimen(code, species="sp0", country="Madagascar", lat=None, lon=None, taxon="myrmicinaepheidole sp1",
+             family="formicidae", genus="pheidole"):
+    return api.Specimen(occurrenceId="o-" + code, code=code, taxonName=taxon, genus=genus,
+                        subfamily="myrmicinae", species=species, family=family, country=country,
                         collectionCode="JTL0001", decimalLatitude=lat, decimalLongitude=lon)
 
 
@@ -771,6 +777,215 @@ def test_front_door_and_documentation_say_an_island_is_its_own_country():
         # the public texts never say the rule of 2026-11-10 (an island is part of the country it is filed under)
         for old in ("islands filed under", "islands are included", "Hawaii under United States", "including its islands"):
             assert old not in page, (path, old)
+
+
+# --- ants only by default ---------------------------------------------------------------------------------------
+
+ANTS = ["mxant01", "mxant02", "mxnofam01", "mxnofam02"]            # Formicidae twice, no family (NULL), no family ('')
+OTHERS = ["mxbeetle01", "mxwasp01"]
+MEXICO = "/v4/specimens?country=Mexico"
+NEAR = "/v4/geoSpecimens?coords=10,10&radius=1"
+
+
+@contextlib.contextmanager
+def other_families():
+    """Six specimens of Mexico at 10,10: two ants, two with no family given, a beetle and a wasp."""
+    try:
+        add("mxant01", country="Mexico", lat=10, lon=10)
+        add("mxant02", country="Mexico", lat=10, lon=10, species="sp1")
+        add("mxnofam01", country="Mexico", lat=10, lon=10, family=None, genus="stenamma")
+        add("mxnofam02", country="Mexico", lat=10, lon=10, family="", genus="stenamma")
+        add("mxbeetle01", country="Mexico", lat=10, lon=10, family="curculionidae", genus="beetlegenus")
+        add("mxwasp01", country="Mexico", lat=10, lon=10, family="vespidae", genus="waspgenus")
+        yield
+    finally:
+        for c in ANTS + OTHERS:
+            delete(c)
+
+
+def test_ants_only_is_the_default_and_the_answer_says_so():
+    """Brian Fisher's definition of 2026-11-10: "Country search: every ant specimen record whose country in AntWeb is
+    the country", the same definition as the data extract (his question about the first Nearctic file: "why did you
+    include non ants for an ant study?"). Without a word about families a v4 specimen answer holds ants only: family
+    Formicidae and the records with no family given; the total counts the same records."""
+    fresh_usage()
+    with other_families(), opened():
+        r = get(MEXICO + "&limit=100")
+        m = r.get_json()["metaData"]
+        assert codes_of(r) == ANTS, codes_of(r)
+        assert m["families"] == "antsOnly" and m["total"] == 4 and m["returned"] == 4 and m["complete"] is True, m
+        assert r.headers["X-AntWeb-Families"] == "antsOnly"
+        # allFamilies=false is the default said aloud
+        r = get(MEXICO + "&limit=100&allFamilies=false")
+        assert codes_of(r) == ANTS and r.get_json()["metaData"]["families"] == "antsOnly"
+        # a record of another family asked for by its code is not there, and the total says 0
+        r = get("/v4/specimens?specimenCode=mxbeetle01")
+        assert codes_of(r) == [] and r.get_json()["metaData"]["total"] == 0, r.get_json()["metaData"]
+        # the same on every page: by afterCode and by offset the set is the ants, each once
+        got, pages = walk_after(MEXICO, 1)
+        assert got == ANTS and pages == 4, (got, pages)
+        got, _pages = walk_offset(MEXICO, 3)
+        assert got == ANTS, got
+        # a later page with total=true counts the same records
+        m = meta(MEXICO + "&limit=1&afterCode=mxant01&total=true")
+        assert m["total"] == 4 and m["families"] == "antsOnly", m
+        # the daily record count is of the records given, not of the ones left out
+        fresh_usage()
+        m = meta(MEXICO + "&limit=100", key="small")
+        assert m["returned"] == 4 and m["recordsLeftToday"] == 12 - 4, m
+
+
+def test_all_families_gives_the_others_and_family_gives_one():
+    fresh_usage()
+    with other_families(), opened():
+        r = get(MEXICO + "&limit=100&allFamilies=true")
+        m = r.get_json()["metaData"]
+        assert codes_of(r) == sorted(ANTS + OTHERS), codes_of(r)
+        assert m["families"] == "allFamilies" and m["total"] == 6 and m["complete"] is True, m
+        assert r.headers["X-AntWeb-Families"] == "allFamilies"
+        got, _pages = walk_after(MEXICO + "&allFamilies=true", 2)
+        assert got == sorted(ANTS + OTHERS), got
+        assert codes_of(get("/v4/specimens?specimenCode=mxbeetle01&allFamilies=true")) == ["mxbeetle01"]
+        # one family by its name (v3.1's own filter): that family, whatever allFamilies says
+        for extra in ("", "&allFamilies=true", "&allFamilies=false"):
+            r = get(MEXICO + "&family=curculionidae&limit=100" + extra)
+            m = r.get_json()["metaData"]
+            assert codes_of(r) == ["mxbeetle01"] and m["families"] == "family" and m["total"] == 1, (extra, m)
+        # family=formicidae is the records that say Formicidae: not those with no family given
+        r = get(MEXICO + "&family=formicidae&limit=100")
+        assert codes_of(r) == ["mxant01", "mxant02"] and r.get_json()["metaData"]["families"] == "family"
+        # family=* is no filter in v3.1: the default stays
+        r = get(MEXICO + "&family=*&limit=100")
+        assert codes_of(r) == ANTS and r.get_json()["metaData"]["families"] == "antsOnly"
+
+
+def test_geo_specimens_are_ants_only_too_with_their_distinct_lists():
+    fresh_usage()
+    with other_families(), opened():
+        r = get(NEAR + "&limit=100")
+        m = r.get_json()["metaData"]
+        assert codes_of(r) == ANTS and m["families"] == "antsOnly" and m["total"] == 4, m
+        r = get(NEAR + "&limit=100&allFamilies=true")
+        m = r.get_json()["metaData"]
+        assert codes_of(r) == sorted(ANTS + OTHERS) and m["families"] == "allFamilies" and m["total"] == 6, m
+        # the names of the specimens in the area follow the same choice
+        r = get(NEAR + "&distinct=genus")
+        assert r.get_json()["genera"] == ["pheidole", "stenamma"], r.get_json()
+        assert r.get_json()["metaData"]["families"] == "antsOnly" and r.get_json()["metaData"]["total"] == 2
+        r = get(NEAR + "&distinct=genus&allFamilies=true")
+        assert r.get_json()["genera"] == ["beetlegenus", "pheidole", "stenamma", "waspgenus"], r.get_json()
+        # ndjson: the records of ants, and the choice in a header
+        r = get(NEAR + "&ndjson=true&limit=100")
+        lines = [json.loads(x) for x in r.get_data(as_text=True).splitlines() if x.strip()]
+        assert [x["specimenCode"] for x in lines[1::2]] == ANTS, lines
+        assert r.headers["X-AntWeb-Families"] == "antsOnly" and r.headers["X-AntWeb-Total"] == "4"
+
+
+def test_other_routes_have_no_family_rule():
+    """Only the two routes whose records are specimens. The other routes answer as before, and do not take the
+    parameter (an unknown parameter is refused, with the name it could be on the routes that have it)."""
+    fresh_usage()
+    with other_families(), opened():
+        m = meta("/v4/taxa?genus=camponotus&limit=2")
+        assert "families" not in m, m
+        r = get("/v4/taxa?genus=camponotus&limit=2")
+        assert "X-AntWeb-Families" not in r.headers
+        j = get("/v4/taxa?allFamilies=true", expect=400).get_json()
+        assert j["unknownParameters"] == ["allFamilies"], j
+        # /distinctTaxa reads the specimens of every family, as in v3.1 (said on the front door)
+        j = get("/v4/distinctTaxa?country=Mexico&taxarank=genus").get_json()
+        assert j["genera"] == ["beetlegenus", "pheidole", "stenamma", "waspgenus"] and "families" not in j["metaData"], j
+
+
+def test_bad_family_values_are_400_before_anything_is_counted():
+    fresh_usage()
+    with opened():
+        for url in ("/v4/specimens?allFamilies=yes", "/v4/specimens?allFamilies=", "/v4/geoSpecimens?coords=10,10&allFamilies=1"):
+            j = get(url, expect=400).get_json()
+            assert j["error"] == "allFamilies must be true or false.", (url, j)
+        for value in ("all", "ALL", "%20all"):
+            j = get("/v4/specimens?family=" + value, expect=400).get_json()
+            assert "allFamilies=true" in j["error"] and "ants only" in j["error"], j
+        # the names somebody might try point to the parameter
+        for name in ("antsOnly", "all_families", "allfamilies", "families"):
+            j = get("/v4/specimens?%s=true" % name, expect=400).get_json()
+            assert j["didYouMean"] == {name: ["allFamilies"]}, (name, j)
+        # none of these was counted as a request or a record
+        m = meta("/v4/specimens?country=Madagascar&limit=1", key="small")
+        assert m["recordsLeftToday"] == 12 - 1, m
+
+
+def test_v31_answers_for_every_family_as_before():
+    """v3.1 is not changed: no family condition in its SQL, every family in its answers, no new parameter."""
+    with other_families():
+        del STATEMENTS[:]
+        r = client.get("/specimens?country=Mexico&limit=100&up=1")
+        assert r.status_code == 200, r.status_code
+        j = r.get_json()
+        assert [s["specimenCode"] for s in j["specimens"]] == sorted(ANTS + OTHERS), j["metaData"]
+        assert "families" not in j["metaData"] and "X-AntWeb-Families" not in r.headers
+        sql = " ".join(st for st, _p in STATEMENTS).lower()
+        assert "family = " not in sql and "family is null" not in sql, sql[-300:]
+        r = client.get("/geoSpecimens?coords=10,10&radius=1&limit=100&up=1")
+        assert [s["specimenCode"] for s in r.get_json()["specimens"]] == sorted(ANTS + OTHERS)
+        j = client.get("/specimens?allFamilies=true&up=1")
+        assert j.status_code == 400 and j.get_json()["unknownParameters"] == ["allFamilies"], j.get_data(as_text=True)[:200]
+        assert "allFamilies" not in api.acceptedParams("getSpecimen") + api.acceptedParams("getGeoSpecimens")
+        # and v4 through an admin key while v4 is closed is v4: ants only
+        fresh_usage()
+        assert codes_of(get(MEXICO + "&limit=100", key="admin")) == ANTS
+
+
+def test_the_ants_only_condition_is_the_data_extracts():
+    """The same test the data extract uses for "ants only", not one of the API's own: family Formicidae, or no family
+    given (tools/export/specimen_extract.py ANTS; DataExtract.ANTS in the page's engine)."""
+    from sqlalchemy.dialects import mysql
+    ours = str(api_v4.ants_condition(api.Specimen).compile(dialect=mysql.dialect(), compile_kwargs={"literal_binds": True}))
+    ours = "(" + ours.replace("api3_1_specimen.", "s.").replace(" OR ", " or ").replace(" IS NULL", " is null") + ")"
+    assert ours == "(s.family = 'formicidae' or s.family is null or s.family = '')", ours
+    if REPO is None:
+        print("  (repository files not mounted, skipped)")
+        return
+    with open(os.path.join(REPO, "tools", "export", "specimen_extract.py"), encoding="utf-8") as f:
+        tool = f.read()
+    assert ('ANTS = "' + ours + '"') in tool, "tools/export/specimen_extract.py ANTS is not " + ours
+    engine = os.path.join(REPO, "src", "org", "calacademy", "antweb", "util", "DataExtract.java")
+    if os.path.isfile(engine):      # the Data extract page, when it is in the repository
+        with open(engine, encoding="utf-8") as f:
+            assert ('ANTS = "' + ours + '"') in f.read(), "DataExtract.ANTS is not " + ours
+    # the view the API reads gives the specimen's own family
+    assert api.Specimen.__table__.c.family.name == "family"
+
+
+def test_front_door_and_documentation_say_ants_only():
+    j = client.get("/v4/").get_json()
+    f = j["families"]
+    assert f["routes"] == ["/v4/specimens", "/v4/geoSpecimens"], f
+    assert "ants only" in f["antsOnly"] and "no family given" in f["antsOnly"] and "metaData.total" in f["antsOnly"], f
+    assert "allFamilies=true" in f["allFamilies"] and "family=<name>" in f["family"], f
+    assert "metaData.families" in f["metaData"] and "X-AntWeb-Families" in f["metaData"], f
+    for value in ("antsOnly", "allFamilies", "family"):
+        assert value in f["metaData"], value
+    if REPO is None:
+        print("  (repository files not mounted, skipped)")
+        return
+    for path in ("web/documentation/api/apiV3_1-body.jsp", "web/llms.txt", "docs/flows/api.md"):
+        with open(os.path.join(REPO, path), encoding="utf-8") as fh:
+            page = fh.read()
+        for word in ("allFamilies=true", "metaData.families", "no family given"):
+            assert word in page, (path, word)
+        assert "ants only" in page.lower(), path
+        # no text says any more that v4 answers for every family by default
+        for old in ("v4 returns the records of every family", "returns every family"):
+            assert old not in page, (path, old)
+        for line in page.splitlines():
+            if "allFamilies" in line:
+                assert chr(0x2014) not in line and "nightly" not in line.lower(), (path, line[:120])
+    with open(os.path.join(REPO, "web/documentation/api/apiV3_1-body.jsp"), encoding="utf-8") as fh:
+        jsp = fh.read()
+    v4 = jsp[jsp.index('id="v4"'):]
+    v4 = v4[:v4.index("</ul>")]
+    assert 'id="v4-families"' in v4 and "<code>allFamilies=true</code>" in v4, "the Version 4 list says ants only"
 
 
 # --- the front door and the documentation ----------------------------------------------------------------------

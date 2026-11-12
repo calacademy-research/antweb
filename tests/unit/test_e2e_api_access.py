@@ -79,10 +79,19 @@ def get(path):
 
 def test_v4_address_of_a_request():
     f = antweb.api_v4_url
-    assert f(BASE + "/v3.1/specimens?genus=camponotus&limit=5&up=1") == BASE + "/v4/specimens?genus=camponotus&limit=5"
-    assert f(BASE + "/v3.1/specimens?up=1&specimenCode=casent0922626") == BASE + "/v4/specimens?specimenCode=casent0922626"
+    # v4's specimen routes are of ants only unless asked otherwise (2026-11-12); v3.1 answers for every family, and
+    # the tests compare with numbers of every specimen: the two specimen routes go to v4 with allFamilies=true
+    assert f(BASE + "/v3.1/specimens?genus=camponotus&limit=5&up=1") == BASE + "/v4/specimens?genus=camponotus&limit=5&allFamilies=true"
+    assert f(BASE + "/v3.1/specimens?up=1&specimenCode=casent0922626") == BASE + "/v4/specimens?specimenCode=casent0922626&allFamilies=true"
     assert f(BASE + "/v3.1/bioregions?up=1") == BASE + "/v4/bioregions"
-    assert f(BASE + "/v3.1/geoSpecimens?coords=37.77,-122.47&radius=10&up=1") == BASE + "/v4/geoSpecimens?coords=37.77%2C-122.47&radius=10"
+    assert f(BASE + "/v3.1/geoSpecimens?coords=37.77,-122.47&radius=10&up=1") == BASE + "/v4/geoSpecimens?coords=37.77%2C-122.47&radius=10&allFamilies=true"
+    # not twice, and no other route gets it (v4 refuses a parameter a route does not know)
+    assert f(BASE + "/v3.1/specimens?allFamilies=false&limit=1&up=1") == BASE + "/v4/specimens?allFamilies=false&limit=1"
+    for route in ("taxa", "distinctTaxa", "measurements", "images", "geoSpeciesStats", "geolocaleTaxa"):
+        assert "allFamilies" not in f(BASE + "/v3.1/" + route + "?limit=1&up=1"), route
+    v4src = open(os.path.join(ROOT, "api", "v3.1", "api_v4.py"), encoding="utf-8").read()
+    assert "FAMILY_ROUTES = ('getSpecimen', 'getGeoSpecimens')" in v4src, "api_v4.FAMILY_ROUTES changed: update V4_ANTS_ONLY_ROUTES"
+    assert antweb.V4_ANTS_ONLY_ROUTES == ("specimens", "geoSpecimens")
     assert f(BASE + "/v3.1/geolocales?geolocaleName=New%20Zealand&up=1") == BASE + "/v4/geolocales?geolocaleName=New+Zealand"
     # not the admin switch, the front door, or another page: left alone
     for url in ("/v3.1/taxa?genus=camponotus", "/v3.1/taxa?up=0", "/v3.1/", "/v3.1/?up=1", "/v4/taxa?up=1",

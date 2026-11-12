@@ -31,6 +31,10 @@ Countries and islands (Brian Fisher, 2026-11-11; COUNTRY below): country= is the
 nothing else. An oceanic island that is its own country in AntWeb (Hawaii, Galapagos Islands) is asked for by its own
 name and is never part of its political parent.
 
+Ants only (Brian Fisher, 2026-11-10; FAMILIES below): the specimen records of /specimens and /geoSpecimens are of
+ants unless more is asked for, with the same test the data extract uses (family Formicidae, or no family given).
+allFamilies=true gives every family, family=<name> on /specimens that family; metaData.families says which was used.
+
 The key is never written to a log, an error or a reply: the inner request has no key header, and nothing here prints
 headers. Docs: docs/flows/api.md, section "v4 and API keys". Tests: tests/unit/test_api_v4.py.
 """
@@ -38,7 +42,7 @@ import json
 import urllib.parse
 
 from flask import Flask, Response, g, request
-from sqlalchemy import bindparam, column, create_engine, func, select, table, text
+from sqlalchemy import bindparam, column, create_engine, func, or_, select, table, text
 from sqlalchemy.engine import URL
 from werkzeug.datastructures import MultiDict
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
@@ -64,13 +68,15 @@ FIELDS = [
 ]
 # New filters of v4 (applied inside the v3.1 /specimens query through flask.g, api.v4SpecimenFilters()).
 # afterCode and total (rows()) are v4 names too: they reach the query through flask.g, never the v3.1 parameters.
-EXTRA_PARAMS = {'getSpecimen': ('collectingEventCode', 'localityCode', 'afterCode', 'total'),
-                'getGeoSpecimens': ('afterCode', 'total'),
+# allFamilies (ants_only()) is a v4 name too.
+EXTRA_PARAMS = {'getSpecimen': ('collectingEventCode', 'localityCode', 'afterCode', 'total', 'allFamilies'),
+                'getGeoSpecimens': ('afterCode', 'total', 'allFamilies'),
                 'getTaxa': ('total',)}
 # Old or Darwin Core names, pointed to the v4 name in the 400 reply.
 HINTS = {'collectionCode': 'collectingEventCode', 'catalogNumber': 'specimenCode', 'eventID': 'collectingEventCode',
          'fieldNumber': 'collectingEventCode', 'locationID': 'localityCode', 'code': 'specimenCode',
-         'after': 'afterCode', 'cursor': 'afterCode'}
+         'after': 'afterCode', 'cursor': 'afterCode', 'allfamilies': 'allFamilies', 'all_families': 'allFamilies',
+         'antsOnly': 'allFamilies', 'ants_only': 'allFamilies', 'families': 'allFamilies'}
 # Routes whose records are specimens (they get localityCode).
 SPECIMEN_LISTS = {'specimens': 'specimens', 'geoSpecimens': 'specimens'}
 NOT_FOR_V4 = ('up', 'log')
@@ -102,6 +108,33 @@ COUNTRY = {
                ' political parent: country=United States gives no record of Hawaii.',
     'noCountry': 'A record with no country is in no country search.',
 }
+# Ants only by default (the v4 front door and docs/flows/api.md). Brian Fisher's definition of 2026-11-10: "Country
+# search: every ant specimen record whose country in AntWeb is the country", the same definition as the data extract
+# (after his question about the first Nearctic file: "why did you include non ants for an ant study?"). AntWeb also
+# holds beetles, wasps, spiders and other animals found with ants (production: 1,289 of the 200,075 specimens of United
+# States, Canada and Mexico). The test is the extract's own, word for word (tools/export/specimen_extract.py ANTS,
+# DataExtract.ANTS): family Formicidae, or no family given; ants_condition() below, and tests/unit/test_api_paging.py
+# compares the two. The name of the choice is the extract's too (--all-families, the form's allFamilies).
+# v3.1 is not changed: it answers for every family, as before.
+ANTS_ONLY, ALL_FAMILIES, ONE_FAMILY = 'antsOnly', 'allFamilies', 'family'
+FAMILY_ROUTES = ('getSpecimen', 'getGeoSpecimens')       # the routes whose records are specimens (SPECIMEN_LISTS)
+FAMILIES = {
+    'routes': ['/v4/specimens', '/v4/geoSpecimens'],
+    'antsOnly': 'The specimen records of these routes are of ants only unless you ask for more: family Formicidae,'
+                ' and the records with no family given. The same holds for metaData.total and for the lists of'
+                ' names of /v4/geoSpecimens with distinct=. AntWeb also holds beetles, wasps, spiders and other'
+                ' animals found with ants; the default leaves them out.',
+    'allFamilies': 'allFamilies=true gives the records of every family.',
+    'family': 'On /v4/specimens, family=<name> gives the records of that one family (family=vespidae).',
+    'metaData': 'metaData.families says which was used: antsOnly, allFamilies or family. With ndjson=true it is in'
+                ' the header X-AntWeb-Families.',
+    'otherRoutes': 'The other routes are not changed by this: they answer for every family.',
+}
+ALL_FAMILIES_VALUE_MESSAGE = 'allFamilies must be true or false.'
+FAMILY_ALL_MESSAGE = ('family=all is not the name of a family. For the records of every family send allFamilies=true;'
+                      ' without it the answer holds ants only.')
+FAMILIES_HEADER = 'X-AntWeb-Families'
+
 BOTH_PAGINGS_MESSAGE = ('Use afterCode or offset, not both. afterCode=<the last specimen code you received> gives the'
                         ' records after it; offset=<n> leaves out the first n records.')
 AFTER_CODE_DISTINCT_MESSAGE = 'afterCode pages specimen records; it cannot be used with distinct.'
@@ -207,7 +240,7 @@ def front():
         'name': 'Antweb API v4', 'status': st, 'message': messages[st],
         'getAKey': api_keys.GET_A_KEY_URL, 'keyHeader': api_keys.KEY_HEADER, 'limits': lim,
         'routes': ['/v4/' + r for r in sorted(routes())], 'fieldNames': FIELDS, 'paging': PAGING,
-        'countries': COUNTRY,
+        'countries': COUNTRY, 'families': FAMILIES,
         'documentation': api.API_DOCS_URL, 'terms': api.API_TERMS_URL, 'guideForPrograms': api.LLMS_URL,
         'terms_of_use': api.API_TERMS, 'contact': api_keys.CONTACT, 'citation': api.CITATION,
         'license': api.LICENSE,
@@ -244,7 +277,7 @@ def data(name):
     if not api.V4_OPEN and (row is None or (row.level or '').lower() != 'admin'):
         return error(NOT_OPEN_MESSAGE, 503, {'Retry-After': '86400'}, documentation=api.API_DOCS_URL,
                      terms=api.API_TERMS_URL)
-    bad = check_params(endpoint) or check_paging(endpoint)
+    bad = check_params(endpoint) or check_paging(endpoint) or check_families(endpoint)
     if bad is not None:
         return bad
 
@@ -323,9 +356,35 @@ def check_paging(endpoint):
     return None
 
 
+def check_families(endpoint):
+    """400 for an allFamilies that is not true or false, and for family=all (it would match no family and give an
+    empty answer). Before the request is counted."""
+    if endpoint not in FAMILY_ROUTES:
+        return None
+    if request.args.get('allFamilies') not in (None, 'true', 'false'):
+        return error(ALL_FAMILIES_VALUE_MESSAGE, 400, documentation=PUBLIC_URL + '/')
+    if (request.args.get('family') or '').strip().lower() == 'all':
+        return error(FAMILY_ALL_MESSAGE, 400, documentation=PUBLIC_URL + '/')
+    return None
+
+
+def family_rule(endpoint, args):
+    """Which families a specimen route answers for: 'family' when /specimens is asked for one family (family=<name>,
+    v3.1's own filter), 'allFamilies' with allFamilies=true, otherwise 'antsOnly' (the default). None for a route
+    whose records are not specimens."""
+    if endpoint not in FAMILY_ROUTES:
+        return None
+    if endpoint == 'getSpecimen' and args.get('family') not in (None, '*'):
+        return ONE_FAMILY
+    if args.get('allFamilies') == 'true':
+        return ALL_FAMILIES
+    return ANTS_ONLY
+
+
 def run(name, endpoint, admission, has_key, limits):
     """The v3.1 route in an inner request (g.apiV4Inner) with limit = the reserved records; returns (response, records)."""
     filters = {}
+    families = family_rule(endpoint, request.args)
     inner = MultiDict()
     for k, values in request.args.lists():
         if k in EXTRA_PARAMS.get(endpoint, ()):
@@ -340,6 +399,7 @@ def run(name, endpoint, admission, has_key, limits):
         g.apiV4Inner = True     # lets the inner request past checkUp()/down() (never up=1)
         g.apiMaxLimit = admission.reserved
         g.apiV4Filters = filters
+        g.apiV4Families = families      # read by ants_only() inside the route
         inner_response = api.application.full_dispatch_request()
         found = getattr(g, 'apiV4Paging', None)     # set by rows() for the list routes
         body = inner_response.get_data()
@@ -387,6 +447,8 @@ def run(name, endpoint, admission, has_key, limits):
                 obj[meta]['recordsLeftToday'] = admission.records_left + (admission.reserved - count)
                 if paging:
                     obj[meta].update(paging)
+                if families:
+                    obj[meta]['families'] = families
         response = app.json.response(obj)
     notice = limit_notice(has_key, limits, admission, count, by_code)
     if notice:
@@ -402,6 +464,8 @@ def run(name, endpoint, admission, has_key, limits):
                 value = 'true' if value else 'false'
             # the code URL-encoded: ready for afterCode=, and safe as a header whatever characters a code has
             response.headers[header] = urllib.parse.quote(str(value), safe='')
+    if families:
+        response.headers[FAMILIES_HEADER] = families
     return response, count
 
 
@@ -546,6 +610,23 @@ def rows(query, limit, offset, key=None, after_code=False):
         paging['lastCode'] = getattr(found[-1], key.key)
     g.apiV4Paging = paging
     return found
+
+
+def ants_condition(Specimen):
+    """Ants only, as the data extract has it (tools/export/specimen_extract.py ANTS and DataExtract.ANTS:
+    "(s.family = 'formicidae' or s.family is null or s.family = '')"): family Formicidae, or no family given.
+    Specimen.family is specimen.family (the view api3_1_specimen passes it through). MySQL compares the name without
+    case, as in the extract."""
+    return or_(Specimen.family == 'formicidae', Specimen.family.is_(None), Specimen.family == '')
+
+
+def ants_only(query, Specimen):
+    """v4 only: the ants-only default on the queries of /specimens and /geoSpecimens (records, total and distinct
+    lists alike, since they are all made from this query). Nothing outside v4 (v3.1 answers for every family), with
+    allFamilies=true, or when /specimens is asked for one family."""
+    if not getattr(g, 'apiV4Inner', False) or getattr(g, 'apiV4Families', None) != ANTS_ONLY:
+        return query
+    return query.filter(ants_condition(Specimen))
 
 
 def specimen_filters(query, Specimen):

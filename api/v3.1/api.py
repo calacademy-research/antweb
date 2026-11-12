@@ -930,6 +930,7 @@ def getSpecimen():
     if validGenus == 'true':
         query = query.filter(func.lower(Specimen.genus).in_(sorted(VALID_GENERA)))
     query = api_v4.specimen_filters(query, Specimen)   # v4 only: collectingEventCode=, localityCode=
+    query = api_v4.ants_only(query, Specimen)          # v4 only: ants unless allFamilies=true or family= (2026-11-12)
 
     # A fixed order (specimen code, the specimen table's key) so paging with offset neither
     # repeats nor skips records; with 500 per request, paging is how larger sets are fetched.
@@ -1045,6 +1046,7 @@ def getGeoSpecimens():
     minLat, maxLat, minLon, maxLon = radiusBox(lat, lon, radius)
     query = query.filter(Specimen.decimalLatitude <= maxLat, Specimen.decimalLatitude >= minLat)
     query = query.filter(Specimen.decimalLongitude <= maxLon, Specimen.decimalLongitude >= minLon)
+    query = api_v4.ants_only(query, Specimen)          # v4 only: ants unless allFamilies=true (2026-11-12)
 
     if distinct != '*':
         # The names of the specimens in the area (2026-10-26, F22: a new query without the area was started here).
