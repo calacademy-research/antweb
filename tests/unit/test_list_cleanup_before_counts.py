@@ -21,6 +21,10 @@ Source checks (the behaviour is tested against a database by home.ListCleanupOrd
 Review of PR #346 (2026-11-12): set 2's step commits the data clean-up first and has its own rollback
 (UtilDataAction.cleanProjectLists), and its line is escaped in the job's answer; every row removed is recorded in
 list_removal_log; the specimen test leaves out red-flagged specimens by the lists' own condition.
+
+Second review of PR #347 (2026-11-12): the record first, then the delete. The record of the clean-ups throws when it
+cannot be written, and the row is then not deleted (until then the failure was logged and the row deleted: a removal
+without a record); the rebuild records a genus with the source it had before the rebuild; the line counts names.
 """
 import pathlib
 import re
@@ -97,7 +101,10 @@ def test_the_cleanup_is_the_two_of_set_5():
         assert word not in cleanup, word
     # the AntCat list keeps every genus row; rows removed are counted and named per project
     assert "from proj_taxon where project_name != 'worldants' order by project_name" in src
-    assert "rowsRemoved.merge(projectName, c, Integer::sum);" in src
+    # one per name taken off a list, as the names shown (a name's row twice on a list is one name)
+    assert "rowsRemoved.merge(projectName, 1, Integer::sum);" in src
+    text = method(src, "public String removedRowsText() {")
+    assert "names.size() + \": \"" in text and "names.size() > shown" in text and "rowsRemoved" not in text
     assert "namesRemoved.computeIfAbsent(projectName, k -> new ArrayList<>()).add(taxonName);" in src
     assert 'String named = removedRowsText();' in cleanup
 
@@ -117,16 +124,18 @@ def test_one_rule_for_the_cleanup_and_the_rebuild_of_the_antweb_wide_list():
     # the method: no species row on the list; on the AntWeb-wide list also no specimen
     assert "return removeGenusRows(projectName, ListRemovalLog.JOB_GENUS_NO_SPECIES, null);" in method(
         src, "public int %s(String projectName) throws SQLException {" % rule)
-    body = method(src, "private int removeGenusRows(String projectName, String job, Set<String> recordOnly) throws SQLException {")
+    body = method(src, "private int removeGenusRows(String projectName, String job, java.util.Map<String, String> recordOnly) throws SQLException {")
     assert "GENUS_ROWS_WITHOUT_SPECIES_SQL" in body
     assert "if (Project.ALLANTWEBANTS.equals(projectName) && antwebHasSpecimenOf(genus[1], genus[2])) continue;" in body
-    assert "deleteProjTaxon(genus[0], projectName, null, record ? job : null, ListRemovalLog.REASON_GENUS_NO_SPECIES);" in body
+    assert "deleteProjTaxon(genus[0], projectName, null, record ? job : null, ListRemovalLog.REASON_GENUS_NO_SPECIES, sourceBefore);" in body
+    # the rebuild's record has the source the genus row had before the rebuild (recordOnly: name -> that source)
+    assert "String sourceBefore = recordOnly == null ? null : DBUtil.sqlLiteral(recordOnly.get(genus[0]));" in body
     # every delete of the clean-ups goes through deleteProjTaxon, which records the row before it deletes it
-    delete = method(src, "private String deleteProjTaxon(String taxonName, String projectName, String extraClause, String job, String reason) throws SQLException {")
+    delete = method(src, "private String deleteProjTaxon(String taxonName, String projectName, String extraClause, String job, String reason, String sourceSql) throws SQLException {")
     # (recordWhereOnce since the review of #347: a row the import puts back every day is not recorded every day)
     assert delete.index("ListRemovalLog.recordWhereOnce(getConnection(), ListRemovalLog.PROJECT,") < delete.index("stmt.executeUpdate(dml)")
     assert src.count("delete from proj_taxon \" + where") == 1
-    assert "ListRemovalLog.JOB_PROXY_NO_CHILDREN, ListRemovalLog.REASON_PROXY_NO_CHILDREN);" in src
+    assert "ListRemovalLog.JOB_PROXY_NO_CHILDREN, ListRemovalLog.REASON_PROXY_NO_CHILDREN, null);" in src
     # a red-flagged specimen is no specimen of the genus: the lists' own condition
     sql = method(src, "public static String antwebSpecimenOfGenusSql(boolean withSubfamily) {")
     assert 'SpecimenDb.notRedFlagged("s")' in sql and "s.genus = ?" in sql
@@ -138,7 +147,13 @@ def test_one_rule_for_the_cleanup_and_the_rebuild_of_the_antweb_wide_list():
     positions = [rebuild.index(x) for x in order]
     assert positions == sorted(positions), list(zip(order, positions))
     assert "childrenCountCrawl" not in rebuild and "updateCounts" not in rebuild
-    assert rebuild.index("generaBefore.add(r.getString(1));") < rebuild.index("delete from proj_taxon where project_name = 'allantwebants'")
+    assert rebuild.index("generaBefore.put(r.getString(1), r.getString(2));") < rebuild.index("delete from proj_taxon where project_name = 'allantwebants'")
+    assert "select pt.taxon_name, pt.source from proj_taxon pt" in rebuild
+    # no record without that read: its error is not swallowed (the first catch of the rebuild is the rule's)
+    assert "catch" not in rebuild[:rebuild.index("delete from proj_taxon where project_name = 'allantwebants'")]
+    # the method's javadoc sits on the method, the test hook above it
+    assert re.search(r"\*/\n    public void rebuildAllAntwebList\(\) throws SQLException \{", src)
+    assert src.index("private static volatile Runnable s_beforeGenusRuleForTests") < src.index("     * The rows of the AntWeb-wide list, built again:")
     assert "} catch (SQLException | RuntimeException e) {\n            s_log.error(\"rebuildAllAntwebList() genus rows e:\" + e);" in rebuild
     # review of #347: a deadlock (the database rolled the upload's transaction back) is passed on, by the rebuild and by
     # the record of removed rows; nothing else is
@@ -160,6 +175,43 @@ def test_one_rule_for_the_cleanup_and_the_rebuild_of_the_antweb_wide_list():
         assert "regenerateAllAntweb()" in read(f), f
 
 
+def test_no_delete_without_its_record():
+    """Brian Fisher, 2026-11-03: no job deletes list entries without a record a curator can see. The record of the
+    project list clean-ups (ListRemovalLog.recordWhereOnce) throws when it cannot be written; deleteProjTaxon throws on
+    before its delete, with the database's error number (a deadlock must still be told from a lock wait timeout). The
+    daily clean-up keeps that as an error of its step, which rolls back; the rebuild at an upload logs it and leaves
+    the list as built. Until 2026-11-12 the failure was logged and the delete ran."""
+    log = read("src/org/calacademy/antweb/home/ListRemovalLog.java")
+    once = [m for m in re.finditer(r"public static int recordWhereOnce\(Connection connection, [^)]*\) throws SQLException \{\n(.*?)\n    \}\n", log, re.S)]
+    assert len(once) == 2, len(once)
+    assert "return insert(connection, scriptSql(listType, job, reason, where, sourceSql) + \" and \" + notRecordedYet(listType, job, reason, sourceSql));" in once[1].group(1)
+    assert "write(" not in once[0].group(1) + once[1].group(1)   # write() logs an error and returns 0
+    start = log.index("private static int insert(Connection connection, String insert) throws SQLException {")
+    assert "catch" not in log[start:log.index("\n    }\n", start)]
+    # the source before the rebuild is the one written and the one compared
+    start = log.index("static String notRecordedYet(String listType, String job, String reason, String sourceSql) {")
+    cond = log[start:log.index("\n    }\n", start)]
+    assert 'String rowSource = sourceSql == null ? "l.source" : sourceSql;' in cond
+    assert 'coalesce(" + rowSource + ", \'\')' in cond and '"(" + rowSource + " in ("' in cond
+
+    src = read("src/org/calacademy/antweb/home/ProjTaxonDb.java")
+    delete = method(src, "private String deleteProjTaxon(String taxonName, String projectName, String extraClause, String job, String reason, String sourceSql) throws SQLException {")
+    record, failed, thrown, dml = (delete.index(x) for x in (
+        "ListRemovalLog.recordWhereOnce(", "} catch (SQLException | RuntimeException e) {", "throw e instanceof SQLException", "stmt.executeUpdate(dml)"))
+    assert record < failed < thrown < dml
+    assert "new SQLException(text, ((SQLException) e).getSQLState(), ((SQLException) e).getErrorCode(), e)" in delete
+    assert "return" not in delete[failed:dml]   # nothing between the failed record and the delete but the throw
+    # the two clean-ups keep the error for the line; set 2's step and the jobs by hand roll back when there is one
+    for signature, label in (("public String verifyProjTaxon() throws SQLException {", "genus rows: "),
+                             ("public String cleanupSpeciesListProxyRecords() throws SQLException {", "proxy rows: ")):
+        body = method(src, signature)
+        assert re.search(r'catch \(SQLException \| RuntimeException e\) \{\s*s_log\.error\([^;]*;\s*cleanupErrors\.add\("%s" \+ e\);' % label, body), signature
+    util = read("src/org/calacademy/antweb/util/UtilDataAction.java")
+    start = util.index("public static String cleanProjectLists(Connection connection) {")
+    step = code(util[start:util.index("\n    }\n", start)])
+    assert step.index("cleanupFailed()") < step.index("connection.rollback();")
+
+
 def test_the_jobs_by_hand_say_a_failure_and_roll_back():
     src = read("src/org/calacademy/antweb/util/UtilDataAction.java")
     assert re.search(r'if \(action\.equals\("cleanupSpeciesListProxyRecords"\) \|\| action\.equals\("verifyProjTaxon"\)\) \{\s*'
@@ -178,5 +230,6 @@ if __name__ == "__main__":
     test_no_later_set_removes_project_list_rows()
     test_the_cleanup_is_the_two_of_set_5()
     test_one_rule_for_the_cleanup_and_the_rebuild_of_the_antweb_wide_list()
+    test_no_delete_without_its_record()
     test_the_jobs_by_hand_say_a_failure_and_roll_back()
     print("ok")

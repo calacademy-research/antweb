@@ -435,7 +435,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
                 if (hasNoChildren(taxonName, projectName)) {
                     A.log("cleanupSpeciesListProxyRecords() taxonName:" + taxonName + " projectName:" + projectName);
                     result = deleteProjTaxon(taxonName, projectName, " and source = 'proxyspeciesListTool'",
-                        ListRemovalLog.JOB_PROXY_NO_CHILDREN, ListRemovalLog.REASON_PROXY_NO_CHILDREN);
+                        ListRemovalLog.JOB_PROXY_NO_CHILDREN, ListRemovalLog.REASON_PROXY_NO_CHILDREN, null);
                 }
             }
         } catch (SQLException | RuntimeException e) {
@@ -478,7 +478,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
      * cleanupSpeciesListProxyRecords) they remove rows after the counts, so that caller counts these projects' list
      * totals again (UtilDataAction.listTotalsAfterRowsRemoved).
      */
-    private final java.util.Map<String, Integer> rowsRemoved = new java.util.LinkedHashMap<>();
+    private final java.util.Map<String, Integer> rowsRemoved = new java.util.LinkedHashMap<>();   // one per name (removedRowsText)
 
     /** The names of those rows, per project, in the order removed (the clean-up's line names them). */
     private final java.util.Map<String, List<String>> namesRemoved = new java.util.LinkedHashMap<>();
@@ -489,15 +489,19 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
     /**
      * The rows this object's clean-ups removed, by project and name: "fossilants 1: formicinaeleucotaphus; madants 12:
      * a, b, ... and 2 more" (up to NAMES_PER_PROJECT names per project); "" when none. Brian Fisher, 2026-11-03: no job
-     * deletes list entries without a record that can be read.
+     * deletes list entries without a record that can be read. The numbers count names, as the names shown and the
+     * "and N more" do: one per name taken off a list, also if that name's row was on the list twice (the repository's
+     * record of the schema shows no key on proj_taxon that rules it out: db/upgrade/8.115/2026-10-22-schema-catch-up.sql;
+     * until 2026-11-12 the number was of rows deleted and the names one per call, so such a name gave "and 1 more"
+     * with nothing more to name).
      */
     public String removedRowsText() {
         List<String> parts = new ArrayList<>();
-        for (java.util.Map.Entry<String, Integer> e : rowsRemoved.entrySet()) {
-            List<String> names = namesRemoved.getOrDefault(e.getKey(), new ArrayList<>());
+        for (java.util.Map.Entry<String, List<String>> e : namesRemoved.entrySet()) {
+            List<String> names = e.getValue();
             int shown = Math.min(names.size(), NAMES_PER_PROJECT);
-            parts.add(e.getKey() + " " + e.getValue() + ": " + String.join(", ", names.subList(0, shown))
-                + (e.getValue() > shown ? " and " + (e.getValue() - shown) + " more" : ""));
+            parts.add(e.getKey() + " " + names.size() + ": " + String.join(", ", names.subList(0, shown))
+                + (names.size() > shown ? " and " + (names.size() - shown) + " more" : ""));
         }
         return String.join("; ", parts);
     }
@@ -541,7 +545,10 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
      * update, on the list and in the numbers alike.
      *
      * Every row removed is recorded in list_removal_log (ListRemovalLog; Brian Fisher, 2026-11-03: no job deletes list
-     * entries without a record a curator can see), every one, also beyond the names the line shows. Returns the line for
+     * entries without a record a curator can see), every one, also beyond the names the line shows. A row whose record
+     * cannot be written is not removed: that is an error of its clean-up ("...; FAILED: genus rows: ... no record could
+     * be written of the removal of <name> from the list of <project>, so the row is not deleted: ..."), and the step's
+     * caller rolls the step back (UtilDataAction.cleanProjectLists). Returns the line for
      * compute.log, which names the rows removed, by project (administrators read compute.log in the Log Manager, logMgr.do):
      * "Project lists cleaned: 6 rows removed in 3 s; fossilants 1: formicinaeleucotaphus; madants 5: a, b, c, d, e";
      * a project with more than NAMES_PER_PROJECT rows ends "... and N more"; "Project lists cleaned: 0 rows removed in
@@ -573,16 +580,34 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
     /**
      * Deletes one row of a project list for the clean-ups. job, reason: the record of the removal (ListRemovalLog, written
      * just before the delete by the same condition; Brian Fisher, 2026-11-03: no job deletes list entries without a
-     * record a curator can see); null job: no record (a row the rebuild itself had just put on the list).
+     * record a curator can see); null job: no record (a row the rebuild itself had just put on the list). sourceSql:
+     * the record's source as SQL when it is not the row's own (the rebuild: the source before it); null: the row's own.
+     *
+     * No record, no delete (since 2026-11-12): when the record cannot be written (a lock wait timeout on
+     * list_removal_log while a Species List Tool save holds it, any other error) the row stays and the error is thrown,
+     * with the name and the list in its text. Until then the failure was logged and the row deleted all the same: a
+     * removal without a record. The callers: the daily clean-up and the two jobs by hand keep the error for their line
+     * (cleanupErrors, "FAILED: ...") and their caller rolls the step back (UtilDataAction.cleanProjectLists,
+     * cleanListsByHand); the rebuild of the AntWeb-wide list logs it and leaves the list as built (rebuildAllAntwebList).
      */
-    private String deleteProjTaxon(String taxonName, String projectName, String extraClause, String job, String reason) throws SQLException {
+    private String deleteProjTaxon(String taxonName, String projectName, String extraClause, String job, String reason, String sourceSql) throws SQLException {
         String where = " where taxon_name = " + DBUtil.sqlQuote(taxonName)
             + " and project_name = " + DBUtil.sqlQuote(projectName)
             + (extraClause != null ? extraClause : "");
         if (job != null) {
-            // not the same record day after day for a row the AntCat import puts back every day (recordWhereOnce)
-            ListRemovalLog.recordWhereOnce(getConnection(), ListRemovalLog.PROJECT, "l.taxon_name = " + DBUtil.sqlQuote(taxonName)
-                + " and l.project_name = " + DBUtil.sqlQuote(projectName) + (extraClause != null ? extraClause : ""), job, reason);
+            try {
+                // not the same record day after day for a row the AntCat import puts back every day (recordWhereOnce)
+                ListRemovalLog.recordWhereOnce(getConnection(), ListRemovalLog.PROJECT, "l.taxon_name = " + DBUtil.sqlQuote(taxonName)
+                    + " and l.project_name = " + DBUtil.sqlQuote(projectName) + (extraClause != null ? extraClause : ""), job, reason, sourceSql);
+            } catch (SQLException | RuntimeException e) {
+                // the state and the number of the database's error stay: a deadlock must still be told from the others
+                String text = "no record could be written of the removal of " + taxonName + " from the list of " + projectName
+                    + ", so the row is not deleted: " + e;
+                s_log.error("deleteProjTaxon() " + text);
+                throw e instanceof SQLException
+                    ? new SQLException(text, ((SQLException) e).getSQLState(), ((SQLException) e).getErrorCode(), e)
+                    : new SQLException(text, e);
+            }
         }
         String dml = "delete from proj_taxon " + where;
         Statement stmt = null;
@@ -591,8 +616,9 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             stmt = DBUtil.getStatement(getConnection(), "deleteProjTaxon()");
             c = stmt.executeUpdate(dml);
             if (c > 0 && projectName != null) {
-                rowsRemoved.merge(projectName, c, Integer::sum);
+                rowsRemoved.merge(projectName, 1, Integer::sum);
                 namesRemoved.computeIfAbsent(projectName, k -> new ArrayList<>()).add(taxonName);
+                if (c > 1) s_log.warn("deleteProjTaxon() " + c + " rows of " + taxonName + " on the list of " + projectName + ": counted as one name");
             }
         } catch (SQLException e) {
             s_log.error("deleteProjTaxon() e:" + e + " dml:" + dml);
@@ -627,6 +653,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
      * (GENUS_ROWS_WITHOUT_SPECIES_SQL), one small query per such genus on the AntWeb-wide list (antwebSpecimenOfGenusSql).
      * Every row removed is recorded (ListRemovalLog, JOB_GENUS_NO_SPECIES: Brian Fisher, 2026-11-03, no job deletes
      * list entries without a record a curator can see) and kept for the clean-up's line (rowsRemoved, namesRemoved).
+     * The record first: a row whose record cannot be written is not deleted, and the method throws (deleteProjTaxon).
      * In the caller's transaction.
      */
     public int removeGenusRowsWithoutSpeciesOrSpecimen(String projectName) throws SQLException {
@@ -635,10 +662,12 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
     /**
      * The rule for one list. job: the record's job name; recordOnly: when not null, only the genus rows named in it are
-     * recorded (the rebuild of the AntWeb-wide list: the rows that were on the list before it; a row the rebuild put on
-     * the list a moment ago, in the same transaction, was never a list entry anyone saw).
+     * recorded, each with the source it is given there (the rebuild of the AntWeb-wide list: the rows that were on the
+     * list before it, with the source they had then; a row the rebuild put on the list a moment ago, in the same
+     * transaction, was never a list entry anyone saw). A row whose record cannot be written is not deleted: the error
+     * is thrown and the rows after it stay too (deleteProjTaxon).
      */
-    private int removeGenusRows(String projectName, String job, Set<String> recordOnly) throws SQLException {
+    private int removeGenusRows(String projectName, String job, java.util.Map<String, String> recordOnly) throws SQLException {
         List<String[]> candidates = new ArrayList<>();   // genus row's name, subfamily, genus
         try (PreparedStatement stmt = getConnection().prepareStatement(GENUS_ROWS_WITHOUT_SPECIES_SQL)) {
             stmt.setString(1, projectName);
@@ -650,8 +679,9 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         int removed = 0;
         for (String[] genus : candidates) {
             if (Project.ALLANTWEBANTS.equals(projectName) && antwebHasSpecimenOf(genus[1], genus[2])) continue;
-            boolean record = recordOnly == null || recordOnly.contains(genus[0]);
-            deleteProjTaxon(genus[0], projectName, null, record ? job : null, ListRemovalLog.REASON_GENUS_NO_SPECIES);
+            boolean record = recordOnly == null || recordOnly.containsKey(genus[0]);
+            String sourceBefore = recordOnly == null ? null : DBUtil.sqlLiteral(recordOnly.get(genus[0]));
+            deleteProjTaxon(genus[0], projectName, null, record ? job : null, ListRemovalLog.REASON_GENUS_NO_SPECIES, sourceBefore);
             ++removed;
         }
         return removed;
@@ -1018,6 +1048,13 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "after regenerateAllAntweb Proj_taxon worldants counts");
     }
 
+    /** Tests only: called in rebuildAllAntwebList when the list's rows are in, before the rule of the genus rows. */
+    private static volatile Runnable s_beforeGenusRuleForTests = null;
+
+    public static void setBeforeGenusRuleForTests(Runnable beforeGenusRule) {
+        s_beforeGenusRuleForTests = beforeGenusRule;
+    }
+
     /**
      * The rows of the AntWeb-wide list, built again: every name of a counted status (StatusSet.getCountables), without
      * the names a curator removed from it (proj_taxon_dispute), and then by the rule of the genus rows (agreed with
@@ -1036,28 +1073,25 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
      *
      * A genus row that was on the list before the rebuild and is off it afterwards by the rule is recorded
      * (ListRemovalLog, JOB_REBUILD_GENUS; Brian Fisher, 2026-11-03: no job deletes list entries without a record a
-     * curator can see). A genus the rebuild put on the list and took off again in the same transaction was not on the
-     * list before and is not after: no record (it would be one for every such genus at every upload).
+     * curator can see), with the source the row had before the rebuild (the rebuild writes its own source on every
+     * row; the one before is what a reader of the list knew, and what tells a curator's row, whose removal is always
+     * recorded, from one recorded already: ListRemovalLog.recordWhereOnce). The record first: when it cannot be
+     * written (a lock wait timeout on list_removal_log, for example) that genus row is not taken off, nor the ones
+     * after it; logged, the upload goes on, and the daily clean-up applies the rule to them. A genus the rebuild put
+     * on the list and took off again in the same transaction was not on the list before and is not after: no record
+     * (it would be one for every such genus at every upload).
      */
-    /** Tests only: called in rebuildAllAntwebList when the list's rows are in, before the rule of the genus rows. */
-    private static volatile Runnable s_beforeGenusRuleForTests = null;
-
-    public static void setBeforeGenusRuleForTests(Runnable beforeGenusRule) {
-        s_beforeGenusRuleForTests = beforeGenusRule;
-    }
-
     public void rebuildAllAntwebList() throws SQLException {
         //LogMgr.logAntQuery(getConnection(), "projectTaxaCountByProjectRank", "Before regenerateAllAntweb Proj_taxon worldants counts");
         //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "Before regenerateAllAntweb Proj_taxon worldants counts");
 
-        // the genus rows on the list before the rebuild: one of them that the rule takes off below is a removal, and recorded
-        Set<String> generaBefore = new HashSet<>();
+        // the genus rows on the list before the rebuild, each with its source: one of them that the rule takes off below
+        // is a removal, and recorded with that source. Not read, not rebuilt: without it a removal would have no record.
+        java.util.Map<String, String> generaBefore = new java.util.HashMap<>();
         try (Statement before = getConnection().createStatement();
-             ResultSet r = before.executeQuery("select pt.taxon_name from proj_taxon pt join taxon t on t.taxon_name = pt.taxon_name"
+             ResultSet r = before.executeQuery("select pt.taxon_name, pt.source from proj_taxon pt join taxon t on t.taxon_name = pt.taxon_name"
                  + " and t.taxarank = 'genus' where pt.project_name = 'allantwebants'")) {
-            while (r.next()) generaBefore.add(r.getString(1));
-        } catch (SQLException | RuntimeException e) {
-            s_log.warn("rebuildAllAntwebList() genus rows before e:" + e);
+            while (r.next()) generaBefore.put(r.getString(1), r.getString(2));
         }
 
         String deleteDML = "delete from proj_taxon where project_name = 'allantwebants'";
@@ -1098,7 +1132,9 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             // A deadlock: the database has rolled back the whole transaction, which is the upload's own (its specimens
             // and this list share one connection, committed once at the end: SpecimenUploadJob, TaxonWorksNightly).
             // Going on would commit an upload without its specimens and call it done. Passed on: the upload fails and
-            // says so. Any other error leaves the transaction as it was and the list as built.
+            // says so. Any other error leaves the transaction as it was and the list as built: a record of a removal
+            // that could not be written is such an error (its genus row and the ones after it stay on the list; no
+            // row goes without its record).
             if (DBUtil.transactionRolledBack(e)) {
                 throw e instanceof SQLException ? (SQLException) e
                     : new SQLException("rebuildAllAntwebList(): the transaction was rolled back by a deadlock", "40001", 1213, e);
