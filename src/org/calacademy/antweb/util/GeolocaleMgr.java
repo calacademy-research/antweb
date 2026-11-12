@@ -24,7 +24,8 @@ import java.util.stream.Stream;
  * as a tree (deep) and as a flat list (shallow), plus the place names for the search box. Loaded by AntwebMgr
  * at start-up (about 12 seconds) and on util.do?action=reloadAntwebMgr. Lookups by name or id, validity of a
  * country or adm1 for uploads, a place's bioregion, and the adm1 lists of countryAdm1List.do. Docs:
- * docs/flows/places.md. Tests: PreviousDeterminationsTest, tests/unit/test_small_fixes.py, CountrySpellingTest
+ * docs/flows/places.md. Islands that are their own country (2026-11-11): getRecordPlace, getIslandsOf; IslandCountryTest.
+ * Tests: PreviousDeterminationsTest, tests/unit/test_small_fixes.py, CountrySpellingTest
  * (a country written with other capitals, accents or blanks, for the specimen upload), PlaceBioregionTest (the
  * bioregion a country and state give an uploaded specimen), OldPlaceNamesTest (an old name in a link).
  */
@@ -1001,6 +1002,37 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         }
         //A.log("getValidIsland() name:" + name + " island:" + validIsland);
         return validIsland;
+    }
+
+    /**
+     * The country an uploaded record is filed under when its country or adm1 names a place AntWeb treats as a country
+     * of its own (Brian Fisher, 2026-11-11: an oceanic island with its own ant fauna is its own country; RecordPlace):
+     * United States + Hawaii or Oahu: Hawaii; Ecuador + Galapagos: Galapagos Islands. Null for every other record and
+     * before the places are loaded.
+     */
+    public static @Nullable org.calacademy.antweb.upload.RecordPlace getRecordPlace(String country, String adm1) {
+        return org.calacademy.antweb.upload.RecordPlace.of(countryNameMap, adm1CountryMap, adm1List, country, adm1);
+    }
+
+    /**
+     * The valid islands whose political parent (geolocale.country) is this country: Hawaii for United States, Galapagos
+     * Islands for Ecuador. They have their own pages and their specimens are not the country's (Brian Fisher,
+     * 2026-11-11); the country's page says so (Country.ownPagesNote).
+     */
+    public static List<Country> getIslandsOf(String countryName) {
+        return islandsOf(islands, countryName);
+    }
+
+    /** getIslandsOf on a given list of islands; the tests call it without a database. */
+    public static List<Country> islandsOf(Collection<Country> islands, String countryName) {
+        List<Country> list = new ArrayList<>();
+        if (islands == null || countryName == null) return list;
+        for (Country island : islands) {
+            if (island != null && island.isValid() && island.isIsland() && island.getName() != null
+                    && countryName.equals(island.getCountry()) && !countryName.equals(island.getName())) list.add(island);
+        }
+        list.sort(Comparator.comparing(Country::getName));
+        return list;
     }
 
     /**

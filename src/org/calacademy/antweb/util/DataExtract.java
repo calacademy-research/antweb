@@ -110,10 +110,9 @@ public final class DataExtract {
     private static final org.apache.commons.logging.Log s_log = org.apache.commons.logging.LogFactory.getLog(DataExtract.class);
 
     /**
-     * The format of the files; the same number as tools/export/specimen_extract.py while they write the same. 10 is
-     * the tool's number with the island rule of 2026-11-11 (branch feat/island-countries, pull request 345); until
-     * that is merged the tool in the repository is at 8 and still brings a country's islands with it
-     * (tests/unit/test_data_extract_tool_version.py says which state the repository is in).
+     * The format of the files; the same number as tools/export/specimen_extract.py while they write the same
+     * (tests/unit/test_data_extract_tool_version.py). 10 is the tool's number with the island rule of 2026-11-11
+     * (pull request 345).
      */
     public static final String VERSION = "10";
 

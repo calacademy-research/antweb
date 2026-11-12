@@ -68,7 +68,9 @@ def test_the_upload_works_out_the_bioregion_from_the_valid_country():
     today would store, and the CAS TaxonWorks upload loads its specimens again every day. If parseLine worked out the
     bioregion from the country as the file wrote it (USA, México), the next upload would undo the correction. The
     bioregion is asked for with the variable country, after it was given the valid country's name and with no other
-    value given to it in between."""
+    value given to it in between, except the one of 2026-11-11 (Brian Fisher: an oceanic island is its own country):
+    the name of the valid country the record is filed under (Hawaii for United States + Hawaii; RecordPlace), which is
+    the country stored, so the bioregion is still worked out from the stored country."""
     src = read("src/org/calacademy/antweb/upload/SpecimenUploadParse.java")
     parse = code(body(src, "protected String parseLine(String theLine, int lineNum, Hashtable specimenItem, Hashtable taxonItem"))
     named = parse.index("country = validCountry.getName();")
@@ -76,7 +78,10 @@ def test_the_upload_works_out_the_bioregion_from_the_valid_country():
     assert named < asked, "parseLine asks for the bioregion before the country has its valid name"
     assert parse.count("GeolocaleMgr.getGeolocaleBioregion(") == 1, "a second bioregion lookup in parseLine: check what country it is given"
     between = parse[named + len("country = validCountry.getName();"):asked]
-    assert not re.search(r"(?<![\w.])country\s*=[^=]", between), "country is given another value before the bioregion is worked out"
+    own = "country = ownCountry.place.getName();"
+    assert between.count(own) == 1 and "RecordPlace ownCountry = GeolocaleMgr.getRecordPlace(country, adm1);" in between
+    assert re.search(re.escape(own) + r"\s*specimenItem\.put\(\"country\", country\);", between), "the country the record is filed under is no longer the one stored"
+    assert not re.search(r"(?<![\w.])country\s*=[^=]", between.replace(own, "")), "country is given another value before the bioregion is worked out"
 
 
 def test_the_server_start_schedules_the_early_taxonworks_request():

@@ -68,8 +68,9 @@ a country came with it and the form had a box "Include islands filed under these
   political parent is the row's `parent` or `country`.
 - **Asked for like any country.** `United States` gives no specimen of Hawaii; `United States, Hawaii` gives both.
   There is no switch.
-- **Both stored forms.** Until the stored specimens are moved (`tools/place/island_countries.py --apply`, part of
-  the island-countries work, pull request 345), a specimen of Hawaii has `country = United States` and
+- **Both stored forms.** Until the stored specimens are moved on a server (`tools/place/island_countries.py
+  --apply`, the one-time step of the island-countries work, pull request 345; see the runbook), a specimen of
+  Hawaii has `country = United States` and
   `island_country = Hawaii`; afterwards `country = Hawaii`. The filter reads both columns
   (`whereSql(countries, islands, antsOnly, otherIslands)`): a specimen marked as the specimen of an island that was
   not asked for is left out whatever its country column says, and a named island is found by its own name in
@@ -127,10 +128,8 @@ No new table.
 ## The same files as the command-line tool
 
 `tools/export/specimen_extract.py` (run on a server by an administrator) and `DataExtract` write the same files
-(format 10, the tool with the island rule of 2026-11-11: branch `feat/island-countries`, pull request 345; until
-that is merged the tool in the repository is format 8, which still brings a country's islands with it, and
-`tests/unit/test_data_extract_tool_version.py` says which of the two states the repository is in and fails in any
-other): the same columns, the same CSV quoting (Python's `csv` default: a field is quoted only when it holds a
+(format 10, the tool with the island rule of 2026-11-11, pull request 345;
+`tests/unit/test_data_extract_tool_version.py` fails when the two format numbers differ): the same columns, the same CSV quoting (Python's `csv` default: a field is quoted only when it holds a
 comma, a quote or a line break), NULL as an empty field, numbers and dates as the database prints them (the Java
 code takes their text from the raw answer, not through Java's number formatting), the same filter (old country
 names included), the same manifest keys and text. Checked on 2026-11-10 by running both against the same database
@@ -162,4 +161,4 @@ Differences on purpose:
 | `test/.../util/DataExtractDbTest` (CI, MySQL 8.4) | the cases of `tests/unit/test_specimen_extract.py` against a real database: complete and verified, special characters, NULL, numbers and dates, a zero date, 0/0 coordinates, a name without taxon row, an island named with the countries, a count that differs, unknown and not-valid names, old names included, a country without specimens (and one with a beetle only), two spellings, an island never in its political parent's extract (both stored forms, old island names, no specimen in two files), read-only, pages of any size give the same file, a change of the table during the extract does not wait, a four-byte character, 12,000 rows |
 | `tests/e2e/test_data_extract.py` (staging) | access (anonymous, curator, admin), a wrong name, a GET starts and deletes nothing, downloads refused, a small country's extract from the form to the downloaded files, its real folder under every guessable address, Delete; Ecuador without the Galapagos Islands and the Galapagos Islands alone |
 | `tests/unit/test_specimen_extract.py` | the command-line tool |
-| `tests/unit/test_data_extract_tool_version.py` | the page and the tool have the same format number (or the one state allowed until pull request 345 is merged); no text of the page says a country's islands come with it |
+| `tests/unit/test_data_extract_tool_version.py` | the page and the tool have the same format number and the same manifest lines for islands; no text of the page says a country's islands come with it |

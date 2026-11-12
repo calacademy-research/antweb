@@ -154,7 +154,9 @@ function selectAll(thisForm) {
 
 <% } %>
 
-<% if (Utility.displayEmptyOrNotBlank(locality.getCountry())) { %>
+<%-- 2026-11-11 (Brian Fisher: an oceanic island is its own country): a collection of Hawaii has country Hawaii and
+     island Hawaii; the Island line below is enough. --%>
+<% if (Utility.displayEmptyOrNotBlank(locality.getCountry()) && !(locality.getCountry() != null && locality.getCountry().equals(locality.getIslandCountry()))) { %>
 <ul>
 <li>Country:</li>
 <%
@@ -175,7 +177,7 @@ function selectAll(thisForm) {
 		     //A.log("locality-body.jsp adm1:" + adm1 + " country:" + locality.getCountry() + " adm1:" + locality.getAdm1());
 		     if (island != null) {
   	 	       //A.log("locality-body.jsp parent:" + adm1.getParent() + " adm1:" + adm1.getName());
-  			   islandCountryLink = "<a href='" + AntwebProps.getDomainApp() + "/island.do?name=" + island.getName() + "'>" + island.getName() + "</a>";
+  			   islandCountryLink = "<a href='" + AntwebProps.getDomainApp() + "/island.do?name=" + Html.escAttr(Html.url(island.getName())) + "'>" + Html.esc(island.getName()) + "</a>";
   		     } %>
 		<li><b><%= islandCountryLink %></b> </li></ul>
   <% } else {
