@@ -122,6 +122,7 @@ public class IslandParseLineTest extends TestCase {
         country(8864, "Galápagos", null, "South America", null, true, false, "Galapagos Islands", "Neotropical", null);
         country(12, "Reunion", "Africa", "Eastern Africa", "Reunion", false, true, null, "Malagasy", null);
         country(8865, "Rodrigues", "Africa", "Eastern Africa", null, false, true, null, "Malagasy", null);
+        country(98, "Mexico", "Americas", "Central America", null, false, true, null, "Neotropical", null);
         adm1(620, "Galapagos", "Ecuador", false, "Galapagos Islands", "Neotropical");
         adm1(2394, "Galápagos", "Ecuador", false, "Galapagos Islands", "Neotropical");
         adm1(1017, "Oahu", "United States", false, "Hawaii", "Nearctic");
@@ -224,6 +225,25 @@ public class IslandParseLineTest extends TestCase {
         assertEquals(HAWAII, place(parse("United States", "Oahu")));
         assertEquals(HAWAII, place(parse("Hawaii", "Oahu")));
         assertEquals(HAWAII, place(parse("Hawaii", "Hawaii")));
+    }
+
+    /**
+     * An adm1 that is an island's name moves only a record of the island's political parent, of the island itself, or
+     * with no country (review, 2026-11-12). Mexico + adm1 Hawaii stays Mexico, with the adm1 as written, and the
+     * report lists it as a state Mexico does not have.
+     */
+    public void testAnIslandsNameAsTheAdm1OfAnotherCountry() throws Exception {
+        assertEquals("Mexico | - | Hawaii | Americas | Central America | Neotropical", place(parse("Mexico", "Hawaii")));
+        assertEquals("Mexico | - | Galapagos | Americas | Central America | Neotropical", place(parse("Mexico", "Galapagos")));
+        assertEquals("United States | - | Galapagos Islands | Americas | North America | Nearctic", place(parse("United States", "Galapagos Islands")));
+        String report = report();
+        assertTrue(report, report.contains("<b>Not valid Antweb adm1</b>") && report.contains("adm1Name=Hawaii&amp;countryName=Mexico")
+            && report.contains("adm1Name=Galapagos&amp;countryName=Mexico") && report.contains("adm1Name=Galapagos+Islands&amp;countryName=United+States"));
+        // no country in the file: the island by the adm1 (Hawaii), or through the country the adm1 belongs to (the
+        // row Galapagos of Ecuador: the upload takes Ecuador, then the island)
+        assertEquals(HAWAII, place(parse("", "Hawaii")));
+        assertEquals(GALAPAGOS, place(parse("", "Galapagos")));
+        assertEquals(HAWAII, place(parse("", "Oahu")));
     }
 
     public void testGalapagosInEveryFormAFileWrites() throws Exception {

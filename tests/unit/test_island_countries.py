@@ -80,9 +80,16 @@ def test_which_specimens_move():
     backup = ic.backup_sql(T, [(691, "Rodrigues")])
     assert backup[0].startswith("create table " + T + " as select s.code, s.country as old_country, s.region as old_region, s.subregion as old_subregion,")
     assert ic.TO_MOVE in backup[0] and ic.ISLAND_ROW in backup[0] and "g.name as new_country" in backup[0]
-    assert "if(coalesce(g.region, '') in ('', 'none', 'null'), s.region, g.region) as new_region" in backup[0], "no region on the island row: unchanged"
-    assert backup[1] == ("create table " + T + "_geolocale as select id, name, parent, valid_name, cast(null as char(250)) as new_valid_name"
-                         " from geolocale where id in (691)")
+    # no value: null, blank, "none" or "null" in any case, with blanks around or not: as blank() and the upload's
+    # RecordPlace.hasNoValue, which trim first (review, 2026-11-12: " none" was a value in the SQL only)
+    assert ic.no_value_sql("g.region") == "lower(coalesce(g.region, '')) regexp '^[[:space:]]*(none|null)?[[:space:]]*$'"
+    assert "if(" + ic.no_value_sql("g.region") + ", s.region, g.region) as new_region" in backup[0], "no region on the island row: unchanged"
+    assert "if(" + ic.no_value_sql("g.subregion") + ", s.subregion, g.subregion) as new_subregion" in backup[0]
+    for none in (None, "", "  ", "none", " none", "None ", "NULL", "\tnull\n"):
+        assert ic.blank(none), repr(none)
+    assert not ic.blank("Nonesuch") and not ic.blank("North America")
+    assert backup[1] == ("create table " + T + "_geolocale as select id, name, parent, valid_name, cast(null as char(250)) as new_valid_name,"
+                         " 0 as applied from geolocale where id in (691)")
     assert ic.backup_sql(T, [])[1].endswith("where id in (0)")
     assert ic.TABLE_NAME.match(T) and not ic.TABLE_NAME.match("specimen") and not ic.TABLE_NAME.match(T + "; drop table x")
     # the names say "dated backup" to the schema check (tools/datamodel/list_tables.py), as the other tools' backups do
@@ -102,8 +109,22 @@ def test_apply_and_rollback_sql():
                       "hex(convert(ifnull(b.island_country, '') using utf8mb4))")
     for never in ("island_country =", "s.adm1", "bioregion"):
         assert never not in sql[1].split(" set ")[1].split(" where ")[0], never
-    assert sql[2] == ("update geolocale set valid_name = 'Rodrigues' where id = 691 and coalesce(is_valid, 0) = 0 "
-                      "and coalesce(valid_name, '') in ('', 'none', 'null')")
+    # an old-name row only while it is still not valid and names nothing, and marked applied by the same statement
+    # (review, 2026-11-12: the tool printed the number of rows it meant to change)
+    assert sql[2] == ("update geolocale g join " + T + "_geolocale b on b.id = g.id set g.valid_name = b.new_valid_name, b.applied = 1 "
+                      "where b.id in (691) and b.new_valid_name is not null and coalesce(g.is_valid, 0) = 0 and "
+                      + ic.no_value_sql("g.valid_name"))
+    # what the update did, read back
+    assert ic.alias_result_sql(T).startswith("select b.id, ") and " from " + T + "_geolocale b left join geolocale g on g.id = b.id" in ic.alias_result_sql(T)
+    hexed = lambda s: s.encode("utf-8").hex().upper()
+    assert ic.alias_results([["691", hexed("Rodrigues"), hexed("Mauritius"), "1", hexed("Rodrigues")]]) == (1, [])
+    changed, left = ic.alias_results([["691", hexed("Rodrigues"), hexed("Mauritius"), "0", hexed("Rodrigues Island")],
+                                      ["700", hexed("X"), hexed("Y"), "1", hexed("Z")], ["701", hexed("V"), hexed("W"), "0", ""]])
+    assert changed == 1 and len(left) == 2
+    assert left[0].startswith("LEFT AS IT IS: Rodrigues of Mauritius (row id 691): its valid name is now 'Rodrigues Island': the row changed between")
+    assert "its valid name is now empty" in left[1]
+    text = ic.report_text("x", "", found(), table=T, changed=6, left=0, aliases_set=0, aliases_left=left)
+    assert "Old-name rows changed: 0.\n  LEFT AS IT IS: Rodrigues of Mauritius (row id 691)" in text, text
     assert len(ic.apply_sql(T, [])) == 3
     # the backup of the old-name rows records the valid name the tool gives each
     backup = ic.backup_sql(T, [(691, "Rodrigues")])
@@ -114,11 +135,14 @@ def test_apply_and_rollback_sql():
     assert "set s.country = b.old_country, s.region = b.old_region, s.subregion = b.old_subregion where b.applied = 1 and " in back[1]
     assert "hex(convert(ifnull(s.country, '') using utf8mb4)) = hex(convert(ifnull(b.new_country, '') using utf8mb4))" in back[1]
     # an old-name row only while it still has the valid name this tool gave it (automatic review, 2026-11-11)
-    assert back[2] == ("update geolocale g join " + T + "_geolocale b on b.id = g.id set g.valid_name = b.valid_name where "
+    # and only a row this tool changed (applied)
+    assert back[2] == ("update geolocale g join " + T + "_geolocale b on b.id = g.id set g.valid_name = b.valid_name where b.applied = 1 and "
                        "hex(convert(ifnull(g.valid_name, '') using utf8mb4)) = hex(convert(ifnull(b.new_valid_name, '') using utf8mb4))")
-    # a table of version 1 (staging, 2026-11-11) has no new_valid_name: the name ALIASES gives the row
-    old = ic.rollback_sql(T, True, False)[2]
-    assert "b.new_valid_name" not in old and "case when b.name = 'Rodrigues' and b.parent = 'Mauritius' then 'Rodrigues' end" in old
+    # a table of version 1 (staging, 2026-11-11) has neither new_valid_name nor applied: the name ALIASES gives the row
+    old = ic.rollback_sql(T, True, False, False)[2]
+    assert "b.new_valid_name" not in old and "b.applied" not in old
+    assert "case when b.name = 'Rodrigues' and b.parent = 'Mauritius' then 'Rodrigues' end" in old
+    assert "b.applied" not in ic.rollback_sql(T, True, True, False)[2] and "b.new_valid_name" in ic.rollback_sql(T, True, True, False)[2]
     assert len(ic.rollback_sql(T, False)) == 4 and "geolocale" not in ic.rollback_sql(T, False)[1]
 
 
@@ -142,6 +166,30 @@ def test_old_state_names_that_file_under_a_country():
     f.old_name_rows = rows
     assert "NOT EXPECTED" not in ic.report_text("x", "", f)
     assert "Old state names that file an upload's record under a country (every such row of the place table):\n  none" in ic.report_text("x", "", ic.Found())
+
+
+def test_the_runbook_pins_this_tools_checksum():
+    """docs/runbook.md runs the tool on production before the merge from the pull request's branch, only if its
+    SHA-256 is the one printed there (review, 2026-11-12: it was fetched with curl and run as root unchecked). The
+    hash in the runbook is this file's: a change to the tool without the runbook fails here."""
+    import hashlib
+    with open(TOOL, "rb") as f:
+        data = f.read()
+    assert b"\r" not in data, "the tool has LF line ends (git show gives these bytes)"
+    digest = hashlib.sha256(data).hexdigest()
+    with open(os.path.join(ROOT, "docs", "runbook.md"), encoding="utf-8") as f:
+        runbook = f.read()
+    section = runbook[runbook.index("### Islands that are their own country"):]
+    section = section[:section.index("\n## ")]
+    command = [line for line in section.split("\n") if "sha256sum -c" in line]
+    assert len(command) == 1, command
+    assert ('git -C /root/antweb fetch -q origin feat/island-countries && git -C /root/antweb show FETCH_HEAD:tools/place/island_countries.py > "$T" '
+            '&& echo "' + digest + '  $T" | sha256sum -c && python3 "$T" --project /root/antweb') in command[0], (digest, command[0])
+    # nothing in the section is fetched and run without a check
+    assert "curl" not in section and "raw.githubusercontent.com" not in section
+    for line in section.split("\n"):
+        if line.startswith("python3 ") and "island_countries.py" in line:
+            assert "--project /root/antweb" in line, line
 
 
 def test_parent_list_sql_and_sources():
@@ -440,7 +488,7 @@ def test_with_a_database():
         out = tool(d, "--apply")
         assert out.returncode == 0, out.stderr + out.stdout
         assert "Specimens changed: 6." in out.stdout and "Old-name rows changed: 1." in out.stdout, out.stdout
-        assert "specimens still to move or old-name rows still to set: 0 (as expected)" in out.stdout and "NOW: 1. Reload the places" in out.stdout
+        assert "specimens still to move or old-name rows not set: 0 (as expected)" in out.stdout and "NOW: 1. Reload the places" in out.stdout
         sp = specimens()
         # country, island_country, region, subregion, adm1, bioregion
         assert sp["hi1"] == ("Hawaii", "Hawaii", "Oceania", "Polynesia", "-", "Oceania"), sp["hi1"]
@@ -457,8 +505,8 @@ def test_with_a_database():
         assert ic.TABLE_NAME.match(table) and run_tables() == [table, table + "_geolocale"]
         assert mysql("select code, old_country, new_country, old_region, new_region, applied from " + table + " where code in ('hi1', 'xx2') order by code") == [
             ["hi1", "United States", "Hawaii", "Americas", "Oceania", "1"], ["xx2", "NULL", "Hawaii", "NULL", "Oceania", "1"]]
-        assert mysql("select id, name, parent, ifnull(valid_name, '-'), new_valid_name from " + table + "_geolocale") == [
-            ["691", "Rodrigues", "Mauritius", "-", "Rodrigues"]]
+        assert mysql("select id, name, parent, ifnull(valid_name, '-'), new_valid_name, applied from " + table + "_geolocale") == [
+            ["691", "Rodrigues", "Mauritius", "-", "Rodrigues", "1"]]
         # now the row names a country: it is among the rows the upload's second rule reads, and expected
         out = tool(d)
         assert "  Rodrigues of Mauritius -> the country Rodrigues (row id 691)\n" in out.stdout and "NOT EXPECTED" not in out.stdout, out.stdout
@@ -487,7 +535,7 @@ def test_with_a_database():
         # with the tool's own value again, a second rollback puts the old one back (here with a table as version 1
         # wrote it on staging, without the column new_valid_name)
         mysql("update geolocale set valid_name = 'Rodrigues' where id = 691")
-        mysql("alter table " + table + "_geolocale drop column new_valid_name")
+        mysql("alter table " + table + "_geolocale drop column new_valid_name, drop column applied")
         out = tool(d, "--rollback", table)
         assert out.returncode == 0 and "Old-name row Rodrigues of Mauritius (id 691): its old valid name is back" in out.stdout, out.stderr + out.stdout
         mysql("update specimen set country = 'United States', region = 'Americas', subregion = 'North America' where code = 'hi2'")
@@ -505,10 +553,55 @@ def test_with_a_database():
         assert mysql(";\n".join(ic.rollback_sql(T, True))) == [["5"]]
         assert specimens()["hi3"][0] == "Mexico" and specimens()["hi1"][0] == "United States"
         assert drop_run_tables()
+
+        # 8. an administrator edits the Rodrigues row between the report and the update (here: a trigger that changes
+        #    it when the run's first update starts): the row is left, and the output says so with the real number
+        #    (review, 2026-11-12: it said "Old-name rows changed: 1" and the check read 0)
+        mysql(SCHEMA + DATA)          # the rows as at the start (step 7 changed a specimen for good)
+        assert snapshot() == before
+        mysql("create trigger island_countries_test before update on specimen for each row "
+              "update geolocale set valid_name = 'Rodrigues Island' where id = 691 and valid_name is null")
+        out = tool(d, "--apply")
+        mysql("drop trigger island_countries_test")
+        assert out.returncode == 1, out.stderr + out.stdout
+        assert "Specimens changed: 6." in out.stdout and "Old-name rows changed: 0." in out.stdout, out.stdout
+        assert ("  LEFT AS IT IS: Rodrigues of Mauritius (row id 691): its valid name is now 'Rodrigues Island': the row changed between "
+                "the report and the update") in out.stdout, out.stdout
+        assert "specimens still to move or old-name rows not set: 1  <-- NOT ZERO" in out.stdout, out.stdout
+        table = run_tables()[0]
+        assert mysql("select applied from " + table + "_geolocale") == [["0"]]
+        assert mysql("select valid_name from geolocale where id = 691") == [["Rodrigues Island"]]
+        # the rollback puts the specimens back and does not touch the row the tool never changed, even after an
+        # administrator gave it the very name the tool would have
+        mysql("update geolocale set valid_name = 'Rodrigues' where id = 691")
+        out = tool(d, "--rollback", table)
+        assert out.returncode == 0 and "Rolled back: 6 of the 6 specimens" in out.stdout, out.stderr + out.stdout
+        assert "Old-name row Rodrigues of Mauritius (id 691): this tool did not change it at the apply: nothing to put back" in out.stdout, out.stdout
+        assert mysql("select valid_name from geolocale where id = 691") == [["Rodrigues"]]
+        mysql("update geolocale set valid_name = null where id = 691")
+        assert snapshot() == before
+        assert drop_run_tables()
+
+        # 9. an island row whose region or subregion holds no value, written with blanks or capitals: the specimen keeps
+        #    its own, as the upload does (review, 2026-11-12: the SQL did not trim)
+        for none in ("  ", " none", "None ", " NULL "):
+            mysql("update geolocale set region = '" + none + "', subregion = '" + none + "' where id = 423")
+            mysql(";\n".join(ic.backup_sql(T, [])))
+            assert mysql("select distinct ifnull(new_region, '-'), ifnull(new_subregion, '-') from " + T + " where new_country = 'Hawaii' and old_country = 'United States'") == [
+                ["Americas", "North America"]], repr(none)
+            assert mysql("select ifnull(new_region, '-') from " + T + " where code = 'xx2'") == [["-"]], repr(none)   # no value of its own either
+            assert drop_run_tables()
+        mysql("update geolocale set region = ' Oceania', subregion = 'Polynesia' where id = 423")       # a value with a blank is a value
+        mysql(";\n".join(ic.backup_sql(T, [])))
+        assert mysql("select distinct new_region, new_subregion from " + T + " where new_country = 'Hawaii'") == [[" Oceania", "Polynesia"]]
+        assert drop_run_tables()
+        mysql("update geolocale set region = 'Oceania', subregion = 'Polynesia' where id = 423")
+        assert snapshot() == before
     idle.shutdown()
     mysql("drop database " + DATABASE, database="mysql")
     print("With a database: report, an old state name not expected, busy or silent AntWeb, failed statement undone, apply, second run, "
-          "rollback (a changed specimen and a changed old-name row left alone; a version 1 table), a specimen changed in between.")
+          "rollback (a changed specimen and a changed old-name row left alone; a version 1 table), a specimen changed in between, "
+          "an old-name row changed before the update (left, and said), an island row with a padded none.")
 
 
 def main():

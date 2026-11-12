@@ -22,9 +22,14 @@ import org.calacademy.antweb.geolocale.Country;
  * specimen.island_country, so every count of the parent included the island.
  *
  * Which records (the country is already AntWeb's valid name of what the file wrote):
- *   1. the adm1 or the country is a flagged island by its own name or by an old name of it (a not-valid country row
- *      whose valid name is the island): United States + Hawaii, Ecuador + Galapagos or Galápagos, country Hawaii,
- *      country Galapagos Islands;
+ *   1. the country is a flagged island by its own name or by an old name of it (a not-valid country row whose valid
+ *      name is the island): country Hawaii, country Galapagos Islands; or the adm1 is such a name and the record's
+ *      country is empty, the island itself, or the island's political parent (geolocale.country of the island's row:
+ *      United States for Hawaii, Ecuador for Galapagos Islands): United States + Hawaii, Ecuador + Galapagos or
+ *      Galápagos, no country + Hawaii. An adm1 that only happens to be an island's name in a record of another
+ *      country (Mexico + Hawaii) does not move the record: it is handled as any adm1 of that country, and reported
+ *      as "Not valid Antweb adm1" when the country has no such state (review, 2026-11-12: the adm1 alone decided,
+ *      whatever country the file named);
  *   2. the adm1 is, in that country, an old name whose valid name is not a state of the country but a valid country:
  *      United States + Oahu (the row Oahu of United States names Hawaii), and Mauritius + Rodrigues once the row
  *      Rodrigues of Mauritius names the country Rodrigues. The target need not be flagged as an island.
@@ -61,11 +66,24 @@ public final class RecordPlace {
                                  String country, String adm1) {
         if (countryNames == null) return null;
         Country place = validIsland(countryNames, adm1);
+        if (place != null && !adm1MayNameIsland(countryNames, place, country)) place = null;
         if (place == null) place = validIsland(countryNames, country);
         if (place == null) place = countryOfOldAdm1(countryNames, adm1s, adm1, country);
         if (place == null || place.getName() == null) return null;
         boolean drop = adm1 == null || adm1.equals(place.getName()) || aliasNames(countryNames, adm1s, adm1Rows, place).contains(adm1);
         return new RecordPlace(place, drop ? null : adm1);
+    }
+
+    /**
+     * Rule 1 by the adm1: an adm1 that is an island's name (or old name) files the record under the island only when
+     * the record's country is empty, the island itself (by its name or an old name), or the island's political parent
+     * (geolocale.country of the island's row). The country is AntWeb's valid name of what the file wrote.
+     */
+    static boolean adm1MayNameIsland(Map<String, Country> countryNames, Country island, String country) {
+        if (country == null || country.trim().isEmpty()) return true;
+        if (validIsland(countryNames, country) == island) return true;
+        String parent = island.getCountry();
+        return !hasNoValue(parent) && parent.equals(country);
     }
 
     /** The valid flagged island a name means: the island itself, or the island an old name (a country row) points to. */

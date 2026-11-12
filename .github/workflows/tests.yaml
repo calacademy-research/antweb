@@ -716,7 +716,9 @@ jobs:
         # calls (review of PR #341). The cases of tests/unit/test_place_fix.py.
         # IslandCountryTest (Brian Fisher, 2026-11-11: an oceanic island is its own country): every form a file writes
         # (United States + Hawaii or Oahu, Ecuador + Galapagos or Galápagos, Mauritius + Rodrigues, the island as the
-        # country) is filed under the island's own name; another adm1 is kept; the parent page's line; region and
+        # country) is filed under the island's own name; another adm1 is kept; an adm1 that is an island's name moves
+        # only a record of the island, its political parent or no country (Mexico + Hawaii stays Mexico); the parent
+        # page's line; region and
         # subregion are the island row's or, where it has none, the record's own (as the one-time update does).
         # IslandParseLineTest: the same forms through SpecimenUploadParse.parseLine itself (the places, taxa and groups
         # in memory filled by the test, no database): the specimen it would store, and the bounds check against the
@@ -764,7 +766,7 @@ jobs:
                      util.BackgroundJobsTest:16 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
                      util.JobSummaryTest:8 upload.SubfamilyFromGenusTest:9 upload.LocalityCodePlainTest:6 \
-                     util.CountrySpellingTest:8 util.PlaceBioregionTest:9 upload.IslandCountryTest:9 upload.IslandParseLineTest:8; do
+                     util.CountrySpellingTest:8 util.PlaceBioregionTest:9 upload.IslandCountryTest:10 upload.IslandParseLineTest:9; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }

@@ -80,6 +80,7 @@ public class IslandCountryTest extends TestCase {
         country(12, "Reunion", "Eastern Africa", "Reunion", false, true, null, "Malagasy");
         country(8737, "Réunion", "Eastern Africa", "Réunion", false, false, "Reunion", "Malagasy");
         country(8865, "Rodrigues", "Eastern Africa", null, false, true, null, "Malagasy");
+        country(98, "Mexico", "Central America", null, false, true, null, "Neotropical");
         adm1(620, "Galapagos", "Ecuador", false, false, "Galapagos Islands");
         adm1(2394, "Galápagos", "Ecuador", true, false, "Galapagos Islands");
         adm1(1017, "Oahu", "United States", false, false, "Hawaii");
@@ -129,6 +130,45 @@ public class IslandCountryTest extends TestCase {
         assertEquals(423, p.place.getId());
         assertEquals("Polynesia", p.place.getSubregion());
         assertEquals("Oceania", p.place.getBioregion());
+    }
+
+    /**
+     * An adm1 that is an island's name (or old name) moves the record only when its country is empty, the island
+     * itself, or the island's political parent (geolocale.country of the island's row). Review, 2026-11-12: the adm1
+     * alone decided, so Mexico + adm1 Hawaii was filed under Hawaii. Such a record is now handled as any record of
+     * its country (the upload then reports the adm1 as a state the country does not have).
+     */
+    public void testAnAdm1MovesOnlyARecordOfTheIslandItsParentOrNoCountry() {
+        assertNull("Mexico + adm1 Hawaii stays Mexico", place("Mexico", "Hawaii"));
+        assertNull(place("Mexico", "Galapagos"));
+        assertNull(place("Mexico", "Galápagos"));
+        assertNull("the parent of another island", place("Ecuador", "Hawaii"));
+        assertNull(place("United States", "Galapagos Islands"));
+        assertNull(place("Mauritius", "Hawaii"));
+        assertNull("a country AntWeb does not know", place("Atlantis", "Hawaii"));
+        // the political parent, the island itself (by its name or an old name), no country
+        assertEquals("Hawaii / null / Hawaii", stored("United States", "Hawaii"));
+        assertEquals("Galapagos Islands / null / Galapagos Islands", stored("Ecuador", "Galapagos"));
+        assertEquals("Galapagos Islands / null / Galapagos Islands", stored("Ecuador", "Galápagos"));
+        assertEquals("Galapagos Islands / null / Galapagos Islands", stored("Ecuador", "Galapagos Islands"));
+        assertEquals("Hawaii / null / Hawaii", stored(null, "Hawaii"));
+        assertEquals("Hawaii / null / Hawaii", stored("", "Hawaii"));
+        assertEquals("Hawaii / null / Hawaii", stored("  ", "Hawaii"));
+        assertEquals("Galapagos Islands / null / Galapagos Islands", stored(null, "Galápagos"));
+        assertEquals("Galapagos Islands / null / Galapagos Islands", stored("Galapagos", "Galápagos"));
+        // the country is an island and the adm1 names another island: the country decides, the adm1 is kept as written
+        assertEquals("Hawaii / Galapagos / Hawaii", stored("Hawaii", "Galapagos"));
+        assertEquals("Galapagos Islands / Hawaii / Galapagos Islands", stored("Galapagos Islands", "Hawaii"));
+        // an island row that names no political parent: only the island itself or no country
+        countries.get("Hawaii").setCountry(null);
+        assertNull(place("United States", "Hawaii"));
+        assertEquals("Hawaii / null / Hawaii", stored("Hawaii", "Hawaii"));
+        assertEquals("Hawaii / null / Hawaii", stored(null, "Hawaii"));
+        countries.get("Hawaii").setCountry("none");
+        assertNull(place("United States", "Hawaii"));
+        assertNull("the text none is no parent", place("none", "Hawaii"));
+        // Oahu (rule 2, an adm1 row of United States) does not depend on the island row's parent
+        assertEquals("Hawaii / null / Hawaii", stored("United States", "Oahu"));
     }
 
     /** Row 1017: Oahu of United States is an old name of Hawaii. The adm1 goes: it was a name of the island. */

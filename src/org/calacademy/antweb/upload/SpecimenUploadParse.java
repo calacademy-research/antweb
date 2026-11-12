@@ -685,9 +685,11 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
 				boolean isValidAdm1 = GeolocaleMgr.isValid(adm1, country);
 				boolean notBlank = Utility.notBlank(adm1);
-                boolean isIsland = GeolocaleMgr.isIsland(adm1);
+                // 2026-11-12: an adm1 that is an island's name was never reported here (the island's records passed this
+                // way with their adm1). They no longer do (ownCountry above), so such an adm1 here belongs to a record of
+                // another country (Mexico + Hawaii) and is reported like any state the country does not have.
 
-				if (!isValidAdm1 && notBlank && !isIsland) {
+				if (!isValidAdm1 && notBlank) {
 				  //String heading = "<b>Not valid Antweb Adm1</b> ";
 
 				  // We will here lead to a tool that allows curators to select a mapping, if they don't want to change their data.

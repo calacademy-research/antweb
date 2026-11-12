@@ -44,11 +44,12 @@ specimen changed with its old and new values).
 answer (--even-if-busy goes on in both cases: only when AntWeb is known to be stopped); (2) writes the backup
 table island_countries_backup_<date>_<time> (every specimen that will change, with its old country, region and
 subregion and the new ones) and ..._geolocale (the old-name rows it will change, with the valid name it gives them);
-(3) stops, before changing
-anything, when the backup holds another number of specimens than the report counted (an upload ran in between: run
-it again); (4) changes the specimens and the rows in one transaction, a specimen only while it still has the country
-the backup recorded; (5) reads again and expects nothing left. Safe to run twice: a second run finds nothing to
-move and writes no table.
+(3) stops, before changing anything, when the backup holds another number of specimens than the report counted (an
+upload ran in between: run it again); (4) changes the specimens and the rows in one transaction, a specimen only
+while it still has the country the backup recorded, an old-name row only while it is still not valid and names
+nothing, and marks each one it changed in its backup table; (5) reports the numbers it read back from those marks
+(a row or specimen left because it had changed is said), reads everything again and expects nothing left. Safe to
+run twice: a second run finds nothing to move and writes no table.
 
 The AntWeb code that files islands under their own name must be live first: the CAS TaxonWorks upload loads every
 CAS specimen again each morning, and with the old code it would put them back under the parent.
@@ -79,7 +80,7 @@ import subprocess
 import sys
 import urllib.request
 
-VERSION = "2"
+VERSION = "3"
 TABLE_NAME = re.compile(r"^island_countries_backup_\d{8}_\d{4}$")
 
 # Old-name rows to give a valid name: (adm1 name, its country, the valid country it now names).
@@ -233,9 +234,16 @@ def alias_sql(adm1, country, target):
             + sql_string(target))
 
 
+def no_value_sql(column):
+    """True where a place column holds no value: null, blank, or the texts "none" and "null" in any case, with blanks
+    around them or not. The same as blank() here and RecordPlace.hasNoValue in the upload, which both trim first
+    (review, 2026-11-12: this compared without trimming, so " none" was a value here and no value there)."""
+    return "lower(coalesce(" + column + ", '')) regexp '^[[:space:]]*(none|null)?[[:space:]]*$'"
+
+
 def new_value(island_column, specimen_column):
     """The island row's value where it has one, else what the specimen has."""
-    return "if(coalesce(" + island_column + ", '') in ('', 'none', 'null'), " + specimen_column + ", " + island_column + ")"
+    return "if(" + no_value_sql(island_column) + ", " + specimen_column + ", " + island_column + ")"
 
 
 def backup_sql(table, aliases):
@@ -244,8 +252,8 @@ def backup_sql(table, aliases):
            "s.island_country, s.access_group, g.name as new_country, " + new_value("g.region", "s.region") + " as new_region, "
            + new_value("g.subregion", "s.subregion") + " as new_subregion, 0 as applied "
            "from specimen s join geolocale g on " + TO_MOVE + " and " + ISLAND_ROW,
-           "create table " + table + "_geolocale as select id, name, parent, valid_name, cast(null as char(250)) as new_valid_name"
-           " from geolocale where id in (" + (", ".join(str(int(i)) for i, _ in aliases) or "0") + ")"]
+           "create table " + table + "_geolocale as select id, name, parent, valid_name, cast(null as char(250)) as new_valid_name,"
+           " 0 as applied from geolocale where id in (" + (", ".join(str(int(i)) for i, _ in aliases) or "0") + ")"]
     for row_id, valid_name in aliases:
         out.append("update " + table + "_geolocale set new_valid_name = " + sql_string(valid_name) + " where id = " + str(int(row_id)))
     return out
@@ -253,16 +261,39 @@ def backup_sql(table, aliases):
 
 def apply_sql(table, aliases):
     """The change, in one transaction. A specimen only while it still has the country the backup recorded (an upload
-    may have loaded it again since); aliases: (row id, valid name) to set."""
+    may have loaded it again since); aliases: (row id, valid name) to set: an old-name row only while it is still not
+    valid and names nothing (an administrator may have edited it since the report). Each row changed is marked applied
+    in its backup table by the same statement, so the tool reports what it changed and not what it meant to."""
     out = ["start transaction",
            "update specimen s join " + table + " b on b.code = s.code set s.country = b.new_country, s.region = b.new_region, "
            "s.subregion = b.new_subregion, b.applied = 1 where " + hx("s.country") + " = " + hx("b.old_country")
            + " and " + hx("s.island_country") + " = " + hx("b.island_country")]
-    for row_id, valid_name in aliases:
-        out.append("update geolocale set valid_name = " + sql_string(valid_name) + " where id = " + str(int(row_id))
-                   + " and coalesce(is_valid, 0) = 0 and coalesce(valid_name, '') in ('', 'none', 'null')")
+    if aliases:
+        out.append("update geolocale g join " + table + "_geolocale b on b.id = g.id set g.valid_name = b.new_valid_name, b.applied = 1 "
+                   "where b.id in (" + ", ".join(str(int(row_id)) for row_id, _ in aliases) + ") and b.new_valid_name is not null "
+                   "and coalesce(g.is_valid, 0) = 0 and " + no_value_sql("g.valid_name"))
     out.append("commit")
     return out
+
+
+def alias_result_sql(table):
+    """What became of the old-name rows of a run: id, name, parent, applied, the valid name the row has now."""
+    return ("select b.id, " + hx("b.name") + ", " + hx("b.parent") + ", b.applied, " + hx("g.valid_name") + " from " + table
+            + "_geolocale b left join geolocale g on g.id = b.id order by b.id")
+
+
+def alias_results(rows):
+    """(rows changed, lines about the rows left as they are) from the rows of alias_result_sql."""
+    changed, left = 0, []
+    for r in rows:
+        if str(r[3]) == "1":
+            changed += 1
+        else:
+            now = unhex(r[4])
+            left.append("LEFT AS IT IS: " + unhex(r[1]) + " of " + unhex(r[2]) + " (row id " + str(r[0]) + "): its valid name is now "
+                        + (repr(now) if now else "empty") + ": the row changed between the report and the update (an administrator?); "
+                        "not set by this tool. Look at the row (Geolocale Manager) and run the report again.")
+    return changed, left
 
 
 def given_valid_name_sql(has_column):
@@ -274,17 +305,18 @@ def given_valid_name_sql(has_column):
                                for adm1, country, target in ALIASES) + " end")
 
 
-def rollback_sql(table, has_geolocale, has_new_name=True):
+def rollback_sql(table, has_geolocale, has_new_name=True, has_applied=True):
     """The old values back: a specimen only while it still has the country this tool gave it, an old-name row only
-    while it still has the valid name this tool gave it (an administrator may have changed it since). The last
-    statement counts the specimens that have their old country again."""
+    when this tool changed it (applied; a table of version 1 or 2 has no such column: every row of it) and while it
+    still has the valid name this tool gave it (an administrator may have changed it since). The last statement
+    counts the specimens that have their old country again."""
     out = ["start transaction",
            "update specimen s join " + table + " b on b.code = s.code set s.country = b.old_country, s.region = b.old_region, "
            "s.subregion = b.old_subregion where b.applied = 1 and " + hx("s.country") + " = " + hx("b.new_country")
            + " and " + hx("s.island_country") + " = " + hx("b.island_country")]
     if has_geolocale:
         out.append("update geolocale g join " + table + "_geolocale b on b.id = g.id set g.valid_name = b.valid_name where "
-                   + hx("g.valid_name") + " = " + hx(given_valid_name_sql(has_new_name)))
+                   + ("b.applied = 1 and " if has_applied else "") + hx("g.valid_name") + " = " + hx(given_valid_name_sql(has_new_name)))
     out += ["commit", "select count(*) from specimen s join " + table + " b on b.code = s.code where b.applied = 1 and "
             + hx("s.country") + " = " + hx("b.old_country")]
     return out
@@ -314,7 +346,7 @@ def from_specimens(source):
     return "specimen" in (source or "")
 
 
-def report_text(when, commit, f, table=None, changed=None, left=None, aliases_set=None):
+def report_text(when, commit, f, table=None, changed=None, left=None, aliases_set=None, aliases_left=()):
     lines = ["AntWeb island countries, " + when + " (tool version " + VERSION + ", AntWeb commit " + (commit or "unknown") + ")", "",
              "Brian Fisher, 2026-11-11: an oceanic island with its own ant fauna is its own country; its specimens never",
              "count toward the political parent. An island's specimen is stored with country = the island's own name.", "",
@@ -366,8 +398,9 @@ def report_text(when, commit, f, table=None, changed=None, left=None, aliases_se
         lines += ["", "Applied. Backup tables: " + table + " and " + table + "_geolocale.",
                   "Specimens changed: " + format(changed or 0, ",") + ((". " + format(left, ",") + " had changed since the backup and were left as they are; run the tool again for them")
                                                                        if left else "") + ".",
-                  "Old-name rows changed: " + str(aliases_set or 0) + ".",
-                  "Put the old values back with:  python3 island_countries.py --rollback " + table]
+                  "Old-name rows changed: " + str(aliases_set or 0) + "."]
+        lines += ["  " + line for line in aliases_left]
+        lines += ["Put the old values back with:  python3 island_countries.py --rollback " + table]
     return "\n".join(lines) + "\n"
 
 
@@ -516,15 +549,19 @@ def rollback(args, db):
     kept = int(run_sql(db, "select count(*) from " + table + " where applied = 1")[0][0])
     has_geolocale = table + "_geolocale" in tables
     has_new_name = has_geolocale and bool(run_sql(db, "show columns from " + table + "_geolocale like 'new_valid_name'"))
-    back = int(run_sql(db, ";\n".join(rollback_sql(table, has_geolocale, has_new_name)))[0][0])
+    has_applied = has_geolocale and bool(run_sql(db, "show columns from " + table + "_geolocale like 'applied'"))
+    back = int(run_sql(db, ";\n".join(rollback_sql(table, has_geolocale, has_new_name, has_applied)))[0][0])
     rows = (run_sql(db, "select b.id, " + hx("b.name") + ", " + hx("b.parent") + ", " + hx("g.valid_name") + ", "
-                    + hx("g.valid_name") + " = " + hx("b.valid_name") + " from " + table + "_geolocale b left join geolocale g on g.id = b.id order by b.id")
+                    + hx("g.valid_name") + " = " + hx("b.valid_name") + ", " + ("b.applied" if has_applied else "1")
+                    + " from " + table + "_geolocale b left join geolocale g on g.id = b.id order by b.id")
             if has_geolocale else [])
     print("Rolled back: " + format(back, ",") + " of the " + format(kept, ",") + " specimens of " + table + " have their old country again"
           + ("" if back >= kept else " (the others had other values than this tool gave them: a later upload; left as they are)") + ".")
     for r in rows:
         print("Old-name row " + unhex(r[1]) + " of " + unhex(r[2]) + " (id " + r[0] + "): "
-              + ("its old valid name is back" if r[4] == "1" else "LEFT AS IT IS: its valid name is now " + (repr(unhex(r[3])) if unhex(r[3]) else "empty")
+              + ("this tool did not change it at the apply: nothing to put back" if r[5] != "1"
+                 else "its old valid name is back" if r[4] == "1"
+                 else "LEFT AS IT IS: its valid name is now " + (repr(unhex(r[3])) if unhex(r[3]) else "empty")
                  + ", not the one this tool gave it (changed since by an administrator)"))
     print("The tables are kept.\n")
     print(AFTER_TEXT)
@@ -538,7 +575,7 @@ def report_or_apply(args, db, now):
     f = load(db)
     write_lists(folder, f)
     to_set = [(r[3], r[2]) for r in f.aliases if r[4] == "set"]
-    table, changed, left, note = None, None, None, ""
+    table, changed, left, note, aliases_set, aliases_left = None, None, None, "", None, []
 
     if args.apply and (f.moving() or to_set):
         busy = busy_answer(args.app + "/util.do?action=isBusy")
@@ -569,6 +606,8 @@ def report_or_apply(args, db, now):
             sys.exit("Nothing changed (the transaction was undone and the backup tables dropped). mysql said: " + str(e))
         changed = int(run_sql(db, "select count(*) from " + table + " where applied = 1")[0][0])
         left = kept - changed
+        # the old-name rows the update changed, read back (not the number it meant to change)
+        aliases_set, aliases_left = alias_results(run_sql(db, alias_result_sql(table)))
         rows = run_sql(db, "select code, " + hx("old_country") + ", " + hx("new_country") + ", " + hx("old_region") + ", " + hx("new_region") + ", "
                        + hx("old_subregion") + ", " + hx("new_subregion") + ", applied from " + table + " order by code")
         with open(os.path.join(folder, "specimens.csv"), "w", newline="", encoding="utf-8") as out:
@@ -577,12 +616,14 @@ def report_or_apply(args, db, now):
             for r in rows:
                 w.writerow([r[0]] + [unhex(v) for v in r[1:7]] + [r[7]])
 
-    text = report_text(now.strftime("%Y-%m-%d %H:%M"), commit, f, table=table, changed=changed, left=left, aliases_set=len(to_set) if table else None)
+    text = report_text(now.strftime("%Y-%m-%d %H:%M"), commit, f, table=table, changed=changed, left=left, aliases_set=aliases_set,
+                       aliases_left=aliases_left)
     after = None
     if table:
         again = load(db)
-        after = again.moving() + sum(1 for r in again.aliases if r[4] == "set")
-        text += ("\nCheck after the change: specimens still to move or old-name rows still to set: " + str(after)
+        # an old-name row left because it had changed counts too: the report said it would be set
+        after = again.moving() + sum(1 for r in again.aliases if r[4] == "set") + len(aliases_left)
+        text += ("\nCheck after the change: specimens still to move or old-name rows not set: " + str(after)
                  + (" (as expected)" if after == 0 else "  <-- NOT ZERO: run the report again and read it") + "\n")
     text += note
     if not args.apply:
