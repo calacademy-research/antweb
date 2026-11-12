@@ -951,6 +951,181 @@ cd /root/antweb-next && python3 tools/data/indet_form.py rollback --project /roo
 docker restart antweb_antweb_1
 ```
 
+### Islands that are their own country
+
+Brian Fisher, 2026-11-11: "An oceanic island or archipelago with its own ant fauna is its own country in AntWeb. Its
+specimens never count toward the political parent." This round Hawaii (was filed under United States) and Galapagos
+Islands (Ecuador); the rule and what the upload does: docs/flows/places.md, "Islands that are their own country". The
+tool `tools/place/island_countries.py` (read its header) brings the specimens already stored to the new form once:
+`specimen.country` = the island's name where `specimen.island_country` names a valid place flagged as an island. It
+also gives the place row "Rodrigues" of Mauritius its valid name. Production on 2026-11-11: 763 specimens of Galapagos
+Islands under Ecuador (3 groups, 697 of CAS) and 248 of Hawaii under United States (8 groups, 174 of CAS).
+
+**Order, and why.** (1) Report with the code as it is, to see the islands' bounding boxes and the old state names
+the new upload rule reads. (2) Deploy the code. (3) `--apply`. (4) Reload the places. (5) Build the lists and numbers
+again, or wait for the daily update, **and reload the places once more when the sets were run by hand**. (6) Checks.
+The code goes first because the CAS TaxonWorks upload loads every CAS specimen again each morning: with the old code
+it would put the CAS specimens back under the parent. Staging first; on production after 08:15 Pacific and not while
+an upload is running (the tool asks AntWeb and stops if one is, or if AntWeb does not answer).
+
+Staging, 2026-11-11: done. 1,011 specimens moved (backup `island_countries_backup_20261111_1710`); sets 2 and 4 and
+the list totals run by hand; the four pages equal their lists; Galapagos Islands Endemic 10; the end-to-end run clean.
+The Galapagos Islands box was widened on production and staging to `-92.05, -1.4101, -89.2402, 1.70`; 12 specimens
+stay outside it (6 at -1.677, -79.645 and 6 at -0.5, -88.0): real data errors, red-flagged at their next upload.
+
+1. Report (read-only: select statements only; it writes its files to a dated folder under
+   `/root/antweb-island-countries/`). On staging the code is deployed (since 2026-11-11), so the tool runs from the
+   project checkout:
+
+```
+# ssh root@165.232.136.170   (staging)
+python3 /root/antweb-next/tools/place/island_countries.py --project /root/antweb-next
+```
+
+   **On production before the merge** the tool is not in the checkout yet. It is taken from the pull request's branch
+   into git's FETCH_HEAD (this changes no file in the checkout), copied to `/root/antweb-island-countries/`, and run
+   only if its SHA-256 is the one of the reviewed file, pinned in the command (the pattern of "Drop the old unused
+   tables"; `pull/<number>/head` in place of the branch name fetches the same commit once the pull request exists):
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+T=/root/antweb-island-countries/island_countries.py; mkdir -p /root/antweb-island-countries && git -C /root/antweb fetch -q origin feat/island-countries && git -C /root/antweb show FETCH_HEAD:tools/place/island_countries.py > "$T" && echo "881cbad727c50db0084373cd7675b8c57d16ff6cd5c07b402257eaaf1d63333a  $T" | sha256sum -c && python3 "$T" --project /root/antweb
+```
+
+   Expect `/root/antweb-island-countries/island_countries.py: OK` first (the file is the reviewed one), then the
+   report. `FAILED` means the file on GitHub is not the reviewed one: nothing was run; stop and tell Claude. (The
+   hash is that of `tools/place/island_countries.py` in the repository; `tests/unit/test_island_countries.py` fails
+   when the two differ.) After the merge production runs the tool from its checkout, as staging does.
+
+   Expect "Islands (valid places flagged as islands): Galapagos Islands, Hawaii"; for each island its specimens "to
+   move" by present country and group; "region and subregion they get"; "bounding box used at upload: ...; specimens
+   with coordinates outside it: N"; under "Old names": "Rodrigues of Mauritius -> the country Rodrigues: ..."; the
+   list "Old state names that file an upload's record under a country"; the two lists for a curator; and last "Report
+   only: nothing was changed." Send the output to Claude before going on.
+
+   **Stop if specimens lie outside an island's bounding box** and they are not known data errors (`outside_box.csv`
+   lists them): from the deploy on, the upload checks an island's specimen against the island's own box (before: the
+   parent's) and red-flags those specimens at their next upload. An administrator corrects the island's box first
+   (Edit Geolocale, "bounding box fixed"), then the report again. On production 12 are expected, the data errors named
+   above.
+
+   **Stop if the list of old state names holds a row marked "NOT EXPECTED".** The new upload files a record under a
+   country when its adm1 is, in its country, an old name whose valid name is a valid country and not a state of that
+   country. This round expects exactly: Oahu of United States -> Hawaii (row 1017), Galapagos and Galápagos of Ecuador
+   -> Galapagos Islands (rows 620 and 2394), and, after step 3, Rodrigues of Mauritius -> Rodrigues (row 691). Any
+   other row would move that state's records to another country at their next upload: Brian decides about the row
+   (Geolocale Manager) before the code is deployed. The same rows, straight from the database:
+
+```
+# ssh root@165.232.136.170   (staging)
+F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select a.id, a.name, a.parent, a.valid_name from geolocale a join geolocale c on c.georank = 'country' and c.is_valid = 1 and c.name = a.valid_name where a.georank = 'adm1' and coalesce(a.is_valid, 0) = 0 and a.valid_name <> a.parent and not exists (select 1 from geolocale b where b.georank = 'adm1' and b.parent = a.parent and b.name = a.valid_name and b.is_valid = 1);"
+```
+
+   Expect three rows, ids 620, 1017 and 2394 (staging, 2026-11-11, before the apply); after step 3 also 691.
+
+2. Deploy the code (Claude pushes it to staging; on production the merge deploys it). Wait until the site answers
+   again (2 to 4 minutes), then check that the United States page says "Hawaii has its own page and is not counted
+   here." (https://staging.antweb.org/country.do?name=United+States).
+
+3. Apply. The tool asks AntWeb whether an upload or the daily update is running, writes the backup tables
+   `island_countries_backup_<date>_<time>` (every specimen it changes with its old country, region and subregion) and
+   `..._geolocale` (the Rodrigues row), compares the backup with the report's count, and changes everything in one
+   transaction.
+
+```
+# ssh root@165.232.136.170   (staging)
+python3 /root/antweb-next/tools/place/island_countries.py --project /root/antweb-next --apply
+```
+
+   Expect "Applied. Backup tables: island_countries_backup_... and ..._geolocale.", "Specimens changed: N." (N = the
+   report's "Specimens to move in all"), "Old-name rows changed: 1." (the number the update changed, read back; a line
+   "LEFT AS IT IS: Rodrigues of Mauritius ..." under it means the row was edited between the report and the update and
+   was not set: look at the row, then the report again), the rollback command with the table's name, and
+   "Check after the change: specimens still to move or old-name rows not set: 0 (as expected)". Keep the name of
+   the backup table. "Nothing changed: AntWeb says "busy ..."": an upload or the daily update is running; run it again
+   later. "Nothing changed: AntWeb did not say ...": AntWeb is down or starting; run it again when the site answers
+   (`--even-if-busy` goes on without asking: only when AntWeb is stopped on purpose). Run twice it says "Nothing to
+   change." and writes no table.
+
+4. Reload the places AntWeb keeps in memory, so the upload knows the Rodrigues row's valid name: sign in as an
+   administrator and open `util.do?action=reloadAntwebMgr&name=geolocale` (the Technical page's "Reload the in-memory
+   lists", "countries and adm1s (geolocales)"; a restart of AntWeb does the same). Then the report or the query of
+   step 1 again: the old state names now include Rodrigues of Mauritius -> Rodrigues (row 691), and nothing else new.
+
+5. The lists and numbers. The species lists of the islands and their parents, Endemic and Introduced, the specimen
+   and image numbers and the maps are built again by the next daily update (05:00); until then the pages show
+   yesterday's numbers and the count check (`countCheck.do`) reports the two parents and the two islands as different.
+   The daily update reloads the places at its end (set 5), so the next morning the pages show the new numbers.
+   To have them the same day, an administrator runs in the browser, one after the other and each to its end:
+   `utilData.do?action=set2` (lists from specimens, counts, endemic and introduced; about 45 minutes),
+   `utilData.do?action=set4` (images, Not curated, imaging progress; about 15 minutes),
+   `utilData.do?action=placeViewTotals&param=all` (the totals of the lists), and then **reloads the places again**:
+   `util.do?action=reloadAntwebMgr&name=geolocale`. The pages read their numbers from the places held in memory:
+   without that last reload they show the old ones although the database has the new (staging, 2026-11-11: the
+   Galapagos Islands page said Endemic 0 after set 2 had set the flags, until the reload).
+
+6. Checks, after step 5 (with its reload) or the next daily update.
+
+```
+# ssh root@165.232.136.170   (staging)
+python3 /root/antweb-next/tools/place/island_countries.py --project /root/antweb-next
+```
+
+   Expect for each island "to move: 0" and "already with country <island>" = its specimens; and under "Rows of a
+   parent's list that come from specimens only on the island": "none" (the island-only species have left the lists of
+   United States and Ecuador). The list above it, "For a curator", names the species that stay on the parent's list
+   because a curator, AntCat or another source put them there (`parent_list_rows.csv` in the folder the last line
+   names): Brian or a curator decides about those; nothing is deleted.
+
+```
+# ssh root@165.232.136.170   (staging)
+F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select country, island_country, count(*) from specimen where island_country in ('Hawaii', 'Galapagos Islands') or country in ('Hawaii', 'Galapagos Islands') group by country, island_country; select name, endemic_species_count, specimen_count from geolocale where name in ('Hawaii', 'Galapagos Islands', 'United States', 'Ecuador') and georank = 'country' and is_valid = 1;"
+```
+
+   Expect two lines of specimens, Hawaii / Hawaii and Galapagos Islands / Galapagos Islands (no line with United
+   States or Ecuador), and for Galapagos Islands an endemic count above 0.
+
+```
+# ssh root@165.232.136.170   (staging)
+python3 /root/antweb-next/tools/export/specimen_extract.py --countries "United States"
+```
+
+   Expect in its text "Islands of these countries that are their own country in AntWeb, NOT in this file: Hawaii", and
+   no Hawaii line in the counts per country. Then in the browser: the Hawaii and Galapagos Islands pages (specimens,
+   species, Endemic), a Hawaii specimen's page (one line "Island: Hawaii", no United States), `countCheck.do` (no new
+   real difference), and the end-to-end tests (`tests/e2e/test_island_countries.py`: none skipped any more).
+
+7. Production: the same six steps with `ssh root@165.232.137.86` and `/root/antweb` in place of `/root/antweb-next`
+   (the tool: `python3 /root/antweb/tools/place/island_countries.py --project /root/antweb`). Step 1's report is run
+   before the merge with its own command above (fetched and checked against the pinned SHA-256); step 2 is the merge;
+   from step 3 on the tool is in the checkout.
+
+Rollback. First the code, then the specimens and the Rodrigues row; both before the next 05:00 (with the new code
+live the CAS upload would move the CAS specimens again; with the old code live it files them under the parent by
+itself, and the tool is still needed for the other groups' specimens). The revert takes the tool out of the checkout,
+so keep a copy outside it first:
+
+```
+# ssh root@165.232.136.170   (staging; on production ssh root@165.232.137.86 and /root/antweb)
+install -D -m 600 /root/antweb-next/tools/place/island_countries.py /root/antweb-island-countries/island_countries.py && sha256sum /root/antweb-island-countries/island_countries.py
+```
+
+   Expect one line with the file's SHA-256 and its path (on production the same hash as in step 1). Then Claude
+   reverts the pull request (it deploys by itself; wait until the site answers again). Then the data: a specimen only
+   while it still has the values the tool gave it, the Rodrigues row only when the tool changed it and its valid name
+   is still the tool's; the tables stay.
+
+```
+# ssh root@165.232.136.170   (staging; on production ssh root@165.232.137.86 and /root/antweb)
+python3 /root/antweb-island-countries/island_countries.py --project /root/antweb-next --rollback island_countries_backup_<date>_<time>
+```
+
+   Expect "Rolled back: N of the N specimens of island_countries_backup_... have their old country again." and "Old-name
+   row Rodrigues of Mauritius (id 691): its old valid name is back" ("LEFT AS IT IS" when an administrator changed the
+   row since, "this tool did not change it at the apply" when the apply had left it: it is then not touched). Then
+   reload the places (step 4) and let the daily update (or step 5, with its reload at the end) build the lists and
+   numbers again.
+
 ## One-off image exports
 
 ### Pheidole major-worker heads for Jack Longino (2026-10-27)

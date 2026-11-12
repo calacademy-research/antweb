@@ -115,8 +115,10 @@ def calls(d):
 
 
 def test_the_extract_is_complete_and_verified():
-    d = setup()
-    r = run(d, "--countries", "United States,Canada,Mexico", "--bioregion", "Nearctic")
+    # Hawaii is asked for by name: since version 9 (Brian Fisher, 2026-11-11) an island that is its own country is in
+    # the file only then
+    d = setup(per_country=[["0", "2"], ["1", "1"], ["2", "1"], ["3", "1"]])
+    r = run(d, "--countries", "United States,Canada,Mexico,Hawaii", "--bioregion", "Nearctic")
     assert r.returncode == 0, r.stdout + r.stderr
     assert "VERIFIED, every count equal" in r.stdout
     with gzip.open(os.path.join(d, "out", "specimens.csv.gz"), "rt", encoding="utf-8", newline="") as f:
@@ -131,7 +133,9 @@ def test_the_extract_is_complete_and_verified():
     m = json.load(open(os.path.join(d, "out", "manifest.json")))
     assert m["specimens"] == 5 and m["verified"] is True and m["differences"] == []
     assert m["without_coordinates"] == 2 and m["no_taxon_row"] == 1 and m["flagged"] == 1
-    assert m["islands"] == ["Hawaii"] and m["antweb_commit"] == "abc1234"
+    assert m["islands"] == ["Hawaii"] and m["islands_left_out"] == [] and m["antweb_commit"] == "abc1234"
+    assert m["tool_version"] == "10" and "WARNING" not in r.stdout
+    assert "Islands included (named in the countries): Hawaii" in r.stdout
     assert m["by_bioregion"] == {"Nearctic": 4, "Oceania": 1}
     assert m["bioregion_list"] == {"names": 2, "names_without_specimen_in_extract": 1, "names_left_out_not_formicidae": 3}
     assert "AntWeb's Nearctic species list: 2 names of ants (3 names of other families left out); 1 of them" in r.stdout
@@ -206,15 +210,15 @@ def test_specimens_under_an_outdated_name_are_in_the_file_and_counted():
     usa = ["casent6", "myrmicinaestenamma diecki", "myrmicinae", "stenamma", "USA", "old name",
            "40.1", "-100.2", "formicidae", "Nearctic", "NULL", "NULL", "valid", "0", "species", "NULL", "Emery, 1895", "CAS", "0"]
     d = setup(rows=ROWS + [usa], counts=[["Canada", "", "1"], ["Hawaii", "Hawaii", "1"], ["Mexico", "", "1"], ["USA", "", "1"],
-                                         ["United States", "", "2"]])
-    r = run(d, "--countries", "United States,Canada,Mexico")
+                                         ["United States", "", "2"]], per_country=[["0", "2"], ["1", "1"], ["2", "1"], ["3", "1"]])
+    r = run(d, "--countries", "United States,Canada,Mexico,Hawaii")      # Hawaii by name (version 9): its row is in ROWS
     assert r.returncode == 0, r.stdout + r.stderr
     export = [c["sql"] for c in calls(d) if "select s.*" in c["sql"]][0]
-    assert "s.country in ('United States', 'Canada', 'Mexico', 'USA')" in export
+    assert "s.country in ('United States', 'Canada', 'Mexico', 'Hawaii', 'USA')" in export
     count = [c["sql"] for c in calls(d) if "group by 1, 2" in c["sql"]][0]
     assert "'USA'" in count
     m = json.load(open(os.path.join(d, "out", "manifest.json")))
-    assert m["tool_version"] == "8"
+    assert m["tool_version"] == "10"
     assert m["outdated_names"] == [{"name": "USA", "valid_name": "United States"}]
     assert m["filed_under_outdated_name"] == 1 and m["specimens"] == 6 and m["verified"] is True
     assert m["countries_without_specimens"] == []
@@ -307,7 +311,7 @@ def test_a_second_run_and_a_failed_run_leave_no_stale_or_partial_file():
 def test_specimens_with_no_country_go_in_their_own_file():
     """Production 2026-11-10: 1,623 specimens have no country (Utah 303, UTEP 167, ...); no country filter finds them."""
     d = setup()
-    r = run(d, "--countries", "United States,Canada,Mexico", "--with-no-country")
+    r = run(d, "--countries", "United States,Canada,Mexico,Hawaii", "--with-no-country")
     assert r.returncode == 0, r.stdout + r.stderr
     with gzip.open(os.path.join(d, "out", "specimens_no_country.csv.gz"), "rt", encoding="utf-8", newline="") as f:
         rows = list(csv.DictReader(f))
@@ -329,9 +333,10 @@ def test_specimens_with_no_country_go_in_their_own_file():
     assert "so no specimen is in both files" in r.stdout
     main_export = [c["sql"] for c in calls(d) if "select s.*" in c["sql"] and "s.country is null" not in c["sql"]][0]
     assert "or s.island_country in ('Hawaii')" in main_export
-    # with --no-islands the countries file has no island specimens, so the no-country file keeps them
+    # an island that was not asked for: the countries file has none of its specimens, so the no-country file keeps
+    # those that have no country
     d2 = setup(counts=[["Canada", "", "1"], ["Mexico", "", "1"], ["United States", "", "2"]])
-    run(d2, "--countries", "United States,Canada,Mexico", "--with-no-country", "--no-islands")
+    run(d2, "--countries", "United States,Canada,Mexico", "--with-no-country")
     for q in [c["sql"] for c in calls(d2) if "s.country is null" in c["sql"]]:
         assert "island_country" not in q.split(" where ")[-1], q
     # a different database count fails the run
@@ -346,12 +351,81 @@ def test_specimens_with_no_country_go_in_their_own_file():
     print("ok   test_specimens_with_no_country_go_in_their_own_file")
 
 
-def test_islands_can_be_left_out():
-    d = setup(counts=[["Canada", "", "1"], ["Mexico", "", "1"], ["United States", "", "2"]])
-    run(d, "--countries", "United States,Canada,Mexico", "--no-islands")
+def test_an_island_is_not_part_of_its_political_parents_extract():
+    """Brian Fisher, 2026-11-11: "An oceanic island or archipelago with its own ant fauna is its own country in AntWeb.
+    Its specimens never count toward the political parent." The Nearctic extract of all ants of the United States held
+    Hawaii, removed by hand. Until version 8 the islands of a requested country were included unless --no-islands."""
+    mainland = [r for r in ROWS if r[0] != "casent5"]
+    counts = [["Canada", "", "1"], ["Mexico", "", "1"], ["United States", "", "2"]]
+    for extra in ([], ["--no-islands"]):          # the old option is accepted and changes nothing
+        d = setup(rows=mainland, counts=counts)
+        r = run(d, "--countries", "United States,Canada,Mexico", *extra)
+        assert r.returncode == 0, r.stdout + r.stderr
+        export = [c["sql"] for c in calls(d) if "select s.*" in c["sql"]][0]
+        # a specimen marked as Hawaii's is left out whatever its country column says: the same file before and after
+        # the stored specimens are moved to country Hawaii (tools/place/island_countries.py)
+        where = ("where (s.country in ('United States', 'Canada', 'Mexico', 'USA')) "
+                 "and (s.island_country is null or s.island_country not in ('Hawaii')) and (s.family = 'formicidae'")
+        assert where in export, export
+        assert "or s.island_country in" not in export
+        count = [c["sql"] for c in calls(d) if "count(*)" in c["sql"] and "group by 1, 2" in c["sql"]][0]
+        assert "and (s.island_country is null or s.island_country not in ('Hawaii'))" in count, count
+        left = [c["sql"] for c in calls(d) if "/* left out */" in c["sql"]][0]
+        assert "not in ('Hawaii')" in left, left
+        m = json.load(open(os.path.join(d, "out", "manifest.json")))
+        assert m["islands"] == [] and m["islands_left_out"] == ["Hawaii"] and m["specimens"] == 4 and m["verified"] is True
+        assert not [p for p in m["by_place"] if p["country"] == "Hawaii" or p["island_country"]], m["by_place"]
+        text = open(os.path.join(d, "out", "manifest.txt"), encoding="utf-8").read()
+        assert "Islands included (named in the countries): none\n" in text
+        assert ("Islands of these countries that are their own country in AntWeb, NOT in this file: Hawaii "
+                "(name an island with the countries to include it)\n") in text, text
+        assert "Old island names read as the island (a specimen marked with one is the island's): none\n" in text
+    # the islands of a run: asked for, every other valid island, and those politically under a requested country
+    places = PLACES + [["Galapagos Islands", "country", "1", "1", "South America", "Ecuador", "Neotropical", "", ""],
+                       ["Galapagos", "country", "0", "1", "South America", "Galapagos", "Neotropical", "", "Galapagos Islands"]]
+    assert se.island_sets(places, ["United States", "Canada"]) == ([], ["Galapagos Islands", "Hawaii"], ["Hawaii"])
+    assert se.island_sets(places, ["United States", "Hawaii"]) == (["Hawaii"], ["Galapagos Islands"], [])
+    assert se.island_sets(places, ["Ecuador"]) == ([], ["Galapagos Islands", "Hawaii"], ["Galapagos Islands"])
+    assert se.island_sets(places, ["Hawaii"]) == (["Hawaii"], ["Galapagos Islands"], [])
+    sql = se.places_sql(["United States"])
+    assert "or (is_island = 1 and is_valid = 1 and georank = 'country')" in sql
+    # an island asked for: before the move its specimens are found by island_country, the warning count too
+    assert se.where_sql(["Hawaii"], ["Hawaii"], False, ["Galapagos Islands"]) == (
+        "(s.country in ('Hawaii') or s.island_country in ('Hawaii')) and (s.island_country is null or s.island_country not in ('Galapagos Islands'))")
+    assert "(s.country in ('Hawaii') or s.island_country = 'Hawaii')" in se.per_country_sql(["Canada", "Hawaii"], [], False, ["Hawaii"])
+    assert "island_country" not in se.per_country_sql(["Canada"], [], False, [])
+    # A specimen marked with an old name of an island (island_country Galapagos or Galápagos: place rows that are not
+    # valid and name Galapagos Islands) is the island's (automatic review, 2026-11-11: it stayed in Ecuador's file).
+    places.append(["Galápagos", "country", "0", "1", "South America", "", "Neotropical", "", "Galapagos Islands"])
+    assert "valid_name in (select name from (select name from geolocale where is_island = 1 and is_valid = 1 and georank = 'country') v)" in sql
+    old = se.island_old_names(places)
+    assert old == {"Galapagos Islands": ["Galapagos", "Galápagos"]}, old        # USA names United States: not an island
+    assert se.with_old_names(["Galapagos Islands", "Hawaii"], old) == ["Galapagos Islands", "Galapagos", "Galápagos", "Hawaii"]
+    assert se.with_old_names([], old) == [] and se.island_old_names(PLACES) == {}
+    assert ("(s.country in ('Galapagos Islands') or s.island_country in ('Galapagos Islands', 'Galapagos', 'Galápagos'))"
+            in se.per_country_sql(["Galapagos Islands"], [], False, ["Galapagos Islands"], old))
+    ecuador = ([["Ecuador", "country", "1", "0", "", "", "Neotropical", "", ""]]
+               + [p for p in places if p[0].startswith("Gal") or p[0] == "Hawaii"])
+    d = setup(places=ecuador, rows=[r for r in ROWS if r[0] != "casent5"], counts=[["Canada", "", "1"], ["Mexico", "", "1"], ["United States", "", "2"]],
+              outdated=[], per_country=[["0", "4"]])
+    r = run(d, "--countries", "Ecuador")
+    assert r.returncode == 0, r.stdout + r.stderr
     export = [c["sql"] for c in calls(d) if "select s.*" in c["sql"]][0]
-    assert "island_country in" not in export
-    print("ok   test_islands_can_be_left_out")
+    assert ("where (s.country in ('Ecuador')) and (s.island_country is null or s.island_country not in "
+            "('Galapagos Islands', 'Galapagos', 'Galápagos', 'Hawaii'))") in export, export
+    m = json.load(open(os.path.join(d, "out", "manifest.json")))
+    assert m["islands_left_out"] == ["Galapagos Islands"] and m["old_island_names"] == {"Galapagos Islands": ["Galapagos", "Galápagos"]}
+    text = open(os.path.join(d, "out", "manifest.txt"), encoding="utf-8").read()
+    assert "Old island names read as the island (a specimen marked with one is the island's): Galapagos, Galápagos = Galapagos Islands\n" in text, text
+    # the island asked for: its specimens are found under the old names too
+    d = setup(places=ecuador, rows=[r for r in ROWS if r[0] != "casent5"], counts=[["Canada", "", "1"], ["Mexico", "", "1"], ["United States", "", "2"]],
+              outdated=[], per_country=[["0", "4"]])
+    r = run(d, "--countries", "Galapagos Islands")
+    assert r.returncode == 0, r.stdout + r.stderr
+    export = [c["sql"] for c in calls(d) if "select s.*" in c["sql"]][0]
+    assert ("where (s.country in ('Galapagos Islands') or s.island_country in ('Galapagos Islands', 'Galapagos', 'Galápagos')) "
+            "and (s.island_country is null or s.island_country not in ('Hawaii'))") in export, export
+    print("ok   test_an_island_is_not_part_of_its_political_parents_extract")
 
 
 def test_helpers():
@@ -382,7 +456,7 @@ def test_ants_only_is_the_default_and_says_what_it_left_out():
     assert se.ANTS in export and se.ANTS in count, "the file and the check must use the same filter"
     assert any("/* left out */" in q and "not " + se.ANTS in q for q in sqls)
     m = json.load(open(os.path.join(d, "out", "manifest.json")))
-    assert m["ants_only"] is True and m["tool_version"] == "8"
+    assert m["ants_only"] is True and m["tool_version"] == "10"
     assert m["left_out_not_formicidae"] == {"specimens": 341, "families": 3,
                                             "by_family": {"(coleoptera)": 164, "curculionidae": 153, "vespidae": 24}}
     assert "Ants only (family Formicidae): 341 specimens of other families are left out ((coleoptera) 164, curculionidae 153, vespidae 24)" in r.stdout
@@ -436,7 +510,7 @@ if __name__ == "__main__":
     test_a_different_database_count_fails_the_run()
     test_an_unknown_country_name_stops_before_any_export()
     test_the_password_never_reaches_a_command_line_and_the_queries_only_read()
-    test_islands_can_be_left_out()
+    test_an_island_is_not_part_of_its_political_parents_extract()
     test_the_database_count_is_grouped_by_the_exact_spelling()
     test_specimens_under_an_outdated_name_are_in_the_file_and_counted()
     test_a_country_without_specimens_is_a_warning()

@@ -94,6 +94,24 @@ public class Country extends Geolocale {
       } 
       return "Country";
     }
+
+    /**
+     * The line on a country's page for the islands that are politically part of it and are countries of their own in
+     * AntWeb (Brian Fisher, 2026-11-11: their specimens never count toward the political parent): "Hawaii has its own
+     * page and is not counted here." (HTML, each island linked to its page; "" when there is none). The wording is
+     * only here: change it in this method.
+     */
+    public static String ownPagesNote(List<Country> islands) {
+      if (islands == null || islands.isEmpty()) return "";
+      StringBuilder names = new StringBuilder();
+      for (int i = 0; i < islands.size(); i++) {
+        Country island = islands.get(i);
+        if (i > 0) names.append(i == islands.size() - 1 ? " and " : ", ");
+        names.append("<a href=\"").append(org.calacademy.antweb.util.Html.escAttr(island.getThisPageTarget())).append("\">")
+            .append(org.calacademy.antweb.util.Html.esc(island.getName())).append("</a>");
+      }
+      return names + (islands.size() == 1 ? " has its own page and is not counted here." : " have their own pages and are not counted here.");
+    }
     public String getPluralTargetDo() {
       return "countries.do";
     }
