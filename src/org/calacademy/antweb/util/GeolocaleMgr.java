@@ -25,6 +25,7 @@ import java.util.stream.Stream;
  * at start-up (about 12 seconds) and on util.do?action=reloadAntwebMgr. Lookups by name or id, validity of a
  * country or adm1 for uploads, a place's bioregion, and the adm1 lists of countryAdm1List.do. Docs:
  * docs/flows/places.md. Islands that are their own country (2026-11-11): getRecordPlace, getIslandsOf; IslandCountryTest.
+ * The country of an AntCat type locality (2026-11-12): getAntcatListCountry; AntcatLocalityTest.
  * Tests: PreviousDeterminationsTest, tests/unit/test_small_fixes.py, CountrySpellingTest
  * (a country written with other capitals, accents or blanks, for the specimen upload), PlaceBioregionTest (the
  * bioregion a country and state give an uploaded specimen), OldPlaceNamesTest (an old name in a link).
@@ -1012,6 +1013,15 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
      */
     public static @Nullable org.calacademy.antweb.upload.RecordPlace getRecordPlace(String country, String adm1) {
         return org.calacademy.antweb.upload.RecordPlace.of(countryNameMap, adm1CountryMap, adm1List, country, adm1);
+    }
+
+    /**
+     * The valid country on whose species list the AntCat import files a name with this type locality ("Ecuador
+     * (Galapagos Is)": Galapagos Islands, by the upload's rule for the place in the parentheses; "Indonesia (Java)":
+     * Indonesia). Null when AntWeb has no valid country for the text before the parentheses (AntcatLocality, 2026-11-12).
+     */
+    public static @Nullable Country getAntcatListCountry(String locality) {
+        return org.calacademy.antweb.upload.AntcatLocality.listCountry(countryNameMap, adm1CountryMap, adm1List, locality);
     }
 
     /**
