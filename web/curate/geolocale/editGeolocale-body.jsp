@@ -275,7 +275,7 @@ For some Geolocales it is best to display the region.<br>
 <% if ("country".equals(geolocale.getGeorank())) { %>
 
 <h3>Is Island:</h3>
-Some countries are treated as countries (like Hawaii, Galapagos Islands) to support our bioregion data.<br>
+An oceanic island or archipelago with its own ant fauna is its own country in AntWeb (Hawaii, Galapagos Islands): its specimens are stored under its own name and never count toward the political parent.<br>
 <input type="checkbox" name="isIsland" <%= (geolocale.getIsIsland() == true)?"checked":"" %>>
 <br><br>
 
@@ -284,7 +284,7 @@ Some countries are treated as countries (like Hawaii, Galapagos Islands) to supp
          out.println("Country can be set for valid islands");
        } else { %>
 <h3>Country (of an Island):</h3>
-An island can have a country set different from its parentage. Galapagos Islands (georank country) is a child of South America
+The political parent of the island, for reference and for the line on the parent's page ("Hawaii has its own page and is not counted here"); the island's specimens are not counted for it. Galapagos Islands (georank country) is a child of South America
 with country set to Ecuador. Hawaii (georank country) is a child of Polynesia with country set to United States.
 <%
          String disableCountry = "disabled";

@@ -627,8 +627,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				  country = validCountry.getName();  
 				  String region = validCountry.getRegion();
 				  String subregion = validCountry.getSubregion();
-                  specimenItem.put("region", region);
-                  specimenItem.put("subregion", subregion);			                        
+                  // a country row without a region or subregion: none stored (Hashtable.put(null) threw; 2026-11-11)
+                  putOrRemove(specimenItem, "region", region);
+                  putOrRemove(specimenItem, "subregion", subregion);
 				}
 				boolean isValidCountry = GeolocaleMgr.isValidCountry(country);   // CountryDb.isValid(getConnection(), element);
 				boolean notBlank = Utility.notBlank(country);
@@ -654,11 +655,29 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				}				
 			}
 
-            Country islandCountry = GeolocaleMgr.getValidIsland(adm1);
-            if (islandCountry == null) islandCountry = GeolocaleMgr.getValidIsland(country);
+            // Brian Fisher, 2026-11-11: "An oceanic island or archipelago with its own ant fauna is its own country in
+            // AntWeb. Its specimens never count toward the political parent." A record whose adm1 or country names such a
+            // place (United States + Hawaii or Oahu, Ecuador + Galapagos, country Galapagos Islands; Mauritius + Rodrigues)
+            // is filed under the place's own name, with its region and subregion (RecordPlace). Until now the country
+            // stored was the political parent (United States, Ecuador) and the island only in island_country, so every
+            // count of the parent included the island. The adm1 goes only when it was the place's own name or an old
+            // name of it; any other adm1 stays as the file wrote it.
+            RecordPlace ownCountry = GeolocaleMgr.getRecordPlace(country, adm1);
+            Country islandCountry = null;
+            if (ownCountry != null) {
+                country = ownCountry.place.getName();
+                specimenItem.put("country", country);
+                // the place row's region and subregion where it has them, else the record keeps its own (as the one-time
+                // update of the stored specimens does: RecordPlace.rowValueOr)
+                putOrRemove(specimenItem, "region", RecordPlace.rowValueOr(ownCountry.place.getRegion(), (String) specimenItem.get("region")));
+                putOrRemove(specimenItem, "subregion", RecordPlace.rowValueOr(ownCountry.place.getSubregion(), (String) specimenItem.get("subregion")));
+                adm1 = ownCountry.adm1;
+                putOrRemove(specimenItem, "adm1", adm1);
+                if (ownCountry.isIsland()) islandCountry = ownCountry.place;
+            }
             //A.log("parseLine() thisAdm1:" + adm1 + " country:" + country + " islandCountry:" + islandCountry);
 
-            if (adm1 != null && country != null && islandCountry == null) {
+            if (adm1 != null && country != null && ownCountry == null) {
 				Geolocale validAdm1 = GeolocaleMgr.getValidAdm1(adm1, country);  // May change, for instance MA to Massachussetts
 				if (validAdm1 != null) {                  
 				  adm1 = validAdm1.getName(); // This will be used for bioregion validation
@@ -666,9 +685,11 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
 				boolean isValidAdm1 = GeolocaleMgr.isValid(adm1, country);
 				boolean notBlank = Utility.notBlank(adm1);
-                boolean isIsland = GeolocaleMgr.isIsland(adm1);
+                // 2026-11-12: an adm1 that is an island's name was never reported here (the island's records passed this
+                // way with their adm1). They no longer do (ownCountry above), so such an adm1 here belongs to a record of
+                // another country (Mexico + Hawaii) and is reported like any state the country does not have.
 
-				if (!isValidAdm1 && notBlank && !isIsland) {
+				if (!isValidAdm1 && notBlank) {
 				  //String heading = "<b>Not valid Antweb Adm1</b> ";
 
 				  // We will here lead to a tool that allows curators to select a mapping, if they don't want to change their data.
@@ -749,11 +770,12 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 // Begin Island Adjust
                 //A.log("parseLine() name:" + islandCountry.getName() + " country:" + islandCountry.getCountry());
 
-              if (islandCountry.getBioregion() != null & islandCountry.getCountry() != null && islandCountry.getName() != null) {
-                  specimenItem.put("bioregion", islandCountry.getBioregion());
-                  specimenItem.put("country", islandCountry.getCountry());
+              // 2026-11-11 (Brian Fisher, above): the country is the island's own name (set above), no longer its
+              // political parent (islandCountry.getCountry(): United States, Ecuador). island_country stays as the
+              // marker of a flagged island this round, so everything that finds an island's specimens by it still does.
+              if (islandCountry.getName() != null) {
+                  if (islandCountry.getBioregion() != null) specimenItem.put("bioregion", islandCountry.getBioregion());
                   specimenItem.put("island_country", islandCountry.getName());
-                  specimenItem.remove("adm1");
               } else {
                   s_log.warn("parseLine() lineNum:" + lineNum + " code:" + code + " bioregion:" + islandCountry.getBioregion() + " country:" + islandCountry.getCountry() + " name:" + islandCountry.getName());
               }
@@ -986,6 +1008,11 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         specimenItem.remove("collectioncode");
         collectionCode = storedCollectionCode(collectionCode);
         if (collectionCode != null) specimenItem.put("collectioncode", collectionCode);
+    }
+
+    private static void putOrRemove(Hashtable specimenItem, String key, String value) {
+        if (value == null) specimenItem.remove(key);
+        else specimenItem.put(key, value);
     }
 
     /** The collection code stored for a value given in the upload: cleaned, or null when there is none (2026-10-30). */

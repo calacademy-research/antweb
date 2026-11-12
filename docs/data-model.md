@@ -102,7 +102,7 @@ Everything else is about **places**, and each kind of place has its own table an
 
 | Place | Table (key) | Its species list (key) | How a specimen belongs to it |
 |---|---|---|---|
-| country, adm1 (state/province), region, subregion; islands are countries or adm1s with `is_island = 1` | `geolocale` (`id`; `georank` says which) | `geolocale_taxon` (`geolocale_id`, `taxon_name`) | `specimen.country`, `adm1`, `island_country`; a region or subregion through its countries |
+| country, adm1 (state/province), region, subregion; islands are countries or adm1s with `is_island = 1` | `geolocale` (`id`; `georank` says which) | `geolocale_taxon` (`geolocale_id`, `taxon_name`) | `specimen.country`, `adm1`, `island_country` (an island that is its own country, Hawaii and Galapagos Islands: its name in `country` and in `island_country` since 2026-11-11, never its political parent's; flows/places.md); a region or subregion through its countries |
 | project (curated regional lists such as Madagascar, plus `worldants`, `allantwebants`, `fossilants`) | `project` (`project_name`) | `proj_taxon` (`project_name`, `taxon_name`) | the specimens of the names on the list |
 | museum (owning institution) | `museum` (`code`) | `museum_taxon` (`code`, `taxon_name`) | `specimen.museum`, set from `ownedby` by nightly set 3 |
 | bioregion (Afrotropical, Malagasy, ...) | `bioregion` (`name`) | `bioregion_taxon` (`bioregion_name`, `taxon_name`) | `specimen.bioregion`, set at upload from the country (and adm1) |
@@ -285,7 +285,7 @@ first deletes the group's specimens (`specimen.access_group`), then inserts the 
 | `status` | the status of `taxon_name` at upload: `valid`, `unrecognized`, `morphotaxon`, `indetermined`, `unidentifiable` (the five statuses counted on place pages, `PlaceImageCountDb.COUNTABLE`), or a non-valid AntCat status (`synonym`, `homonym`, ...; `Status.java`) |
 | `subfamily`, `genus`, `species`, `subspecies`, `family`, `tribe`, `subgenus`, `speciesgroup`, `kingdom_name` ... `order_name` | the name parts as uploaded |
 | `access_group`, `access_login`, `upload_id` | group, login and upload that loaded it (`ant_group.id`, `login.id`, `upload.upload_id`) |
-| `country`, `adm1`, `adm2`, `island_country`, `region`, `subregion`, `bioregion` | place names; `region`, `subregion`, `island_country` and (if empty) `bioregion` are derived at upload from the `geolocale` row of the country (`SpecimenUploadParse`) |
+| `country`, `adm1`, `adm2`, `island_country`, `region`, `subregion`, `bioregion` | place names; `region`, `subregion`, `island_country` and (if empty) `bioregion` are derived at upload from the `geolocale` row of the country (`SpecimenUploadParse`). `island_country`: the name of the flagged island (`geolocale.is_island`) the specimen is from, else null; since 2026-11-11 (Brian Fisher: an oceanic island is its own country) `country` holds the same name, before that the political parent (United States for Hawaii). The column stays as the marker of an island's specimen; the one-time move of the stored specimens: `tools/place/island_countries.py` (tables `island_countries_backup_*`) |
 | `museum` | museum code, set by nightly set 3 where the code is a whole word of `ownedby` (`MuseumDb.specimenMuseumDml`, `ownedByPattern`) |
 | `ownedby`, `locatedat`, `collectedby`, `determinedby`, `collectioncode`, `localitycode`, `localityname` | as uploaded |
 | `localitycode`, `collectioncode` (detail) | spaces, `%`, `#` and apostrophes removed; stored as written since 2026-10-22 (locality codes were URL-encoded before: `docs/flows/specimen-upload.md` 3b) |
@@ -327,7 +327,7 @@ walked every ant specimen per state, 4 hours). Production's indexes: `PRIMARY` (
 |---|---|---|
 | adm1 | `country = <its parent> and adm1 = <its name>` (B26, fixed 2026-11-09; `Geolocale.adm1Criteria`) | `country_adm1_idx` |
 | country | `country = X`, then `island_country = X and not (country <=> X)` (`PlaceTaxonNotes.placeSpecimenParts`; some queries still `country = X or island_country = X`) | `country_adm1_idx`; the second part `island_country_idx` (to add) |
-| island | `island_country = X` | `island_country_idx` (to add) |
+| island | `island_country = X` (the same specimens as `country = X` once the stored specimens are moved, 2026-11-11) | `island_country_idx` (to add) |
 | museum | `museum = X` | `col_museum_idx` |
 | bioregion | `bioregion = X` | `bioregion_idx` (to add) |
 | region, subregion | the specimens of their countries (`Geolocale.regionSpecimensSql`) | as countries |
@@ -440,7 +440,7 @@ pages).
 | `region`, `subregion` | the UN region and subregion of a country |
 | `is_valid` | 1 = a real current place (0 = an alias or misspelling; `valid_name` then names the valid place) |
 | `is_live` | 1 = shown on the site |
-| `is_island` | 1 = also an island page (specimens matched by `specimen.island_country`) |
+| `is_island` | 1 = an island that is its own country in AntWeb (Hawaii, Galapagos Islands; Brian Fisher, 2026-11-11): page `island.do`, specimens matched by `specimen.island_country`, stored with `specimen.country` = its name. `country` on such a row names its political parent, for reference and for the line on the parent's page only |
 | `is_un` | 1 = a UN member country |
 | `is_use_children`, `is_use_parent_region` | how a country's map and region are chosen |
 | `bioregion`, `alt_bioregion` | the bioregion of the place (used at upload to set `specimen.bioregion`) |
