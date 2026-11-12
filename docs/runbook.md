@@ -708,7 +708,7 @@ Decided by Brian Fisher 2026-11-09: when v4 opens, v3.1 ends. How it works: [flo
 
 **Before the switch, on that server:**
 
-- The island work is live there (the code of `feat/island-countries` and `tools/place/island_countries.py --apply`): v4's texts say that an island that is its own country is not part of its political parent (Brian Fisher, 2026-11-11), and that is true only once the stored specimens are moved. Staging: the weekly refresh from production (Sundays 02:30) undoes the move until production has it too; run the tool's `--apply` on staging again after a refresh, or wait until production is done.
+- The stored specimens of the islands are moved there (`tools/place/island_countries.py --apply`: "Islands that are their own country", below; the code is in master since 2026-11-12, pull request 345; staging was moved on 2026-11-11): v4's texts say that an island that is its own country is not part of its political parent (Brian Fisher, 2026-11-11), and that is true only once the stored specimens are moved. Staging: the weekly refresh from production (Sundays 02:30) undoes the move until production has it too; run the tool's `--apply` on staging again after a refresh, or wait until production is done.
 - This branch is deployed (the test key script comes with it).
 - Staging only: the test key and the GitHub secret (steps 2 and 3). Production has no test key: the production smoke run sends none.
 - Production only: Cloudflare (last part of this section).
