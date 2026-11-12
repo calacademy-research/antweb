@@ -201,18 +201,20 @@ public final class DataExtractAction extends AntwebAction {
 
     /**
      * The islands AntWeb treats as countries of their own (valid country rows with is_island = 1), each with the
-     * country it belongs to politically: "Hawaii (United States)". For the form's note about islands.
+     * country it belongs to politically: "Hawaii (United States)". For the form's note about islands. The political
+     * parent is the row's country column; its parent column is the subregion the island's page hangs under
+     * (Polynesia), not a country.
      */
-    static List<String> islandCountries(Connection connection) throws SQLException {
+    public static List<String> islandCountries(Connection connection) throws SQLException {
         List<String> out = new ArrayList<>();
         try (Statement stmt = connection.createStatement();
-             ResultSet rset = stmt.executeQuery("select distinct name, ifnull(nullif(parent, ''), ifnull(country, '')) from geolocale"
+             ResultSet rset = stmt.executeQuery("select distinct name, ifnull(country, '') from geolocale"
                  + " where georank = 'country' and is_valid = 1 and is_island = 1 order by name")) {
             while (rset.next()) {
                 String name = rset.getString(1);
-                String parent = rset.getString(2);
+                String political = rset.getString(2);
                 if (name == null) continue;
-                out.add(name + (parent == null || parent.isEmpty() || parent.equals(name) ? "" : " (" + parent + ")"));
+                out.add(name + (political == null || political.isEmpty() || political.equals(name) ? "" : " (" + political + ")"));
             }
         }
         return out;

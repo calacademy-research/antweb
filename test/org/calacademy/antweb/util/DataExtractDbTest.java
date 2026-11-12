@@ -23,6 +23,7 @@ import junit.framework.TestCase;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 
+import org.calacademy.antweb.curate.DataExtractAction;
 import org.calacademy.antweb.util.DataExtract;
 
 /**
@@ -107,14 +108,15 @@ public class DataExtractDbTest extends TestCase {
         exec("insert into bioregion values ('Nearctic'), ('Oceania'), ('Neotropical')");
         exec("insert into geolocale values"
             + " (1, 'Canada', 'country', 1, null, 0, 'Northern America', null, 'Nearctic', null),"
-            + " (2, 'Hawaii', 'country', 1, null, 1, 'United States', 'United States', 'Oceania', null),"
+            // an island that is its own country: parent = the subregion its page hangs under, country = its political parent
+            + " (2, 'Hawaii', 'country', 1, null, 1, 'Polynesia', 'United States', 'Oceania', null),"
             + " (3, 'Mexico', 'country', 1, null, 0, 'Central America', null, 'Neotropical', 'Nearctic'),"
             + " (4, 'United States', 'country', 1, null, 0, 'Northern America', null, 'Nearctic', 'Neotropical'),"
             + " (5, 'USA', 'country', 0, 'United States', 0, null, null, null, null),"
             + " (6, 'Brazil', 'country', 1, null, 0, 'South America', null, 'Neotropical', null),"
             + " (7, 'Cote d''Ivoire', 'country', 1, null, 0, 'Western Africa', null, 'Afrotropical', null),"
             + " (8, 'California', 'adm1', 1, null, 0, 'United States', null, 'Nearctic', null),"
-            + " (9, 'Galapagos Islands', 'country', 1, null, 1, 'Ecuador', 'Ecuador', 'Neotropical', null),"
+            + " (9, 'Galapagos Islands', 'country', 1, null, 1, 'South America', 'Ecuador', 'Neotropical', null),"
             + " (10, 'Zaire', 'country', 0, null, 0, null, null, null, null),"
             + " (11, 'Etats-Unis', 'country', 0, 'United States', 0, null, null, null, null),"
             + " (12, 'Mexique', 'country', null, 'Mexico', 0, null, null, null, null)");
@@ -821,6 +823,8 @@ public class DataExtractDbTest extends TestCase {
         assertEquals("[Hawaii] [Galapagos Islands] []", named.included + " " + named.other + " " + named.leftOut);
         DataExtract.Islands parent = DataExtract.islands(connection, Arrays.asList("United States"));
         assertEquals("[] [Galapagos Islands, Hawaii] [Hawaii]", parent.included + " " + parent.other + " " + parent.leftOut);
+        // the form's list: each island with its political parent (the row's country, not the subregion it hangs under)
+        assertEquals(Arrays.asList("Galapagos Islands (Ecuador)", "Hawaii (United States)"), DataExtractAction.islandCountries(connection));
         DataExtract.Islands elsewhere = DataExtract.islands(connection, Arrays.asList("Cote d'Ivoire"));
         assertEquals("[] [Galapagos Islands, Hawaii] [] {}", elsewhere.included + " " + elsewhere.other + " " + elsewhere.leftOut + " " + elsewhere.oldNames);
         // a quote in a name does not break the queries
