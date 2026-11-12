@@ -134,10 +134,13 @@ def test_ecuadors_list_has_no_name_antcat_files_in_the_galapagos(session, deploy
     """Brian Fisher's acceptance check: "Ecuador list has no Galapagos-only species". Since 2026-11-12 the AntCat import
     files a name whose type locality is the Galapagos under Galapagos Islands only; the rows it had put on Ecuador's
     list leave with the first daily import that runs the new code (it deletes every AntCat list row and files them
-    again). Skips until compute.log has that import's line (staging; unreadable elsewhere)."""
+    again). Skips until compute.log has that import's line (staging; unreadable elsewhere). The line is written by the
+    daily update's set 1 only: after an import run by hand (staging, 2026-11-12) the lists were right and this test
+    still skipped; it runs after the next daily update."""
     if ns.antcat_island_names_filed() is not True:
-        pytest.skip("no daily AntCat import with the island rule yet, or compute.log cannot be read here ('AntCat import done ... ("
-                    + ns.ANTCAT_ISLAND_LOG + ")')")
+        pytest.skip("compute.log has no line 'AntCat import done ... (" + ns.ANTCAT_ISLAND_LOG + ")', or cannot be read here (it is read "
+                    "on staging only). Set 1 of the daily update (05:00) writes the line; an import run by hand "
+                    "(utilData.do?action=worldantsFetchAndReload) does not. To see this test run: staging, after the next daily update.")
     ecuador = list_names(session, "Ecuador")
     assert len(ecuador) > 100, "Ecuador's list could not be read (" + str(len(ecuador)) + " names)"
     still = sorted(name for name in GALAPAGOS_SUBSPECIES if name in ecuador)

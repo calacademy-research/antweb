@@ -6,6 +6,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.collections4.map.MultiKeyMap;
 import org.calacademy.antweb.geolocale.Adm1;
@@ -37,6 +38,16 @@ import org.calacademy.antweb.util.GeolocaleMgr;
  * The rows already on a parent's list: the import deletes every list row whose source is AntCat at its start, each
  * day (SpeciesListUploadDb.prepareDatabase), and files them again; a row it no longer files under the parent is gone
  * after the next daily update.
+ *
+ * The country before the parentheses is resolved as the import always resolved it (GeolocaleMgr.getValidCountry: the
+ * name letter for letter, an old name through its valid name; no other capitals or accents). The import asks filing()
+ * with that country; listCountry() does the same lookup on a given map, for the tests.
+ *
+ * A missing old name is seen in the import's report (2026-11-12, review of #347): when the country before the
+ * parentheses has places that are countries of their own (United States: Hawaii; Ecuador: Galapagos Islands;
+ * Mauritius: Rodrigues) and the place in the parentheses is neither one of them nor a state AntWeb knows in that
+ * country, the report lists the locality ("United States (Hawaiian Is): filed under United States"), once, and the
+ * import's compute.log line counts them. Such a place is either no island at all or a spelling to add as an old name.
  *
  * No database: the maps are GeolocaleMgr's. Tests: AntcatLocalityTest, AntcatIslandRowsDbTest. Docs:
  * docs/flows/antcat-to-antweb.md, docs/flows/places.md ("Islands that are their own country").
@@ -94,22 +105,95 @@ public final class AntcatLocality {
         return new ArrayList<>(spellings);
     }
 
+    /** Where a name is filed, and what the import's report says about its locality. */
+    public static final class Filing {
+        /** The valid country of the text before the parentheses, as the import always resolved it. */
+        public final Country before;
+        /** The country on whose list the name is filed: the country of its own the parentheses name, or else before. */
+        public final Country country;
+        /** The locality as the report lists it when its place is not known (placeNotKnownLine), or null. */
+        public final String note;
+
+        Filing(Country before, Country country, String note) {
+            this.before = before;
+            this.country = country;
+            this.note = note;
+        }
+    }
+
     /**
-     * The valid country on whose list a name with this AntCat locality is filed: the country the place in the
-     * parentheses is, by the upload's rule (RecordPlace), or else the valid country of the text before them. Null when
-     * AntWeb has no valid country for that text (the import reports "Country not found", as before), whatever the
-     * parentheses say.
+     * Where a name with this AntCat locality is filed, given the valid country of the text before the parentheses
+     * (the import: GeolocaleMgr.getValidCountry, as before 2026-11-12): under the country the place in the parentheses
+     * is, by the upload's rule (RecordPlace), or else under that country. Null when there is no such country (the
+     * import reports "Country not found", as before), whatever the parentheses say.
+     *
+     * parents: the countries that have places which are countries of their own (parentsOfOwnCountries), or null for no
+     * notes. For such a country a place in the parentheses that is neither one of those places nor a state AntWeb
+     * knows in the country gets a note: the name is filed under the country, and the place may be an island's name
+     * AntWeb does not have yet.
+     */
+    public static Filing filing(Map<String, Country> countryNames, MultiKeyMap<String, Adm1> adm1s, Collection<Adm1> adm1Rows,
+                                Set<String> parents, Country before, String locality) {
+        if (before == null || before.getName() == null) return null;
+        List<String> spellings = placeSpellings(placePart(locality));
+        for (String place : spellings) {
+            RecordPlace own = RecordPlace.of(countryNames, adm1s, adm1Rows, before.getName(), place);
+            if (own != null) return new Filing(before, own.place, null);
+        }
+        String note = null;
+        if (parents != null && parents.contains(before.getName()) && !spellings.isEmpty()) {
+            boolean knownState = false;
+            for (String place : spellings) {
+                if (GeolocaleMgr.validAdm1(adm1s, place, before.getName()) != null) knownState = true;
+            }
+            if (!knownState) note = placeNotKnownLine(locality, before.getName());
+        }
+        return new Filing(before, before, note);
+    }
+
+    /**
+     * The valid country on whose list a name with this AntCat locality is filed, on a given map of country names (the
+     * tests): filing() with the valid country of the text before the parentheses, looked up as the import does
+     * (GeolocaleMgr.getValidCountry is validCountry on the manager's map). Null when AntWeb has no such country.
      */
     public static Country listCountry(Map<String, Country> countryNames, MultiKeyMap<String, Adm1> adm1s, Collection<Adm1> adm1Rows,
                                       String locality) {
-        String countryPart = countryPart(locality);
-        if (countryPart == null || countryPart.isEmpty()) return null;
-        Country country = GeolocaleMgr.validCountry(countryNames, countryPart);
-        if (country == null) return null;
-        for (String place : placeSpellings(placePart(locality))) {
-            RecordPlace own = RecordPlace.of(countryNames, adm1s, adm1Rows, country.getName(), place);
-            if (own != null) return own.place;
+        Filing filing = filing(countryNames, adm1s, adm1Rows, null, GeolocaleMgr.validCountry(countryNames, countryPart(locality)), locality);
+        return filing == null ? null : filing.country;
+    }
+
+    /**
+     * The names of the valid countries that have places which are countries of their own: the political parent of a
+     * valid place flagged as an island (geolocale.country of its row: United States for Hawaii, Ecuador for Galapagos
+     * Islands), and a country one of whose old state names is a valid country (RecordPlace's second rule: Mauritius
+     * for Rodrigues, United States for Oahu). Only their localities get a note (the report would otherwise list every
+     * place AntWeb has no row for).
+     */
+    public static Set<String> parentsOfOwnCountries(Map<String, Country> countryNames, MultiKeyMap<String, Adm1> adm1s, Collection<Adm1> adm1Rows) {
+        Set<String> parents = new TreeSet<>();
+        if (countryNames == null) return parents;
+        for (Country island : countryNames.values()) {
+            if (island == null || !island.isIsland() || !island.isValid() || RecordPlace.hasNoValue(island.getCountry())) continue;
+            if (island.getCountry().equals(island.getName())) continue;
+            Country parent = countryNames.get(island.getCountry());
+            if (parent != null && parent.isValid()) parents.add(parent.getName());
         }
-        return country;
+        if (adm1s != null && adm1Rows != null) {
+            for (Adm1 row : adm1Rows) {
+                if (row == null || row.getName() == null || row.getParent() == null) continue;
+                if (RecordPlace.countryOfOldAdm1(countryNames, adm1s, row.getName(), row.getParent()) != null) parents.add(row.getParent());
+            }
+        }
+        return parents;
+    }
+
+    /** The report's line for a locality whose place is not known: "United States (Hawaiian Is): filed under United States". */
+    public static String placeNotKnownLine(String locality, String country) {
+        return (locality == null ? "" : locality.trim()) + ": filed under " + country;
+    }
+
+    /** The part of the import's compute.log line that counts those localities (0 too, so the line always says). */
+    public static String placesNotKnownLog(int localities) {
+        return "localities of a country with island countries whose place in parentheses is not a known name: " + localities;
     }
 }
