@@ -1251,10 +1251,23 @@ For a locality name without code (this name has special characters):
     }
    
     public String getLocatedAtLink() {
-        String link = Html.esc(locatedAt);
         Museum museum = MuseumMgr.getInferredMuseum(locatedAt);
-        if (museum != null) link = museum.getLink();        
-        return link;
+        return museum == null ? Html.esc(locatedAt) : locatedAtLink(locatedAt, museum.getCode(), museum.getLink());
+    }
+
+    /**
+     * "Located at" on the specimen page: the text as the curator's file wrote it (the field is free text). When the
+     * text is exactly a museum's code, the museum's name and link stand for it, as before. When it only contains a
+     * code ("can't find at JTLC", "MCZC, on loan"), the text is shown as written, followed by the museum's link.
+     * Until 2026-11-12 any text that contained a museum code was replaced by the museum's name, so a note in the
+     * field never showed (Jack Longino, 2026-11-12). museumLink is the museum's link as HTML (Museum.getLink).
+     * Test: LocatedAtLinkTest.
+     */
+    public static String locatedAtLink(String locatedAt, String museumCode, String museumLink) {
+        String text = Html.esc(locatedAt);
+        if (locatedAt == null || museumCode == null || museumLink == null) return text;
+        if (locatedAt.trim().equalsIgnoreCase(museumCode)) return museumLink;
+        return text + " (" + museumLink + ")";
     }
 
 
