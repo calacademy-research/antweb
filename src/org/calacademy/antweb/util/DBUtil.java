@@ -242,6 +242,31 @@ Or, if there are stmts and/or rsets...
         close(stmt, rset, null, name);                    
     }
     
+    /**
+     * Whether this error means the database has rolled back the whole open transaction: a deadlock (MySQL error 1213),
+     * anywhere in the error's chain of causes. After it the connection is in a new, empty transaction: code that
+     * catches the error and goes on would commit only what it does from there, and report success for work that is
+     * gone. Such an error is passed on, never swallowed (2026-11-12, review of PR #347: the rebuild of the AntWeb-wide
+     * list at the end of a specimen upload swallowed it, and the upload would have reported success with its specimens
+     * rolled back).
+     *
+     * Not a lock wait timeout (error 1205): with innodb_rollback_on_timeout off, MySQL's default and what the servers
+     * run (no setting in docker/), only the statement that waited is undone and the transaction stands. The JDBC driver
+     * gives both errors the SQLState 40001, so the error number decides; another error with that state counts as a
+     * rollback.
+     */
+    public static boolean transactionRolledBack(Throwable e) {
+        int depth = 0;
+        for (Throwable t = e; t != null && depth < 20; t = t.getCause(), depth++) {
+            if (t instanceof SQLException) {
+                SQLException sql = (SQLException) t;
+                if (sql.getErrorCode() == 1213) return true;
+                if ("40001".equals(sql.getSQLState()) && sql.getErrorCode() != 1205) return true;
+            }
+        }
+        return false;
+    }
+
     public static void rollback(Connection connection) {
         //AntwebUtil.errorStackTrace(e);
         try {

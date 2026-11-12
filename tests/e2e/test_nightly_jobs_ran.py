@@ -13,7 +13,9 @@ Which line proves which job (checked in the Java source, 2026-11-04):
 - set 1 (UtilDataAction set1): "AntCat import done" after worldantsFetchAndReload succeeded, then the name
   update ("name update: ...", nightlyNameUpdate) and the taxon parents repair ("taxon parents (B36): ...",
   nightlyTaxonParents), its last step;
-- set 2: dataCleanup writes "Data cleanup done" (since 2026-11-04, UtilDataAction.jobLine), then recountGlobal
+- set 2: dataCleanup writes "Data cleanup done" (since 2026-11-04, UtilDataAction.jobLine), then the project list
+  clean-up "Project lists cleaned:" (since 2026-11-12, ProjTaxonDb.cleanupLists: cleanupSpeciesListProxyRecords and
+  verifyProjTaxon, before any project list is counted; see test_project_lists_cleaned_line), then recountGlobal
   "Global column recounted after the clean-up" and recountAntCatList "AntCat list (worldants) recounted after set 1";
   generateGeolocaleTaxaFromSpecimens and updateTaxonSets write "Geolocale taxa from specimens generated" and "Taxon
   sets updated" (also since 2026-11-04); then geolocaleCountCrawl's "Populating Geolocales"
@@ -31,8 +33,8 @@ Which line proves which job (checked in the Java source, 2026-11-04):
   placeViewTotals "Place list totals counted:";
 - set 5 is skipped in staging's nightly ("set5 skipped on staging (memory)", Scheduler); on production it
   runs but writes no line of its own. This test runs on staging only, so set 5 and its jobs
-  (deleteConflictedDefaultImages, genObjectMaps, cleanupSpeciesListProxyRecords, verifyProjTaxon) are not
-  counted as covered here;
+  (deleteConflictedDefaultImages, genObjectMaps) are not counted as covered here (cleanupSpeciesListProxyRecords and
+  verifyProjTaxon were set 5 jobs until 2026-11-12; they run in set 2 now, on staging too);
 - after the sets (Scheduler): "statistics page tables counted", "API taxon counts:", "count check started"
   (only when the nightly restart is off), "End run".
 """
@@ -188,6 +190,47 @@ def test_set5_skipped_on_staging(run_lines):
     skipped = _find(run_lines, SET5_SKIPPED, set4)
     assert skipped is not None and skipped < after, (
         f"no '{SET5_SKIPPED}' between 'Set 4 done' and the steps after the sets:\n" + _quote(run_lines[set4:after + 1]))
+
+
+# The two jobs of the project list clean-up: daily steps since 2026-11-12 (set 2), also admin jobs by hand.
+LIST_CLEANUP_JOBS = ("/utilData.do?action=cleanupSpeciesListProxyRecords", "/utilData.do?action=verifyProjTaxon")
+
+
+def test_project_lists_cleaned_line(run_lines):
+    """Set 2 takes the rows off project lists that go once their children are gone (a genus row without species, a
+    proxy row without children; ProjTaxonDb.cleanupLists) right after the data clean-up and before the Global recount,
+    the first count of a project list, and writes "Project lists cleaned: N rows removed in S s; <project> n: <names>;
+    ..." (the rows by project and name, up to ten names per project, then "and N more": Brian Fisher, 2026-11-03, no
+    job deletes list entries without a record; administrators read compute.log in the Log Manager; every row is also
+    recorded in list_removal_log, which the lists' view All specimen names shows).
+    Until 2026-11-12 set 5 removed them on production after the counts (count check 11-12: Genera of fossilants 259
+    stored, 258 listed; allantwebants 536, 535; proj_taxa 70,419, 70,413), and staging, which skips set 5, never ran
+    them. A run from before the change has no such line: skipped then. Once staging's daily update has written it,
+    the line can join RUN_LINES (after "Data cleanup done") and JOB_LINES (the two jobs)."""
+    i = _find(run_lines, "Project lists cleaned:")
+    if i is None:
+        pytest.skip(f"the nightly run that began {run_lines[0][0]} has no 'Project lists cleaned:' line: it ran before "
+                    "the change of 2026-11-12 was deployed")
+    line = run_lines[i][1]
+    # "Project lists cleaned: NOT done, no row removed (...)" when the step met an error and rolled its work back
+    assert not FAILED.search(line), f"{' and '.join(LIST_CLEANUP_JOBS)}: {line[:300]}"
+    m = re.match(r"Project lists cleaned: (\d+) rows removed in \d+ s(?:; (.*))?$", line)
+    assert m, line[:300]
+    projects = [p for p in (m.group(2) or "").split("; ") if p]
+    removed = 0
+    for part in projects:   # "<project> <n>: <name>, <name> and <k> more"
+        p = re.match(r"(\w+) (\d+): (.+)$", part)
+        assert p, f"not '<project> <n>: <names>': {part[:200]!r} in {line[:300]!r}"
+        n, names = int(p.group(2)), p.group(3)
+        more = re.search(r" and (\d+) more$", names)
+        named = len((names[:more.start()] if more else names).split(", "))
+        assert named + (int(more.group(1)) if more else 0) == n and named <= 10, f"{part[:200]!r}: {n} rows, {named} named"
+        removed += n
+    assert removed == int(m.group(1)), line[:300]   # the projects' rows add up to the total
+    before, after = _find(run_lines, "Data cleanup done"), _find(run_lines, "Global column recounted after the clean-up")
+    assert before is not None and after is not None and before < i < after, (
+        "the line is not between 'Data cleanup done' and 'Global column recounted after the clean-up':\n"
+        + _quote(run_lines[max(0, i - 3):i + 4]))
 
 
 def test_group_specimen_counts_line(run_lines):

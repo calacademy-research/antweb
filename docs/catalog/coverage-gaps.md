@@ -6,7 +6,7 @@ Hits: production Tomcat access log, 2026-10-11 00:00 to 2026-10-18 14:47 (8 days
 
 0 of 372 rows have no functional e2e test.
 
-## Not tested end to end on purpose (19)
+## Not tested end to end on purpose (17)
 
 Status manual: the job sends email, restarts the app, runs on production only, or is a one-off admin repair. The notes say why and how it is checked.
 
@@ -16,7 +16,6 @@ Status manual: the job sends email, restarts the app, runs on production only, o
 | `/util.do?action=emailTest` | admin | <2 | Admin: send a test email to the developer address. | Sends an email; not from a test. Mail is checked by the upload-complete emails (emails.log). |
 | `/util.do?action=postInstantiate` | partial | 82 | AntWeb's own call after start-up to finish loading the managers (secret code). | AntWeb's own call at start-up (secret code); every deploy runs it, and the e2e run starts after a deploy, so a failure shows as a site that does not finish loading. |
 | `/utilData.do?action=calcCaste` | admin or system | <2 | Admin: recompute caste and subcaste of specimens from their caste notes (groupId= for one group, code= for one specimen, otherwise all; a full run takes about 8 minutes). | One-off admin repair, run by hand when needed; changes data across all places, so never from a test. Run on staging first, then production. |
-| `/utilData.do?action=cleanupSpeciesListProxyRecords` | admin or system | <2 | Remove stale species list proxy records. | Production nightly only (set 5; staging skips it for memory): checked each morning on production by the release gate's compute.log check (Set 5 done, no FAILED). |
 | `/utilData.do?action=deleteConflictedDefaultImages` | admin or system | <2 | Remove default specimen picks that no longer fit. | Production nightly only (set 5; staging skips it for memory): checked each morning on production by the release gate's compute.log check (Set 5 done, no FAILED). |
 | `/utilData.do?action=delGoogleMapFunction` | admin or system | <2 | Admin: delete the stored specimen map of one geolocale (num=<id>). | One-off admin repair, run by hand when needed; changes data across all places, so never from a test. Run on staging first, then production. |
 | `/utilData.do?action=fixGeolocaleTaxonParentage` | admin or system | <2 | Admin repair: deletes the region taxon records whose source contains 'proxy', then adds the missing ones so that each taxon in a geolocale is also in its parent geolocale and each taxon's parent taxon is present (source proxy<original source>). | One-off admin repair, run by hand when needed; changes data across all places, so never from a test. Run on staging first, then production. |
@@ -29,5 +28,4 @@ Status manual: the job sends email, restarts the app, runs on production only, o
 | `/utilData.do?action=set5` | admin or system | 3 | Nightly set 5: default images clean-up, object maps, list proxies, checks. | Production nightly only (set 5; staging skips it for memory): checked each morning on production by the release gate's compute.log check (Set 5 done, no FAILED). |
 | `/utilData.do?action=setIsRestart` | admin or system | <2 | Ask for an app restart (picked up by reboot_checker.sh). | Restarts the app (picked up by reboot_checker.sh); never from a test, it would cut the run. reboot_checker.sh --dry-run shows the answer. |
 | `/utilData.do?action=updateGeolocaleParentHierarchy` | admin or system | <2 | Admin repair: sets the subregion of every adm1 from its country, reloads the geolocale cache, then sets the region of every geolocale from its subregion. | One-off admin repair, run by hand when needed; changes data across all places, so never from a test. Run on staging first, then production. |
-| `/utilData.do?action=verifyProjTaxon` | admin or system | <2 | Check project taxon records. | Production nightly only (set 5; staging skips it for memory): checked each morning on production by the release gate's compute.log check (Set 5 done, no FAILED). |
 | `/utilData.do?action=worldantsReload` | admin or system | <2 | Load the AntCat names from the last fetched file. | Admin: reload the AntCat names from the file already fetched (when the nightly import failed after the download). The import code is the nightly's, covered by the morning log test (AntCat import done). |
