@@ -437,6 +437,7 @@ paths = [
   "src/org/calacademy/antweb/util/OverviewMgr.java",
   "src/org/calacademy/antweb/util/OldPlaceNames.java",
   "src/org/calacademy/antweb/upload/RecordPlace.java",
+  "src/org/calacademy/antweb/upload/AntcatLocality.java",
   "web/subregion*",
   "web/museum*",
   "web/project*",

@@ -84,6 +84,17 @@ public class SpeciesListUpload extends AntwebUpload {
 
     private final SpeciesListUploadDb m_speciesListUploadDb;
     private int totalTaxonCountryPrimaryKeyViolations = 0;
+
+    // AntCat localities of this import whose place in parentheses is not known (AntcatLocality.Filing.note), each once,
+    // and the countries that get such notes (read once per import).
+    private final java.util.Set<String> placesNotKnown = new java.util.TreeSet<>();
+    private java.util.Set<String> ownCountryParents = null;
+    private static volatile int s_lastPlacesNotKnown = 0;
+
+    /** How many localities the last AntCat import listed under "Place in parentheses not a known island name" (the compute.log line). */
+    public static int lastPlacesNotKnown() {
+        return s_lastPlacesNotKnown;
+    }
     private final int totalFossils = 0;
     private final int totalNotFossils = 0;
     
@@ -751,11 +762,26 @@ public class SpeciesListUpload extends AntwebUpload {
 
 						  // Use the worldants country to populate geolocale_taxon... 
 						  if (thisCountry != null && !"".equals(thisCountry) && !isFossil) {						
-							String tempCountry = thisCountry;
-							// We could try to get the adm1 from the parenthesis..
-							if (tempCountry.contains("(")) tempCountry = tempCountry.substring(0, tempCountry.indexOf("("));
-							tempCountry = tempCountry.trim();
+							// The country AntCat names is the text before the parenthesis ("Ecuador (Galapagos Is)": Ecuador),
+							// resolved as it always was.
+							String tempCountry = AntcatLocality.countryPart(thisCountry);
 							Country country = GeolocaleMgr.getValidCountry(tempCountry);
+							// 2026-11-12 (Brian Fisher, 2026-11-11: an oceanic island with its own ant fauna is its own country
+							// in AntWeb and never counts toward its political parent): when the place in the parentheses is such
+							// a country by the upload's rule (RecordPlace: Ecuador + Galapagos, United States + Hawaii), the name
+							// is filed under it only. Until now the parentheses were dropped, so every name described from the
+							// Galapagos was on Ecuador's list. Every other locality: the country before the parentheses, and
+							// when that country has island countries and the place is not a name AntWeb knows, the report says so.
+							if (country != null) {
+							  if (ownCountryParents == null) ownCountryParents = GeolocaleMgr.getOwnCountryParents();
+							  AntcatLocality.Filing filing = GeolocaleMgr.getAntcatFiling(ownCountryParents, country, thisCountry);
+							  if (filing != null) {
+							    country = filing.country;
+							    if (filing.note != null && placesNotKnown.add(filing.note)) {
+							      getMessageMgr().addToMessages(MessageMgr.antcatPlaceNotKnown, Html.esc(filing.note));
+							    }
+							  }
+							}
                             if (taxonName.contains(debugTaxonName)) s_log.debug("importSpeciesList() 9 taxonName:" + taxonName + " status:" + status + " country:" + country);
 							if (country != null) {
 							  //if (taxonName.contains(debugTaxonName))
@@ -852,6 +878,7 @@ public class SpeciesListUpload extends AntwebUpload {
             }
         }      
 
+        s_lastPlacesNotKnown = placesNotKnown.size();
         uploadDetails = new UploadDetails("importWorldants", returnStr);
         uploadDetails.setRecordCount(lineNum-2);
         return uploadDetails;

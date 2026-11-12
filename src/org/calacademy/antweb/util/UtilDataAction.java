@@ -297,6 +297,37 @@ public class UtilDataAction extends AntwebAction {
         return line;
     }
 
+    /**
+     * Set 2's clean-up of the project lists (ProjTaxonDb.cleanupLists), with its own commit and rollback, as the two
+     * recounts after it. What set 2 did before (the data clean-up) is committed first: a deadlock in here makes the
+     * database roll back the whole open transaction, which was the data clean-up's work too. When one of the two
+     * clean-ups met an error, what this step removed is rolled back (after a deadlock the database has undone part of
+     * it already, so the line could not say truly which rows are gone) and the line says so; the lists are then as
+     * before, the counts that follow count them as they are, and the next daily update cleans them. One line for
+     * compute.log: ProjTaxonDb.cleanupLists' own, or "Project lists cleaned: NOT done, no row removed (...)".
+     */
+    public static String cleanProjectLists(Connection connection) {
+        String line;
+        try {
+            connection.commit();
+            ProjTaxonDb lists = new ProjTaxonDb(connection);
+            line = lists.cleanupLists();
+            if (lists.cleanupFailed()) {
+                connection.rollback();
+                line = ProjTaxonDb.CLEANUP_LOG + ": NOT done, no row removed (rolled back; the next daily update cleans the lists): "
+                    + lists.cleanupErrorsText();
+            } else {
+                connection.commit();
+            }
+        } catch (Exception e) {
+            try { connection.rollback(); } catch (SQLException e2) { s_log.error("cleanProjectLists() rollback e:" + e2); }
+            s_log.error("cleanProjectLists() e:" + e);
+            line = ProjTaxonDb.CLEANUP_LOG + ": NOT done, no row removed (" + e + ")";
+        }
+        LogMgr.appendLog("compute.log", "  " + line, true);
+        return line;
+    }
+
     /** Written to compute.log by set 2 when the AntCat list (worldants) was recounted; the count check's tests read it. */
     public static final String ANTCAT_LIST_RECOUNTED = "AntCat list (worldants) recounted after set 1";
 
@@ -484,8 +515,11 @@ public class UtilDataAction extends AntwebAction {
                     DailyUpdate.noteFailed("antcatImport", "the AntCat import did not succeed: " + (worldants == null ? "no answer" : worldants.getMessage()));
                 }
                 if (worldants != null && "success".equals(worldants.getMessage())) {
-                    // The e2e tests read this line: the bioregion lists were rebuilt with valid names only (2026-10-29).
-                    LogMgr.appendLog("compute.log", "  AntCat import done (" + org.calacademy.antweb.upload.SpeciesListUpload.BIOREGION_VALID_LOG + ")", true);
+                    // The e2e tests read this line: the bioregion lists were rebuilt with valid names only (2026-10-29),
+                    // and the names described from an island that is its own country are on the island's list only (2026-11-12).
+                    LogMgr.appendLog("compute.log", "  AntCat import done (" + org.calacademy.antweb.upload.SpeciesListUpload.BIOREGION_VALID_LOG + ")"
+                        + " (" + org.calacademy.antweb.upload.AntcatLocality.ISLAND_LOG + "; "
+                        + org.calacademy.antweb.upload.AntcatLocality.placesNotKnownLog(org.calacademy.antweb.upload.SpeciesListUpload.lastPlacesNotKnown()) + ")", true);
                 }
                 message += " " + doAction("taxonFinish", form, accessLogin, accessGroup, connection, request, mapping);
                 // CAS specimens from TaxonWorks (GitHub #27). Does nothing without etc/taxonworks.properties.
@@ -514,6 +548,16 @@ public class UtilDataAction extends AntwebAction {
             if ("set2".equals(action)) {
                 message = "set2 - ";
                 message += doAction("dataCleanup", form, accessLogin, accessGroup, connection, request, mapping);
+                // Project list rows that go once their children are gone (a genus row with neither a species row on the list
+                // nor, on the AntWeb-wide list, a specimen: the rule of 2026-11-02; a proxy row of the Species List Tool
+                // without children): removed here, after the data clean-up took its rows and
+                // before anything counts a project list (the Global recount right below is the first). Until 2026-11-12
+                // set 5 removed them, after sets 3 and 4 had stored the project totals and the statistics row, so the
+                // count check found those numbers one or a few rows too high every day on production (staging skips
+                // set 5 and never showed it). ProjTaxonDb.cleanupLists.
+                // The line names taxa and, after an error, has the database's text: escaped for the job page (cleanProjectLists
+                // writes it to compute.log as it is).
+                message += " " + Html.esc(cleanProjectLists(connection));
                 // The clean-up deletes list rows (morphospecies without specimens, names no longer in the taxon table) from every
                 // project, the Global column (allantwebants) too, which the specimen upload had counted before it and nothing
                 // recounts after it: its genus and subfamily rows then counted more rows than they have (count check 2026-10-27,
@@ -643,14 +687,11 @@ public class UtilDataAction extends AntwebAction {
                 s_log.info("Done deleteConflictedDefaultImages. Starting genObjectMaps...");
 
                 message += " " + doAction("genObjectMaps", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 48.93 mins
-                s_log.info("Done genObjectMaps. Starting cleanupSpeciesListProxyRecords...");
+                s_log.info("Done genObjectMaps.");
 
-                message += " " + doAction("cleanupSpeciesListProxyRecords", form, accessLogin, accessGroup, connection, request, mapping);
-                s_log.info("Done cleanupSpeciesListProxyRecords. Starting verifyProjTaxon...");
-
-                message += " " + doAction("verifyProjTaxon", form, accessLogin, accessGroup, connection, request, mapping);
-                s_log.info("Done verifyProjTaxon.");
-
+                // The two clean-ups of project lists (cleanupSpeciesListProxyRecords, verifyProjTaxon) ran here until
+                // 2026-11-12, after the counts of sets 3 and 4; they are in set 2 now (ProjTaxonDb.cleanupLists). No step
+                // of this set changes a table an earlier set counted: taxon_prop (default images), object_map, the caches.
                 AntwebMgr.populate(connection, true);
             }
 
@@ -1050,17 +1091,9 @@ public class UtilDataAction extends AntwebAction {
 
 
         // If a species list proxy record is created for a species list species that is then removed... cleanup.
-        if (action.equals("cleanupSpeciesListProxyRecords")) {
-            ProjTaxonDb projTaxonDb = new ProjTaxonDb(connection);
-            String result = projTaxonDb.cleanupSpeciesListProxyRecords();
-            message = "Cleanup Species List Proxy Records:" + result + listTotalsAfterRowsRemoved(connection, projTaxonDb);
-        }
-
-        // If a species list proxy record is created for a species list species that is then removed... cleanup.
-        if (action.equals("verifyProjTaxon")) {
-            ProjTaxonDb projTaxonDb = new ProjTaxonDb(connection);
-            String result = projTaxonDb.verifyProjTaxon();
-            message = "verifyProjTaxon Records:" + result + listTotalsAfterRowsRemoved(connection, projTaxonDb);
+        // The two clean-ups of the project lists, by hand (the daily update runs both in set 2, cleanProjectLists).
+        if (action.equals("cleanupSpeciesListProxyRecords") || action.equals("verifyProjTaxon")) {
+            message = cleanListsByHand(connection, action);
         }
 
      // --- Map functions
@@ -1219,17 +1252,56 @@ public class UtilDataAction extends AntwebAction {
   
 
     /**
-     * After a clean-up took rows off project lists (set 5: cleanupSpeciesListProxyRecords, verifyProjTaxon; also run by
-     * hand): the list totals of those projects, counted earlier in the daily update (set 4), are counted again, so the
-     * project page's Genera equal its list (Brian Fisher, 2026-11-11: Fossil Ants Genera 259, its list 258). The text for
-     * the job's message: "" when no list lost a row.
+     * The admin jobs cleanupSpeciesListProxyRecords and verifyProjTaxon: one of the two clean-ups of the project lists,
+     * by hand. Returns the job's answer. When the clean-up met a database error (it logs it and goes on), the answer
+     * says "FAILED: ..." with the error, escaped, and what the job removed and recorded is rolled back, as set 2's step
+     * does (cleanProjectLists): the answer could not say truly which rows are gone (after a deadlock the database has
+     * undone them already), and until 2026-11-12 the job answered as if nothing had happened. The list totals are
+     * counted again only after a clean-up without error.
+     */
+    public static String cleanListsByHand(Connection connection, String action) {
+        boolean proxy = "cleanupSpeciesListProxyRecords".equals(action);
+        String head = proxy ? "Cleanup Species List Proxy Records:" : "verifyProjTaxon Records:";
+        ProjTaxonDb projTaxonDb = new ProjTaxonDb(connection);
+        String result;
+        try {
+            result = proxy ? projTaxonDb.cleanupSpeciesListProxyRecords() : projTaxonDb.verifyProjTaxon();
+        } catch (SQLException e) {      // the two catch their own; kept for their signature
+            s_log.error("cleanListsByHand() " + action + " e:" + e);
+            return head + rolledBack(connection, String.valueOf(e));
+        }
+        if (projTaxonDb.cleanupFailed()) return head + rolledBack(connection, projTaxonDb.cleanupErrorsText());
+        return head + result + listTotalsAfterRowsRemoved(connection, projTaxonDb);
+    }
+
+    /** "; FAILED: <error>; no row removed (rolled back)", after rolling the job's transaction back. */
+    private static String rolledBack(Connection connection, String errors) {
+        String undone = "; no row removed (rolled back)";
+        try {
+            connection.rollback();
+        } catch (SQLException e) {
+            s_log.error("cleanListsByHand() rollback e:" + e);
+            undone = "; the rows removed before the error stay removed (not rolled back: " + Html.esc(String.valueOf(e)) + ")";
+        }
+        return "; FAILED: " + Html.esc(errors) + undone;
+    }
+
+    /**
+     * After a clean-up run by hand took rows off project lists (the admin jobs cleanupSpeciesListProxyRecords and
+     * verifyProjTaxon; until 2026-11-12 also set 5 of the daily update): the list totals of those projects, counted by
+     * the last daily update, are counted again, so the project page's Genera equal its list (Brian Fisher, 2026-11-11:
+     * Fossil Ants Genera 259, its list 258). The projects' own stored totals and the statistics row follow at the next
+     * daily update, which since 2026-11-12 runs the two clean-ups before it counts (set 2, ProjTaxonDb.cleanupLists).
+     * The text for the job's message: "" when no list lost a row.
      */
     static String listTotalsAfterRowsRemoved(Connection connection, ProjTaxonDb projTaxonDb) {
         java.util.Set<String> projects = projTaxonDb.getProjectsWithRowsRemoved();
         if (projects.isEmpty()) return "";
         java.util.List<String> counted = new org.calacademy.antweb.home.PlaceViewTotalDb(connection).recountProjects(projects);
+        // the rows by project and name (Brian Fisher, 2026-11-03: no job deletes list entries without a record)
         return "; rows removed from the lists of " + projects.size() + " project" + (projects.size() == 1 ? "" : "s")
-            + ", list totals counted again for " + counted.size() + (counted.isEmpty() ? "" : " (" + String.join(", ", counted) + ")");
+            + ": " + Html.esc(projTaxonDb.removedRowsText())
+            + "; list totals counted again for " + counted.size() + (counted.isEmpty() ? "" : " (" + String.join(", ", counted) + ")");
     }
 
     /** Preview page of fixGeolocaleTaxonParentage: what the check found, and a button that applies the fix. */

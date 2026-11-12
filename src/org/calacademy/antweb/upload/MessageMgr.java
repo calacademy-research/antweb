@@ -144,6 +144,9 @@ public class MessageMgr {
     public static final String countryMissing = "countryMissing";
     public static final String adm1Missing = "adm1Missing";
     public static final String countryNotFound = "countryNotFound";
+    /** AntCat import (2026-11-12): a locality of a country with island countries whose place in parentheses AntWeb does not know (AntcatLocality). */
+    public static final String antcatPlaceNotKnown = "antcatPlaceNotKnown";
+    public static final String ANTCAT_PLACE_NOT_KNOWN_HEADING = "Place in parentheses not a known island name (filed under the country before it)";
     public static final String notValidBioregion = "notValidBioregion";
     //public static final String adm1UpgradeToIsland = "adm1UpgradeToIsland";
     public static final String invalidLatLon = "invalidLatLon";
@@ -347,6 +350,7 @@ public class MessageMgr {
       testList.add(new Test(countryMissing, NUM, "<b>Country is missing <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(adm1Missing, SET, "<b>Adm1 is missing, but expected for these countries <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(countryNotFound, SET, "<b>Country not found</b>"));
+      testList.add(new Test(antcatPlaceNotKnown, SET, "<b>" + ANTCAT_PLACE_NOT_KNOWN_HEADING + "</b>"));
       testList.add(new Test(notValidBioregion, STR, "<b>Not valid Antweb Biogeographic Regions</b> "));
       //testList.add(new Test(adm1UpgradeToIsland, STR, "<b>Adm1 upgraded to Island Country</b>"));
       testList.add(new Test(notValidCountries, STR, "<b>Not Antweb valid countries</b>"));

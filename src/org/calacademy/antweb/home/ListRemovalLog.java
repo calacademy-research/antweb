@@ -28,7 +28,9 @@ import org.apache.commons.logging.LogFactory;
  * row keeps the reason too) and by the jobs that remove names, not by the routine rebuilds (the nightly delete and
  * re-insert of the rows from specimens, the AntCat rows of set 1, the Global list): the nightly clean-up of morphospecies
  * without specimens and of names no longer in AntWeb (TaxonSetDb.dataCleanup; the curators' rows are parked first and
- * come back), and the orphan tool (OrphansDb.deleteTaxon). Rows are recorded just before the delete, by the same
+ * come back), the clean-up of the project lists (ProjTaxonDb: a genus row with neither a species row nor a specimen, a
+ * Species List Tool proxy row without children; since 2026-11-12, every row, but not the same record day after day:
+ * recordWhereOnce) and the orphan tool (OrphansDb.deleteTaxon). Rows are recorded just before the delete, by the same
  * condition (recordWhere), in one insert per step. Read by the lists' view All specimen names (ListView.loadRemovals:
  * "removed from the list by ... (date): reason").
  *
@@ -56,10 +58,17 @@ public final class ListRemovalLog {
     public static final String JOB_MORPHO_NO_SPECIMEN = "nightly clean-up: morphospecies with no specimens";
     public static final String JOB_NO_TAXON = "nightly clean-up: name no longer in AntWeb";
     public static final String JOB_ORPHAN = "orphan tool: name deleted";
+    /** The clean-up of the project lists (ProjTaxonDb.cleanupLists, the daily update's set 2; also the two admin jobs). */
+    public static final String JOB_GENUS_NO_SPECIES = "list clean-up: genus with no species row or specimen";
+    public static final String JOB_PROXY_NO_CHILDREN = "list clean-up: Species List Tool proxy row with no children";
+    /** The rebuild of the AntWeb-wide list (ProjTaxonDb.rebuildAllAntwebList): a genus that was on the list before it. */
+    public static final String JOB_REBUILD_GENUS = "AntWeb-wide list rebuilt: genus with no species row or specimen";
 
     /** The reasons the jobs give. */
     public static final String REASON_MORPHO_NO_SPECIMEN = "a morphospecies with no specimens left in AntWeb";
     public static final String REASON_NO_TAXON = "the name is no longer in AntWeb; a curator's entry comes back if the name does";
+    public static final String REASON_GENUS_NO_SPECIES = "a genus stays on a list only with a species row of that genus or a specimen of it there";
+    public static final String REASON_PROXY_NO_CHILDREN = "the row stood for the names under it, and none of them is on the list any more";
 
     public static String createTable(String charset, String collation) {
         return "CREATE TABLE IF NOT EXISTS " + TABLE + " ("
@@ -155,17 +164,61 @@ public final class ListRemovalLog {
         return recordWhere(connection, listType, where, job, null);
     }
 
-    /** The same, with the job's reason. */
+    /**
+     * The same, with the job's reason. A deadlock is passed on (unchecked, the SQLException as its cause): the database
+     * has rolled back the caller's whole transaction, which the caller must learn (DBUtil.transactionRolledBack).
+     */
     public static int recordWhere(Connection connection, String listType, String where, String job, String reason) {
+        return write(connection, listType, job, scriptSql(listType, job, reason, where));
+    }
+
+    private static int write(Connection connection, String listType, String job, String insert) {
         try {
             ensureSchema(connection);
             try (Statement stmt = connection.createStatement()) {
-                return stmt.executeUpdate(scriptSql(listType, job, reason, where));
+                return stmt.executeUpdate(insert);
             }
         } catch (SQLException | RuntimeException e) {
+            if (org.calacademy.antweb.util.DBUtil.transactionRolledBack(e)) {
+                throw new IllegalStateException("the record of removed list rows met a deadlock; the transaction is rolled back", e);
+            }
             s_log.warn("recordWhere() listType:" + listType + " job:" + job + " e:" + e);
             return 0;
         }
+    }
+
+    /**
+     * recordWhere for a clean-up that finds the same rows again and again: no record when the newest record of the same
+     * list and name is this very one (same job, reason and source, by a job) and the row to remove was not made by a
+     * curator. The AntCat import puts the same fossil genera without species on the Fossil Ants list every day and the
+     * daily clean-up takes them off every day (staging 2026-11-12: dissimulodorylus, pseudosirex, formicites,
+     * myrmicites): the first record stands, and says what happens to that name on that list, instead of one more
+     * every day.
+     *
+     * A row a curator put back since the last record is recorded again. There is no table that says when a list row
+     * was added, so the row itself tells: its source. A curator's row has a curator's source
+     * (CuratorTaxonSetDb.CURATOR_SOURCES: curator, speciesList, speciesListTool, speciesListUpload) or is the parent row
+     * such an entry made ("proxy" + that source); its removal is always recorded. A row with any other source (the
+     * AntCat import's, the specimens') is recorded unless the newest record of its list and name is the same in all of
+     * job, reason and source; a curator's own removal in between (a record with a login) is a newer, different record,
+     * so the job's next removal is recorded again.
+     */
+    public static int recordWhereOnce(Connection connection, String listType, String where, String job, String reason) {
+        return write(connection, listType, job, scriptSql(listType, job, reason, where) + " and " + notRecordedYet(listType, job, reason));
+    }
+
+    /** SQL condition on the list row (alias l) for recordWhereOnce: a curator's row, or its removal is not the newest record. */
+    static String notRecordedYet(String listType, String job, String reason) {
+        StringBuilder curators = new StringBuilder();
+        for (String source : CuratorTaxonSetDb.CURATOR_SOURCES) {
+            curators.append(curators.length() == 0 ? "" : ", ").append("'").append(source).append("', 'proxy").append(source).append("'");
+        }
+        String same = "concat_ws('|', " + org.calacademy.antweb.util.DBUtil.sqlLiteral(clip(job, 80)) + ", "
+            + "coalesce(" + org.calacademy.antweb.util.DBUtil.sqlLiteral(clip(reason, 255)) + ", ''), coalesce(l.source, ''), '')";
+        String newest = "(select concat_ws('|', coalesce(r.removed_by_job, ''), coalesce(r.reason, ''), coalesce(r.source, ''), coalesce(r.removed_by_login, ''))"
+            + " from " + TABLE + " r where r.list_type = '" + listType + "' and r.list_key = l." + keyColumn(listType) + " and r.taxon_name = l.taxon_name"
+            + " order by r.removed_at desc, r.id desc limit 1)";
+        return "(l.source in (" + curators + ") or coalesce(" + newest + ", '#none') <> " + same + ")";
     }
 
     /** One removal by a curator or a job. */

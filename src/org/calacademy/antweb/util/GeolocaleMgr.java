@@ -25,6 +25,7 @@ import java.util.stream.Stream;
  * at start-up (about 12 seconds) and on util.do?action=reloadAntwebMgr. Lookups by name or id, validity of a
  * country or adm1 for uploads, a place's bioregion, and the adm1 lists of countryAdm1List.do. Docs:
  * docs/flows/places.md. Islands that are their own country (2026-11-11): getRecordPlace, getIslandsOf; IslandCountryTest.
+ * The country of an AntCat type locality (2026-11-12): getAntcatFiling, getOwnCountryParents; AntcatLocalityTest.
  * Tests: PreviousDeterminationsTest, tests/unit/test_small_fixes.py, CountrySpellingTest
  * (a country written with other capitals, accents or blanks, for the specimen upload), PlaceBioregionTest (the
  * bioregion a country and state give an uploaded specimen), OldPlaceNamesTest (an old name in a link).
@@ -1012,6 +1013,21 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
      */
     public static @Nullable org.calacademy.antweb.upload.RecordPlace getRecordPlace(String country, String adm1) {
         return org.calacademy.antweb.upload.RecordPlace.of(countryNameMap, adm1CountryMap, adm1List, country, adm1);
+    }
+
+    /**
+     * Where the AntCat import files a name with this type locality, given the valid country of the text before the
+     * parentheses (getValidCountry, as the import always resolved it): "Ecuador (Galapagos Is)": Galapagos Islands, by
+     * the upload's rule for the place in the parentheses; "Indonesia (Java)": Indonesia. parents: getOwnCountryParents(),
+     * once per import. Null when the country is null (AntcatLocality, 2026-11-12).
+     */
+    public static @Nullable org.calacademy.antweb.upload.AntcatLocality.Filing getAntcatFiling(Set<String> parents, Country before, String locality) {
+        return org.calacademy.antweb.upload.AntcatLocality.filing(countryNameMap, adm1CountryMap, adm1List, parents, before, locality);
+    }
+
+    /** The countries that have places which are countries of their own (United States, Ecuador, Mauritius): AntcatLocality. */
+    public static Set<String> getOwnCountryParents() {
+        return org.calacademy.antweb.upload.AntcatLocality.parentsOfOwnCountries(countryNameMap, adm1CountryMap, adm1List);
     }
 
     /**
