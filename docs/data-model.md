@@ -590,7 +590,8 @@ specimen-derived rows: valid names, and since 2026-10-29 the genus rows of speci
 
 **Written by.** Set 1 (`worldants` replaced, `allantwebants` regenerated: `ProjTaxonDb.regenerateAllAntweb`), every
 specimen upload (`allantwebants`), set 3 (`ProjTaxonCountDb.curatedProjectsCountCrawl`, names moved), set 4
-(`image_count`), set 5 (`cleanupSpeciesListProxyRecords`, `verifyProjTaxon`), curators' species list tool and
+(`image_count`), set 2 (`ProjTaxonDb.cleanupLists`: `cleanupSpeciesListProxyRecords`, `verifyProjTaxon`, before any
+project list is counted; set 5 until 2026-11-12), curators' species list tool and
 species list upload (`ProjTaxonDb.insertItem`, `delete`).
 
 **Read by.** Project pages and lists, the Global column of every taxon list (`allantwebants`), `Project` counts,

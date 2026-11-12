@@ -735,9 +735,10 @@ public class PlaceViewTotalDb {
 
     /**
      * Counts the list totals of the named projects again (recountPlace each) and returns the names counted. For the
-     * clean-ups of set 5 that take rows off project lists after the daily update counted the totals
-     * (ProjTaxonDb.getProjectsWithRowsRemoved): without it the project page keeps, until the next daily update, the
-     * number of a list that has since lost a row. A project the daily update does not count (the AntWeb-wide list) or
+     * clean-ups that take rows off project lists after the daily update counted the totals
+     * (ProjTaxonDb.getProjectsWithRowsRemoved: the admin jobs verifyProjTaxon and cleanupSpeciesListProxyRecords run by
+     * hand; until 2026-11-12 also set 5, since then the daily update runs them in set 2, before it counts): without it
+     * the project page keeps, until the next daily update, the number of a list that has since lost a row. A project the daily update does not count (the AntWeb-wide list) or
      * whose count fails is not in the answer.
      */
     public List<String> recountProjects(java.util.Collection<String> projectNames) {
