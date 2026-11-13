@@ -2,7 +2,9 @@
 
 > AntWeb is the California Academy of Sciences' community-supported resource for ant specimen records, images, distribution and natural history, developed since 2002 under the scientific leadership of Brian L. Fisher. Use its API for data, keep scientific attribution and specimen provenance, and use AntCat for names.
 
-**API status (November 2026):** the data API is temporarily closed while free registered keys and request limits are introduced. Data requests return HTTP 503. Do not get around the closure by scraping pages. When registration opens, use a free API key for regular or substantial use; a small number of requests will work without a key. Respect the limits and the Retry-After header of HTTP 429 answers.
+**API status (November 2026):** AntWeb is transitioning to version 4 of its data API: https://www.antweb.org/v4/ . This endpoint reports the current status ("open" or "closed"), available routes, limits, and field names. While version 4 is closed, its data endpoints return HTTP 503 (Service Unavailable). When version 4 opens, version 3.1 is retired: its data endpoints return HTTP 410 (Gone), directing clients to version 4. The version 3.1 status endpoint (https://www.antweb.org/v3.1/) remains available and reports "ended". Do not bypass a closure or rate limit by scraping AntWeb's web pages.
+
+**Keys and limits:** Register for a free API key at https://www.antweb.org/apiKey.do and send it in the `X-API-Key` HTTP header, never in the URL. With a registered key: 60 requests per minute, 5,000 requests per day, 500 records per response, and 50,000 records per day. Without a key (per IP address), once the API is open: 5 requests per minute, 50 requests per day, 25 records per response, and 1,250 records per day. Daily limits reset at 00:00 UTC. Paginate with `offset`; comply with HTTP 429 and its `Retry-After` header. To retrieve a complete set from `/v4/specimens` or `/v4/geoSpecimens`, read `metaData.total` (the number of records that match the query) from the first response (a `/v4/specimens` request without a filter reports it only with `total=true`, which requires a key), then send each response's `metaData.nextAfterCode` as `afterCode` until `metaData.complete` is true. Data responses report `metaData.recordsLeftToday` and `X-AntWeb-Records-Left-Today`. Version 4 uses `specimenCode`, `collectingEventCode`, and `localityCode`; consult the API documentation at https://www.antweb.org/api.do for endpoint details and version 4 changes.
 
 **Access:** use the API, not crawling or scraping of AntWeb's web pages. Follow robots.txt. Do not harvest the whole database, run an automated mirror, or synchronize it in full through the API without arranging access with the AntWeb team first: antweb@antweb.org. The limits do not change the rights the CC BY 4.0 licence grants.
 
@@ -12,14 +14,19 @@
 
 **Collaboration and contributions:** for taxonomic revisions, country or regional lists and large studies that depend on AntWeb, contact the AntWeb team early to explore collaboration. Coauthorship follows real contributions; it is not a condition of reuse. Please contribute new specimen photographs, especially of type specimens, updated identifications, type designations and publication links back to AntWeb, with photographer and contributor credit.
 
+**Ants only by default:** in version 4, the routes that read specimen records by place (`/v4/specimens`, `/v4/geoSpecimens`, `/v4/geoSpeciesStats`, `/v4/distinctTaxa`, `/v4/measurements`) answer from the records of ants unless you ask for more: family Formicidae, and the records with no family given. `metaData.total` and the name lists count the same records. AntWeb also holds beetles, wasps, spiders and other animals found with ants: add `allFamilies=true` for every family, or `family=<name>` on `/v4/specimens` for one family. `metaData.families` says which was used (`antsOnly`, `allFamilies` or `family`).
+
+**Countries and islands:** `country=` returns the specimen records whose country in AntWeb is that country. An oceanic island or archipelago with its own ant fauna is its own country in AntWeb (Hawaii, Galapagos Islands): request it by its own name. Its records are never part of its political parent (`country=United States` returns no records of Hawaii).
+
 **Names:** AntWeb holds specimen identifications, including provisional ones and morphospecies. For accepted names, synonyms and nomenclatural history use AntCat (https://www.antcat.org). Not every AntWeb specimen name is an accepted taxon.
 
 **Contact:** antweb@antweb.org
 
 ## Data access and documentation
 
-- [AntWeb API v3.1](https://www.antweb.org/v3.1/): API entry point and status
-- [API documentation and terms](https://www.antweb.org/apiV3.1.do): endpoints, parameters, access and citation
+- [AntWeb API v4](https://www.antweb.org/v4/): API entry point, status, routes and limits
+- [Free API key](https://www.antweb.org/apiKey.do): registration
+- [API documentation and terms](https://www.antweb.org/api.do): endpoints, parameters, access and citation
 - [How to Cite AntWeb](https://www.antweb.org/citing_antweb.jsp): image credit and citation
 - [Participate](https://www.antweb.org/documentation.do): how to contribute specimens and images
 

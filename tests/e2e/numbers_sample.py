@@ -343,6 +343,17 @@ def bioregion_valid_names_imported():
     return compute_log_has("AntCat import done", BIOREGION_VALID_LOG)
 
 
+# AntcatLocality.ISLAND_LOG, on the same "AntCat import done" line since 2026-11-12. Keep in step with Java.
+ANTCAT_ISLAND_LOG = "names of an island country filed under the island only (2026-11-12)"
+
+
+def antcat_island_names_filed():
+    """True when a daily AntCat import has filed the names described from an island that is its own country under the
+    island only (2026-11-12: "Ecuador (Galapagos Is)" is the Galapagos Islands' name, no longer Ecuador's); False when
+    compute.log is readable and has no such line (pending); None when unreadable."""
+    return compute_log_has("AntCat import done", ANTCAT_ISLAND_LOG)
+
+
 # GeolocaleTaxonDb.GENUS_ROWS_LOG, on the "Set 2 done" line of the nightly run. Keep in step with Java.
 GENUS_ROWS_LOG = "genus rows from every specimen identified to genus (2026-10-29)"
 

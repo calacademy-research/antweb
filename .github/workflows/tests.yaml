@@ -52,6 +52,12 @@ jobs:
 
       - name: API key login script (password never printed or on a command line, least privilege, file and MySQL agree) (tests/unit/test_api_usage_login_script.py)
         run: python3 tests/unit/test_api_usage_login_script.py
+      - name: End-to-end tests reach the API in both states (up=1 while v4 is closed, v4 with the test key once open; key only from the environment) (tests/unit/test_e2e_api_access.py)
+        run: |
+          python3 -m pip install --quiet requests pytest
+          python3 tests/unit/test_e2e_api_access.py
+      - name: API test key script (staging only, only the hash kept, put back by the weekly refresh) (tests/unit/test_api_test_key_script.py)
+        run: python3 tests/unit/test_api_test_key_script.py
       - name: Every workflow step is valid shell, also inside sh -c '...' (tests/unit/test_workflow_shell.py)
         # 2026-10-24: an apostrophe in a comment ended a quoted sh -c script early; the step failed only on GitHub.
         run: python3 tests/unit/test_workflow_shell.py
@@ -94,6 +100,9 @@ jobs:
 
       - name: A recount of one bioregion or museum makes the statistics page count again (tests/unit/test_statspage_forget.py)
         run: python3 tests/unit/test_statspage_forget.py
+
+      - name: The daily update takes rows off project lists before it counts them, and no later set does (tests/unit/test_list_cleanup_before_counts.py)
+        run: python3 tests/unit/test_list_cleanup_before_counts.py
 
       - name: The daily update recounts every group's stored specimen count as the last statement of set 3 (tests/unit/test_group_specimen_count_daily.py)
         run: python3 tests/unit/test_group_specimen_count_daily.py
@@ -195,10 +204,18 @@ jobs:
             -v "$PWD/docker-compose.yml:/repo/docker-compose.yml:ro" -v "$PWD/docker-compose.dev.yml:/repo/docker-compose.dev.yml:ro" \
             antweb/api:dev /t/test_api_decisions.py
 
-      - name: API v4 with free registered keys (header only, hashes, levels, 429 and 401, daily record limit, no key or token in logs, v3.1 admin switch, IPv6 per /64) (tests/unit/test_api_v4.py)
+      - name: API v4 with free registered keys (header only, hashes, levels, 429 and 401, daily record limit, no key or token in logs, IPv6 per /64; one switch v4Open, closed as before, open is v4 for everyone and every v3.1 data route 410) (tests/unit/test_api_v4.py)
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" -v "$PWD/docker/caddy:/caddy:ro" \
             antweb/api:dev /t/test_api_v4.py
+
+      - name: API v4 complete sets (metaData.total, returned and complete; afterCode paging that neither skips nor repeats when records change; afterCode with offset is 400; v3.1 unchanged while v4 is closed; ants only by default on every route that reads specimens by place, one definition (the data extract's) and one helper, allFamilies=true, metaData.families) (tests/unit/test_api_paging.py)
+        run: |
+          docker run --rm --entrypoint python -e REPO_DIR=/repo -v "$PWD/tests/unit:/t:ro" \
+            -v "$PWD/web/documentation/api/apiV3_1-body.jsp:/repo/web/documentation/api/apiV3_1-body.jsp:ro" \
+            -v "$PWD/web/llms.txt:/repo/web/llms.txt:ro" -v "$PWD/docs/flows/api.md:/repo/docs/flows/api.md:ro" \
+            -v "$PWD/tools/export/specimen_extract.py:/repo/tools/export/specimen_extract.py:ro" \
+            antweb/api:dev /t/test_api_paging.py
 
       - name: API refuses to start without its read-only login (API_REQUIRE_READONLY_LOGIN=true, as on the servers)
         run: |
@@ -720,6 +737,11 @@ jobs:
         # only a record of the island, its political parent or no country (Mexico + Hawaii stays Mexico); the parent
         # page's line; region and
         # subregion are the island row's or, where it has none, the record's own (as the one-time update does).
+        # AntcatLocalityTest (2026-11-12): the country the AntCat import files a name under, from AntCat's type locality:
+        # "Ecuador (Galapagos Is)" is the Galapagos Islands' name only (the upload's rule for the place in the
+        # parentheses), "Hawaii (Oahu)" Hawaii's, "Mexico (Hawaii)" Mexico's; every other locality as before. The country
+        # before the parentheses is resolved by the import's old lines and the new code alike, on the same spellings;
+        # a place AntWeb does not know in a country with island countries ("United States (Hawaiian Is)") is noted.
         # IslandParseLineTest: the same forms through SpecimenUploadParse.parseLine itself (the places, taxa and groups
         # in memory filled by the test, no database): the specimen it would store, and the bounds check against the
         # island's own box.
@@ -767,14 +789,15 @@ jobs:
               /t/org/calacademy/antweb/util/PlaceBioregionTest.java \
               /t/org/calacademy/antweb/upload/IslandCountryTest.java \
               /t/org/calacademy/antweb/upload/IslandParseLineTest.java \
-              /t/org/calacademy/antweb/util/DataExtractTest.java
+              /t/org/calacademy/antweb/util/DataExtractTest.java \
+              /t/org/calacademy/antweb/upload/AntcatLocalityTest.java
             for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:15 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:19 upload.GenusSynonymRuleTest:16 upload.GenusConceptRuleTest:8 upload.GenusConceptProposalsTest:5 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:16 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
                      util.JobSummaryTest:8 upload.SubfamilyFromGenusTest:9 upload.LocalityCodePlainTest:6 \
-                     util.CountrySpellingTest:8 util.PlaceBioregionTest:9 upload.IslandCountryTest:10 upload.IslandParseLineTest:9 util.DataExtractTest:19; do
+                     util.CountrySpellingTest:8 util.PlaceBioregionTest:9 upload.IslandCountryTest:10 upload.IslandParseLineTest:9 upload.AntcatLocalityTest:9 util.DataExtractTest:19; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
@@ -885,6 +908,9 @@ jobs:
 
       - name: The Data extract page writes the tool's format, and an island is its own country (tests/unit/test_data_extract_tool_version.py)
         run: python3 tests/unit/test_data_extract_tool_version.py
+
+      - name: AntCat names of an island are filed under the island only (tests/unit/test_antcat_island_rows.py)
+        run: python3 tests/unit/test_antcat_island_rows.py
 
       - name: Place fix, the stored country and bioregion against today's upload rule (tests/unit/test_place_fix.py)
         run: python3 tests/unit/test_place_fix.py
@@ -1324,6 +1350,9 @@ jobs:
           # IslandCountryDbTest (2026-11-11): a specimen stored with country = island_country = the island is the
           # island's, once, and never its political parent's, in every place number, list and download; endemic.
           # In its own schema ant_islandtest (granted above), dropped when it ends.
+          # AntcatIslandRowsDbTest (2026-11-12): the AntCat rows of an island's political parent (Ecuador: 19 Galapagos
+          # subspecies on production) leave with the next daily import, which deletes every AntCat list row and files
+          # each name under the island only; curator and specimen rows stay. In the same schema ant_islandtest.
           # DownloadGuardsDbTest: a place download holds only the specimens collected there (5,000 cap), the paged
           # search list (COUNT, LIMIT/OFFSET, sort before paging, images/types only), ant specimens only on place pages.
           # PlaceTaxonNotesDbTest (2026-10-29): country and adm1 lists get the genus rows of specimens identified to genus
@@ -1379,6 +1408,21 @@ jobs:
           # a group without specimens gets 0, the count check's differences gone, in the set's transaction with no lock
           # left on the specimen table, a number an upload wrote since the read (or during the set) not overwritten, a
           # failure said in the line with what was written before it, and not thrown.
+          # ListCleanupOrderDbTest (2026-11-12): the daily update takes rows off project lists (a genus row without species,
+          # a proxy row without children) before it counts them. In the order until then (set 5, after the counts) the
+          # project's stored Genera and the statistics row's proj_taxa keep the removed rows, the three differences of
+          # production's count check on 11-12; in the order now no removed row is in a stored number and the count check
+          # finds nothing; the AntCat list keeps its rows; the line names the rows removed by project and name (ten per
+          # project, then "and N more"); an error is in the line. The rule of the genus rows of 2026-11-02 (a genus only
+          # with a species row or a specimen) in one method: the rebuilt AntWeb-wide list follows it (no genus without
+          # either; kept with an "(indet)" name or a specimen), so the daily clean-up takes nothing off it and its Genera
+          # do not move between an upload and the daily update; on a project list a genus needs a species row. Review of
+          # #346: every removed row recorded in list_removal_log (the rebuild: a genus that was on the list before, once);
+          # a red-flagged specimen keeps no genus; the specimen query can use genus_species_idx (EXPLAIN); set 2's step
+          # commits the data clean-up first and rolls back only its own work after an error. Review of #347: a deadlock in
+          # the rebuild's rule is passed on (a real one: the upload's transaction is gone), a lock wait timeout is not; the
+          # two jobs by hand say FAILED and roll back; the same removal day after day is recorded once, a curator's row
+          # and a removal after a curator's own are recorded again.
           # LicenseUpdateDbTest (2026-10-29): the start-up update of stored licence texts to CC BY 4.0 backs up first,
           # is a no-op on a second run and skips a missing license table. Last: it makes its own small tables.
           # DataExtractDbTest (2026-11-10, dataExtract.do): the extract of three countries and an island named with them
@@ -1413,6 +1457,7 @@ jobs:
               /t/org/calacademy/antweb/home/PlaceTotalsDbTest.java \
               /t/org/calacademy/antweb/home/DownloadGuardsDbTest.java \
               /t/org/calacademy/antweb/home/IslandCountryDbTest.java \
+              /t/org/calacademy/antweb/home/AntcatIslandRowsDbTest.java \
               /t/org/calacademy/antweb/home/UploadRecordDbTest.java \
               /t/org/calacademy/antweb/home/NightlyCountOrderDbTest.java \
               /t/org/calacademy/antweb/home/TaxonTreeCountDbTest.java \
@@ -1430,8 +1475,9 @@ jobs:
               /t/org/calacademy/antweb/home/ImagingProgressDbTest.java \
               /t/org/calacademy/antweb/util/OnePlaceJobDbTest.java \
               /t/org/calacademy/antweb/home/GroupSpecimenCountDbTest.java \
-              /t/org/calacademy/antweb/util/DataExtractDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3 home.GroupSpecimenCountDbTest:8 home.IslandCountryDbTest:7 util.DataExtractDbTest:19; do
+              /t/org/calacademy/antweb/util/DataExtractDbTest.java \
+              /t/org/calacademy/antweb/home/ListCleanupOrderDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3 home.GroupSpecimenCountDbTest:8 home.IslandCountryDbTest:7 home.AntcatIslandRowsDbTest:2 home.ListCleanupOrderDbTest:14 util.DataExtractDbTest:19; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

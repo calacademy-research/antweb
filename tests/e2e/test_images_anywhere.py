@@ -66,7 +66,7 @@ def ant_imaged_codes(taxon_name):
     body = ns.api(f"taxaImages?taxonName={quote_plus(taxon_name)}&limit={PAGE}")
     if body is None:
         return None
-    images = [(sp.get("code") or "", (i.get("shotType") or "").strip().lower())
+    images = [(sp.get("specimenCode") or sp.get("code") or "", (i.get("shotType") or "").strip().lower())
               for t in ns.api_rows(body) for sp in (t.get("specimen") or []) for i in (sp.get("images") or [])]
     if len(images) >= PAGE:
         return None

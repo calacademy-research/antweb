@@ -434,11 +434,13 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
                 String projectName = rset.getString("projectName");
                 if (hasNoChildren(taxonName, projectName)) {
                     A.log("cleanupSpeciesListProxyRecords() taxonName:" + taxonName + " projectName:" + projectName);
-                    result = deleteProjTaxon(taxonName, projectName, "and source = 'proxyspeciesListTool'");
+                    result = deleteProjTaxon(taxonName, projectName, " and source = 'proxyspeciesListTool'",
+                        ListRemovalLog.JOB_PROXY_NO_CHILDREN, ListRemovalLog.REASON_PROXY_NO_CHILDREN);
                 }
             }
-        } catch (SQLException e) {
-            s_log.error("cleanupSpeciesListProxyRecords()");
+        } catch (SQLException | RuntimeException e) {
+            s_log.error("cleanupSpeciesListProxyRecords() e:" + e);
+            cleanupErrors.add("proxy rows: " + e);
         } finally {
             DBUtil.close(stmt, rset, "cleanupSpeciesListProxyRecords()");
         }
@@ -471,31 +473,127 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
     /**
      * The projects whose list lost a row in this object's clean-ups (cleanupSpeciesListProxyRecords, verifyProjTaxon), in
-     * the order found. Set 5 runs these after the daily update has counted the lists' totals (PlaceViewTotalDb, set 4), so
-     * the caller counts these projects' totals again (UtilDataAction; 2026-11-11: Fossil Ants said Genera 259 all day
-     * beside a list of 258: every day the AntCat import puts a fossil genus on the list that has no species there, the
-     * totals count it, and verifyProjTaxon then takes it off the list).
+     * the order found, each with its rows removed. In the daily update the clean-ups run in set 2 before any list is
+     * counted (cleanupLists, since 2026-11-12). Run by hand as an admin job (utilData.do?action=verifyProjTaxon,
+     * cleanupSpeciesListProxyRecords) they remove rows after the counts, so that caller counts these projects' list
+     * totals again (UtilDataAction.listTotalsAfterRowsRemoved).
      */
-    private final Set<String> projectsWithRowsRemoved = new LinkedHashSet<>();
+    private final java.util.Map<String, Integer> rowsRemoved = new java.util.LinkedHashMap<>();
+
+    /** The names of those rows, per project, in the order removed (the clean-up's line names them). */
+    private final java.util.Map<String, List<String>> namesRemoved = new java.util.LinkedHashMap<>();
+
+    /** How many removed rows of one project the line names; the rest is "and N more". */
+    static final int NAMES_PER_PROJECT = 10;
+
+    /**
+     * The rows this object's clean-ups removed, by project and name: "fossilants 1: formicinaeleucotaphus; madants 12:
+     * a, b, ... and 2 more" (up to NAMES_PER_PROJECT names per project); "" when none. Brian Fisher, 2026-11-03: no job
+     * deletes list entries without a record that can be read.
+     */
+    public String removedRowsText() {
+        List<String> parts = new ArrayList<>();
+        for (java.util.Map.Entry<String, Integer> e : rowsRemoved.entrySet()) {
+            List<String> names = namesRemoved.getOrDefault(e.getKey(), new ArrayList<>());
+            int shown = Math.min(names.size(), NAMES_PER_PROJECT);
+            parts.add(e.getKey() + " " + e.getValue() + ": " + String.join(", ", names.subList(0, shown))
+                + (e.getValue() > shown ? " and " + (e.getValue() - shown) + " more" : ""));
+        }
+        return String.join("; ", parts);
+    }
+
+    /** What failed in this object's clean-ups (they log a database error and go on), for cleanupLists' line. */
+    private final List<String> cleanupErrors = new ArrayList<>();
 
     public Set<String> getProjectsWithRowsRemoved() {
-        return projectsWithRowsRemoved;
+        return rowsRemoved.keySet();
     }
 
-    private String deleteProjTaxon(String taxonName, String projectName) throws SQLException {
-      return deleteProjTaxon(taxonName, projectName, null);
+    /** Whether one of this object's clean-ups met a database error (its rows may be partly removed). */
+    public boolean cleanupFailed() {
+        return !cleanupErrors.isEmpty();
     }
-    private String deleteProjTaxon(String taxonName, String projectName, String extraClause) throws SQLException {
-        String dml = "delete from proj_taxon "
-            + " where taxon_name = " + DBUtil.sqlQuote(taxonName)
-            + " and project_name = " + DBUtil.sqlQuote(projectName);
-        if (extraClause != null) dml += extraClause;
+
+    /** Those errors: "proxy rows: ...; genus rows: ...". */
+    public String cleanupErrorsText() {
+        return String.join("; ", cleanupErrors);
+    }
+
+    /** Starts the line cleanupLists returns (compute.log, written by the daily update's set 2). */
+    public static final String CLEANUP_LOG = "Project lists cleaned";
+
+    /**
+     * The two clean-ups that take rows off project lists, for the daily update: a proxy row of the Species List Tool
+     * whose children are gone from the list (cleanupSpeciesListProxyRecords), and a genus row of any project but the
+     * AntCat list that has neither a species row on the list nor, on the AntWeb-wide list, a specimen (verifyProjTaxon;
+     * the rule of 2026-11-02, removeGenusRowsWithoutSpeciesOrSpecimen). Set 2 calls it right after the data clean-up and
+     * before the first count of a project list, so every number the daily update stores afterwards is counted from the
+     * lists as they stay.
+     *
+     * Until 2026-11-12 the two ran in set 5, production's last set, after set 3 had stored the project totals and set 4
+     * the statistics row: the rows they removed were still in those numbers, and the count check reported them every
+     * day. Production 2026-11-12, 6 rows removed: "Genera of project pages = genus rows on the list" fossilants 259
+     * stored, 258 listed, and allantwebants 536 and 535; statistics row proj_taxa 70,419, 70,413 by a recount. Staging
+     * skips set 5, so it never ran them and never showed it.
+     *
+     * A genus row that loses its last species later in the same run (a synonym's row renamed to a valid name of another
+     * genus: set 2's rename of the lists, set 3's rename before each project is counted) stays until the next daily
+     * update, on the list and in the numbers alike.
+     *
+     * Every row removed is recorded in list_removal_log (ListRemovalLog; Brian Fisher, 2026-11-03: no job deletes list
+     * entries without a record a curator can see), every one, also beyond the names the line shows. Returns the line for
+     * compute.log, which names the rows removed, by project (administrators read compute.log in the Log Manager, logMgr.do):
+     * "Project lists cleaned: 6 rows removed in 3 s; fossilants 1: formicinaeleucotaphus; madants 5: a, b, c, d, e";
+     * a project with more than NAMES_PER_PROJECT rows ends "... and N more"; "Project lists cleaned: 0 rows removed in
+     * 2 s". Never throws; a database error in one of the two is at the end of the line: "...; FAILED: genus rows: ..."
+     * (the rows removed before it stay removed, in the set's transaction).
+     */
+    public String cleanupLists() {
+        long start = System.currentTimeMillis();
+        try {
+            cleanupSpeciesListProxyRecords();
+        } catch (SQLException | RuntimeException e) {
+            s_log.error("cleanupLists() proxy rows e:" + e);
+            cleanupErrors.add("proxy rows: " + e);
+        }
+        try {
+            verifyProjTaxon();
+        } catch (SQLException | RuntimeException e) {
+            s_log.error("cleanupLists() genus rows e:" + e);
+            cleanupErrors.add("genus rows: " + e);
+        }
+        int rows = 0;
+        for (int n : rowsRemoved.values()) rows += n;
+        String named = removedRowsText();
+        return CLEANUP_LOG + ": " + rows + " rows removed in " + (System.currentTimeMillis() - start) / 1000 + " s"
+            + (named.isEmpty() ? "" : "; " + named)
+            + (cleanupErrors.isEmpty() ? "" : "; FAILED: " + String.join("; ", cleanupErrors));
+    }
+
+    /**
+     * Deletes one row of a project list for the clean-ups. job, reason: the record of the removal (ListRemovalLog, written
+     * just before the delete by the same condition; Brian Fisher, 2026-11-03: no job deletes list entries without a
+     * record a curator can see); null job: no record (a row the rebuild itself had just put on the list).
+     */
+    private String deleteProjTaxon(String taxonName, String projectName, String extraClause, String job, String reason) throws SQLException {
+        String where = " where taxon_name = " + DBUtil.sqlQuote(taxonName)
+            + " and project_name = " + DBUtil.sqlQuote(projectName)
+            + (extraClause != null ? extraClause : "");
+        if (job != null) {
+            // not the same record day after day for a row the AntCat import puts back every day (recordWhereOnce)
+            ListRemovalLog.recordWhereOnce(getConnection(), ListRemovalLog.PROJECT, "l.taxon_name = " + DBUtil.sqlQuote(taxonName)
+                + " and l.project_name = " + DBUtil.sqlQuote(projectName) + (extraClause != null ? extraClause : ""), job, reason);
+        }
+        String dml = "delete from proj_taxon " + where;
         Statement stmt = null;
         int c = 0;
         try {
             stmt = DBUtil.getStatement(getConnection(), "deleteProjTaxon()");
             c = stmt.executeUpdate(dml);
-            if (c > 0 && projectName != null) projectsWithRowsRemoved.add(projectName);
+            if (c > 0 && projectName != null) {
+                rowsRemoved.merge(projectName, c, Integer::sum);
+                namesRemoved.computeIfAbsent(projectName, k -> new ArrayList<>()).add(taxonName);
+            }
         } catch (SQLException e) {
             s_log.error("deleteProjTaxon() e:" + e + " dml:" + dml);
             throw e;
@@ -507,36 +605,113 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
     }
 
 
-    // Make sure that all of the genus records have the correct number of species records according to count.
-    // If a genus does not have species in the project, remove it.
-    public String verifyProjTaxon() throws SQLException {
-        String result = null;
-        String query = "select pt.taxon_name taxonName, pt.project_name projectName, pt.species_count from proj_taxon pt, taxon t "
-            + " where pt.taxon_name = t.taxon_name and t.taxarank = 'genus'"
-            + "   and pt.project_name != 'worldants'";
-        // For each proxyspeciesListTool find if it has children.
+    /**
+     * The rule of the genus rows of a list (agreed with Brian Fisher, 2026-11-02, claude/antweb-list-design-rules.md):
+     * "A genus stays on a place's list only with a species row of that genus or a specimen of it there." It holds at
+     * every moment, not once a day, so the code that builds a list and the code that cleans it read it from this one
+     * method: the daily clean-up of every project list (verifyProjTaxon, set 2) and the rebuild of the AntWeb-wide list
+     * at each specimen upload and after the name update (rebuildAllAntwebList).
+     *
+     * A species row of the genus: a row of the same list whose name has the genus row as parent in the taxon tree
+     * (taxon.parent_taxon_name, as the counts and ParentRows read the tree): species, subspecies, and the name of
+     * specimens identified only to genus, "<Genus> (indet)", which is such a row.
+     * A specimen of it there: a project list is no place; its specimens are those filed under the names on the list
+     * (Project.getCountSpecimensQuery), and those names are the rows above, so for a project the first half says it
+     * all and no specimen is asked for. The AntWeb-wide list (allantwebants) is all of AntWeb: there a genus also stays
+     * while AntWeb has a specimen of it (specimen.genus and subfamily), although no name of the genus is on the list
+     * (its specimens are filed under names of a status the list leaves out, a synonym for example). A red-flagged
+     * specimen is no such specimen ("A red-flagged specimen never counts, in any view, on any list",
+     * claude/antweb-list-design-rules.md; SpecimenDb.notRedFlagged, the condition of the lists).
+     *
+     * Removes the genus rows of the project's list that have neither, and returns how many. One query for the list
+     * (GENUS_ROWS_WITHOUT_SPECIES_SQL), one small query per such genus on the AntWeb-wide list (antwebSpecimenOfGenusSql).
+     * Every row removed is recorded (ListRemovalLog, JOB_GENUS_NO_SPECIES: Brian Fisher, 2026-11-03, no job deletes
+     * list entries without a record a curator can see) and kept for the clean-up's line (rowsRemoved, namesRemoved).
+     * In the caller's transaction.
+     */
+    public int removeGenusRowsWithoutSpeciesOrSpecimen(String projectName) throws SQLException {
+        return removeGenusRows(projectName, ListRemovalLog.JOB_GENUS_NO_SPECIES, null);
+    }
 
-        Statement stmt = null;
-        ResultSet rset = null;
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "verifyProjTaxon()");
-            rset = stmt.executeQuery(query);
-            while (rset.next()) {
-                String genusName = rset.getString("taxonName");
-                String projectName = rset.getString("projectName");
-                int speciesCount = rset.getInt("species_count");
-                if (hasNoChildren(genusName, projectName)) {
-                    A.log("verifyProjTaxon() No children for genusName:" + genusName + " projectName:" + projectName + " speciesCount:" + speciesCount);
-                    // All, or just those with speciesCount > 0?
-                    result = deleteProjTaxon(genusName, projectName);
-                }
+    /**
+     * The rule for one list. job: the record's job name; recordOnly: when not null, only the genus rows named in it are
+     * recorded (the rebuild of the AntWeb-wide list: the rows that were on the list before it; a row the rebuild put on
+     * the list a moment ago, in the same transaction, was never a list entry anyone saw).
+     */
+    private int removeGenusRows(String projectName, String job, Set<String> recordOnly) throws SQLException {
+        List<String[]> candidates = new ArrayList<>();   // genus row's name, subfamily, genus
+        try (PreparedStatement stmt = getConnection().prepareStatement(GENUS_ROWS_WITHOUT_SPECIES_SQL)) {
+            stmt.setString(1, projectName);
+            stmt.setString(2, projectName);
+            try (ResultSet r = stmt.executeQuery()) {
+                while (r.next()) candidates.add(new String[] {r.getString(1), r.getString(2), r.getString(3)});
             }
-        } catch (SQLException e) {
-            s_log.error("verifyProjTaxon() e:" + e);
-        } finally {
-            DBUtil.close(stmt, rset, "verifyProjTaxon()");
         }
-        return result;
+        int removed = 0;
+        for (String[] genus : candidates) {
+            if (Project.ALLANTWEBANTS.equals(projectName) && antwebHasSpecimenOf(genus[1], genus[2])) continue;
+            boolean record = recordOnly == null || recordOnly.contains(genus[0]);
+            deleteProjTaxon(genus[0], projectName, null, record ? job : null, ListRemovalLog.REASON_GENUS_NO_SPECIES);
+            ++removed;
+        }
+        return removed;
+    }
+
+    /**
+     * The genus rows of one project's list (two parameters: the project name, twice) with no row on the same list whose
+     * name has them as parent: the candidates of the rule above. One pass over the list's rows.
+     */
+    public static final String GENUS_ROWS_WITHOUT_SPECIES_SQL =
+        "select pt.taxon_name, t.subfamily, t.genus from proj_taxon pt"
+        + " join taxon t on t.taxon_name = pt.taxon_name and t.taxarank = 'genus'"
+        + " left join (select distinct ct.parent_taxon_name p from proj_taxon c join taxon ct on ct.taxon_name = c.taxon_name"
+        + "   where c.project_name = ? and ct.parent_taxon_name is not null) k on k.p = pt.taxon_name"
+        + " where pt.project_name = ? and k.p is null order by pt.taxon_name";
+
+    /**
+     * "select 1 ... limit 1": a specimen of the genus (parameter 1) and, withSubfamily, of the subfamily (parameter 2)
+     * that is not red-flagged. Read through the index genus_species_idx (genus, species) of the specimen table
+     * (docs/data-model.md, "Indexes and the place queries"): the genus is its first column, so the query reads the
+     * specimens of that one genus and stops at the first that fits; no scan of the table. Asked once per genus row
+     * without a species row on the AntWeb-wide list, at each rebuild of that list (every specimen upload): a handful
+     * of genera. Test: ListCleanupOrderDbTest (EXPLAIN).
+     */
+    public static String antwebSpecimenOfGenusSql(boolean withSubfamily) {
+        return "select 1 from specimen s where s.genus = ?" + (withSubfamily ? " and s.subfamily = ?" : "")
+            + " and " + SpecimenDb.notRedFlagged("s") + " limit 1";
+    }
+
+    /** Whether AntWeb has a specimen of the genus (its genus and, when the genus row has one, its subfamily), not red-flagged. */
+    private boolean antwebHasSpecimenOf(String subfamily, String genus) throws SQLException {
+        if (genus == null || genus.isEmpty()) return false;
+        try (PreparedStatement stmt = getConnection().prepareStatement(antwebSpecimenOfGenusSql(subfamily != null))) {
+            stmt.setString(1, genus);
+            if (subfamily != null) stmt.setString(2, subfamily);
+            try (ResultSet r = stmt.executeQuery()) {
+                return r.next();
+            }
+        }
+    }
+
+    /**
+     * The daily clean-up of the genus rows of every project list but the AntCat list (worldants lists every AntCat
+     * name): removeGenusRowsWithoutSpeciesOrSpecimen for each. Returns "deleteProjTaxon:N" (the rows removed), or null
+     * when none. A database error is logged and kept for cleanupLists' line; the projects before it are done.
+     */
+    public String verifyProjTaxon() throws SQLException {
+        int removed = 0;
+        try {
+            List<String> projects = new ArrayList<>();
+            try (Statement stmt = getConnection().createStatement();
+                 ResultSet r = stmt.executeQuery("select distinct project_name from proj_taxon where project_name != 'worldants' order by project_name")) {
+                while (r.next()) projects.add(r.getString(1));
+            }
+            for (String project : projects) removed += removeGenusRowsWithoutSpeciesOrSpecimen(project);
+        } catch (SQLException | RuntimeException e) {
+            s_log.error("verifyProjTaxon() e:" + e);
+            cleanupErrors.add("genus rows: " + e);
+        }
+        return removed == 0 ? null : "deleteProjTaxon:" + removed;
     }
 
 // ---------------------------------------------------------------------------------------    
@@ -819,12 +994,71 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         return statistics;
     }
 
-    // XXX Insufficient below. Perhaps fix in allCountCrawl? Performance matters.
+    /**
+     * The AntWeb-wide list (allantwebants, the "Global" column) built again and counted: at the end of every specimen
+     * upload, after the name update and the parent repair of set 1, and by the admin job. The list first
+     * (rebuildAllAntwebList), then its counts.
+     */
     public void regenerateAllAntweb() throws SQLException {
-        //s_log.warn("regenerateAllAntweb() DONT execute too often. Expensive? About a minute.");
+        rebuildAllAntwebList();
 
+        // This was in the UtilData.java regenerateAllAntweb
+
+        new ProjTaxonCountDb(getConnection()).childrenCountCrawl("allantwebants"); // Proj_taxon counts
+        // The rows were re-inserted with image_count 0: count their Images again now, not at the next nightly set 4
+        // (every list's Images column shows the AntWeb-wide number, 2026-10-28).
+        new ProjTaxonCountDb(getConnection()).allAntwebImageCount();
+        finishRegenerateAllAntweb();
+        new ProjectDb(getConnection()).updateCounts("allantwebants");      // Project counts
+
+        s_log.info("regenerateAllAntweb() completed.");
+
+        //s_log.warn("regenerateAllAntweb() execute complete.");
+        //  LogMgr.logAntQuery(getConnection(), "projectTaxaCountByProjectRank", "After regenerateAllAntweb Proj_taxon worldants counts");
+        //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "after regenerateAllAntweb Proj_taxon worldants counts");
+    }
+
+    /**
+     * The rows of the AntWeb-wide list, built again: every name of a counted status (StatusSet.getCountables), without
+     * the names a curator removed from it (proj_taxon_dispute), and then by the rule of the genus rows (agreed with
+     * Brian Fisher, 2026-11-02: "A genus stays on a place's list only with a species row of that genus or a specimen
+     * of it there"; removeGenusRowsWithoutSpeciesOrSpecimen, the method the daily clean-up uses).
+     *
+     * Until 2026-11-12 the list took every counted name, a genus without species or specimens among them (a genus
+     * AntCat lists as valid while none of its names is of a counted status), and the daily clean-up took that genus
+     * off again: the list's Genera moved by one between an upload and the next daily update (production 11-12: 536
+     * after the rebuild, 535 after the clean-up). The builder and the clean-up read the list's rule differently; now
+     * the builder applies the clean-up's own method to its list, after the disputed rows are gone and before anything
+     * is counted, in the same transaction, so no page and no count ever sees such a row. An error there (database or
+     * other) that leaves the transaction intact is logged and the list stays as built (the daily clean-up applies the
+     * rule again); it does not fail an upload. A deadlock is passed on: the transaction, the upload's own, is gone
+     * (DBUtil.transactionRolledBack).
+     *
+     * A genus row that was on the list before the rebuild and is off it afterwards by the rule is recorded
+     * (ListRemovalLog, JOB_REBUILD_GENUS; Brian Fisher, 2026-11-03: no job deletes list entries without a record a
+     * curator can see). A genus the rebuild put on the list and took off again in the same transaction was not on the
+     * list before and is not after: no record (it would be one for every such genus at every upload).
+     */
+    /** Tests only: called in rebuildAllAntwebList when the list's rows are in, before the rule of the genus rows. */
+    private static volatile Runnable s_beforeGenusRuleForTests = null;
+
+    public static void setBeforeGenusRuleForTests(Runnable beforeGenusRule) {
+        s_beforeGenusRuleForTests = beforeGenusRule;
+    }
+
+    public void rebuildAllAntwebList() throws SQLException {
         //LogMgr.logAntQuery(getConnection(), "projectTaxaCountByProjectRank", "Before regenerateAllAntweb Proj_taxon worldants counts");
         //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "Before regenerateAllAntweb Proj_taxon worldants counts");
+
+        // the genus rows on the list before the rebuild: one of them that the rule takes off below is a removal, and recorded
+        Set<String> generaBefore = new HashSet<>();
+        try (Statement before = getConnection().createStatement();
+             ResultSet r = before.executeQuery("select pt.taxon_name from proj_taxon pt join taxon t on t.taxon_name = pt.taxon_name"
+                 + " and t.taxarank = 'genus' where pt.project_name = 'allantwebants'")) {
+            while (r.next()) generaBefore.add(r.getString(1));
+        } catch (SQLException | RuntimeException e) {
+            s_log.warn("rebuildAllAntwebList() genus rows before e:" + e);
+        }
 
         String deleteDML = "delete from proj_taxon where project_name = 'allantwebants'";
         // s_log.warn("regenerateAllAntweb() deleteDML:" + deleteDML);
@@ -852,23 +1086,26 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         UtilDb utilDb = new UtilDb(getConnection());
         int deleteCount = utilDb.deleteFrom("proj_taxon", "where (project_name, taxon_name) in (select project_name, taxon_name from proj_taxon_dispute)");
         int updateCount = utilDb.updateField("proj_taxon", "source", "'specimen'", "project_name = 'allantwebants' and specimen_count > 0");
-        s_log.debug("regenerateAllAntweb() deleteCount:" + deleteCount + " updateCount:" + updateCount);
+        s_log.debug("rebuildAllAntwebList() deleteCount:" + deleteCount + " updateCount:" + updateCount);
 
-        // This was in the UtilData.java regenerateAllAntweb
-
-        new ProjTaxonCountDb(getConnection()).childrenCountCrawl("allantwebants"); // Proj_taxon counts
-        // The rows were re-inserted with image_count 0: count their Images again now, not at the next nightly set 4
-        // (every list's Images column shows the AntWeb-wide number, 2026-10-28).
-        new ProjTaxonCountDb(getConnection()).allAntwebImageCount();
-        finishRegenerateAllAntweb();
-        new ProjectDb(getConnection()).updateCounts("allantwebants");      // Project counts
-
-        s_log.info("regenerateAllAntweb() completed.");
-
-        //s_log.warn("regenerateAllAntweb() execute complete.");
-        //  LogMgr.logAntQuery(getConnection(), "projectTaxaCountByProjectRank", "After regenerateAllAntweb Proj_taxon worldants counts");
-        //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "after regenerateAllAntweb Proj_taxon worldants counts");
+        try {
+            Runnable hook = s_beforeGenusRuleForTests;
+            if (hook != null) hook.run();
+            int removed = removeGenusRows(Project.ALLANTWEBANTS, ListRemovalLog.JOB_REBUILD_GENUS, generaBefore);
+            if (removed > 0) s_log.info("rebuildAllAntwebList() genus rows without a species row or a specimen left out: " + removedRowsText());
+        } catch (SQLException | RuntimeException e) {
+            s_log.error("rebuildAllAntwebList() genus rows e:" + e);
+            // A deadlock: the database has rolled back the whole transaction, which is the upload's own (its specimens
+            // and this list share one connection, committed once at the end: SpecimenUploadJob, TaxonWorksNightly).
+            // Going on would commit an upload without its specimens and call it done. Passed on: the upload fails and
+            // says so. Any other error leaves the transaction as it was and the list as built.
+            if (DBUtil.transactionRolledBack(e)) {
+                throw e instanceof SQLException ? (SQLException) e
+                    : new SQLException("rebuildAllAntwebList(): the transaction was rolled back by a deadlock", "40001", 1213, e);
+            }
+        }
     }
+
 
     public void finishRegenerateAllAntweb() throws SQLException {
 

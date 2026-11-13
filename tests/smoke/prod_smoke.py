@@ -16,7 +16,8 @@ Settings (environment):
   SMOKE_SITE_URL       where the HTML pages are read. Default https://www.antweb.org. The workflows use
                        http://127.0.0.1:18081, an SSH tunnel to Tomcat's local port on the production server,
                        because Cloudflare's Under Attack Mode challenges robots on the public pages.
-  SMOKE_API_URL        where /v3.1/ is read. Default https://www.antweb.org (Cloudflare lets /v3.1/ through).
+  SMOKE_API_URL        where /v3.1/ (and, once v4 is open, /v4/) is read. Default https://www.antweb.org (Cloudflare
+                       lets /v3.1/ through; /v4/ must be let through before v4 opens).
   SMOKE_EXPECT_COMMIT  full or short hash the header must show (deploy check); empty: header not compared.
   SMOKE_TODAY          YYYY-MM-DD to use as "today" in Pacific time (tests only).
   SMOKE_TIMEOUT        seconds per request, default 60.
@@ -131,23 +132,57 @@ def check_header(html, expect_commit):
     return shown
 
 
-def check_api_root(api):
+def api_state(api):
+    """(HTTP status, text, "open" | "closed" | None) of /v3.1/: what the front door says about v4."""
     r = get(api + "/v3.1/")
+    state = None
+    try:
+        body = json.loads(r.text)
+        if isinstance(body, dict) and isinstance(body.get("v4"), dict):
+            state = "open" if body["v4"].get("status") == "open" else "closed"
+    except ValueError:
+        pass
+    return r, state
+
+
+def check_api_root(api):
+    r, state = api_state(api)
     if r.status != 200 or "Antweb API" not in r.text:
         raise Fail(f"API /v3.1/: HTTP {r.status}, {r.text[:120]!r}")
-    return "API /v3.1/ answers"
+    if state != "open":
+        return "API /v3.1/ answers"
+    # v4 is open: its front door must answer and say so (v3.1's own front door stays 200 with status "ended")
+    v4 = get(api + "/v4/")
+    try:
+        body = json.loads(v4.text)
+    except ValueError:
+        body = None
+    if v4.status != 200 or not isinstance(body, dict) or body.get("status") != "open":
+        raise Fail(f"API /v4/: /v3.1/ says v4 is open, but /v4/ answers HTTP {v4.status}, {v4.text[:120]!r}")
+    return "API /v3.1/ answers (ended); /v4/ answers (open)"
 
 
 def check_api_taxa(api):
-    # 2026-11-09: the closed API answers its data routes with 503 and the terms (api.py apiDown); the old admin
-    # switch is refused before it reaches the server (Cloudflare rule "API: admin switch closed"). Until v4 opens,
-    # the smoke run checks that the data route answers as closed, from the API itself (JSON, not a proxy error).
+    # Two states, told apart by what /v3.1/ says (one switch on the server, v4Open in etc/api-db.properties):
+    # - v4 closed (2026-11-09): the data routes answer 503 with the terms (api.py apiDown); the old admin switch is
+    #   refused before it reaches the server (Cloudflare rule "API: admin switch closed").
+    # - v4 open: v3.1 has ended, its data routes answer 410 Gone with a signpost to v4 (api.py apiEnded).
+    # Either way the answer must come from the API itself (JSON, not a proxy error). No key is sent.
+    _, state = api_state(api)
     r = get(api + "/v3.1/taxa?genus=camponotus&limit=1")
-    if r.status != 503:
-        raise Fail(f"API /v3.1/taxa: HTTP {r.status} (expected 503 while the API is closed), {r.text[:120]!r}")
     try:
         body = json.loads(r.text)
     except ValueError:
+        body = None
+    if state == "open":
+        if r.status != 410:
+            raise Fail(f"API /v3.1/taxa: HTTP {r.status} (expected 410, v3.1 has ended since v4 is open), {r.text[:120]!r}")
+        if not isinstance(body, dict) or "/v4/" not in str(body.get("v4")) or "terms" not in body:
+            raise Fail(f"API /v3.1/taxa: 410 without the signpost to v4: {r.text[:120]!r}")
+        return "API /v3.1/taxa answers as ended (410 with the signpost to v4)"
+    if r.status != 503:
+        raise Fail(f"API /v3.1/taxa: HTTP {r.status} (expected 503 while the API is closed), {r.text[:120]!r}")
+    if body is None:
         raise Fail(f"API /v3.1/taxa: 503 but not the API's JSON (proxy or server error?): {r.text[:120]!r}")
     if not isinstance(body, dict) or "terms" not in body:
         raise Fail(f"API /v3.1/taxa: 503 without the terms link: {r.text[:120]!r}")

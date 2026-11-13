@@ -588,9 +588,11 @@ specimen-derived rows: valid names, and since 2026-10-29 the genus rows of speci
 
 **Key columns.** The counts above; `is_endemic`; `source`; `rev`; `created`.
 
-**Written by.** Set 1 (`worldants` replaced, `allantwebants` regenerated: `ProjTaxonDb.regenerateAllAntweb`), every
+**Written by.** Set 1 (`worldants` replaced, `allantwebants` regenerated: `ProjTaxonDb.regenerateAllAntweb`, every
+counted name, a genus only with a species row or a specimen, the rule of 2026-11-02), every
 specimen upload (`allantwebants`), set 3 (`ProjTaxonCountDb.curatedProjectsCountCrawl`, names moved), set 4
-(`image_count`), set 5 (`cleanupSpeciesListProxyRecords`, `verifyProjTaxon`), curators' species list tool and
+(`image_count`), set 2 (`ProjTaxonDb.cleanupLists`: `cleanupSpeciesListProxyRecords`, `verifyProjTaxon`, before any
+project list is counted; set 5 until 2026-11-12), curators' species list tool and
 species list upload (`ProjTaxonDb.insertItem`, `delete`).
 
 **Read by.** Project pages and lists, the Global column of every taxon list (`allantwebants`), `Project` counts,
@@ -820,9 +822,19 @@ and (`removed_at`).
 "nightly clean-up: morphospecies with no specimens", `GeolocaleTaxonDb` and `ProjTaxonDb.deleteUncuratedMorphosWithoutSpecimen`;
 "nightly clean-up: name no longer in AntWeb", `deleteGeolocaleTaxaWithoutTaxon` and the project rows without a taxon;
 the curators' rows of those names are parked first, `taxon_set_parked`, and come back); the orphan tool
-(`OrphansDb.deleteTaxon`: "orphan tool: name deleted"). Not the routine rebuilds (the rows from specimens deleted and
-inserted again each night, the AntCat rows of set 1, the Global list allantwebants, the proxy and childless genus rows
-of set 5). Created at startup when missing (`ListRemovalLog.ensureSchema`, from `LoginMgr`; DDL only when missing, as a
+(`OrphansDb.deleteTaxon`: "orphan tool: name deleted"); since 2026-11-12 the clean-up of the project lists, set 2
+(`ProjTaxonDb.cleanupLists`, every row: "list clean-up: genus with no species row or specimen", "list clean-up:
+Species List Tool proxy row with no children"; until then these rows of set 5 were not recorded), and the rebuild of
+the AntWeb-wide list for a genus that was on the list before it and is off it afterwards ("AntWeb-wide list rebuilt:
+genus with no species row or specimen"). Not the routine rebuilds (the rows from specimens deleted and inserted again
+each night, the AntCat rows of set 1, the rows of the Global list allantwebants that its rebuild puts on the list
+again). A genus the AntCat import puts on the Fossil Ants list every day without a species there is taken off every
+day and recorded once (`ListRemovalLog.recordWhereOnce`): no new record while the newest record of that list and name
+is the same in job, reason and source and was written by a job. No table says when a list row was added, so the row's
+source tells a curator's row (a curator source, or "proxy" + one): its removal is always recorded; and a curator's own
+removal in between is a newer, different record, after which the job's next removal is recorded again. A deadlock
+while a record is written is passed on to the caller (the database has rolled back its transaction); any other
+failure of the record is logged and the job goes on. Created at startup when missing (`ListRemovalLog.ensureSchema`, from `LoginMgr`; DDL only when missing, as a
 CREATE commits an open transaction). Record: `db/upgrade/8.115/2026-11-03-list-removal-log.sql`.
 
 **One-off data scripts** that delete list rows write the same record first, with the delete's condition on alias `l`

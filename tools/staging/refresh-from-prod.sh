@@ -25,7 +25,9 @@
 #   7. Stops AntWeb, loads the production dump, checks it, scrubs personal data (scrub.sql),
 #      puts the test logins back with their saved hashes, adds zztest_uploader to the "Upload as"
 #      list of the administrator login(s) in /root/staging-refresh/upload-as.txt (lines
-#      adminLogin=NAME; no file: the login antweb) if missing, starts AntWeb and waits for it.
+#      adminLogin=NAME; no file: the login antweb) if missing, puts the API key of the end-to-end
+#      tests back (tools/api/create-test-key.py --restore, from its saved hash), starts AntWeb and
+#      waits for it.
 #   8. On any failure in step 7 it loads the safety dump again and starts AntWeb.
 #   9. On success it deletes the downloaded dump and the safety dump (--keep-safety keeps the
 #      safety dump until the next refresh). At the end of every run, a settings file that went
@@ -524,6 +526,14 @@ refresh() {
   log "Adding the test uploader to the \"Upload as\" list of the admin login(s) ($UPLOAD_AS_FILE; no file: antweb)"
   python3 "$accounts_py" --add-upload-as "$UPLOAD_AS_FILE" 2>&1 | while IFS= read -r l; do log "  $l"; done \
     || log "WARNING: the \"Upload as\" list was not updated; add zztest_uploader by hand on viewLogin.do"
+
+  # The API key of the end-to-end tests (tools/api/create-test-key.py) is staging's own: put it back from its saved
+  # hash, so the GitHub secret ANTWEB_TEST_API_KEY keeps working. Nothing to do when none was made. Not worth a rollback.
+  if [[ -f "$PROJECT_DIR/tools/api/create-test-key.py" ]]; then
+    log "Putting the API test key back (tools/api/create-test-key.py --restore)"
+    python3 "$PROJECT_DIR/tools/api/create-test-key.py" --restore 2>&1 | while IFS= read -r l; do log "  $l"; done \
+      || log "WARNING: the API test key was not put back; run python3 $PROJECT_DIR/tools/api/create-test-key.py --restore"
+  fi
 
   sql_value "select table_name, column_name from information_schema.columns where table_schema = 'ant'" \
     | LC_ALL=C sort > "$WORK_DIR/schema-after.tsv"

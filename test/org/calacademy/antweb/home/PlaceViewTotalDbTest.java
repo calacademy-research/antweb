@@ -919,7 +919,9 @@ public class PlaceViewTotalDbTest extends TestCase {
         assertEquals("every other place: three totals, its Valid species is valid_species_count", 3, PlaceViewTotalDb.expectedTotals(madagascar()));
         assertEquals(3, db.read(madagascar()).length);
 
-        // set 5: the list check takes the genus without species off the list, and says which projects lost a row
+        // the list check run after the counts (set 5 until 2026-11-12; by hand since: the daily update runs it in set 2,
+        // before it counts, ListCleanupOrderDbTest): it takes the genus without species off the list, and says which
+        // projects lost a row
         org.calacademy.antweb.home.ProjTaxonDb lists = new org.calacademy.antweb.home.ProjTaxonDb(connection);
         assertTrue(lists.getProjectsWithRowsRemoved().isEmpty());
         lists.verifyProjTaxon();
