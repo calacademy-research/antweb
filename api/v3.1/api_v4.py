@@ -90,7 +90,7 @@ PAGING = {
     'total': 'metaData.total is the number of records that match the filters, whatever limit is. It is given on the'
              ' first page (no offset, no afterCode) and on any page with total=true; total=false leaves it out.'
              ' A /v4/specimens request without any filter gets no total unless it says total=true (counting every'
-             ' specimen record takes long); metaData.totalNotGiven then says so.',
+             ' specimen record takes long); metaData.totalNotGiven then says so. total=true without a filter needs an API key.',
     'returned': 'metaData.returned is the number of records in this answer.',
     'complete': 'metaData.complete is true when this answer reaches the end of the set.',
     'afterCode': 'On /v4/specimens and /v4/geoSpecimens, afterCode=<specimen code> gives the records after that code'
@@ -304,7 +304,8 @@ def data(name):
     if not api.V4_OPEN and (row is None or (row.level or '').lower() != 'admin'):
         return error(NOT_OPEN_MESSAGE, 503, {'Retry-After': '86400'}, documentation=api.API_DOCS_URL,
                      terms=api.API_TERMS_URL)
-    bad = check_params(endpoint) or check_paging(endpoint) or check_families(endpoint)
+    bad = (check_params(endpoint) or check_paging(endpoint) or check_families(endpoint)
+           or check_total_needs_key(endpoint, row is not None))
     if bad is not None:
         return bad
 
@@ -414,6 +415,19 @@ def family_rule(endpoint, args):
     if args.get('allFamilies') == 'true':
         return ALL_FAMILIES
     return ANTS_ONLY
+
+
+TOTAL_NEEDS_KEY_MESSAGE = ('A total of every specimen record (total=true without a filter) needs an API key: the count'
+                           ' reads every record. Add a filter (for example country=Madagascar), or send your key in'
+                           ' the X-API-Key header. Free keys: ' + PUBLIC_URL.rsplit('/v4', 1)[0] + '/apiKey.do')
+
+
+def check_total_needs_key(endpoint, has_key):
+    """400 for total=true on a request without a filter and without a key (review of pull request 348, 2026-11-12:
+    a count of the whole view, open to anyone at 5 requests a minute from every address). Before it is counted."""
+    if not has_key and request.args.get('total') == 'true' and without_filter(endpoint, request.args):
+        return error(TOTAL_NEEDS_KEY_MESSAGE, 400, documentation=PUBLIC_URL + '/')
+    return None
 
 
 def without_filter(endpoint, args):

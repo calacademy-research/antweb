@@ -227,7 +227,7 @@ def test_total_is_the_filtered_count_whatever_the_limit():
             assert m["complete"] is (limit >= N), (limit, m)
         # without limit too, and for every filter: the total is what the filter matches
         assert meta(MADAGASCAR)["total"] == N
-        assert meta("/v4/specimens?limit=3&total=true")["total"] == N + 7      # without a filter: only when asked
+        assert meta("/v4/specimens?limit=3&total=true", key="registered")["total"] == N + 7      # without a filter: only when asked, with a key
         assert meta("/v4/specimens?country=Kenya&limit=3")["total"] == 7
         assert meta(MADAGASCAR + "&species=sp1&limit=2")["total"] == len([i for i in range(N) if i % 3 == 1]) == 13
         assert meta("/v4/specimens?country=Niger&limit=2") == dict(meta("/v4/specimens?country=Niger&limit=2"),
@@ -310,11 +310,19 @@ def test_no_total_for_a_request_without_a_filter_unless_asked():
         del STATEMENTS[:]
         m = meta("/v4/specimens?limit=3&country=%20")
         assert m["total"] == 0 and m["complete"] is True and not any("count(" in s.lower() for s, _ in STATEMENTS), m
-        # asked for: the count of every record (ants only, the default)
+        # asked for, with a key: the count of every record (ants only, the default)
         del STATEMENTS[:]
-        m = meta("/v4/specimens?limit=3&total=true")
+        m = meta("/v4/specimens?limit=3&total=true", key="registered")
         assert m["total"] == N + 7 and "totalNotGiven" not in m, m
         assert sum("count(" in s.lower() for s, _ in STATEMENTS) == 1
+        # asked for without a key: refused before it is counted or run (review of #348, second round)
+        fresh_usage()
+        del STATEMENTS[:]
+        r = get("/v4/specimens?limit=3&total=true", None, expect=400)
+        assert r.status_code == 400 and "needs an API key" in r.get_json()["error"], r.get_json()
+        assert not any("count(" in s.lower() for s, _ in STATEMENTS), "the refused request counted"
+        r = get("/v4/specimens?limit=3&total=true&country=Madagascar", None)
+        assert r.status_code == 200, "a total with a filter needs no key"
         # total=false and later pages say nothing about it, as before
         for url in ("/v4/specimens?limit=3&total=false", "/v4/specimens?limit=3&offset=3", "/v4/specimens?limit=3&afterCode=casent0002"):
             m = meta(url)
