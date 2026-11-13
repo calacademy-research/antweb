@@ -1,13 +1,10 @@
-"""The API: every case answers, and data endpoints return JSON. Requests are capped at 500
-records (2026-10-21; with a registered key in v4 as well); asking for more gives 500 and a notice.
-
-The requests are written as /v3.1/...&up=1. While v4 is closed they go to v3.1 with the admin switch; once v4 is
-open (v3.1 has ended) the sessions of antweb.new_session() send them to /v4/ with the test key (antweb.py)."""
+"""API v3.1: every case answers, and data endpoints return JSON. Requests are capped at 500
+records (2026-10-21, until registered API keys); asking for more gives 500 and a notice."""
 import json
 
 import pytest
 
-from antweb import API_KEY_ENV, API_KEY_HEADER, BASE_URL, IS_PRODUCTION, TIMEOUT, api_test_key, new_session, v4_open
+from antweb import BASE_URL, TIMEOUT, new_session
 from api_cases import API_CASES
 
 
@@ -52,18 +49,6 @@ LIMIT_NOTICE = ("Requests are limited to 500 records while AntWeb moves to regis
                 "For larger data needs contact antweb@antweb.org.")
 
 
-V4_NOTICE = "Answers with your key hold at most 500 records"
-
-
-def _is_cap_notice(text):
-    """The notice of a reply cut at 500 records: v3.1's text, or v4's for a key once v4 is open."""
-    if v4_open():
-        # v4 names afterCode= for the specimen records of /specimens and /geoSpecimens (2026-11-10) and offset= for
-        # the other lists; both texts hold the word offset=
-        return bool(text) and text.startswith(V4_NOTICE) and "offset=" in text
-    return text == LIMIT_NOTICE
-
-
 def _get(path):
     r = new_session().get(BASE_URL + path, timeout=max(TIMEOUT, 120))
     assert r.status_code == 200, (path, r.status_code, r.text[:200])
@@ -82,8 +67,8 @@ def test_limit_1000_returns_500_and_the_notice():
     _skip_if_cap_not_deployed(body["metaData"])
     assert body["metaData"]["limit"] == 500, body["metaData"]
     assert len(body["specimens"]) == 500, len(body["specimens"])
-    assert _is_cap_notice(body["metaData"]["limitNotice"]), body["metaData"]
-    assert _is_cap_notice(r.headers.get("X-AntWeb-Limit-Notice")), dict(r.headers)
+    assert body["metaData"]["limitNotice"] == LIMIT_NOTICE, body["metaData"]
+    assert r.headers.get("X-AntWeb-Limit-Notice") == LIMIT_NOTICE, dict(r.headers)
 
 
 def test_limit_within_the_cap_has_no_notice():
@@ -101,7 +86,7 @@ def test_ndjson_is_capped_with_the_notice_header():
         pytest.skip("500-record cap not deployed on this host yet")
     assert len(lines) == 1000, len(lines)   # an index line and a record line per specimen
     assert json.loads(lines[-1]).get("specimenCode"), lines[-1][:200]
-    assert _is_cap_notice(r.headers.get("X-AntWeb-Limit-Notice")), dict(r.headers)
+    assert r.headers.get("X-AntWeb-Limit-Notice") == LIMIT_NOTICE, dict(r.headers)
 
 
 def test_offset_pages_past_the_cap():
@@ -121,7 +106,7 @@ def test_geolocales_are_capped():
     body = _get("/v3.1/geolocales?georank=adm1&limit=1000&up=1").json()
     _skip_if_cap_not_deployed(body["metaData"])
     assert 0 < len(body["geolocales"]) <= 500, len(body["geolocales"])
-    assert _is_cap_notice(body["metaData"]["limitNotice"]), body["metaData"]
+    assert body["metaData"]["limitNotice"] == LIMIT_NOTICE
 
 
 # ---------- road map step 2 (docs/flows/api.md): every route's reply, limit and offset ----------
@@ -173,11 +158,7 @@ def test_reply_shape_and_limit(name):
     assert len(records) <= 5, f"{name}: {len(records)} records for limit=5"
     if count_key:
         assert meta.get(count_key) == len(records), f"{name}: metaData {count_key}={meta.get(count_key)} for {len(records)} records"
-    fields = set(RECORD_FIELDS.get(name, ()))
-    if name == "specimens" and v4_open():
-        # v4 field names (api_v4.py): the collecting event, and the locality code v3.1 did not give
-        fields = fields - {"collectionCode"} | {"collectingEventCode", "localityCode"}
-    for field in sorted(fields):
+    for field in sorted(RECORD_FIELDS.get(name, ())):
         missing = [r for r in records if field not in r]
         assert not missing, f"{name}: records without {field!r}: {missing[:1]}"
 
@@ -217,189 +198,18 @@ def test_taxa_cap_sends_the_notice_header():
     header."""
     r = _get("/v3.1/taxa?genus=camponotus&limit=1000&up=1")
     assert len(r.json()["taxa"]) <= 500, len(r.json()["taxa"])
-    assert _is_cap_notice(r.headers.get("X-AntWeb-Limit-Notice")), dict(r.headers)
+    assert r.headers.get("X-AntWeb-Limit-Notice") == LIMIT_NOTICE, dict(r.headers)
 
 
 def test_without_up_the_reply_is_503_json():
     """Decided by Brian Fisher 2026-10-27 (api.py checkUp, apiDown): without up=1 every data route answers 503
-    with a JSON message (was 200 with an empty body). The / route stays 200 for health checks. Once v4 is open,
-    v3.1 has ended (2026-11-09): 410, see test_v31_has_ended_when_v4_is_open."""
-    r = new_session().get(BASE_URL + "/v3.1/", timeout=max(TIMEOUT, 120))
-    assert r.status_code == 200 and "Antweb API" in r.text, r.status_code
-    if v4_open():
-        pytest.skip("v4 is open here: v3.1 answers 410 (test_v31_has_ended_when_v4_is_open)")
+    with a JSON message (was 200 with an empty body). The / route stays 200 for health checks."""
     r = new_session().get(BASE_URL + "/v3.1/taxa?genus=camponotus&limit=1", timeout=max(TIMEOUT, 120))
     assert r.status_code == 503, r.status_code
     # wording of 2026-11-03 (Brian Fisher): closed while free registered API keys are added
     assert "closed while we add free registered API keys" in r.json()["error"], r.text[:200]
-
-
-V31_ROUTES = sorted(ROUTES)
-
-
-def test_v31_has_ended_when_v4_is_open():
-    """Decided by Brian Fisher 2026-11-09: when v4 opens, v3.1 ends. Every v3.1 data route answers 410 Gone with a
-    JSON signpost to v4, with or without up=1 or a key; /v3.1/ stays 200 and says "ended"; /v4/ says "open"."""
-    if not v4_open():
-        pytest.skip("v4 is closed here: v3.1 answers 503 without up=1 (test_without_up_the_reply_is_503_json)")
-    import requests
-    plain = requests.Session()   # not new_session(): these requests must reach v3.1 as they are
-    plain.headers["User-Agent"] = new_session().headers["User-Agent"]
-    for route in V31_ROUTES:
-        for query in ("", "?up=1", "?limit=1&up=1"):
-            r = plain.get(BASE_URL + "/v3.1/" + route + query, timeout=max(TIMEOUT, 120))
-            if r.status_code == 403 and "json" not in r.headers.get("Content-Type", ""):
-                # production: Cloudflare may still refuse up=1 before the API sees it (rule "API: admin switch closed")
-                continue
-            assert r.status_code == 410, (route + query, r.status_code, r.text[:200])
-            j = r.json()
-            assert j["status"] == "ended" and "has ended" in j["error"], j
-            assert j["v4"] == "https://www.antweb.org/v4/" and j["getAKey"] == "https://www.antweb.org/apiKey.do", j
-            for field in ("documentation", "terms", "citation", "license"):
-                assert j.get(field), (route, field, j)
-            assert "Retry-After" not in r.headers, dict(r.headers)
-    j = plain.get(BASE_URL + "/v3.1/", timeout=max(TIMEOUT, 120)).json()
-    assert j["status"] == "ended" and j["v4"]["status"] == "open", j
-    r = plain.get(BASE_URL + "/v4/", timeout=max(TIMEOUT, 120))
-    assert r.status_code == 200 and r.json()["status"] == "open", (r.status_code, r.text[:200])
-    assert sorted(x.rsplit("/", 1)[1] for x in r.json()["routes"]) == V31_ROUTES, r.json()["routes"]
-
-
-def test_the_tests_can_reach_the_api():
-    """The suite's own way into the API (antweb.py): up=1 while v4 is closed; once v4 is open, the admin test key in
-    the secret ANTWEB_TEST_API_KEY. Fails with what to do when the key is missing or refused, because the other API
-    tests are then skipped."""
-    if IS_PRODUCTION:
-        pytest.skip("the test key is a staging key")
-    if not v4_open():
-        r = new_session().get(BASE_URL + "/v3.1/taxa?genus=camponotus&limit=1&up=1", timeout=max(TIMEOUT, 120))
-        assert r.status_code == 200, (r.status_code, r.text[:200])
-        return
-    how = ("make a key on staging with tools/api/create-test-key.py and put it in the GitHub Actions secret "
-           + API_KEY_ENV + " (docs/flows/api.md, \"The switch\")")
-    assert api_test_key(), f"v4 is open on {BASE_URL} and {API_KEY_ENV} is not set: {how}"
-    import requests
-    r = requests.get(BASE_URL + "/v4/taxa?genus=camponotus&limit=1", timeout=max(TIMEOUT, 120),
-                     headers={API_KEY_HEADER: api_test_key(), "User-Agent": new_session().headers["User-Agent"]},
-                     allow_redirects=False)
-    assert r.status_code != 401, f"the server refused the key in {API_KEY_ENV}: {how}"
-    assert r.status_code == 200 and r.headers.get("X-AntWeb-Level") == "key", (r.status_code, r.text[:200])
-    # the session of the tests gets the same answer from the v3.1 spelling
-    r = new_session().get(BASE_URL + "/v3.1/taxa?genus=camponotus&limit=1&up=1", timeout=max(TIMEOUT, 120))
-    assert r.status_code == 200 and len(r.json()["taxa"]) == 1, (r.status_code, r.text[:200])
-
-
-def test_an_island_is_not_part_of_its_political_parent():
-    """Brian Fisher, 2026-11-11: "An oceanic island or archipelago with its own ant fauna is its own country in AntWeb.
-    Its specimens never count toward the political parent." country=Hawaii returns Hawaii's specimens, each with the
-    island as its country; the same specimen asked for with country=United States is not there. Skips until the stored
-    specimens are moved on the server (tools/place/island_countries.py --apply)."""
-    s = new_session()
-    for island, parent in (("Hawaii", "United States"), ("Galapagos Islands", "Ecuador")):
-        r = s.get(BASE_URL + "/v3.1/specimens?up=1&limit=3&country=" + island.replace(" ", "%20"), timeout=max(TIMEOUT, 120))
-        assert r.status_code == 200, (island, r.status_code, r.text[:200])
-        specimens = r.json().get("specimens") or []
-        if not specimens:
-            pytest.skip(f"{island}: the stored specimens are not moved yet (tools/place/island_countries.py --apply)")
-        for specimen in specimens:
-            assert specimen["country"] == island, (specimen["specimenCode"], specimen["country"])
-            code = specimen["specimenCode"]
-            r = s.get(BASE_URL + f"/v3.1/specimens?up=1&specimenCode={code}&country=" + parent.replace(" ", "%20"),
-                      timeout=max(TIMEOUT, 120))
-            assert r.status_code == 200, (code, r.status_code, r.text[:200])
-            assert (r.json().get("specimens") or []) == [], f"{code} of {island} is returned for country={parent}"
-
-
-# Families other than ants that AntWeb holds (animals found with ants), most frequent first: the test asks for one
-# record of each until it finds one, so no specimen code is written here.
-OTHER_FAMILIES = ("curculionidae", "vespidae", "staphylinidae", "apidae", "salticidae", "carabidae")
-
-
-def test_v4_specimens_are_ants_only_unless_asked():
-    """Brian Fisher's definition of 2026-11-10: "Country search: every ant specimen record whose country in AntWeb is
-    the country", the same definition as the data extract. A v4 specimen answer holds ants only (family Formicidae
-    and the records with no family given) and says so in metaData.families; allFamilies=true gives the others; a
-    record of another family asked for by its code is there only then; the total of its country is larger with
-    allFamilies=true. /distinctTaxa, /geoSpeciesStats and /measurements follow the same rule; a route that does not
-    read specimens by place has none. Needs the staging test key (v4 answers an admin key also while it is closed)."""
-    if IS_PRODUCTION:
-        pytest.skip("the test key is a staging key")
-    if not api_test_key():
-        pytest.skip(f"{API_KEY_ENV} is not set: v4 cannot be asked")
-    import requests
-    headers = {API_KEY_HEADER: api_test_key(), "User-Agent": new_session().headers["User-Agent"]}
-
-    def v4(query, route="specimens"):
-        r = requests.get(BASE_URL + "/v4/" + route + "?" + query, timeout=max(TIMEOUT, 120), headers=headers, allow_redirects=False)
-        if r.status_code == 401:
-            pytest.skip("the server refused the test key: make a new one with tools/api/create-test-key.py")
-        assert r.status_code == 200, (query, r.status_code, r.text[:200])
-        return r.json()
-
-    # the default: ants only, and the answer says so
-    body = v4("genus=camponotus&limit=3")
-    assert body["metaData"]["families"] == "antsOnly", body["metaData"]
-    assert all((s.get("family") or "").lower() in ("formicidae", "") for s in body["specimens"]), body["specimens"]
-
-    # a record of another family: found by asking for the family
-    other = None
-    for family in OTHER_FAMILIES:
-        body = v4(f"family={family}&limit=1")
-        assert body["metaData"]["families"] == "family", body["metaData"]
-        if body["specimens"]:
-            other = body["specimens"][0]
-            assert (other.get("family") or "").lower() == family, other.get("family")
-            break
-    if other is None:
-        pytest.skip("AntWeb here has no specimen of " + ", ".join(OTHER_FAMILIES))
-    code = other["specimenCode"]
-    body = v4(f"specimenCode={code}")
-    assert body["specimens"] == [] and body["metaData"]["total"] == 0, f"{code} ({family}) is in an ants-only answer"
-    body = v4(f"specimenCode={code}&allFamilies=true")
-    assert [s["specimenCode"] for s in body["specimens"]] == [code] and body["metaData"]["families"] == "allFamilies", body["metaData"]
-
-    # its country: more records with every family than with ants only
-    country = other.get("country")
-    if country:
-        ants = v4("limit=1&country=" + country.replace(" ", "%20"))["metaData"]["total"]
-        everything = v4("limit=1&allFamilies=true&country=" + country.replace(" ", "%20"))["metaData"]["total"]
-        assert everything > ants, f"{country}: {everything} records of every family, {ants} of ants"
-
-    # the other routes that read specimens by place follow the same rule and say so (the requests of API_CASES)
-    for route, query in (("distinctTaxa", "country=Madagascar&taxarank=genus&limit=5"),
-                         ("geoSpeciesStats", "geolocaleName=California&limit=5"), ("measurements", "genus=camponotus&limit=5")):
-        assert v4(query, route)["metaData"]["families"] == "antsOnly", route
-        assert v4(query + "&allFamilies=true", route)["metaData"]["families"] == "allFamilies", route
-    # the names of the specimens of the other record's country: its genus is named only with every family, unless ants
-    # of that genus name exist there too (then it is in both lists)
-    genus = (other.get("genus") or "").lower()
-    if country and genus:
-        def genera(extra):
-            names, offset = set(), 0
-            while True:
-                page = v4(f"taxarank=genus&limit=500&offset={offset}{extra}&country=" + country.replace(" ", "%20"), "distinctTaxa")["genera"]
-                names.update((g or "").lower() for g in page)
-                if len(page) < 500 or offset >= 5000:
-                    return names
-                offset += 500
-        every, ants_only = genera("&allFamilies=true"), genera("")
-        assert ants_only <= every, sorted(ants_only - every)[:5]
-        assert genus in every, f"{genus} of {code} is not among the genera of {country} with allFamilies=true"
-    # a route without the rule says nothing about families and does not take the parameter
-    assert "families" not in v4("genus=camponotus&limit=1", "taxa")["metaData"]
-    r = requests.get(BASE_URL + "/v4/taxa?allFamilies=true", timeout=max(TIMEOUT, 120), headers=headers, allow_redirects=False)
-    assert r.status_code == 400 and r.json()["unknownParameters"] == ["allFamilies"], (r.status_code, r.text[:200])
-
-    # bad values are refused
-    for query in ("allFamilies=yes", "family=all"):
-        r = requests.get(BASE_URL + "/v4/specimens?" + query, timeout=max(TIMEOUT, 120), headers=headers, allow_redirects=False)
-        assert r.status_code == 400 and "allFamilies" in r.json()["error"], (query, r.status_code, r.text[:200])
-
-    # v3.1 answers for every family, as before (while it has not ended)
-    if not v4_open():
-        r = new_session().get(BASE_URL + f"/v3.1/specimens?up=1&specimenCode={code}", timeout=max(TIMEOUT, 120))
-        assert r.status_code == 200 and len(r.json()["specimens"]) == 1, (r.status_code, r.text[:200])
-        assert "families" not in r.json()["metaData"]
+    r = new_session().get(BASE_URL + "/v3.1/", timeout=max(TIMEOUT, 120))
+    assert r.status_code == 200 and "Antweb API" in r.text, r.status_code
 
 
 def test_unknown_route_is_json_404():
@@ -483,14 +293,13 @@ def test_llms_txt_and_the_terms_on_the_api_page():
     the API page, both linked from the API's front door."""
     r = new_session().get(BASE_URL + "/llms.txt", timeout=TIMEOUT)
     assert r.status_code == 200 and r.headers.get("Content-Type", "").startswith("text/plain"), (r.status_code, r.headers.get("Content-Type"))
-    for words in ("# AntWeb", "https://www.antweb.org/v4/", "https://www.antweb.org/apiKey.do", "X-API-Key",
-                  "https://www.antweb.org/api.do", "CC BY 4.0", "antweb@antweb.org"):
+    for words in ("# AntWeb", "https://www.antweb.org/v3.1/", "https://www.antweb.org/apiV3.1.do", "CC BY 4.0", "antweb@antweb.org"):
         assert words in r.text, words
     r = new_session().get(BASE_URL + "/apiV3.1.do", timeout=max(TIMEOUT, 120))
     assert r.status_code == 200 and 'id="terms"' in r.text and "Access and terms of use" in r.text, r.status_code
     assert "since 2002" in r.text and "CC BY 4.0" in r.text, "the terms Brian approved (2026-11-08)"
     j = new_session().get(BASE_URL + "/v3.1/", timeout=max(TIMEOUT, 120)).json()
-    assert j["terms"].endswith("/api.do#terms") and j["guideForPrograms"].endswith("/llms.txt"), j
+    assert j["terms"].endswith("/apiV3.1.do#terms") and j["guideForPrograms"].endswith("/llms.txt"), j
 
 
 def test_v4_front_door_and_refusals():

@@ -83,29 +83,22 @@ public class Utility implements Serializable {
      * @return The string, after it has the character stripped
      * @throws AntwebException if the trim goes out of bounds
      */
-    /**
-     * Removes a quote mark that wraps the whole value ('...' or "..."), at most twice, and nothing else. Used on every
-     * field of a specimen or species list upload. A quote mark on one side only is part of the value: place names
-     * that end in an apostrophe (hamza or ayn: San'a', Ad Dali', Wadi ash Shati', Al Bayda', in AntWeb with their
-     * diacritics) lost it here until
-     * 2026-11-13, and the upload then reported them as adm1s AntWeb does not know (TaxonWorks upload of 2026-11-13,
-     * 11 specimens). Before that date one quote mark was taken off each end separately, twice.
-     */
     public static String customTrim(String text, String toTrim) throws AntwebException {
-        if (StringUtils.isEmpty(text) || StringUtils.isEmpty(toTrim)) {
+
+        if (StringUtils.isEmpty(text)) {
             return text;
         }
+
         String trimText = text;
-        for (int i = 0; i < 2; i++) {
-            if (trimText.length() >= 2 * toTrim.length() && trimText.startsWith(toTrim) && trimText.endsWith(toTrim)) {
-                trimText = trimText.substring(toTrim.length(), trimText.length() - toTrim.length());
-            } else {
-                break;
-            }
-        }
+        trimText = StringUtils.removeStart(trimText, toTrim);
+        trimText = StringUtils.removeStart(trimText, toTrim);
+        trimText = StringUtils.removeEnd(trimText, toTrim);
+        trimText = StringUtils.removeEnd(trimText, toTrim);
+
+        //if (!trimText.equals(text)) A.log("customTrim() text:" + text + " trimText:" + trimText);
         return trimText;
     }
-
+    
     public static boolean isTabDelimited(String fileName) {
         boolean isTabDelimited = false;
         try {

@@ -203,9 +203,6 @@ def test_scrub_sql_covers_personal_data():
     assert "@example.invalid" in sql and "set password" in sql and "random_bytes" in sql
     assert "delete from remember_token" in sql and "delete from password_reset" in sql
     assert "session_version = session_version + 1" in sql
-    # API key registrants and key hashes never stay on staging (2026-11-09)
-    for table in ("api_key", "api_rate", "api_usage_daily"):
-        assert "delete from " + table + ";" in sql, table
     # Never a fixed password (it would be a known plain-text login).
     assert not re.search(r"set password\s*=\s*'", sql)
 

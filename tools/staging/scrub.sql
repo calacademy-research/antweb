@@ -67,24 +67,3 @@ END //
 DELIMITER ;
 CALL antweb_scrub_login_copies();
 DROP PROCEDURE antweb_scrub_login_copies;
-
--- API keys (2026-11-09): production's registrants (name, email, institution, project) and the hashes of their
--- working keys never stay on staging. The key tables are emptied when they exist; the refresh script then puts
--- the staging test key back from its own saved hash (tools/api/create-test-key.py --restore).
-DROP PROCEDURE IF EXISTS antweb_scrub_api_keys;
-DELIMITER //
-CREATE PROCEDURE antweb_scrub_api_keys()
-BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'api_usage_daily') THEN
-    DELETE FROM api_usage_daily;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'api_rate') THEN
-    DELETE FROM api_rate;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'api_key') THEN
-    DELETE FROM api_key;
-  END IF;
-END //
-DELIMITER ;
-CALL antweb_scrub_api_keys();
-DROP PROCEDURE antweb_scrub_api_keys;

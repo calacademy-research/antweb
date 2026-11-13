@@ -139,7 +139,7 @@ def images_by_code(taxon_name):
     body = ns.api(f"taxaImages?taxonName={ns.quote_plus(taxon_name)}&limit=500")
     if body is None:
         return None
-    images = [((sp.get("specimenCode") or sp.get("code") or "").strip().lower(), (i.get("shotType") or "").strip().lower())
+    images = [((sp.get("code") or "").strip().lower(), (i.get("shotType") or "").strip().lower())
               for t in ns.api_rows(body) for sp in (t.get("specimen") or []) for i in (sp.get("images") or [])]
     if len(images) >= 500:
         return None

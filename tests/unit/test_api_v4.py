@@ -6,9 +6,7 @@
   per-key columns override the defaults for every level
 - 429 with Retry-After and Brian's text; 401 for a bad or revoked key; 503 without the usage login
 - the daily record limit stops paging with offset; the counts live in the database, so they hold across workers
-- v4 field names specimenCode, collectingEventCode, localityCode; v3.1 unchanged while v4 is closed
-- when v4 opens, v3.1 ends (Brian Fisher 2026-11-09): every v3.1 data route 410 with a signpost, up=1 does nothing,
-  /v3.1/ stays 200 with status "ended"; one switch, v4Open= in etc/api-db.properties, default closed
+- v4 field names specimenCode, collectingEventCode, localityCode; v3.1 unchanged
 
 The data routes run against a small SQLite database, the counters against another (no MySQL needed). Run inside the
 API image (CI, .github/workflows/tests.yaml):
@@ -279,11 +277,6 @@ def test_no_key_twenty_five_records_an_answer():
     assert r.status_code == 200 and len(j["specimens"]) == 25, (r.status_code, len(j.get("specimens", [])))
     assert "at most 25 records" in j["metaData"]["limitNotice"] and api.LIMIT_HEADER in r.headers
     assert "get a free API key" in r.headers[api.LIMIT_HEADER]
-    # the whole text: a cut page of specimens goes on with afterCode (offset stays allowed), 2026-11-10
-    assert j["metaData"]["limitNotice"] == r.headers[api.LIMIT_HEADER] == (
-        "Answers without a key hold at most 25 records, and 1,250 records a day. This answer holds 25; to continue,"
-        " send afterCode=<the last specimenCode of this answer> (offset= also works). For more, get a free API key at"
-        " https://www.antweb.org/apiKey.do."), j["metaData"]["limitNotice"]
     assert j["metaData"]["limit"] == 25 and j["metaData"]["level"] == "no key"
 
 
@@ -451,144 +444,33 @@ def test_up_switch_before_v4_opens_is_as_before():
         api_v4.usage = saved
 
 
-def v31_data_routes():
-    return sorted(r.rule for r in api.application.url_map.iter_rules()
-                  if r.endpoint not in api.UNCHECKED_ENDPOINTS and "<" not in r.rule)
-
-
-SIGNPOST = {"error", "status", "v4", "getAKey", "documentation", "terms", "guideForPrograms", "citation", "license"}
-
-
-def test_v31_has_ended_once_v4_opens_every_data_route_is_410_with_the_signpost():
-    """Decided by Brian Fisher 2026-11-09: when v4 opens, v3.1 ends. Every data route answers 410 Gone with a short
-    JSON signpost; up=1 and keys change nothing."""
+def test_up_switch_needs_an_admin_key_once_v4_opens():
     fresh_usage()
-    routes = v31_data_routes()
-    assert len(routes) >= 13, routes
     with opened():
-        for route in routes:
-            for url, headers in ((route, {}), (route + "?up=1", {}), (route + "?up=1&limit=2", {"X-API-Key": KEYS["admin"]}),
-                                 (route + "?limit=2", {"X-API-Key": KEYS["registered"]}),
-                                 (route + "?up=1", {"X-API-Key": "nonsense"}), (route + "?noSuchParameter=1", {})):
-                r = client.get(url, headers=headers)
-                assert r.status_code == 410, (url, r.status_code, r.get_data(as_text=True)[:200])
-                j = r.get_json()
-                assert set(j) == SIGNPOST, (url, sorted(j))
-                assert j["status"] == "ended" and j["error"] == api.API_ENDED_MESSAGE, j
-                assert j["v4"] == "https://www.antweb.org/v4/" and j["getAKey"] == "https://www.antweb.org/apiKey.do", j
-                assert j["documentation"] == api.API_DOCS_URL and j["terms"] == api.API_TERMS_URL, j
-                assert j["citation"] == api.CITATION and j["license"] == api.LICENSE, j
-                assert "Retry-After" not in r.headers and r.headers["Cache-Control"] == "no-store", dict(r.headers)
-                assert 'rel="license"' in r.headers.get("Link", ""), dict(r.headers)
-        assert "has ended" in api.API_ENDED_MESSAGE and "https://www.antweb.org/v4/" in api.API_ENDED_MESSAGE
-        assert "https://www.antweb.org/apiKey.do" in api.API_ENDED_MESSAGE
-        # an unknown route stays a JSON 404
-        assert client.get("/noSuchRoute?up=1").status_code == 404
-        # without the usage login too (v3.1 needs no key lookup any more)
+        r = client.get("/specimens?up=1&limit=2")
+        assert r.status_code == 503 and r.headers["Retry-After"] == "86400", r.status_code
+        assert client.get("/specimens?up=1&limit=2", headers={"X-API-Key": KEYS["registered"]}).status_code == 503
+        assert client.get("/specimens?up=1&limit=2", headers={"X-API-Key": KEYS["collaborator"]}).status_code == 503
+        for bad in (KEYS["revoked"], KEYS["pending"], "aw_" + "x" * 40, "nonsense"):
+            assert client.get("/specimens?up=1&limit=2", headers={"X-API-Key": bad}).status_code == 401, bad
+        r = client.get("/specimens?up=1&limit=2", headers={"X-API-Key": KEYS["admin"]})
+        assert r.status_code == 200 and len(r.get_json()["specimens"]) == 2, r.status_code
+        # an admin key without up=1 does not open v3.1
+        assert client.get("/specimens?limit=2", headers={"X-API-Key": KEYS["admin"]}).status_code == 503
+        # without the usage login: refused, even with an admin key
         saved = api_v4.usage
         api_v4.usage = None
         try:
-            assert client.get("/specimens?up=1", headers={"X-API-Key": KEYS["admin"]}).status_code == 410
+            assert client.get("/specimens?up=1", headers={"X-API-Key": KEYS["admin"]}).status_code == 503
         finally:
             api_v4.usage = saved
-    # closed again (the rollback): exactly as before
-    assert client.get("/specimens?limit=2").status_code == 503
-    assert client.get("/specimens?up=1&limit=2").status_code == 200
-
-
-def test_up_has_no_effect_once_v4_opens():
-    fresh_usage()
-    with opened():
-        with api.application.test_request_context("/specimens?up=1"):
-            assert api.down(api.request) == 1
-        # no key lookup for v3.1: the counter database is not asked
+        # counter database down: refused
         saved_engine = api_v4.usage.engine
         api_v4.usage.engine = create_engine("sqlite:////nonexistent/dir/x.db")
         try:
-            assert client.get("/specimens?up=1", headers={"X-API-Key": KEYS["admin"]}).status_code == 410
+            assert client.get("/specimens?up=1", headers={"X-API-Key": KEYS["admin"]}).status_code in (401, 503)
         finally:
             api_v4.usage.engine = saved_engine
-    assert not hasattr(api, "upSwitch"), "the admin-key variant of up=1 is gone (v3.1 ends when v4 opens)"
-
-
-def test_every_v4_route_answers_once_open():
-    fresh_usage()
-    at(40)
-    urls = {"geoSpecimens": "?coords=-18.9,47.5&radius=10&limit=1", "geoSpeciesStats": "?geolocaleName=Madagascar&limit=1"}
-    with opened():
-        for name in sorted(api_v4.routes()):
-            r = get("/v4/" + name + urls.get(name, "?limit=1"), KEYS["collaborator"])
-            # the small SQLite database lacks some tables and functions of MySQL: an inner 500 or 404 is still the
-            # route answering; never 410, 503 or 401
-            assert r.status_code in (200, 400, 404, 500), (name, r.status_code, r.get_data(as_text=True)[:200])
-        r = get("/v4/specimens?limit=2")
-        assert r.status_code == 200 and len(r.get_json()["specimens"]) == 2, r.status_code
-        r = get("/v4/taxaImages?limit=2", KEYS["registered"])
-        assert r.status_code == 200, r.status_code
-
-
-def test_the_switch_is_one_line_in_the_settings_file():
-    """v4Open=true in etc/api-db.properties (api.readV4Open); default closed; API_V4_OPEN in the environment wins."""
-    assert api.V4_OPEN is False, "closed unless the server says otherwise"
-    read = api.readV4Open
-    assert read({}, {}) is False
-    for value in ("true", "True", " TRUE ", "1", "yes", "on"):
-        assert read({"v4Open": value}, {}) is True, value
-    for value in ("", "false", "0", "no", "off", "open", "tru"):
-        assert read({"v4Open": value}, {}) is False, value
-    assert read({"v4open": "true"}, {}) is False and read({"V4_OPEN": "true"}, {}) is False, "the name is v4Open"
-    assert read({"v4Open": "true"}, {"API_V4_OPEN": "false"}) is False
-    assert read({"v4Open": "false"}, {"API_V4_OPEN": "true"}) is True
-    assert read({"v4Open": "true"}, {"API_V4_OPEN": " "}) is True
-    # as the file is read: spaces around = are fine, a commented line does not count
-    import tempfile
-    with tempfile.NamedTemporaryFile("w", suffix=".properties", delete=False) as f:
-        f.write("user=apiro\npassword=x\n#v4Open=true\n")
-        path = f.name
-    try:
-        assert read(api._apiProperties(path), {}) is False
-        with open(path, "a") as f:
-            f.write("v4Open = true\n")
-        assert read(api._apiProperties(path), {}) is True
-    finally:
-        os.unlink(path)
-    # a fresh start with the switch on: v4 open, the v3.1 data route 410, the root 200 "ended"
-    import subprocess
-    code = ("import sys; sys.path.insert(0, %r); import api; c = api.application.test_client();"
-            " print(api.V4_OPEN, c.get('/specimens').status_code, c.get('/').status_code,"
-            " c.get('/').get_json()['status'], c.get('/v4/').get_json()['status'])" % os.path.dirname(api.__file__))
-    for value, expected in (("true", "True 410 200 ended"), ("", "False 503 200 closed")):
-        out = subprocess.run([sys.executable, "-c", code], env=dict(os.environ, API_V4_OPEN=value),
-                             capture_output=True, text=True, timeout=120)
-        last = out.stdout.strip().splitlines()[-1] if out.stdout.strip() else out.stderr[-300:]
-        assert last.startswith(expected), (value, last)
-    src = open(api.__file__).read()
-    assert "V4_OPEN = readV4Open(_apiProps)" in src and "\nV4_OPEN = True" not in src
-
-
-def test_no_key_day_is_1250_records_and_ends_at_midnight_utc():
-    fresh_usage()
-    assert api_keys.NO_KEY.records_per_day == 1250 and api_keys.NO_KEY.max_records == 25
-    assert "timezone.utc" in open(api_keys.__file__).read().split("def utcnow")[1][:120], "API days are UTC days"
-    with opened():
-        got = 0
-        for i in range(50):
-            NOW[0] = datetime.datetime(2026, 11, 8, 12 + i // 5, i % 5, 30)
-            r = get("/v4/specimens?limit=25", ip="203.0.113.50")
-            assert r.status_code == 200, (i, r.status_code)
-            got += len(r.get_json()["specimens"])
-        assert got == 1250, got
-        assert r.headers["X-AntWeb-Records-Left-Today"] == "0", dict(r.headers)
-        NOW[0] = datetime.datetime(2026, 11, 8, 23, 59, 50)
-        r = get("/v4/specimens?limit=1", ip="203.0.113.50")
-        assert r.status_code == 429 and r.headers["Retry-After"] == "10", (r.status_code, r.headers.get("Retry-After"))
-        # another address has its own day
-        assert get("/v4/specimens?limit=1", ip="203.0.113.51").status_code == 200
-        NOW[0] = datetime.datetime(2026, 11, 9, 0, 0, 1)
-        r = get("/v4/specimens?limit=25", ip="203.0.113.50")
-        assert r.status_code == 200 and len(r.get_json()["specimens"]) == 25, r.status_code
-        assert r.headers["X-AntWeb-Records-Left-Today"] == "1225", dict(r.headers)
-    at(0)
 
 
 def test_v4_does_not_use_up_and_is_unaffected_by_the_switch():
@@ -712,20 +594,8 @@ def test_front_doors():
     assert {f["name"]: f["darwinCore"] for f in j["fieldNames"]} == {
         "specimenCode": "catalogNumber", "collectingEventCode": "eventID, fieldNumber", "localityCode": "locationID"}
     assert j["getAKey"] == "https://www.antweb.org/apiKey.do"
-    v31 = client.get("/")
-    assert v31.status_code == 200 and v31.get_json()["status"] == "closed" and "Antweb API" in v31.get_json()["name"]
     with opened():
-        j = client.get("/v4/")
-        assert j.status_code == 200 and j.get_json()["status"] == "open"
-        assert j.get_json()["message"].startswith("The AntWeb API v4 is open")
-        # the v3.1 front door stays 200 (uptime checks, old clients) and says "ended"
-        r = client.get("/")
-        j = r.get_json()
-        assert r.status_code == 200 and j["name"] == "Antweb API V3.1" and j["status"] == "ended", (r.status_code, j)
-        assert j["message"] == api.API_ENDED_MESSAGE and j["v4"]["status"] == "open", j
-        assert j["v4"]["url"] == "https://www.antweb.org/v4/" and j["v4"]["getAKey"] == "https://www.antweb.org/apiKey.do"
-        assert j["citation"] == api.CITATION and j["license"] == api.LICENSE and j["documentation"] == api.API_DOCS_URL
-        assert client.get("/?up=1").get_json()["status"] == "ended"
+        assert client.get("/v4/").get_json()["status"] == "open"
     r = client.get("/v4")
     assert r.status_code in (301, 302, 308) and r.headers["Location"].endswith("/v4/"), r.status_code
     v31 = client.get("/").get_json()
@@ -739,9 +609,8 @@ def test_v31_is_unchanged():
     assert r.status_code == 200 and "collectionCode" in r.get_data(as_text=True)
     assert "collectingEventCode" not in r.get_data(as_text=True) and "localityCode" not in r.get_data(as_text=True)
     assert client.get("/specimens?up=1&collectingEventCode=JTL0002").status_code == 400
-    # once v4 opens, v3.1 has ended and its message points to v4
+    # once v4 opens, the v3.1 503 points to it
     msg = api.apiDownMessage(True)
-    assert msg == api.API_ENDED_MESSAGE
     assert "https://www.antweb.org/v4/" in msg and "https://www.antweb.org/apiKey.do" in msg, msg
 
 

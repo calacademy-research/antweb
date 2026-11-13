@@ -203,7 +203,7 @@ public class ListCleanupOrderDbTest extends TestCase {
         counts();
         assertEquals("nothing differs before the clean-up: " + differences(), 0, differences().size());
         String line = new ProjTaxonDb(connection).cleanupLists();
-        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 rows removed in "));
+        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 names removed in "));
         // the three numbers of production 2026-11-12, here one or two rows too high each
         assertEquals("madants Genera stored, listed", "[3, 2]", Arrays.toString(genera("madants")));
         assertEquals(ALL + " Genera stored, listed", "[3, 2]", Arrays.toString(genera(ALL)));
@@ -221,7 +221,7 @@ public class ListCleanupOrderDbTest extends TestCase {
         int rows = one("select count(*) from proj_taxon");
         String line = new ProjTaxonDb(connection).cleanupLists();
         // the line names each row removed, by project (madants first: its proxy row went before the genus rows)
-        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 rows removed in "));
+        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 names removed in "));
         assertTrue(line, line.endsWith(" s; madants 2: " + DORYLINAE + ", " + CREMATOGASTER + "; " + ALL + " 1: " + CREMATOGASTER));
         assertFalse(line, line.contains("FAILED"));
         assertEquals(rows - 3, one("select count(*) from proj_taxon"));
@@ -246,7 +246,7 @@ public class ListCleanupOrderDbTest extends TestCase {
 
         // the next day: nothing to remove, and the numbers stand
         line = new ProjTaxonDb(connection).cleanupLists();
-        assertTrue(line, line.matches(ProjTaxonDb.CLEANUP_LOG + ": 0 rows removed in \\d+ s"));
+        assertTrue(line, line.matches(ProjTaxonDb.CLEANUP_LOG + ": 0 names removed in \\d+ s"));
         counts();
         assertEquals("the count check: " + differences(), 0, differences().size());
     }
@@ -265,7 +265,7 @@ public class ListCleanupOrderDbTest extends TestCase {
         exec(connection, "insert into proj_taxon (project_name, taxon_name, source) values " + rows);
         ProjTaxonDb db = new ProjTaxonDb(connection);
         String line = db.cleanupLists();
-        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 15 rows removed in "));
+        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 15 names removed in "));
         // madants: the proxy row, Crematogaster and the twelve genera = 14 rows, ten named
         assertTrue(line, line.contains("; madants 14: " + DORYLINAE + ", " + CREMATOGASTER + ", " + MYRM + "genus11, "));
         assertTrue(line, line.contains(", " + MYRM + "genus18 and 4 more; " + ALL + " 1: " + CREMATOGASTER));
@@ -288,7 +288,7 @@ public class ListCleanupOrderDbTest extends TestCase {
         exec(connection, "insert into proj_taxon (project_name, taxon_name, source) values ('madants', '" + CREMATOGASTER + "', 'specimen')");
         ProjTaxonDb db = new ProjTaxonDb(connection);
         String line = db.cleanupLists();
-        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 rows removed in "));
+        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 names removed in "));
         assertTrue(line, line.endsWith(" s; madants 2: " + DORYLINAE + ", " + CREMATOGASTER + "; " + ALL + " 1: " + CREMATOGASTER));
         assertEquals("both rows are gone", 0, one("select count(*) from proj_taxon where project_name = 'madants' and taxon_name = '" + CREMATOGASTER + "'"));
         assertEquals("a record for each row: the proxy row, Crematogaster twice on madants and once on the AntWeb-wide list", 4, records().size());
@@ -384,7 +384,7 @@ public class ListCleanupOrderDbTest extends TestCase {
 
         // the next daily update: the clean-up takes nothing off that list (madants loses its two rows as before)
         String line = new ProjTaxonDb(connection).cleanupLists();
-        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 2 rows removed in "));
+        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 2 names removed in "));
         assertFalse("nothing removed from the AntWeb-wide list: " + line, line.contains(ALL));
         counts();
         assertEquals("Genera do not move between the upload and the daily update", afterUpload, genera(ALL)[0]);
@@ -530,6 +530,7 @@ public class ListCleanupOrderDbTest extends TestCase {
                         int[] w = weightsOnceTheOtherWaits(watch, uploadId, otherId);
                         if (w != null) {
                             weights[0] = "upload " + w[0] + ", other " + w[1];
+                            assertTrue("the upload's transaction was not found in innodb_trx: " + weights[0], w[0] >= 0);
                             assertTrue("the other transaction must be the heavier one, or the database rolls it back instead: " + weights[0], w[1] > w[0]);
                         }
                     } catch (Throwable e) {
@@ -657,7 +658,7 @@ public class ListCleanupOrderDbTest extends TestCase {
             ProjTaxonDb db = new ProjTaxonDb(connection);
             String line = db.cleanupLists();
             String noRecord = ".*no record could be written of the removal of %s from the list of %s, so the row is not deleted: .*";
-            assertTrue(line, line.matches("(?s)" + ProjTaxonDb.CLEANUP_LOG + ": 0 rows removed in \\d+ s; FAILED: proxy rows: "
+            assertTrue(line, line.matches("(?s)" + ProjTaxonDb.CLEANUP_LOG + ": 0 names removed in \\d+ s; FAILED: proxy rows: "
                 + String.format(noRecord, DORYLINAE, "madants") + "; genus rows: " + String.format(noRecord, CREMATOGASTER, ALL)));
             assertTrue("a failed record is an error of the clean-up: its caller rolls the step back", db.cleanupFailed());
             assertEquals("no row is named as removed", "", db.removedRowsText());
@@ -669,7 +670,7 @@ public class ListCleanupOrderDbTest extends TestCase {
             assertEquals(0, records().size());
             // the record table is free: set 2's step removes the three rows and records each
             line = UtilDataAction.cleanProjectLists(connection);
-            assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 rows removed in "));
+            assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 names removed in "));
             assertEquals(3, records().size());
             assertEquals("the AntCat list's row stays", 1, one("select count(*) from proj_taxon where taxon_name in ('" + CREMATOGASTER + "', '" + DORYLINAE + "')"));
         } finally {
@@ -795,7 +796,7 @@ public class ListCleanupOrderDbTest extends TestCase {
             }
             // nothing in the way: removed, recorded, committed
             line = UtilDataAction.cleanProjectLists(connection);
-            assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 rows removed in "));
+            assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 names removed in "));
             connection.rollback();
             try (PreparedStatement s = reader.prepareStatement("select (select count(*) from proj_taxon where taxon_name in ('" + CREMATOGASTER + "', '" + DORYLINAE
                     + "') and project_name <> 'worldants'), (select count(*) from " + ListRemovalLog.TABLE + ")"); ResultSet r = s.executeQuery()) {
@@ -834,8 +835,8 @@ public class ListCleanupOrderDbTest extends TestCase {
         exec(connection, "alter table proj_taxon rename to proj_taxon_gone");
         String line = new ProjTaxonDb(connection).cleanupLists();
         exec(connection, "alter table proj_taxon_gone rename to proj_taxon");
-        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 0 rows removed in "));
-        assertTrue(line, line.matches(ProjTaxonDb.CLEANUP_LOG + ": 0 rows removed in \\d+ s; FAILED: proxy rows: .*; genus rows: .*"));
+        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 0 names removed in "));
+        assertTrue(line, line.matches(ProjTaxonDb.CLEANUP_LOG + ": 0 names removed in \\d+ s; FAILED: proxy rows: .*; genus rows: .*"));
         assertEquals("no row was removed", 4, one("select count(*) from proj_taxon where taxon_name in ('" + CREMATOGASTER + "', '" + DORYLINAE + "')"));
     }
 }

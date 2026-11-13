@@ -76,7 +76,7 @@ def recount(specimens, field):
         value = s.get(field)
         if value is None or not str(value).strip():
             continue
-        code = s.get("collectingEventCode", s.get("collectionCode"))   # v4 name, v3.1 name
+        code = s.get("collectionCode")
         bucket = groups.setdefault(_key(str(value)), set())
         if code is not None and str(code).strip():
             bucket.add(("code", _key(str(code))))

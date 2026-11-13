@@ -41,11 +41,6 @@ PENDING = "list rows and place numbers are those of the last nightly run; after 
 PAGE = 500
 
 
-def _code(sp):
-    """The specimen code of a /taxaImages specimen: specimenCode in v4, code in v3.1."""
-    return sp.get("specimenCode") or sp.get("code")
-
-
 def _meta(body):
     return (body or {}).get("metaData") or (body or {}).get("_metaData") or {}
 
@@ -371,10 +366,9 @@ def test_taxa_images_counts_equal_the_specimens_and_images_of_the_name():
         images = sum(len(sp.get("images") or []) for sp in specimens)
         if meta.get("taxonCount") != len(trows) or len(trows) != 1:
             wrong.append(f"{taxon}: taxonCount {meta.get('taxonCount')}, {len(trows)} taxa (one asked for)")
-        codes = {_code(sp) for sp in specimens}  # specimenCode in v4, code in v3.1
-        if meta.get("specimenCount") != len(specimens) or len(codes) != len(specimens):
+        if meta.get("specimenCount") != len(specimens) or len({sp.get('code') for sp in specimens}) != len(specimens):
             wrong.append(f"{taxon}: specimenCount {meta.get('specimenCount')}, {len(specimens)} specimens"
-                         f" ({len(codes)} codes)")
+                         f" ({len({sp.get('code') for sp in specimens})} codes)")
         if meta.get("imageCount") != images:
             wrong.append(f"{taxon}: imageCount {meta.get('imageCount')}, {images} images")
         if images < PAGE:
@@ -382,14 +376,14 @@ def test_taxa_images_counts_equal_the_specimens_and_images_of_the_name():
                              "&hasImage=true", "count", max_pages=4)
             if recs is not None:
                 expected = {x.get("specimenCode") for x in recs if (x.get("antwebTaxonName") or "") == taxon}
-                got = {_code(sp) for sp in specimens}
+                got = {sp.get("code") for sp in specimens}
                 if got != expected:
                     wrong.append(f"{taxon}: /taxaImages {len(got)} specimens, /specimens with images {len(expected)};"
                                  f" only in taxaImages {sorted(got - expected)[:3]}, only in specimens {sorted(expected - got)[:3]}")
         for sp in ns.pick(specimens if images < PAGE else [], 3, "api-ti" + taxon):
-            alone, _ = _images_of(_code(sp))
+            alone, _ = _images_of(sp.get("code"))
             if alone != len(sp.get("images") or []):
-                wrong.append(f"{taxon} {_code(sp)}: /taxaImages {len(sp.get('images') or [])} images, /images {alone}")
+                wrong.append(f"{taxon} {sp.get('code')}: /taxaImages {len(sp.get('images') or [])} images, /images {alone}")
         checked.append(taxon)
     if not checked:
         pytest.skip(f"no named specimen in /{path}")

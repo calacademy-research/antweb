@@ -124,8 +124,8 @@ def test_front_door_points_to_the_terms_and_the_guide():
     r = client.get("/")
     j = r.get_json()
     assert r.status_code == 200 and j["status"] == "closed", (r.status_code, j)
-    assert j["documentation"] == "https://www.antweb.org/api.do", j
-    assert j["terms"] == "https://www.antweb.org/api.do#terms", j
+    assert j["documentation"] == "https://www.antweb.org/apiV3.1.do", j
+    assert j["terms"] == "https://www.antweb.org/apiV3.1.do#terms", j
     assert j["guideForPrograms"] == "https://www.antweb.org/llms.txt", j
     assert "localhost" not in r.get_data(as_text=True), j
     assert len(j["terms_of_use"]) == 5 and "arranged in advance" in j["terms_of_use"][1], j

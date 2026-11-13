@@ -107,8 +107,8 @@ public final class ApiKeys {
     public static final int MAX_PROJECT = 4000;
     public static final int MAX_NOTE = 4000;
 
-    public static final String TERMS_URL = "https://www.antweb.org/api.do#terms";
-    public static final String DOCS_URL = "https://www.antweb.org/api.do";
+    public static final String TERMS_URL = "https://www.antweb.org/apiV3.1.do#terms";
+    public static final String DOCS_URL = "https://www.antweb.org/apiV3.1.do";
     public static final String HEADER = "X-API-Key";
     /** The API that takes keys (api/v3.1/api_v4.py). */
     public static final String V4_URL = "https://www.antweb.org/v4/";
