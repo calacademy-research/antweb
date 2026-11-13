@@ -187,6 +187,23 @@ def main():
     ok, msg, _ = prod_smoke.evaluate_daily({"started": "2026-11-07 05:00:00", "ended": "2026-11-07 07:00:00",
                                             "state": "ok"}, dt.date(2026, 11, 7))
     expect(ok, "a single run object with naive Pacific times (" + msg + ")")
+    # the statistics page counts its tables on its first visit after a restart: it gets a longer wait than the other
+    # pages (2026-11-13: two deploy checks failed at 60 s while the page was fine a minute later)
+    seen = {}
+    real_get = prod_smoke.get
+
+    def fake_get(url, timeout=None):
+        seen[url] = timeout
+        return prod_smoke.Resp(200, "Statistics Madagascar Genera maculatus", url, {})
+    prod_smoke.get = fake_get
+    try:
+        prod_smoke.check_page("http://x", "statistics page", "/statsPage.do", ["Statistics"])
+        prod_smoke.check_page("http://x", "species page", "/description.do", ["maculatus"])
+    finally:
+        prod_smoke.get = real_get
+    expect(seen["http://x/statsPage.do"] == 240 and prod_smoke.PAGE_TIMEOUTS["statistics page"] > prod_smoke.TIMEOUT,
+           "the statistics page waits longer", str(seen))
+    expect(seen["http://x/description.do"] is None, "the other pages keep the usual timeout", str(seen))
     srv.shutdown()
     print("prod_smoke.py: all logic checks passed.")
 

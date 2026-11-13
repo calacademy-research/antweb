@@ -60,6 +60,10 @@ PAGES = [
                         "&country=Comoros&resultRank=specimen", ["Comoros"]),
     ("statistics page", "/statsPage.do", ["Statistics"]),
 ]
+# A page may take longer than TIMEOUT on its first visit after a restart (2026-11-13): the statistics page counts its
+# tables then (about 1 to 2 minutes on production), and the deploy check is that first visit. It failed twice on
+# 11-13 at 60 s while the page was fine a minute later.
+PAGE_TIMEOUTS = {"statistics page": 240}
 
 
 class Fail(Exception):
@@ -93,10 +97,10 @@ def is_cloudflare_challenge(r):
     return r.status in (403, 429, 503) and any(t in r.text for t in ("Just a moment", "cf-chl", "challenge-platform"))
 
 
-def check_page(base, name, path, markers):
+def check_page(base, name, path, markers, timeout=None):
     url = base + path
     try:
-        r = get(url)
+        r = get(url, timeout=timeout or PAGE_TIMEOUTS.get(name))
     except Exception as e:  # timeout, refused, DNS
         raise Fail(f"{name}: no answer from {url} ({e})")
     if is_cloudflare_challenge(r):
