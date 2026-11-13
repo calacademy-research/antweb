@@ -90,7 +90,9 @@ PAGING = {
     'total': 'metaData.total is the number of records that match the filters, whatever limit is. It is given on the'
              ' first page (no offset, no afterCode) and on any page with total=true; total=false leaves it out.'
              ' A /v4/specimens request without any filter gets no total unless it says total=true (counting every'
-             ' specimen record takes long); metaData.totalNotGiven then says so. total=true without a filter needs an API key.',
+             ' specimen record takes long); metaData.totalNotGiven then says so. total=true without a filter needs an API key.'
+             ' A count that takes longer than 3 seconds (20 with a key) is not given either; metaData.totalNotGiven'
+             ' says so, and the records are complete page by page.',
     'returned': 'metaData.returned is the number of records in this answer.',
     'complete': 'metaData.complete is true when this answer reaches the end of the set.',
     'afterCode': 'On /v4/specimens and /v4/geoSpecimens, afterCode=<specimen code> gives the records after that code'
@@ -162,6 +164,13 @@ NOT_FILTERS = frozenset(('limit', 'offset', 'afterCode', 'total', 'ndjson', 'all
 TOTAL_NOT_GIVEN = ('No total is given for a request without a filter: counting every specimen record takes long.'
                    ' Add total=true to get it, or add a filter (for example country=Madagascar).')
 TOTAL_NOT_GIVEN_HEADER = 'X-AntWeb-Total-Not-Given'
+# A count may take this long (MySQL max_execution_time, for the count only; the records are read as before), 2026-11-13:
+# a filter that matches nearly every record (status=valid, georeferenced=true) passes without_filter() and was
+# counted on every first page, a read of the whole view by anyone without a key. Longer with a key.
+COUNT_MS = {False: 3000, True: 20000}
+TOTAL_TOO_LONG = ('No total is given: counting the records that match these filters took longer than {s} seconds.'
+                  ' The records are complete page by page: go on with afterCode until metaData.complete is true.{key}')
+TOTAL_TOO_LONG_KEY = ' With an API key a count may take longer (X-API-Key header; free keys: {url}/apiKey.do).'
 
 BOTH_PAGINGS_MESSAGE = ('Use afterCode or offset, not both. afterCode=<the last specimen code you received> gives the'
                         ' records after it; offset=<n> leaves out the first n records.')
@@ -465,6 +474,7 @@ def run(name, endpoint, admission, has_key, limits):
         g.apiV4Filters = filters
         g.apiV4Families = families      # read by ants_only() inside the route
         g.apiV4NoFilter = no_filter     # read by rows(): no total unless total=true
+        g.apiV4HasKey = has_key         # read by rows(): how long a count may take (COUNT_MS)
         inner_response = api.application.full_dispatch_request()
         found = getattr(g, 'apiV4Paging', None)     # set by rows() for the list routes
         body = inner_response.get_data()
@@ -535,7 +545,8 @@ def run(name, endpoint, admission, has_key, limits):
     if families:
         response.headers[FAMILIES_HEADER] = families
     if paging and paging.get('totalNotGiven'):
-        response.headers[TOTAL_NOT_GIVEN_HEADER] = 'add total=true'
+        response.headers[TOTAL_NOT_GIVEN_HEADER] = ('add total=true' if paging['totalNotGiven'] == TOTAL_NOT_GIVEN
+                                                    else 'the count took too long')
     return response, count
 
 
@@ -694,10 +705,14 @@ def rows(query, limit, offset, key=None, after_code=False):
     no_filter = bool(getattr(g, 'apiV4NoFilter', False))
     if wanted == 'true' or (wanted != 'false' and first_page and not no_filter):
         counted = unlimited.order_by(None)
-        if key is not None:
-            paging['total'] = counted.with_entities(func.count(key)).scalar()
+        has_key = bool(getattr(g, 'apiV4HasKey', False))
+        total = count_within(counted, key, COUNT_MS[has_key])
+        if total is None:
+            paging['totalNotGiven'] = TOTAL_TOO_LONG.format(
+                s=COUNT_MS[has_key] // 1000,
+                key='' if has_key else TOTAL_TOO_LONG_KEY.format(url=PUBLIC_URL.rsplit('/v4', 1)[0]))
         else:
-            paging['total'] = counted.count()
+            paging['total'] = total
     elif wanted != 'false' and first_page and no_filter:
         paging['totalNotGiven'] = TOTAL_NOT_GIVEN
     if after:
@@ -713,6 +728,32 @@ def rows(query, limit, offset, key=None, after_code=False):
         paging['lastCode'] = getattr(found[-1], key.key)
     g.apiV4Paging = paging
     return found
+
+
+MYSQL_TIME_EXCEEDED = 3024     # ER_QUERY_TIMEOUT: maximum statement execution time exceeded
+
+
+def count_within(counted, key, ms):
+    """The count of `counted` (rows()), or None when MySQL stopped it after `ms` milliseconds. The limit is set on
+    the session for this one count and put back to what it was before the records are read, also after an error. Only on MySQL: SQLite (the unit tests) has no such limit."""
+    session = counted.session
+    mysql = session.get_bind().dialect.name == 'mysql'
+    before = int(session.execute(text('SELECT @@SESSION.max_execution_time')).scalar() or 0) if mysql else 0
+    try:
+        if mysql:
+            session.execute(text('SET SESSION max_execution_time = %d' % int(ms)))
+        if key is not None:
+            return counted.with_entities(func.count(key)).scalar()
+        return counted.count()
+    except Exception as e:      # noqa: BLE001 -- only the time limit is turned into "no total"
+        code = getattr(getattr(e, 'orig', None), 'args', [None])[0]
+        if code != MYSQL_TIME_EXCEEDED:
+            raise
+        session.rollback()
+        return None
+    finally:
+        if mysql:
+            session.execute(text('SET SESSION max_execution_time = %d' % before))
 
 
 def ants_only(query, specimen):

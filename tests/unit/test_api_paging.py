@@ -1217,6 +1217,98 @@ def test_documentation_names_total_and_after_code():
     assert "<code>metaData.total</code>" in v4 and "<code>afterCode</code>" in v4, "the Version 4 list names both"
 
 
+# --- a count that takes too long (2026-11-13) ---------------------------------------------------------------------
+
+class _TimeExceeded(Exception):
+    def __init__(self):
+        super().__init__("maximum statement execution time exceeded")
+        self.orig = Exception(api_v4.MYSQL_TIME_EXCEEDED, "Query execution was interrupted")
+
+
+class _FakeMysqlSession:
+    """Enough of a session for count_within(): a MySQL dialect, a record of the statements, a rollback."""
+    def __init__(self, raise_on_count, before=0):
+        self.sql, self.rolled_back, self.raise_on_count, self.before = [], False, raise_on_count, before
+
+    def get_bind(self):
+        return type("B", (), {"dialect": type("D", (), {"name": "mysql"})()})()
+
+    def execute(self, stmt):
+        self.sql.append(str(stmt))
+        return type("R", (), {"scalar": lambda _s: self.before})()
+
+    def rollback(self):
+        self.rolled_back = True
+
+
+class _FakeCounted:
+    def __init__(self, session):
+        self.session = session
+
+    def with_entities(self, *_a):
+        return self
+
+    def scalar(self):
+        if self.session.raise_on_count:
+            raise self.session.raise_on_count
+        return 7
+
+    count = scalar
+
+
+def test_count_within_sets_the_limit_for_the_count_only():
+    s = _FakeMysqlSession(None, before=5)
+    assert api_v4.count_within(_FakeCounted(s), "k", 3000) == 7
+    assert s.sql[1:] == ["SET SESSION max_execution_time = 3000", "SET SESSION max_execution_time = 5"], s.sql
+    # stopped by the limit: no total, the session rolled back and the limit put back
+    s = _FakeMysqlSession(_TimeExceeded())
+    assert api_v4.count_within(_FakeCounted(s), None, 20000) is None
+    assert s.rolled_back and s.sql[-1] == "SET SESSION max_execution_time = 0", s.sql
+    # any other error is not hidden, and the limit is put back all the same
+    s = _FakeMysqlSession(ValueError("other"))
+    try:
+        api_v4.count_within(_FakeCounted(s), None, 3000)
+        raise AssertionError("the error was swallowed")
+    except ValueError:
+        pass
+    assert not s.rolled_back and s.sql[-1] == "SET SESSION max_execution_time = 0", s.sql
+    assert api_v4.COUNT_MS[False] < api_v4.COUNT_MS[True]
+
+
+def test_a_count_that_takes_too_long_gives_the_records_without_a_total():
+    """A filter that matches nearly every record passes the no-filter rule and was counted on every first page. When
+    the count takes longer than COUNT_MS the page comes without a total and says how to go on; with a key the limit
+    is longer and the text does not offer a key."""
+    real = api_v4.count_within
+    seen = []
+
+    def too_long(counted, key, ms):
+        seen.append(ms)
+        return None
+    api_v4.count_within = too_long
+    try:
+        fresh_usage()
+        with opened():
+            r = get(MADAGASCAR + "&limit=5", key=None)
+            m = r.get_json()["metaData"]
+            assert "total" not in m and m["returned"] == 5 and m["complete"] is False and m["nextAfterCode"], m
+            assert m["totalNotGiven"].startswith("No total is given: counting the records that match these filters"
+                                                 " took longer than 3 seconds."), m
+            assert "apiKey.do" in m["totalNotGiven"]
+            assert r.headers[api_v4.TOTAL_NOT_GIVEN_HEADER] == "the count took too long"
+            m = meta(MADAGASCAR + "&limit=5")
+            assert "took longer than 20 seconds" in m["totalNotGiven"] and "apiKey.do" not in m["totalNotGiven"], m
+            assert seen == [api_v4.COUNT_MS[False], api_v4.COUNT_MS[True]], seen
+            # a first page that holds every record: their number is the total, no count needed
+            m = meta(MADAGASCAR + "&limit=500")
+            assert m["total"] == N and "totalNotGiven" not in m, m
+            # walking on by afterCode still gives every record once
+            got, _pages = walk_after(MADAGASCAR, 7)
+            assert got == ALL, got
+    finally:
+        api_v4.count_within = real
+
+
 if __name__ == "__main__":
     setup()
     failed = 0
