@@ -14,5 +14,5 @@ PyMySQL==1.1.2
 # PyMySQL needs cryptography to sign in with MySQL 8.4's default method (caching_sha2_password).
 # The usage login of v4 (antweb_api_usage, tools/api/setup-usage-login.sh) uses it: without the
 # package every v4 request was refused with 503 (staging, 2026-11-12).
-cryptography==46.0.3
+cryptography==50.0.0
 gunicorn~=23.0
