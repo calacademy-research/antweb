@@ -1277,8 +1277,16 @@ def test_count_within_turns_only_the_time_limit_into_no_total():
         # the other ways MySQL reports the limit, by stage: the same
         for code in (1317, 1028):
             e = _TimeExceeded()
-            e.orig = Exception(code, "interrupted")
+            e.orig = Exception(code, "Query execution was interrupted, maximum statement execution time exceeded")
             assert api_v4.count_within(Counted(_FakeSession(e)), None, 3000) is None
+            # the same codes for KILL QUERY or a shutdown: passed on (review of #353)
+            e = _TimeExceeded()
+            e.orig = Exception(code, "Query execution was interrupted")
+            try:
+                api_v4.count_within(Counted(_FakeSession(e)), None, 3000)
+                raise AssertionError("an interruption that is not the limit was reported as no total")
+            except _TimeExceeded:
+                pass
         # total=true with a key (no limit of its own): the database's 90 s limit is not "took too long" (review of #353)
         try:
             api_v4.count_within(Counted(_FakeSession(_TimeExceeded())), None, None)
@@ -1327,7 +1335,7 @@ def test_a_count_that_takes_too_long_gives_the_records_without_a_total():
             assert "apiKey.do" in m["totalNotGiven"]
             assert r.headers[api_v4.TOTAL_NOT_GIVEN_HEADER] == "the count took too long"
             m = meta(MADAGASCAR + "&limit=5")
-            assert "took longer than 20 seconds" in m["totalNotGiven"] and "apiKey.do" not in m["totalNotGiven"], m
+            assert "took longer than 20 seconds" in m["totalNotGiven"] and "apiKey.do" not in m["totalNotGiven"] and "Add total=true" in m["totalNotGiven"], m
             assert seen == [api_v4.COUNT_MS[False], api_v4.COUNT_MS[True]], seen
             # total=true with a key: counted to the end, no limit of its own
             meta(MADAGASCAR + "&limit=5&total=true")

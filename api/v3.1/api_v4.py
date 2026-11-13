@@ -171,6 +171,7 @@ COUNT_MS = {False: 3000, True: 20000}    # total=true with a key: no limit of it
 TOTAL_TOO_LONG = ('No total is given: counting the records that match these filters took longer than {s} seconds.'
                   ' The records are complete page by page: go on with afterCode until metaData.complete is true.{key}')
 TOTAL_TOO_LONG_KEY = ' With an API key a count may take longer (X-API-Key header; free keys: {url}/apiKey.do).'
+TOTAL_TOO_LONG_HAS_KEY = ' Add total=true to have the records counted to the end.'
 
 BOTH_PAGINGS_MESSAGE = ('Use afterCode or offset, not both. afterCode=<the last specimen code you received> gives the'
                         ' records after it; offset=<n> leaves out the first n records.')
@@ -511,6 +512,7 @@ def run(name, endpoint, admission, has_key, limits):
             if SPECIMEN_LISTS.get(name) == key:
                 add_locality_codes(name, obj[key])
         notice = limit_notice(has_key, limits, admission, count, by_code)
+        note = other_family_note(endpoint, families, count)    # once, whatever the metaData key
         for meta in ('metaData', '_metaData'):
             if isinstance(obj.get(meta), dict):
                 obj[meta]['parameters'] = [request.args.to_dict()]
@@ -524,7 +526,6 @@ def run(name, endpoint, admission, has_key, limits):
                     obj[meta].update(paging)
                 if families:
                     obj[meta]['families'] = families
-                note = other_family_note(endpoint, families, count)
                 if note:
                     obj[meta]['familiesNote'] = note
         response = app.json.response(obj)
@@ -648,7 +649,9 @@ def other_family_note(endpoint, families, count):
             return None
     try:
         # the one definition of an ant (ANTS), so the note and the filter cannot disagree
-        row = api.session.execute(text('select family, ' + ANTS.format(s='specimen') + ' from specimen where code = :c'),
+        # the view the answer comes from (it joins the taxon table, so a record without a taxon row is in no answer
+        # and gets no note: allFamilies=true would not bring it either; review of #353)
+        row = api.session.execute(text('select family, ' + ANTS.format(s='v') + ' from api3_1_specimen v where specimen_code = :c'),
                                   {'c': code}).first()
     finally:
         api.session.remove()
@@ -717,7 +720,7 @@ def rows(query, limit, offset, key=None, after_code=False):
         if total is None:
             paging['totalNotGiven'] = TOTAL_TOO_LONG.format(
                 s=COUNT_MS[has_key] // 1000,
-                key='' if has_key else TOTAL_TOO_LONG_KEY.format(url=PUBLIC_URL.rsplit('/v4', 1)[0]))
+                key=TOTAL_TOO_LONG_HAS_KEY if has_key else TOTAL_TOO_LONG_KEY.format(url=PUBLIC_URL.rsplit('/v4', 1)[0]))
         else:
             paging['total'] = total
     elif wanted != 'false' and first_page and no_filter:
@@ -768,7 +771,11 @@ def count_within(counted, key, ms):
         return session.execute(count_statement(counted, key, ms)).scalar()
     except Exception as e:      # noqa: BLE001 -- only the time limit of this count is turned into "no total"
         args = getattr(getattr(e, 'orig', None), 'args', None) or [None]
-        if ms is None or args[0] not in MYSQL_TIME_LIMIT_CODES:
+        # 3024 is only ever the time limit; 1317 and 1028 also mean KILL QUERY or a shutdown, so only with the
+        # limit's own words (review of #353)
+        limit_hit = args[0] == MYSQL_TIME_EXCEEDED or (
+            args[0] in MYSQL_TIME_LIMIT_CODES and 'maximum statement execution time' in str(args[1:]).lower())
+        if ms is None or not limit_hit:
             raise
         session.rollback()
         return None
