@@ -64,6 +64,10 @@ jobs:
       ANTWEB_TEST_NOUPLOAD_PASSWORD: ${{ (inputs.antweb_url || 'https://staging.antweb.org') == 'https://staging.antweb.org' && secrets.ANTWEB_TEST_NOUPLOAD_PASSWORD || '' }}
       ANTWEB_TEST_ADMIN_USER: ${{ (inputs.antweb_url || 'https://staging.antweb.org') == 'https://staging.antweb.org' && secrets.ANTWEB_TEST_ADMIN_USER || '' }}
       ANTWEB_TEST_ADMIN_PASSWORD: ${{ (inputs.antweb_url || 'https://staging.antweb.org') == 'https://staging.antweb.org' && secrets.ANTWEB_TEST_ADMIN_PASSWORD || '' }}
+      # The API once v4 is open (v3.1 has ended): an admin API key of staging, made there by
+      # tools/api/create-test-key.py, sent only in the X-API-Key header (tests/e2e/antweb.py). Staging only. Not
+      # needed while v4 is closed (the tests then use the admin switch up=1).
+      ANTWEB_TEST_API_KEY: ${{ (inputs.antweb_url || 'https://staging.antweb.org') == 'https://staging.antweb.org' && secrets.ANTWEB_TEST_API_KEY || '' }}
     steps:
       - uses: actions/checkout@v5
         with:

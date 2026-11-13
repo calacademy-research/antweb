@@ -222,7 +222,7 @@ public class ApiKeysTest extends TestCase {
         // the registrant's name is not in the email (it could carry any text to any address)
         assertTrue(body, body.startsWith("Hello,<br>"));
         assertTrue(body.contains("24 hours"));
-        assertTrue(body.contains("https://www.antweb.org/apiV3.1.do#terms"));
+        assertTrue(body.contains("https://www.antweb.org/api.do#terms"));
         assertTrue(body.contains("Working on a larger project? Brian L. Fisher welcomes collaborations; write to antweb@antweb.org."));
         assertFalse("no key in the email", body.contains("aw_"));
 

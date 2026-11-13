@@ -25,10 +25,11 @@ and rate-limits it per visitor).
 
 Routes (all GET, JSON, or one record per line with ndjson=true): / (the documentation page link and health
 check, always open), /specimens, /geoSpecimens, /geoSpeciesStats, /taxa, /distinctTaxa, /images, /measurements,
-/taxaImages, /geolocales, /geolocaleTaxa, /bioregions, /bioregionTaxa and /unimagedGeolocaleTaxa. The data routes
-answer only with up=1 (an admin switch, see down(); once V4_OPEN is True it also needs an admin key in X-API-Key,
-upSwitch()); without it HTTP 503 with a JSON message. Unknown parameters
-get HTTP 400 naming the accepted ones. Records per request are capped
+/taxaImages, /geolocales, /geolocaleTaxa, /bioregions, /bioregionTaxa and /unimagedGeolocaleTaxa. While v4 is closed
+(V4_OPEN False) the data routes answer only with up=1 (an admin switch, see down()); without it HTTP 503 with a JSON
+message. Once v4 is open (V4_OPEN True; decided by Brian Fisher 2026-11-09) v3.1 has ended: every data route answers
+HTTP 410 Gone with a JSON signpost to v4 (apiEnded()), up=1 does nothing, and / stays 200 with status "ended".
+Unknown parameters get HTTP 400 naming the accepted ones. Records per request are capped
 (MAX_LIMIT, maxLimit= in etc/api-db.properties); every reply carries the CC BY 4.0 licence in a Link header,
 and JSON data replies also in a license field.
 
@@ -39,8 +40,10 @@ cannot reach the database. v3.1 writes nothing.
 Version 4 (/v4/, step 6 PR 3, 2026-11-08) is api_v4.py, mounted under /v4 at the end of this file: the same routes
 with free registered API keys (header X-API-Key), limits per level and the field names specimenCode,
 collectingEventCode and localityCode. Its counts are written with a second login that may write only the API key
-tables (usageUser= and usagePassword=, api_keys.py). V4_OPEN below says whether v4 is open to everyone. The counts /taxa serves are written into the taxon table by the
-nightly (TaxonApiCountDb). User documentation: https://www.antweb.org/apiV3.1.do; developer documentation:
+tables (usageUser= and usagePassword=, api_keys.py). V4_OPEN below says whether v4 is open to everyone; it is read at
+start from v4Open= in etc/api-db.properties (readV4Open()), so opening and closing need no code change. v4 runs the
+route functions of this file in an inner request (g.apiV4Inner), in both states. The counts /taxa serves are written
+into the taxon table by the daily update (TaxonApiCountDb). User documentation: https://www.antweb.org/api.do; developer documentation:
 docs/flows/api.md. Tests: tests/unit/test_api_*.py, tests/e2e (API tests).
 """
 
@@ -229,7 +232,7 @@ apiPublicBase = prodServer + "/v3.1"
 def specimenApiUrl(code):
     """The public /specimens address of one specimen (the accepted parameter is specimenCode)."""
     return apiPublicBase + "/specimens?specimenCode=" + urllib.parse.quote(str(code), safe="")
-apiUri = "api" + version + ".do"
+apiUri = "api.do"   # the version-neutral address of the documentation page (apiV3.1.do still opens it; 2026-11-09)
 
 globalMessage = "Either the server is overloaded or there is an error in the application."
 
@@ -248,11 +251,12 @@ print("server started. devMode:" + str(isDevMode) + " platform:" + sys.platform)
 def hello():
     """The API's front door (step 6, API keys PR 1, 2026-11-08): what the API is, whether it is open, and where the
     documentation, terms of use and the plain-text guide for programs and AI agents (/llms.txt) are. Always 200 (the
-    uptime check and the deploy smoke run read it; both look for "Antweb API")."""
-    return jsonify(
+    uptime check and the deploy smoke run read it; both look for "Antweb API"). Once v4 is open (V4_OPEN) the status
+    is "ended" and the message points to v4; the data routes then answer 410 (apiEnded())."""
+    body = dict(
         name="Antweb API " + version,
-        status="closed",
-        message=API_DOWN_MESSAGE,
+        status="ended" if V4_OPEN else "closed",
+        message=apiDownMessage(V4_OPEN),
         documentation=API_DOCS_URL,
         terms=API_TERMS_URL,
         guideForPrograms=LLMS_URL,
@@ -263,6 +267,7 @@ def hello():
             "message": ("Version 4 is open with free registered API keys." if V4_OPEN else
                         "Version 4, with free registered API keys, is not open yet.")},
     )
+    return jsonify(**body)
 
 
 # - Various Methods, etc.. ---------------------------------------------------------------
@@ -312,66 +317,53 @@ def numbers(value, count):
     if len(parts) != count:
         return None
     try:
-        return [float(p) for p in parts]
+        found = [float(p) for p in parts]
     except ValueError:
         return None
+    # nan and inf are floats to Python but not numbers to MySQL (the driver refuses them: HTTP 500 until 2026-11-10)
+    return found if all(math.isfinite(n) for n in found) else None
 
 
 def down(request):
-    # The data routes answer only with &up=1 (admin switch, see the documentation page). Returns 1 when the request is
-    # not let in (503), 0 when it is. The inner requests of v4 (api_v4.run) are let in by g.apiV4Inner, set only there;
-    # they never depend on up=1. Once V4_OPEN is True, up=1 also needs an active admin key in X-API-Key (upSwitch()).
+    # Returns 1 when the request is not let in, 0 when it is. The inner requests of v4 (api_v4.run) are let in by
+    # g.apiV4Inner, set only there; they never depend on up=1. While v4 is closed (V4_OPEN False) a data route answers
+    # only with &up=1 (admin switch; the staging tests use it), else 503. Once v4 is open, v3.1 has ended: nothing but
+    # v4's inner requests is let in, with or without up=1 (410, apiEnded(); decided by Brian Fisher 2026-11-09).
     if g.get('apiV4Inner'):
         return 0
-    up = request.args.get('up', default='*', type=str)
-    if up != '1':
+    if V4_OPEN:
         return 1
-    return 0 if upSwitch(request) == 'ok' else 1
+    up = request.args.get('up', default='*', type=str)
+    return 0 if up == '1' else 1
 
 
-def upSwitch(request):
-    """'ok' when up=1 may open v3.1 for this request, 'down' (503) or 'badkey' (401). While V4_OPEN is False, up=1 alone
-    is enough (as before; the staging tests use it). Once V4_OPEN is True, it needs an active admin key in the X-API-Key
-    header, looked up with the v4 usage login (api_v4.usage); without that login, refused. Decided once per request
-    (g.apiUpSwitch), since checkUp() and the route's own down() both ask."""
-    if not V4_OPEN:
-        return 'ok'
-    cached = g.get('apiUpSwitch')
-    if cached is not None:
-        return cached
-    result = 'down'
-    store = getattr(sys.modules.get('api_v4'), 'usage', None)
-    sent = request.headers.get('X-API-Key')
-    if store is not None and sent is not None:
-        import api_keys
-        sent = sent.strip()
-        try:
-            row = store.find_key(api_keys.key_hash(sent)) if api_keys.KEY_RE.match(sent) else None
-        except Exception as err:  # noqa: BLE001  counter database down: refused
-            print('API up switch: key lookup failed: ' + type(err).__name__, flush=True)
-            row = None
-            sent = None
-        if sent is not None and (row is None or row.status != 'active'):
-            result = 'badkey'
-        elif row is not None and (row.level or '').lower() == 'admin':
-            result = 'ok'
-    g.apiUpSwitch = result
-    return result
+def readV4Open(props, env=None):
+    """Is v4 open? The one switch (decided by Brian Fisher 2026-11-09): v4Open=true in etc/api-db.properties on the
+    server, read at start (docker restart antweb_api_1 after a change). Without the line, or with any other value:
+    closed. The environment variable API_V4_OPEN, when set, wins (development and tests)."""
+    env = os.environ if env is None else env
+    raw = env.get('API_V4_OPEN', '')
+    if not str(raw).strip():
+        raw = next((v for k, v in props.items() if k.strip() == 'v4Open'), '')
+    return str(raw).strip().lower() in ('1', 'true', 'yes', 'on')
 
 
-# Version 4 with free registered API keys (api_v4.py). False: v4 answers only admin keys, and v3.1 keeps the message
-# below. True (when keys go live, Brian Fisher's decision): v4 is open to everyone at its limits, and the v3.1 503
-# points to v4.
-V4_OPEN = False
+# Version 4 with free registered API keys (api_v4.py). False (the default): v4 answers only admin keys, and v3.1 is as
+# it was (503 without up=1). True: v4 is open to everyone at its limits and v3.1 has ended: its data routes answer 410
+# with a signpost to v4, up=1 does nothing, / says "ended" (decided by Brian Fisher 2026-11-09). Set on the server
+# without a code change: v4Open=true in etc/api-db.properties, then docker restart antweb_api_1; rollback: remove the
+# line and restart.
+V4_OPEN = readV4Open(_apiProps)
+print('API v4 open:', V4_OPEN, flush=True)
 V4_URL = "https://www.antweb.org/v4/"
 GET_A_KEY_URL = "https://www.antweb.org/apiKey.do"
 API_CLOSED_MESSAGE = "The AntWeb API is closed while we add free registered API keys. It will reopen in the coming weeks; see antweb.org for news."
-API_MOVED_MESSAGE = ("The AntWeb API v3.1 is closed. Please use the AntWeb API v4 at " + V4_URL + " with a free API key"
+API_ENDED_MESSAGE = ("The AntWeb API v3.1 has ended. Please use the AntWeb API v4 at " + V4_URL + " with a free API key"
                      " from " + GET_A_KEY_URL + ".")
 
 
 def apiDownMessage(v4Open):
-    return API_MOVED_MESSAGE if v4Open else API_CLOSED_MESSAGE
+    return API_ENDED_MESSAGE if v4Open else API_CLOSED_MESSAGE
 
 
 API_DOWN_MESSAGE = apiDownMessage(V4_OPEN)
@@ -393,10 +385,25 @@ API_TERMS = [
 ]
 
 
+def apiEnded():
+    """v3.1 after v4 opened: HTTP 410 Gone with a short JSON signpost (where v4 is, where the free key comes from, the
+    documentation, the terms, the citation and the licence). No Retry-After (it does not come back) and no-store, so
+    no cache keeps the 410 if the switch is turned back."""
+    response = flaskJsonify(error=API_ENDED_MESSAGE, status="ended", v4=V4_URL, getAKey=GET_A_KEY_URL,
+                            documentation=API_DOCS_URL, terms=API_TERMS_URL, guideForPrograms=LLMS_URL,
+                            citation=CITATION, license=LICENSE)
+    response.status_code = 410
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 def apiDown():
-    # Without up=1: HTTP 503 with a JSON message (decided by Brian Fisher 2026-10-27; it was an empty page with
-    # HTTP 200). The / route stays open for health checks.
-    response = jsonify(error=API_DOWN_MESSAGE, documentation=API_DOCS_URL, terms=API_TERMS_URL)
+    # The reply of a data route that is not let in (down()). While v4 is closed: HTTP 503 with a JSON message (decided
+    # by Brian Fisher 2026-10-27; it was an empty page with HTTP 200). Once v4 is open: 410 (apiEnded()). The / route
+    # stays open for health checks.
+    if V4_OPEN:
+        return apiEnded()
+    response = jsonify(error=API_CLOSED_MESSAGE, documentation=API_DOCS_URL, terms=API_TERMS_URL)
     response.status_code = 503
     # programs should come back tomorrow, not retry at once (Brian Fisher's terms, 2026-11-08)
     response.headers["Retry-After"] = "86400"
@@ -923,6 +930,7 @@ def getSpecimen():
     if validGenus == 'true':
         query = query.filter(func.lower(Specimen.genus).in_(sorted(VALID_GENERA)))
     query = api_v4.specimen_filters(query, Specimen)   # v4 only: collectingEventCode=, localityCode=
+    query = api_v4.ants_only(query, Specimen)          # v4 only: ants unless allFamilies=true or family= (2026-11-12)
 
     # A fixed order (specimen code, the specimen table's key) so paging with offset neither
     # repeats nor skips records; with 500 per request, paging is how larger sets are fetched.
@@ -936,7 +944,8 @@ def getSpecimen():
         print("hasImage:" + hasImage)
         # print("hasImage:" + hasImage + " query:" + str(query))
     try:
-        data = query.all()
+        # v4 only: metaData.total, complete and afterCode=; outside v4 this is query.all() (api_v4.rows())
+        data = api_v4.rows(query, limit, offset, Specimen.code, after_code=True)
     except OperationalError as error:
         return apiError("specimens", error)
     except Exception as error:
@@ -1006,12 +1015,18 @@ def radiusBox(lat, lon, radiusKm):
     return lat - dLat, lat + dLat, lon - dLon, lon + dLon
 
 
+COORDS_REQUIRED_MESSAGE = ('The coords parameter is required: the latitude and longitude of the centre of the area,'
+                           ' for example coords=37.77,-122.47 (radius is in kilometres, default 5).')
+
+
 # http://localhost:5000/geoSpecimens?coords=37,%20-122&limit=8000&radius=2
 @application.route('/geoSpecimens', methods=['GET'])
 def getGeoSpecimens():
     coords = request.args.get('coords', default='*', type=str)  # (?coord=37, -122) is cal academy
     if coords == '*':
-        return 'Must enter coords for a geoSpecimens request'
+        # 2026-11-10: HTTP 400 as JSON. It was the plain text "Must enter coords for a geoSpecimens request" with
+        # HTTP 200, which v4 could not read as JSON and answered with HTTP 500.
+        return badRequest(COORDS_REQUIRED_MESSAGE)
     radius = request.args.get('radius', default=5.0, type=float)  # in kilometres
     distinct = request.args.get('distinct', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
@@ -1022,11 +1037,16 @@ def getGeoSpecimens():
     try:
         # Decimal coordinates (37.77,-122.47) used to raise ValueError (HTTP 500).
         lat, lon = float(coordsArray[0]), float(coordsArray[1])
+        if not (math.isfinite(lat) and math.isfinite(lon)):
+            raise ValueError(coords)   # nan, inf: not numbers to MySQL (HTTP 500 until 2026-11-10)
     except (ValueError, IndexError):
         return 'coords must be "latitude,longitude", for example coords=37.77,-122.47', 400
+    if not math.isfinite(radius):
+        return badRequest('radius must be a number of kilometres, for example radius=10')
     minLat, maxLat, minLon, maxLon = radiusBox(lat, lon, radius)
     query = query.filter(Specimen.decimalLatitude <= maxLat, Specimen.decimalLatitude >= minLat)
     query = query.filter(Specimen.decimalLongitude <= maxLon, Specimen.decimalLongitude >= minLon)
+    query = api_v4.ants_only(query, Specimen)          # v4 only: ants unless allFamilies=true (2026-11-12)
 
     if distinct != '*':
         # The names of the specimens in the area (2026-10-26, F22: a new query without the area was started here).
@@ -1044,7 +1064,7 @@ def getGeoSpecimens():
         query = query.offset(offset)
 
         try:
-            data = query.all()
+            data = api_v4.rows(query, limit, offset)   # v4 only: metaData.total and complete; else query.all()
         except OperationalError as error:
             return apiError("geoSpecimens", error)
         except Exception as error:
@@ -1075,7 +1095,8 @@ def getGeoSpecimens():
     query = query.offset(offset)
 
     try:
-        data = query.all()
+        # v4 only: metaData.total, complete and afterCode=; outside v4 this is query.all() (api_v4.rows())
+        data = api_v4.rows(query, limit, offset, Specimen.code, after_code=True)
     except OperationalError as error:
         return apiError("geoSpecimens", error)
     except Exception as error:
@@ -1143,6 +1164,7 @@ def getGeoSpeciesStats():
     # queenErgatoidCount and maleErgatoidCount count the ergatoids of their caste (2026-10-22: both counted every
     # ergatoid specimen, so a male ergatoid was also a queen ergatoid). Every subcaste count counts only within its
     # caste, as the ergatoids do (decided by Brian Fisher 2026-10-27).
+    # api_v4.ants_only(...): v4 only, ants unless allFamilies=true (2026-11-12); in v3.1 the text is as it was.
     query = "select s.taxon_name, s.genus, s.species " \
             + " , count(case when caste='queen' then 1 end)" \
             + " , count(case when caste='queen' and subcaste='ergatoid' then 1 end)" \
@@ -1159,7 +1181,7 @@ def getGeoSpeciesStats():
             + "   and gt.geolocale_id = g.id and " \
             + extraClause \
             + " and g.id = :geolocaleId" \
-            + "  and s.status = 'valid'" \
+            + api_v4.ants_only("  and s.status = 'valid'", 's') \
             + " group by s.taxon_name, s.genus, s.species" \
             + " order by s.taxon_name" \
             + " limit :limit offset :offset"
@@ -1271,7 +1293,8 @@ def getTaxa():
     query = query.offset(offset)
 
     try:
-        data = query.all()
+        # v4 only: metaData.total and complete; outside v4 this is query.all() (api_v4.rows())
+        data = api_v4.rows(query, limit, offset, Taxon.taxonName)
     except OperationalError as error:
         return apiError("taxa", error)
     except Exception as error:
@@ -1383,6 +1406,7 @@ def getDistinctTaxa():
     query = boundsFilter(query, minDate, maxDate, minElevation, maxElevation)
     if status != '*':
         query = query.filter(Specimen.status == status)
+    query = api_v4.ants_only(query, Specimen)          # v4 only: ants unless allFamilies=true (2026-11-12)
 
     # A fixed order so paging with offset neither repeats nor skips (F8).
     if 'subfamily' == taxarank:
@@ -1770,6 +1794,7 @@ def getMeasurements():
         query = query.filter(Specimen.caste == caste)
     if taxonStatus != '*':
         query = query.filter(Specimen.status == taxonStatus)
+    query = api_v4.ants_only(query, Specimen)          # v4 only: ants unless allFamilies=true (2026-11-12)
 
     query = query.order_by(Measurement.id)
     query = query.limit(limit)
@@ -2558,6 +2583,10 @@ def imagedTaxaSql(casteClause=""):
             " and " + NOT_RED_FLAGGED_SQL + casteClause)
 
 
+GEOLOCALE_NAME_REQUIRED_MESSAGE = ('The geolocaleName parameter is required: the name of a place, for example'
+                                   ' geolocaleName=Madagascar.')
+
+
 @application.route('/unimagedGeolocaleTaxa', methods=['GET'])
 def getUnimagedGeolocaleTaxa():
     geolocaleName = request.args.get('geolocaleName', default='*', type=str)
@@ -2568,9 +2597,13 @@ def getUnimagedGeolocaleTaxa():
     limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return apiDown()
 
+    if geolocaleName == '*' or not geolocaleName.strip():
+        return badRequest(GEOLOCALE_NAME_REQUIRED_MESSAGE)
     geolocale = getGeolocale(geolocaleName)
     if geolocale is None:
-        return "Must enter valid geolocale"
+        # 2026-11-10: JSON with HTTP 404, as /geoSpeciesStats answers an unknown place. It was the plain text
+        # "Must enter valid geolocale" with HTTP 200, which v4 could not read as JSON and answered with HTTP 500.
+        return apiNotFound("Geolocale not found: " + geolocaleName)
     # georank = geolocale.georank
     # geoClause = georank + " = '" + geolocaleName + "'"
 
@@ -2764,15 +2797,12 @@ def suggestParams(name, accepted):
 @application.before_request
 def checkUp():
     # Before any other check and before the route's own code (some routes answered a missing parameter first):
-    # every data route without up=1 answers 503 (apiDown). The per-route down() lines stay as a second check.
+    # every data route that is not let in answers 503 (v4 closed, no up=1) or 410 (v4 open: v3.1 has ended), see
+    # apiDown(). The per-route down() lines stay as a second check.
     endpoint = request.endpoint
     if endpoint is None or endpoint in UNCHECKED_ENDPOINTS or endpoint not in application.view_functions:
         return None
     if down(request):
-        if g.get('apiUpSwitch') == 'badkey':
-            response = jsonify(error="This API key is not valid.", documentation=API_DOCS_URL)
-            response.status_code = 401
-            return response
         return apiDown()
     return None
 

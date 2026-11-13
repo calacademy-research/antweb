@@ -18,7 +18,7 @@ from public_pages import assert_ok, title
 from staging_accounts import login, needs
 
 OPENS_SOON = "Registration opens soon."
-TERMS = "https://www.antweb.org/apiV3.1.do#terms"
+TERMS = "https://www.antweb.org/api.do#terms"
 COLLAB = "Working on a larger project? Brian L. Fisher welcomes collaborations; write to"
 
 
