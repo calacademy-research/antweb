@@ -929,6 +929,8 @@ def test_ants_only_is_the_default_and_the_answer_says_so():
         assert "familiesNote" not in get("/v4/specimens?specimenCode=mxant01").get_json()["metaData"]
         assert "familiesNote" not in get("/v4/specimens?specimenCode=nosuchcode").get_json()["metaData"]
         assert "familiesNote" not in get("/v4/specimens?specimenCode=mxbeetle01&allFamilies=true").get_json()["metaData"]
+        # with another filter, that filter may be why it is empty: no note (review of #353)
+        assert "familiesNote" not in get("/v4/specimens?specimenCode=mxbeetle01&country=Madagascar").get_json()["metaData"]
         # the same on every page: by afterCode and by offset the set is the ants, each once
         got, pages = walk_after(MEXICO, 1)
         assert got == ANTS and pages == 4, (got, pages)
@@ -1225,53 +1227,61 @@ class _TimeExceeded(Exception):
         self.orig = Exception(api_v4.MYSQL_TIME_EXCEEDED, "Query execution was interrupted")
 
 
-class _FakeMysqlSession:
-    """Enough of a session for count_within(): a MySQL dialect, a record of the statements, a rollback."""
-    def __init__(self, raise_on_count, before=0):
-        self.sql, self.rolled_back, self.raise_on_count, self.before = [], False, raise_on_count, before
-
-    def get_bind(self):
-        return type("B", (), {"dialect": type("D", (), {"name": "mysql"})()})()
+class _FakeSession:
+    """Enough of a session for count_within(): runs nothing, raises the given error, records a rollback."""
+    def __init__(self, raise_on_count):
+        self.rolled_back, self.raise_on_count, self.statements = False, raise_on_count, []
 
     def execute(self, stmt):
-        self.sql.append(str(stmt))
-        return type("R", (), {"scalar": lambda _s: self.before})()
+        self.statements.append(stmt)
+        if self.raise_on_count:
+            raise self.raise_on_count
+        return type("R", (), {"scalar": lambda _s: 7})()
 
     def rollback(self):
         self.rolled_back = True
 
 
-class _FakeCounted:
-    def __init__(self, session):
-        self.session = session
+def test_the_count_limit_is_a_hint_on_the_count_statement_only():
+    """Review of #353: a session setting could stay on a pooled connection after a timeout and cut a later request.
+    The limit is MySQL's optimizer hint on the one count statement, at its top level (MySQL ignores it in a
+    subquery); the statement of a distinct list counts the list as a subquery."""
+    from sqlalchemy.dialects import mysql
+    q = api.session.query(api.Specimen).filter(api.Specimen.country == "Madagascar")
+    sql = str(api_v4.count_statement(q, api.Specimen.code, 3000).compile(dialect=mysql.dialect()))
+    assert sql.startswith("SELECT /*+ MAX_EXECUTION_TIME(3000) */ count("), sql
+    sql = str(api_v4.count_statement(q, None, 20000).compile(dialect=mysql.dialect()))
+    assert sql.startswith("SELECT /*+ MAX_EXECUTION_TIME(20000) */ count(*)") and "FROM (SELECT" in sql, sql
+    # no limit of its own (total=true with a key): no hint
+    assert "MAX_EXECUTION_TIME" not in str(api_v4.count_statement(q, api.Specimen.code, None).compile(dialect=mysql.dialect()))
+    # SQLite (and any other dialect) never sees the hint
+    assert "MAX_EXECUTION_TIME" not in str(api_v4.count_statement(q, api.Specimen.code, 3000).compile(dialect=api.session.get_bind().dialect))
+    api.session.remove()
+    assert "SET SESSION max_execution_time" not in open(api_v4.__file__, encoding="utf-8").read()
 
-    def with_entities(self, *_a):
-        return self
 
-    def scalar(self):
-        if self.session.raise_on_count:
-            raise self.session.raise_on_count
-        return 7
+def test_count_within_turns_only_the_time_limit_into_no_total():
+    class Counted:
+        def __init__(self, session):
+            self.session = session
 
-    count = scalar
-
-
-def test_count_within_sets_the_limit_for_the_count_only():
-    s = _FakeMysqlSession(None, before=5)
-    assert api_v4.count_within(_FakeCounted(s), "k", 3000) == 7
-    assert s.sql[1:] == ["SET SESSION max_execution_time = 3000", "SET SESSION max_execution_time = 5"], s.sql
-    # stopped by the limit: no total, the session rolled back and the limit put back
-    s = _FakeMysqlSession(_TimeExceeded())
-    assert api_v4.count_within(_FakeCounted(s), None, 20000) is None
-    assert s.rolled_back and s.sql[-1] == "SET SESSION max_execution_time = 0", s.sql
-    # any other error is not hidden, and the limit is put back all the same
-    s = _FakeMysqlSession(ValueError("other"))
+    stmt = object()
+    real = api_v4.count_statement
+    api_v4.count_statement = lambda counted, key, ms: stmt
     try:
-        api_v4.count_within(_FakeCounted(s), None, 3000)
-        raise AssertionError("the error was swallowed")
-    except ValueError:
-        pass
-    assert not s.rolled_back and s.sql[-1] == "SET SESSION max_execution_time = 0", s.sql
+        s = _FakeSession(None)
+        assert api_v4.count_within(Counted(s), "k", 3000) == 7 and s.statements == [stmt]
+        s = _FakeSession(_TimeExceeded())
+        assert api_v4.count_within(Counted(s), None, 20000) is None and s.rolled_back
+        s = _FakeSession(ValueError("other"))
+        try:
+            api_v4.count_within(Counted(s), None, 3000)
+            raise AssertionError("the error was swallowed")
+        except ValueError:
+            pass
+        assert not s.rolled_back
+    finally:
+        api_v4.count_statement = real
     assert api_v4.COUNT_MS[False] < api_v4.COUNT_MS[True]
 
 
@@ -1299,6 +1309,16 @@ def test_a_count_that_takes_too_long_gives_the_records_without_a_total():
             m = meta(MADAGASCAR + "&limit=5")
             assert "took longer than 20 seconds" in m["totalNotGiven"] and "apiKey.do" not in m["totalNotGiven"], m
             assert seen == [api_v4.COUNT_MS[False], api_v4.COUNT_MS[True]], seen
+            # total=true with a key: counted to the end, no limit of its own
+            meta(MADAGASCAR + "&limit=5&total=true")
+            assert seen[-1] is None, seen
+            # a later page whose count took too long: no total, even when it is the last page (review of #353:
+            # its records are not all of them)
+            first = meta(MADAGASCAR + "&limit=5", key=None)
+            last = sorted(ALL)[-3]
+            m = meta(MADAGASCAR + "&limit=500&total=true&afterCode=" + last, key=None)
+            assert m["complete"] is True and "total" not in m and "took longer" in m["totalNotGiven"], m
+            assert first["nextAfterCode"], first
             # a first page that holds every record: their number is the total, no count needed
             m = meta(MADAGASCAR + "&limit=500")
             assert m["total"] == N and "totalNotGiven" not in m, m
