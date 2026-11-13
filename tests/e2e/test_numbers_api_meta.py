@@ -371,9 +371,10 @@ def test_taxa_images_counts_equal_the_specimens_and_images_of_the_name():
         images = sum(len(sp.get("images") or []) for sp in specimens)
         if meta.get("taxonCount") != len(trows) or len(trows) != 1:
             wrong.append(f"{taxon}: taxonCount {meta.get('taxonCount')}, {len(trows)} taxa (one asked for)")
-        if meta.get("specimenCount") != len(specimens) or len({sp.get('code') for sp in specimens}) != len(specimens):
+        codes = {_code(sp) for sp in specimens}  # specimenCode in v4, code in v3.1
+        if meta.get("specimenCount") != len(specimens) or len(codes) != len(specimens):
             wrong.append(f"{taxon}: specimenCount {meta.get('specimenCount')}, {len(specimens)} specimens"
-                         f" ({len({sp.get('code') for sp in specimens})} codes)")
+                         f" ({len(codes)} codes)")
         if meta.get("imageCount") != images:
             wrong.append(f"{taxon}: imageCount {meta.get('imageCount')}, {images} images")
         if images < PAGE:
