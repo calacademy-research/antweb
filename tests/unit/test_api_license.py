@@ -80,11 +80,9 @@ def test_every_route_has_the_header_and_data_replies_the_field():
             r = client.get(route + query)
             assert has_link(r), (route + query, r.status_code, r.headers.get("Link"))
             body = r.get_json(silent=True)
-            if not isinstance(body, dict):
-                # /geoSpecimens and /unimagedGeolocaleTaxa answer a missing parameter with a plain-text message
-                # (older behaviour, not JSON): the header carries the licence.
-                assert route in ("/geoSpecimens", "/unimagedGeolocaleTaxa"), (route + query, r.get_data(as_text=True)[:200])
-                continue
+            # every route answers JSON without parameters: /geoSpecimens and /unimagedGeolocaleTaxa answered a missing
+            # parameter with plain text and HTTP 200 until 2026-11-10 (now HTTP 400 as JSON)
+            assert isinstance(body, dict), (route + query, r.status_code, r.get_data(as_text=True)[:200])
             if "error" in body:
                 assert "license" not in body, (route + query, body)
             else:
