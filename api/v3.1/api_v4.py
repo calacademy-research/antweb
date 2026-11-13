@@ -638,7 +638,8 @@ def other_family_note(endpoint, families, count):
     an ant says so, and how to see it (allFamilies=true); without the note an empty answer reads as "no such
     specimen". None in every other case: records were given, the answer was not ants only, no specimenCode= was
     sent, the code is in no specimen record, or the specimen is an ant (another filter left it out)."""
-    code = request.args.get('specimenCode', '')
+    codes = request.args.getlist('specimenCode')
+    code = codes[0] if len(codes) == 1 else ''      # one code only: the one v3.1 filtered by
     if count or families != ANTS_ONLY or endpoint != 'getSpecimen' or not code or code == '*':
         return None
     # only the code itself: with another filter, that filter may be why the answer is empty (review of #353)
@@ -738,6 +739,9 @@ def rows(query, limit, offset, key=None, after_code=False):
 
 
 MYSQL_TIME_EXCEEDED = 3024     # ER_QUERY_TIMEOUT: maximum statement execution time exceeded
+# how MySQL may report a statement stopped by MAX_EXECUTION_TIME, depending on the stage it was in: 3024, 1317
+# (ER_QUERY_INTERRUPTED), 1028 (ER_FILSORT_ABORT, "Sort aborted: ... maximum statement execution time exceeded")
+MYSQL_TIME_LIMIT_CODES = (MYSQL_TIME_EXCEEDED, 1317, 1028)
 
 
 def count_statement(counted, key, ms):
@@ -756,14 +760,15 @@ def count_statement(counted, key, ms):
 
 def count_within(counted, key, ms):
     """The count of `counted` (rows()), or None when MySQL stopped it after `ms` milliseconds (error 3024). ms None:
-    no limit of its own (the database's for every API read). Any other error is passed on. SQLite (the unit tests)
-    ignores the MySQL-only hint."""
+    no limit of its own (the database's for every API read): then nothing is caught, as before this limit (a count
+    that fails answers HTTP 500, it is not reported as "took too long"). Any other error is passed on. SQLite (the
+    unit tests) ignores the MySQL-only hint."""
     session = counted.session
     try:
         return session.execute(count_statement(counted, key, ms)).scalar()
-    except Exception as e:      # noqa: BLE001 -- only the time limit is turned into "no total"
-        code = getattr(getattr(e, 'orig', None), 'args', [None])[0]
-        if code != MYSQL_TIME_EXCEEDED:
+    except Exception as e:      # noqa: BLE001 -- only the time limit of this count is turned into "no total"
+        args = getattr(getattr(e, 'orig', None), 'args', None) or [None]
+        if ms is None or args[0] not in MYSQL_TIME_LIMIT_CODES:
             raise
         session.rollback()
         return None

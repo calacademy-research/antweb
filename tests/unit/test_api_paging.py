@@ -931,6 +931,7 @@ def test_ants_only_is_the_default_and_the_answer_says_so():
         assert "familiesNote" not in get("/v4/specimens?specimenCode=mxbeetle01&allFamilies=true").get_json()["metaData"]
         # with another filter, that filter may be why it is empty: no note (review of #353)
         assert "familiesNote" not in get("/v4/specimens?specimenCode=mxbeetle01&country=Madagascar").get_json()["metaData"]
+        assert "familiesNote" not in get("/v4/specimens?specimenCode=mxbeetle01&specimenCode=mxant01").get_json()["metaData"]
         # the same on every page: by afterCode and by offset the set is the ants, each once
         got, pages = walk_after(MEXICO, 1)
         assert got == ANTS and pages == 4, (got, pages)
@@ -1273,6 +1274,25 @@ def test_count_within_turns_only_the_time_limit_into_no_total():
         assert api_v4.count_within(Counted(s), "k", 3000) == 7 and s.statements == [stmt]
         s = _FakeSession(_TimeExceeded())
         assert api_v4.count_within(Counted(s), None, 20000) is None and s.rolled_back
+        # the other ways MySQL reports the limit, by stage: the same
+        for code in (1317, 1028):
+            e = _TimeExceeded()
+            e.orig = Exception(code, "interrupted")
+            assert api_v4.count_within(Counted(_FakeSession(e)), None, 3000) is None
+        # total=true with a key (no limit of its own): the database's 90 s limit is not "took too long" (review of #353)
+        try:
+            api_v4.count_within(Counted(_FakeSession(_TimeExceeded())), None, None)
+            raise AssertionError("a timeout without a limit of our own was reported as no total")
+        except _TimeExceeded:
+            pass
+        # an error with no arguments is passed on as it is
+        e = _TimeExceeded()
+        e.orig = Exception()
+        try:
+            api_v4.count_within(Counted(_FakeSession(e)), None, 3000)
+            raise AssertionError("swallowed")
+        except _TimeExceeded:
+            pass
         s = _FakeSession(ValueError("other"))
         try:
             api_v4.count_within(Counted(s), None, 3000)
