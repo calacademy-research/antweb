@@ -922,6 +922,13 @@ def test_ants_only_is_the_default_and_the_answer_says_so():
         # a record of another family asked for by its code is not there, and the total says 0
         r = get("/v4/specimens?specimenCode=mxbeetle01")
         assert codes_of(r) == [] and r.get_json()["metaData"]["total"] == 0, r.get_json()["metaData"]
+        # and the answer says why, and how to see it (2026-11-13)
+        assert r.get_json()["metaData"]["familiesNote"] == ("Specimen mxbeetle01 is in family Curculionidae, not an"
+            " ant. Answers made from specimen records hold ants only unless you add allFamilies=true."), r.get_json()["metaData"]
+        # no note for an ant, for a code that is in no record, or with allFamilies=true
+        assert "familiesNote" not in get("/v4/specimens?specimenCode=mxant01").get_json()["metaData"]
+        assert "familiesNote" not in get("/v4/specimens?specimenCode=nosuchcode").get_json()["metaData"]
+        assert "familiesNote" not in get("/v4/specimens?specimenCode=mxbeetle01&allFamilies=true").get_json()["metaData"]
         # the same on every page: by afterCode and by offset the set is the ants, each once
         got, pages = walk_after(MEXICO, 1)
         assert got == ANTS and pages == 4, (got, pages)

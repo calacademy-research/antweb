@@ -139,7 +139,8 @@ FAMILIES = {
     'allFamilies': 'allFamilies=true gives the records of every family.',
     'family': 'On /v4/specimens, family=<name> gives the records of that one family (family=vespidae).',
     'metaData': 'metaData.families says which was used: antsOnly, allFamilies or family. With ndjson=true it is in'
-                ' the header X-AntWeb-Families.',
+                ' the header X-AntWeb-Families. An empty answer for specimenCode=<a specimen of another family> says'
+                ' so in metaData.familiesNote.',
     'otherRoutes': 'The other routes have no family rule: /v4/images and /v4/taxaImages give images by specimen code'
                    ' or name, and the taxon, geolocale and bioregion routes give names and lists, not specimen'
                    ' records.',
@@ -513,6 +514,9 @@ def run(name, endpoint, admission, has_key, limits):
                     obj[meta].update(paging)
                 if families:
                     obj[meta]['families'] = families
+                note = other_family_note(endpoint, families, count)
+                if note:
+                    obj[meta]['familiesNote'] = note
         response = app.json.response(obj)
     notice = limit_notice(has_key, limits, admission, count, by_code)
     if notice:
@@ -616,6 +620,26 @@ def ndjson_records(body):
     for line in lines[1::2]:
         records.append(rename(json.loads(line)))
     return records
+
+
+def other_family_note(endpoint, families, count):
+    """metaData.familiesNote (2026-11-13): an answer for one specimenCode= that is empty because the specimen is not
+    an ant says so, and how to see it (allFamilies=true); without the note an empty answer reads as "no such
+    specimen". None in every other case: records were given, the answer was not ants only, no specimenCode= was
+    sent, the code is in no specimen record, or the specimen is an ant (another filter left it out)."""
+    code = request.args.get('specimenCode', '')
+    if count or families != ANTS_ONLY or endpoint not in FAMILY_ROUTES or not code or code == '*':
+        return None
+    try:
+        # the one definition of an ant (ANTS), so the note and the filter cannot disagree
+        row = api.session.execute(text('select family, ' + ANTS.format(s='specimen') + ' from specimen where code = :c'),
+                                  {'c': code}).first()
+    finally:
+        api.session.remove()
+    if row is None or row[1]:
+        return None
+    return ('Specimen %s is in family %s, not an ant. Answers made from specimen records hold ants only unless you'
+            ' add allFamilies=true.' % (code, row[0].strip().capitalize()))
 
 
 def add_locality_codes(name, records):
