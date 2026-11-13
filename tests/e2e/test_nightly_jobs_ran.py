@@ -199,7 +199,7 @@ LIST_CLEANUP_JOBS = ("/utilData.do?action=cleanupSpeciesListProxyRecords", "/uti
 def test_project_lists_cleaned_line(run_lines):
     """Set 2 takes the rows off project lists that go once their children are gone (a genus row without species, a
     proxy row without children; ProjTaxonDb.cleanupLists) right after the data clean-up and before the Global recount,
-    the first count of a project list, and writes "Project lists cleaned: N rows removed in S s; <project> n: <names>;
+    the first count of a project list, and writes "Project lists cleaned: N names removed in S s; <project> n: <names>;
     ..." (the rows by project and name, up to ten names per project, then "and N more": Brian Fisher, 2026-11-03, no
     job deletes list entries without a record; administrators read compute.log in the Log Manager; every row is also
     recorded in list_removal_log, which the lists' view All specimen names shows).
@@ -214,7 +214,8 @@ def test_project_lists_cleaned_line(run_lines):
     line = run_lines[i][1]
     # "Project lists cleaned: NOT done, no row removed (...)" when the step met an error and rolled its work back
     assert not FAILED.search(line), f"{' and '.join(LIST_CLEANUP_JOBS)}: {line[:300]}"
-    m = re.match(r"Project lists cleaned: (\d+) rows removed in \d+ s(?:; (.*))?$", line)
+    # "names removed" since 2026-11-13 (one per name, as the names listed); "rows removed" before
+    m = re.match(r"Project lists cleaned: (\d+) (?:names|rows) removed in \d+ s(?:; (.*))?$", line)
     assert m, line[:300]
     projects = [p for p in (m.group(2) or "").split("; ") if p]
     removed = 0

@@ -550,8 +550,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
      * be written of the removal of <name> from the list of <project>, so the row is not deleted: ..."), and the step's
      * caller rolls the step back (UtilDataAction.cleanProjectLists). Returns the line for
      * compute.log, which names the rows removed, by project (administrators read compute.log in the Log Manager, logMgr.do):
-     * "Project lists cleaned: 6 rows removed in 3 s; fossilants 1: formicinaeleucotaphus; madants 5: a, b, c, d, e";
-     * a project with more than NAMES_PER_PROJECT rows ends "... and N more"; "Project lists cleaned: 0 rows removed in
+     * "Project lists cleaned: 6 names removed in 3 s; fossilants 1: formicinaeleucotaphus; madants 5: a, b, c, d, e";
+     * a project with more than NAMES_PER_PROJECT rows ends "... and N more"; "Project lists cleaned: 0 names removed in
      * 2 s". Never throws; a database error in one of the two is at the end of the line: "...; FAILED: genus rows: ..."
      * (the rows removed before it stay removed, in the set's transaction).
      */
@@ -572,7 +572,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         int rows = 0;
         for (int n : rowsRemoved.values()) rows += n;
         String named = removedRowsText();
-        return CLEANUP_LOG + ": " + rows + " rows removed in " + (System.currentTimeMillis() - start) / 1000 + " s"
+        return CLEANUP_LOG + ": " + rows + " names removed in " + (System.currentTimeMillis() - start) / 1000 + " s"
             + (named.isEmpty() ? "" : "; " + named)
             + (cleanupErrors.isEmpty() ? "" : "; FAILED: " + String.join("; ", cleanupErrors));
     }
