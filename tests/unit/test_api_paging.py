@@ -1333,6 +1333,10 @@ def test_a_count_that_takes_too_long_gives_the_records_without_a_total():
             assert m["totalNotGiven"].startswith("No total is given: counting the records that match these filters"
                                                  " took longer than 3 seconds."), m
             assert "apiKey.do" in m["totalNotGiven"]
+            assert "go on with afterCode" in m["totalNotGiven"], m
+            # a route without afterCode (/taxa, the distinct lists) is told offset (review of #353)
+            assert api_v4.TOTAL_TOO_LONG_NEXT == {True: "afterCode", False: "offset"}
+            assert "{next}" in api_v4.TOTAL_TOO_LONG and "afterCode" not in api_v4.TOTAL_TOO_LONG
             assert r.headers[api_v4.TOTAL_NOT_GIVEN_HEADER] == "the count took too long"
             m = meta(MADAGASCAR + "&limit=5")
             assert "took longer than 20 seconds" in m["totalNotGiven"] and "apiKey.do" not in m["totalNotGiven"] and "Add total=true" in m["totalNotGiven"], m

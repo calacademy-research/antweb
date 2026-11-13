@@ -169,7 +169,9 @@ TOTAL_NOT_GIVEN_HEADER = 'X-AntWeb-Total-Not-Given'
 # counted on every first page, a read of the whole view by anyone without a key. Longer with a key.
 COUNT_MS = {False: 3000, True: 20000}    # total=true with a key: no limit of its own (count_within)
 TOTAL_TOO_LONG = ('No total is given: counting the records that match these filters took longer than {s} seconds.'
-                  ' The records are complete page by page: go on with afterCode until metaData.complete is true.{key}')
+                  ' The records are complete page by page: go on with {next} until metaData.complete is true.{key}')
+# how to go on, by route (review of #353): afterCode where the route takes it, offset elsewhere (/taxa, distinct lists)
+TOTAL_TOO_LONG_NEXT = {True: 'afterCode', False: 'offset'}
 TOTAL_TOO_LONG_KEY = ' With an API key a count may take longer (X-API-Key header; free keys: {url}/apiKey.do).'
 TOTAL_TOO_LONG_HAS_KEY = ' Add total=true to have the records counted to the end.'
 
@@ -719,7 +721,7 @@ def rows(query, limit, offset, key=None, after_code=False):
         total = count_within(counted, key, ms)
         if total is None:
             paging['totalNotGiven'] = TOTAL_TOO_LONG.format(
-                s=COUNT_MS[has_key] // 1000,
+                next=TOTAL_TOO_LONG_NEXT[bool(after_code)], s=COUNT_MS[has_key] // 1000,
                 key=TOTAL_TOO_LONG_HAS_KEY if has_key else TOTAL_TOO_LONG_KEY.format(url=PUBLIC_URL.rsplit('/v4', 1)[0]))
         else:
             paging['total'] = total
