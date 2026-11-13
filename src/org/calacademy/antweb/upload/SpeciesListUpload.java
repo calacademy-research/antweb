@@ -89,6 +89,9 @@ public class SpeciesListUpload extends AntwebUpload {
     // and the countries that get such notes (read once per import).
     private final java.util.Set<String> placesNotKnown = new java.util.TreeSet<>();
     private java.util.Set<String> ownCountryParents = null;
+    // Note (review of PR #347, 2026-11-12): one number for the whole application, set at the end of each import. An AntCat
+    // import started by hand while set 1's import runs would overwrite it, and set 1's compute.log line would then show
+    // the other import's count. Only that line reads it; nothing is counted from it.
     private static volatile int s_lastPlacesNotKnown = 0;
 
     /** How many localities the last AntCat import listed under "Place in parentheses not a known island name" (the compute.log line). */

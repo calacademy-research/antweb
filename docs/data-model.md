@@ -826,15 +826,21 @@ the curators' rows of those names are parked first, `taxon_set_parked`, and come
 (`ProjTaxonDb.cleanupLists`, every row: "list clean-up: genus with no species row or specimen", "list clean-up:
 Species List Tool proxy row with no children"; until then these rows of set 5 were not recorded), and the rebuild of
 the AntWeb-wide list for a genus that was on the list before it and is off it afterwards ("AntWeb-wide list rebuilt:
-genus with no species row or specimen"). Not the routine rebuilds (the rows from specimens deleted and inserted again
+genus with no species row or specimen"; `source` is the one the row had before the rebuild, which gives every row its
+own). Not the routine rebuilds (the rows from specimens deleted and inserted again
 each night, the AntCat rows of set 1, the rows of the Global list allantwebants that its rebuild puts on the list
 again). A genus the AntCat import puts on the Fossil Ants list every day without a species there is taken off every
 day and recorded once (`ListRemovalLog.recordWhereOnce`): no new record while the newest record of that list and name
 is the same in job, reason and source and was written by a job. No table says when a list row was added, so the row's
 source tells a curator's row (a curator source, or "proxy" + one): its removal is always recorded; and a curator's own
 removal in between is a newer, different record, after which the job's next removal is recorded again. A deadlock
-while a record is written is passed on to the caller (the database has rolled back its transaction); any other
-failure of the record is logged and the job goes on. Created at startup when missing (`ListRemovalLog.ensureSchema`, from `LoginMgr`; DDL only when missing, as a
+while a record is written is passed on to the caller (the database has rolled back its transaction). The record of
+the project list clean-ups and of the rebuild (`recordWhereOnce`) comes first and decides (since 2026-11-12; Brian
+Fisher, 2026-11-03: no job deletes list entries without a record a curator can see): when it cannot be written, a lock
+wait timeout included, the row is not deleted (`ProjTaxonDb.deleteProjTaxon`); the daily clean-up says so as an error
+of its step, which is rolled back, and the rebuild at an upload leaves the genus row on the list. The other records
+(`recordWhere`: the data clean-up of set 2, the orphan tool; `record`: the Species List Tool's save) still log a
+failure other than a deadlock and go on. Created at startup when missing (`ListRemovalLog.ensureSchema`, from `LoginMgr`; DDL only when missing, as a
 CREATE commits an open transaction). Record: `db/upgrade/8.115/2026-11-03-list-removal-log.sql`.
 
 **One-off data scripts** that delete list rows write the same record first, with the delete's condition on alias `l`

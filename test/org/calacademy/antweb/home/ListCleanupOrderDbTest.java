@@ -77,6 +77,15 @@ import static test.org.calacademy.antweb.util.NumbersTestDb.*;
  *    list_removal_log, not every day; a curator's row, and a row removed again after a curator's own removal, are
  *    recorded again (ListRemovalLog.recordWhereOnce).
  *
+ * Second review of PR #347 (2026-11-12): the record first, then the delete.
+ *  - a row whose removal cannot be recorded (the record's insert meets a lock wait timeout) is not deleted: the daily
+ *    clean-up says it as an error of its step ("FAILED: ... no record could be written ..."), which the step's caller
+ *    rolls back; the rebuild at an upload logs it, leaves the genus row on the list and goes on. Until then the
+ *    failure was logged and the row deleted: a removal without a record;
+ *  - the rebuild's record has the source the genus row had before the rebuild, which is also what tells a curator's
+ *    row and a removal recorded already;
+ *  - the line counts one per name, also when a name's row is on a list twice.
+ *
  * tests/unit/test_list_cleanup_before_counts.py checks in the source that set 2 calls the clean-up before its first
  * count and that no later set removes list rows. Runs in CI against MySQL 8.4; ANTWEB_TEST_DB_URL overrides.
  */
@@ -194,7 +203,7 @@ public class ListCleanupOrderDbTest extends TestCase {
         counts();
         assertEquals("nothing differs before the clean-up: " + differences(), 0, differences().size());
         String line = new ProjTaxonDb(connection).cleanupLists();
-        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 rows removed in "));
+        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 names removed in "));
         // the three numbers of production 2026-11-12, here one or two rows too high each
         assertEquals("madants Genera stored, listed", "[3, 2]", Arrays.toString(genera("madants")));
         assertEquals(ALL + " Genera stored, listed", "[3, 2]", Arrays.toString(genera(ALL)));
@@ -212,7 +221,7 @@ public class ListCleanupOrderDbTest extends TestCase {
         int rows = one("select count(*) from proj_taxon");
         String line = new ProjTaxonDb(connection).cleanupLists();
         // the line names each row removed, by project (madants first: its proxy row went before the genus rows)
-        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 rows removed in "));
+        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 names removed in "));
         assertTrue(line, line.endsWith(" s; madants 2: " + DORYLINAE + ", " + CREMATOGASTER + "; " + ALL + " 1: " + CREMATOGASTER));
         assertFalse(line, line.contains("FAILED"));
         assertEquals(rows - 3, one("select count(*) from proj_taxon"));
@@ -237,7 +246,7 @@ public class ListCleanupOrderDbTest extends TestCase {
 
         // the next day: nothing to remove, and the numbers stand
         line = new ProjTaxonDb(connection).cleanupLists();
-        assertTrue(line, line.matches(ProjTaxonDb.CLEANUP_LOG + ": 0 rows removed in \\d+ s"));
+        assertTrue(line, line.matches(ProjTaxonDb.CLEANUP_LOG + ": 0 names removed in \\d+ s"));
         counts();
         assertEquals("the count check: " + differences(), 0, differences().size());
     }
@@ -256,7 +265,7 @@ public class ListCleanupOrderDbTest extends TestCase {
         exec(connection, "insert into proj_taxon (project_name, taxon_name, source) values " + rows);
         ProjTaxonDb db = new ProjTaxonDb(connection);
         String line = db.cleanupLists();
-        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 15 rows removed in "));
+        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 15 names removed in "));
         // madants: the proxy row, Crematogaster and the twelve genera = 14 rows, ten named
         assertTrue(line, line.contains("; madants 14: " + DORYLINAE + ", " + CREMATOGASTER + ", " + MYRM + "genus11, "));
         assertTrue(line, line.contains(", " + MYRM + "genus18 and 4 more; " + ALL + " 1: " + CREMATOGASTER));
@@ -266,6 +275,23 @@ public class ListCleanupOrderDbTest extends TestCase {
         assertEquals(15, records().size());
         assertEquals(1, one("select count(*) from " + ListRemovalLog.TABLE + " where list_type = 'project' and list_key = 'madants' and taxon_name = '"
             + MYRM + "genus22' and removed_by_job = '" + ListRemovalLog.JOB_GENUS_NO_SPECIES + "' and removed_at is not null"));
+    }
+
+    /**
+     * The line counts names, one per name taken off a list, as the names it shows and its "and N more" do. A name whose
+     * row is on a list twice (the fixture's key on the list table rules that out; the repository's record of the
+     * schema shows no such key) is one name: until 2026-11-12 the number was of rows deleted, so madants read "3:" with
+     * two names. Each of its rows has its record.
+     */
+    public void testANameWhoseRowIsOnAListTwiceCountsOnce() throws Exception {
+        exec(connection, "alter table proj_taxon drop primary key");
+        exec(connection, "insert into proj_taxon (project_name, taxon_name, source) values ('madants', '" + CREMATOGASTER + "', 'specimen')");
+        ProjTaxonDb db = new ProjTaxonDb(connection);
+        String line = db.cleanupLists();
+        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 names removed in "));
+        assertTrue(line, line.endsWith(" s; madants 2: " + DORYLINAE + ", " + CREMATOGASTER + "; " + ALL + " 1: " + CREMATOGASTER));
+        assertEquals("both rows are gone", 0, one("select count(*) from proj_taxon where project_name = 'madants' and taxon_name = '" + CREMATOGASTER + "'"));
+        assertEquals("a record for each row: the proxy row, Crematogaster twice on madants and once on the AntWeb-wide list", 4, records().size());
     }
 
     // ------------------------------------------------------------------ the rule at every moment: the AntWeb-wide list's rebuild
@@ -325,14 +351,28 @@ public class ListCleanupOrderDbTest extends TestCase {
         new ProjTaxonDb(connection).rebuildAllAntwebList();
         assertEquals("genus rows after the rebuild: not the genus without species or specimens",
             Arrays.asList(LIOPONERA, OLDGENUS, PHEIDOLE, HYPO), genusRows(ALL));
-        // Crematogaster was on the list before this rebuild (setUp) and is not after it: one record (its source is the one
-        // the rebuild gave the row it took off: none here, the test's taxon rows have no source)
-        String crematogaster = ALL + "|" + CREMATOGASTER + "||" + ListRemovalLog.JOB_REBUILD_GENUS + "|" + ListRemovalLog.REASON_GENUS_NO_SPECIES;
+        // Crematogaster was on the list before this rebuild (setUp) and is not after it: one record, with the source the
+        // row had before the rebuild (setUp: worldants), not the one the rebuild gave the row it took off (none here,
+        // the test's taxon rows have no source)
+        String rebuilt = "|" + ListRemovalLog.JOB_REBUILD_GENUS + "|" + ListRemovalLog.REASON_GENUS_NO_SPECIES;
+        String crematogaster = ALL + "|" + CREMATOGASTER + "|worldants" + rebuilt;
         assertEquals(Arrays.asList(crematogaster), records());
         // the next upload's rebuild puts it on the list and takes it off again: it was not on the list before, no second record
         new ProjTaxonDb(connection).rebuildAllAntwebList();
         assertEquals(Arrays.asList(LIOPONERA, OLDGENUS, PHEIDOLE, HYPO), genusRows(ALL));
         assertEquals("one record, not one per upload", Arrays.asList(crematogaster), records());
+        // the row is back on the list as it was (source worldants) and the next rebuild takes it off: the same removal as
+        // the newest record, by the source before the rebuild: not recorded again
+        exec(connection, "insert into proj_taxon (project_name, taxon_name, source) values ('" + ALL + "', '" + CREMATOGASTER + "', 'worldants')");
+        new ProjTaxonDb(connection).rebuildAllAntwebList();
+        assertEquals("the same removal again", Arrays.asList(crematogaster), records());
+        // a curator put it on the list (Species List Tool): the rebuild gives every row its own source, so only the
+        // source before the rebuild says that this is a curator's row, whose removal is always recorded
+        exec(connection, "insert into proj_taxon (project_name, taxon_name, source) values ('" + ALL + "', '" + CREMATOGASTER + "', 'speciesListTool')");
+        new ProjTaxonDb(connection).rebuildAllAntwebList();
+        assertEquals("a curator's row: recorded, with the curator's source",
+            Arrays.asList(crematogaster, ALL + "|" + CREMATOGASTER + "|speciesListTool" + rebuilt), records());
+        assertEquals(Arrays.asList(LIOPONERA, OLDGENUS, PHEIDOLE, HYPO), genusRows(ALL));
         assertEquals("every other counted name is on the list (the rule is about genus rows only)", 0,
             one("select count(*) from taxon t where t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')"
                 + " and t.taxon_name <> '" + CREMATOGASTER + "' and t.taxon_name not in (select taxon_name from proj_taxon where project_name = '" + ALL + "')"));
@@ -344,7 +384,7 @@ public class ListCleanupOrderDbTest extends TestCase {
 
         // the next daily update: the clean-up takes nothing off that list (madants loses its two rows as before)
         String line = new ProjTaxonDb(connection).cleanupLists();
-        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 2 rows removed in "));
+        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 2 names removed in "));
         assertFalse("nothing removed from the AntWeb-wide list: " + line, line.contains(ALL));
         counts();
         assertEquals("Genera do not move between the upload and the daily update", afterUpload, genera(ALL)[0]);
@@ -436,66 +476,138 @@ public class ListCleanupOrderDbTest extends TestCase {
     /**
      * A specimen upload is one transaction on one connection: its specimens, then the rebuild of the AntWeb-wide list,
      * one commit at the end (SpecimenUploadJob). Here the rule of the genus rows meets a real deadlock in the rebuild:
-     * another transaction, larger than the upload's so far, holds the record table and waits for a list row the rebuild
-     * holds; the rebuild then asks for the record table, and the database rolls the upload's transaction back. The
-     * rebuild must pass that on. Swallowed (until 2026-11-12), the upload went on, committed nothing of its specimens
-     * and reported success.
+     * another transaction holds the record table and waits for a list row the rebuild holds; the rebuild then asks for
+     * the record table, and the database rolls the upload's transaction back. The rebuild must pass that on. Swallowed
+     * (until 2026-11-12), the upload went on, committed nothing of its specimens and reported success.
+     *
+     * Which of the two the database rolls back: the one of smaller weight (InnoDB: the rows a transaction changed plus
+     * the locks it holds; information_schema.innodb_trx.trx_weight, "InnoDB selects the transaction with the smallest
+     * weight as the victim"). The other transaction changes 2,000 rows and locks them all; the upload's so far is the
+     * rebuild of the fixture's list, some dozens of rows. Where the test's user may read innodb_trx (not in CI: it
+     * needs the PROCESS privilege) the test waits until the other transaction is seen waiting and checks the two
+     * weights before the rebuild goes on. The order does not decide: if the rebuild asks first and the other
+     * transaction's request closes the circle, the weights are the same. If the other transaction is rolled back all
+     * the same, or the preparation itself fails, the test says that, not "the rebuild swallowed the deadlock".
      */
     public void testADeadlockInTheRebuildIsPassedOn() throws Exception {
         exec(connection, "set innodb_lock_wait_timeout = 5");   // no deadlock found: fail in seconds, not wait
         connection.setAutoCommit(false);
         Thread[] waiter = new Thread[1];
-        try (Connection other = connect()) {
-            exec(connection, "update project set specimen_count = 4321 where project_name = 'madants'");   // the upload's own writes
-            ProjTaxonDb.setBeforeGenusRuleForTests(() -> {
-                try {
-                    other.setAutoCommit(false);
-                    // a larger transaction than the upload's so far (the database rolls back the smaller of the two)
-                    StringBuilder rows = new StringBuilder();
-                    for (int i = 0; i < 2000; i++) rows.append(i == 0 ? "" : ", ").append("('project', 'weight', 'w").append(i).append("', now())");
-                    exec(other, "insert into " + ListRemovalLog.TABLE + " (list_type, list_key, taxon_name, removed_at) values " + rows);
-                    try (PreparedStatement s = other.prepareStatement("select id from " + ListRemovalLog.TABLE + " for update"); ResultSet r = s.executeQuery()) {
-                        while (r.next()) { /* every row and the gap after them are locked */ }
-                    }
-                    // and it waits for a row the rebuild has just put on the list
-                    waiter[0] = new Thread(() -> {
-                        try {
-                            exec(other, "update proj_taxon set source = 'x' where project_name = '" + ALL + "' and taxon_name = '" + CREMATOGASTER + "'");
-                        } catch (java.sql.SQLException e) {
-                            // the other side lost the deadlock: the rebuild then goes on and the test fails below
-                        }
-                    });
-                    waiter[0].start();
-                    Thread.sleep(700);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
-            java.sql.SQLException thrown = null;
+        Throwable[] preparationFailed = new Throwable[1];
+        java.sql.SQLException[] otherRolledBack = new java.sql.SQLException[1];
+        String[] weights = {"not read"};
+        try (Connection other = connect(); Connection watch = connect()) {
             try {
-                new ProjTaxonDb(connection).rebuildAllAntwebList();
-            } catch (java.sql.SQLException e) {
-                thrown = e;
+                int uploadId = one("select connection_id()");
+                exec(connection, "update project set specimen_count = 4321 where project_name = 'madants'");   // the upload's own writes
+                ProjTaxonDb.setBeforeGenusRuleForTests(() -> {
+                    try {
+                        int otherId;
+                        try (PreparedStatement s = other.prepareStatement("select connection_id()"); ResultSet r = s.executeQuery()) {
+                            r.next();
+                            otherId = r.getInt(1);
+                        }
+                        other.setAutoCommit(false);
+                        // a much larger transaction than the upload's so far (the database rolls back the smaller of the two)
+                        StringBuilder rows = new StringBuilder();
+                        for (int i = 0; i < 2000; i++) rows.append(i == 0 ? "" : ", ").append("('project', 'weight', 'w").append(i).append("', now())");
+                        exec(other, "insert into " + ListRemovalLog.TABLE + " (list_type, list_key, taxon_name, removed_at) values " + rows);
+                        try (PreparedStatement s = other.prepareStatement("select id from " + ListRemovalLog.TABLE + " for update"); ResultSet r = s.executeQuery()) {
+                            while (r.next()) { /* every row and the gap after them are locked */ }
+                        }
+                        // and it waits for a row the rebuild has just put on the list
+                        java.util.concurrent.CountDownLatch asking = new java.util.concurrent.CountDownLatch(1);
+                        waiter[0] = new Thread(() -> {
+                            asking.countDown();
+                            try {
+                                exec(other, "update proj_taxon set source = 'x' where project_name = '" + ALL + "' and taxon_name = '" + CREMATOGASTER + "'");
+                            } catch (java.sql.SQLException e) {
+                                otherRolledBack[0] = e;   // the other side lost the deadlock: said below
+                            }
+                        });
+                        waiter[0].start();
+                        assertTrue("the other transaction's thread did not start", asking.await(10, java.util.concurrent.TimeUnit.SECONDS));
+                        int[] w = weightsOnceTheOtherWaits(watch, uploadId, otherId);
+                        if (w != null) {
+                            weights[0] = "upload " + w[0] + ", other " + w[1];
+                            assertTrue("the upload's transaction was not found in innodb_trx: " + weights[0], w[0] >= 0);
+                            assertTrue("the other transaction must be the heavier one, or the database rolls it back instead: " + weights[0], w[1] > w[0]);
+                        }
+                    } catch (Throwable e) {
+                        preparationFailed[0] = e;
+                        throw new RuntimeException(e);
+                    }
+                });
+                java.sql.SQLException thrown = null;
+                try {
+                    new ProjTaxonDb(connection).rebuildAllAntwebList();
+                } catch (java.sql.SQLException e) {
+                    thrown = e;
+                }
+                ProjTaxonDb.setBeforeGenusRuleForTests(null);
+                if (waiter[0] != null) waiter[0].join(10000);
+                if (preparationFailed[0] != null) {
+                    throw new AssertionError("the test's own preparation failed, not the rebuild: " + preparationFailed[0], preparationFailed[0]);
+                }
+                assertNull("the database rolled back the other transaction, not the upload's (weights: " + weights[0] + "): " + otherRolledBack[0], otherRolledBack[0]);
+                assertNotNull("the rebuild swallowed the deadlock: the upload would go on on an empty transaction", thrown);
+                assertTrue("" + thrown, org.calacademy.antweb.util.DBUtil.transactionRolledBack(thrown));
+                assertEquals(1213, thrown.getErrorCode());
+                assertTrue("which row had no record: " + thrown, thrown.getMessage().startsWith("no record could be written of the removal of "
+                    + CREMATOGASTER + " from the list of " + ALL + ", so the row is not deleted: "));
+                // why it must be passed on: the upload's own writes are gone from its transaction
+                assertEquals("the upload's write was rolled back by the database", 5, one("select specimen_count from project where project_name = 'madants'"));
+                other.rollback();
+                connection.rollback();
+                assertEquals("the list is as before the rebuild", Arrays.asList(CREMATOGASTER, PHEIDOLE, HYPO), genusRows(ALL));
+            } finally {
+                ProjTaxonDb.setBeforeGenusRuleForTests(null);
+                if (waiter[0] != null) waiter[0].join(10000);   // before its connection closes
+                try { other.rollback(); } catch (java.sql.SQLException e) { /* closed or never opened a transaction */ }
             }
-            ProjTaxonDb.setBeforeGenusRuleForTests(null);
-            assertNotNull("the rebuild swallowed the deadlock: the upload would go on on an empty transaction", thrown);
-            assertTrue("" + thrown, org.calacademy.antweb.util.DBUtil.transactionRolledBack(thrown));
-            assertEquals(1213, thrown.getErrorCode());
-            // why it must be passed on: the upload's own writes are gone from its transaction
-            assertEquals("the upload's write was rolled back by the database", 5, one("select specimen_count from project where project_name = 'madants'"));
-            waiter[0].join(10000);
-            other.rollback();
-            connection.rollback();
-            assertEquals("the list is as before the rebuild", Arrays.asList(CREMATOGASTER, PHEIDOLE, HYPO), genusRows(ALL));
         } finally {
-            ProjTaxonDb.setBeforeGenusRuleForTests(null);
             connection.setAutoCommit(true);
         }
     }
 
     /**
+     * Waits (up to 5 s) until the other session's transaction waits for a lock, and returns the weights of the upload's
+     * transaction and of the other one, as the database has them (information_schema.innodb_trx). Null when the test's
+     * user may not read that table (the PROCESS privilege; CI's user has the test database only): then a pause.
+     * Read every 250 ms, not faster: the database refreshes what that table shows only when the last read of it is
+     * more than 100 ms old, so a faster reader keeps seeing its first answer.
+     */
+    private static int[] weightsOnceTheOtherWaits(Connection watch, int uploadId, int otherId) throws Exception {
+        long end = System.currentTimeMillis() + 5000;
+        while (true) {
+            Thread.sleep(250);
+            int[] w = {-1, -1};
+            boolean waits = false;
+            try (PreparedStatement s = watch.prepareStatement("select trx_mysql_thread_id, trx_weight, trx_state from information_schema.innodb_trx"
+                    + " where trx_mysql_thread_id in (?, ?)")) {
+                s.setInt(1, uploadId);
+                s.setInt(2, otherId);
+                try (ResultSet r = s.executeQuery()) {
+                    while (r.next()) {
+                        boolean isOther = r.getInt(1) == otherId;
+                        w[isOther ? 1 : 0] = r.getInt(2);
+                        if (isOther && "LOCK WAIT".equals(r.getString(3))) waits = true;
+                    }
+                }
+            } catch (java.sql.SQLException e) {
+                Thread.sleep(700);
+                return null;
+            }
+            if (waits || System.currentTimeMillis() > end) return w;
+        }
+    }
+
+    /**
      * A lock wait timeout in the same place undoes the one statement that waited (the record), not the transaction:
-     * the rebuild logs it and goes on; the list follows the rule and the upload's writes are still in its transaction.
+     * the rebuild logs it and goes on, and the upload's writes are still in its transaction. The record was not
+     * written, so the genus row is not taken off the list (Brian Fisher, 2026-11-03: no job deletes list entries
+     * without a record a curator can see; until 2026-11-12 the row was deleted and its record was missing). The next
+     * rebuild, with the record table free, takes it off and records it.
      */
     public void testALockWaitTimeoutInTheRebuildIsNotPassedOn() throws Exception {
         exec(connection, "set innodb_lock_wait_timeout = 1");
@@ -509,10 +621,58 @@ public class ListCleanupOrderDbTest extends TestCase {
             exec(connection, "update project set specimen_count = 4321 where project_name = 'madants'");
             new ProjTaxonDb(connection).rebuildAllAntwebList();   // does not throw
             assertEquals("the upload's write is still in its transaction", 4321, one("select specimen_count from project where project_name = 'madants'"));
-            assertEquals("the list follows the rule", Arrays.asList(PHEIDOLE, HYPO), genusRows(ALL));
+            assertEquals("no record could be written: the genus row is still on the list", Arrays.asList(CREMATOGASTER, PHEIDOLE, HYPO), genusRows(ALL));
             other.rollback();
             connection.commit();
-            assertEquals("the record that timed out is missing, nothing else", 0, records().size());
+            assertEquals("the upload's write stands", 4321, one("select specimen_count from project where project_name = 'madants'"));
+            assertEquals("still on the list after the commit", Arrays.asList(CREMATOGASTER, PHEIDOLE, HYPO), genusRows(ALL));
+            assertEquals("no record, and no removal without one", 0, records().size());
+            // the next upload's rebuild, nothing in the way: off the list, with its record (the source the last rebuild gave it: none)
+            new ProjTaxonDb(connection).rebuildAllAntwebList();
+            connection.commit();
+            assertEquals(Arrays.asList(PHEIDOLE, HYPO), genusRows(ALL));
+            assertEquals(Arrays.asList(ALL + "|" + CREMATOGASTER + "||" + ListRemovalLog.JOB_REBUILD_GENUS + "|" + ListRemovalLog.REASON_GENUS_NO_SPECIES), records());
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+
+    /**
+     * The daily clean-up, the same rule: the record's insert waits for the record table (a Species List Tool save
+     * holds it, for example) until the lock wait timeout. No row whose record failed is deleted: the line says 0 rows
+     * removed and names, for each of the two clean-ups, the row that has no record; the clean-up has failed
+     * (cleanupFailed), which makes set 2's step and the jobs by hand roll back and say so
+     * (testSet2sStepCommitsTheDataCleanupAndRollsBackOnlyItself, testTheJobsByHandSayAFailureAndRollBack). Until
+     * 2026-11-12 the rows were deleted, the line named them as removed and no record was written. With the table free
+     * the step removes and records them.
+     */
+    public void testARowWhoseRemovalCannotBeRecordedStaysOnItsList() throws Exception {
+        connection.setAutoCommit(false);
+        try (Connection other = connect()) {
+            other.setAutoCommit(false);
+            exec(other, "insert into " + ListRemovalLog.TABLE + " (list_type, list_key, taxon_name, removed_at) values ('project', 'held', 'h', now())");
+            try (PreparedStatement s = other.prepareStatement("select id from " + ListRemovalLog.TABLE + " for update"); ResultSet r = s.executeQuery()) {
+                while (r.next()) { /* locked */ }
+            }
+            exec(connection, "set innodb_lock_wait_timeout = 1");
+            ProjTaxonDb db = new ProjTaxonDb(connection);
+            String line = db.cleanupLists();
+            String noRecord = ".*no record could be written of the removal of %s from the list of %s, so the row is not deleted: .*";
+            assertTrue(line, line.matches("(?s)" + ProjTaxonDb.CLEANUP_LOG + ": 0 names removed in \\d+ s; FAILED: proxy rows: "
+                + String.format(noRecord, DORYLINAE, "madants") + "; genus rows: " + String.format(noRecord, CREMATOGASTER, ALL)));
+            assertTrue("a failed record is an error of the clean-up: its caller rolls the step back", db.cleanupFailed());
+            assertEquals("no row is named as removed", "", db.removedRowsText());
+            assertEquals("no project's totals to count again", 0, db.getProjectsWithRowsRemoved().size());
+            assertEquals("every row is still on its list, in the clean-up's own transaction", 4,
+                one("select count(*) from proj_taxon where taxon_name in ('" + CREMATOGASTER + "', '" + DORYLINAE + "')"));
+            connection.rollback();
+            other.rollback();
+            assertEquals(0, records().size());
+            // the record table is free: set 2's step removes the three rows and records each
+            line = UtilDataAction.cleanProjectLists(connection);
+            assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 names removed in "));
+            assertEquals(3, records().size());
+            assertEquals("the AntCat list's row stays", 1, one("select count(*) from proj_taxon where taxon_name in ('" + CREMATOGASTER + "', '" + DORYLINAE + "')"));
         } finally {
             connection.setAutoCommit(true);
         }
@@ -636,7 +796,7 @@ public class ListCleanupOrderDbTest extends TestCase {
             }
             // nothing in the way: removed, recorded, committed
             line = UtilDataAction.cleanProjectLists(connection);
-            assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 rows removed in "));
+            assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 3 names removed in "));
             connection.rollback();
             try (PreparedStatement s = reader.prepareStatement("select (select count(*) from proj_taxon where taxon_name in ('" + CREMATOGASTER + "', '" + DORYLINAE
                     + "') and project_name <> 'worldants'), (select count(*) from " + ListRemovalLog.TABLE + ")"); ResultSet r = s.executeQuery()) {
@@ -675,8 +835,8 @@ public class ListCleanupOrderDbTest extends TestCase {
         exec(connection, "alter table proj_taxon rename to proj_taxon_gone");
         String line = new ProjTaxonDb(connection).cleanupLists();
         exec(connection, "alter table proj_taxon_gone rename to proj_taxon");
-        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 0 rows removed in "));
-        assertTrue(line, line.matches(ProjTaxonDb.CLEANUP_LOG + ": 0 rows removed in \\d+ s; FAILED: proxy rows: .*; genus rows: .*"));
+        assertTrue(line, line.startsWith(ProjTaxonDb.CLEANUP_LOG + ": 0 names removed in "));
+        assertTrue(line, line.matches(ProjTaxonDb.CLEANUP_LOG + ": 0 names removed in \\d+ s; FAILED: proxy rows: .*; genus rows: .*"));
         assertEquals("no row was removed", 4, one("select count(*) from proj_taxon where taxon_name in ('" + CREMATOGASTER + "', '" + DORYLINAE + "')"));
     }
 }

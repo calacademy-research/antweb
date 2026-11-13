@@ -34,6 +34,10 @@ import org.apache.commons.logging.LogFactory;
  * condition (recordWhere), in one insert per step. Read by the lists' view All specimen names (ListView.loadRemovals:
  * "removed from the list by ... (date): reason").
  *
+ * The record first, then the delete. recordWhereOnce, the record of the project list clean-up, throws when the record
+ * could not be written, and its caller does not delete the row (ProjTaxonDb.deleteProjTaxon, since 2026-11-12: "no job
+ * deletes list entries without a record a curator can see"). recordWhere and record log a failure and return 0.
+ *
  * One-off data scripts write the same record before they delete (docs/data-model.md, list_removal_log):
  *   insert into list_removal_log (list_type, list_key, taxon_name, source, removed_by_job, reason, removed_at)
  *     select 'geolocale', l.geolocale_id, l.taxon_name, l.source, 'script 2026-11-03 <name>', '<why>', now()
@@ -149,8 +153,13 @@ public final class ListRemovalLog {
      * on the list table, alias l).
      */
     public static String scriptSql(String listType, String job, String reason, String where) {
+        return scriptSql(listType, job, reason, where, null);
+    }
+
+    /** The same; sourceSql: the record's source as SQL when it is not the row's own (null: l.source). */
+    private static String scriptSql(String listType, String job, String reason, String where, String sourceSql) {
         return "insert into " + TABLE + " (list_type, list_key, taxon_name, source, removed_by_job, reason, removed_at)"
-            + " select '" + listType + "', l." + keyColumn(listType) + ", l.taxon_name, l.source, "
+            + " select '" + listType + "', l." + keyColumn(listType) + ", l.taxon_name, " + (sourceSql == null ? "l.source" : sourceSql) + ", "
             + org.calacademy.antweb.util.DBUtil.sqlLiteral(clip(job, 80)) + ", " + org.calacademy.antweb.util.DBUtil.sqlLiteral(clip(reason, 255))
             + ", now() from " + table(listType) + " l where " + where;
     }
@@ -174,16 +183,21 @@ public final class ListRemovalLog {
 
     private static int write(Connection connection, String listType, String job, String insert) {
         try {
-            ensureSchema(connection);
-            try (Statement stmt = connection.createStatement()) {
-                return stmt.executeUpdate(insert);
-            }
+            return insert(connection, insert);
         } catch (SQLException | RuntimeException e) {
             if (org.calacademy.antweb.util.DBUtil.transactionRolledBack(e)) {
                 throw new IllegalStateException("the record of removed list rows met a deadlock; the transaction is rolled back", e);
             }
             s_log.warn("recordWhere() listType:" + listType + " job:" + job + " e:" + e);
             return 0;
+        }
+    }
+
+    /** Runs the record's insert and returns the rows recorded; an error is the caller's. */
+    private static int insert(Connection connection, String insert) throws SQLException {
+        ensureSchema(connection);
+        try (Statement stmt = connection.createStatement()) {
+            return stmt.executeUpdate(insert);
         }
     }
 
@@ -202,23 +216,46 @@ public final class ListRemovalLog {
      * AntCat import's, the specimens') is recorded unless the newest record of its list and name is the same in all of
      * job, reason and source; a curator's own removal in between (a record with a login) is a newer, different record,
      * so the job's next removal is recorded again.
+     *
+     * Unlike recordWhere, a record that could not be written is not swallowed (since 2026-11-12): the error is thrown
+     * (a lock wait timeout while a Species List Tool save holds the table, a deadlock, any other), and the caller
+     * must not delete the row (Brian Fisher, 2026-11-03: no job deletes list entries without a record a curator can
+     * see). Returns the rows recorded; 0 is no failure: the row's removal is the newest record already, or no row
+     * meets the condition.
      */
-    public static int recordWhereOnce(Connection connection, String listType, String where, String job, String reason) {
-        return write(connection, listType, job, scriptSql(listType, job, reason, where) + " and " + notRecordedYet(listType, job, reason));
+    public static int recordWhereOnce(Connection connection, String listType, String where, String job, String reason) throws SQLException {
+        return recordWhereOnce(connection, listType, where, job, reason, null);
+    }
+
+    /**
+     * The same for a row whose source is no longer the one it had as a list entry: sourceSql, a SQL value (a literal;
+     * null: the row's own, l.source), is the source written to the record and the one compared with the newest record
+     * and with the curators' sources. The rebuild of the AntWeb-wide list deletes and re-inserts every row before it
+     * applies the rule of the genus rows: the source the genus row had before the rebuild is the one a reader of the
+     * record knows (ProjTaxonDb.rebuildAllAntwebList).
+     */
+    public static int recordWhereOnce(Connection connection, String listType, String where, String job, String reason, String sourceSql) throws SQLException {
+        return insert(connection, scriptSql(listType, job, reason, where, sourceSql) + " and " + notRecordedYet(listType, job, reason, sourceSql));
     }
 
     /** SQL condition on the list row (alias l) for recordWhereOnce: a curator's row, or its removal is not the newest record. */
     static String notRecordedYet(String listType, String job, String reason) {
+        return notRecordedYet(listType, job, reason, null);
+    }
+
+    /** The same, with the row's source as SQL when it is not the row's own (null: l.source). */
+    static String notRecordedYet(String listType, String job, String reason, String sourceSql) {
+        String rowSource = sourceSql == null ? "l.source" : sourceSql;
         StringBuilder curators = new StringBuilder();
         for (String source : CuratorTaxonSetDb.CURATOR_SOURCES) {
             curators.append(curators.length() == 0 ? "" : ", ").append("'").append(source).append("', 'proxy").append(source).append("'");
         }
         String same = "concat_ws('|', " + org.calacademy.antweb.util.DBUtil.sqlLiteral(clip(job, 80)) + ", "
-            + "coalesce(" + org.calacademy.antweb.util.DBUtil.sqlLiteral(clip(reason, 255)) + ", ''), coalesce(l.source, ''), '')";
+            + "coalesce(" + org.calacademy.antweb.util.DBUtil.sqlLiteral(clip(reason, 255)) + ", ''), coalesce(" + rowSource + ", ''), '')";
         String newest = "(select concat_ws('|', coalesce(r.removed_by_job, ''), coalesce(r.reason, ''), coalesce(r.source, ''), coalesce(r.removed_by_login, ''))"
             + " from " + TABLE + " r where r.list_type = '" + listType + "' and r.list_key = l." + keyColumn(listType) + " and r.taxon_name = l.taxon_name"
             + " order by r.removed_at desc, r.id desc limit 1)";
-        return "(l.source in (" + curators + ") or coalesce(" + newest + ", '#none') <> " + same + ")";
+        return "(" + rowSource + " in (" + curators + ") or coalesce(" + newest + ", '#none') <> " + same + ")";
     }
 
     /** One removal by a curator or a job. */
