@@ -922,6 +922,16 @@ def test_ants_only_is_the_default_and_the_answer_says_so():
         # a record of another family asked for by its code is not there, and the total says 0
         r = get("/v4/specimens?specimenCode=mxbeetle01")
         assert codes_of(r) == [] and r.get_json()["metaData"]["total"] == 0, r.get_json()["metaData"]
+        # and the answer says why, and how to see it (2026-11-13)
+        assert r.get_json()["metaData"]["familiesNote"] == ("Specimen mxbeetle01 is in family Curculionidae, not an"
+            " ant. Answers made from specimen records hold ants only unless you add allFamilies=true."), r.get_json()["metaData"]
+        # no note for an ant, for a code that is in no record, or with allFamilies=true
+        assert "familiesNote" not in get("/v4/specimens?specimenCode=mxant01").get_json()["metaData"]
+        assert "familiesNote" not in get("/v4/specimens?specimenCode=nosuchcode").get_json()["metaData"]
+        assert "familiesNote" not in get("/v4/specimens?specimenCode=mxbeetle01&allFamilies=true").get_json()["metaData"]
+        # with another filter, that filter may be why it is empty: no note (review of #353)
+        assert "familiesNote" not in get("/v4/specimens?specimenCode=mxbeetle01&country=Madagascar").get_json()["metaData"]
+        assert "familiesNote" not in get("/v4/specimens?specimenCode=mxbeetle01&specimenCode=mxant01").get_json()["metaData"]
         # the same on every page: by afterCode and by offset the set is the ants, each once
         got, pages = walk_after(MEXICO, 1)
         assert got == ANTS and pages == 4, (got, pages)
@@ -1208,6 +1218,147 @@ def test_documentation_names_total_and_after_code():
     v4 = jsp[jsp.index('id="v4"'):]
     v4 = v4[:v4.index("</ul>")]
     assert "<code>metaData.total</code>" in v4 and "<code>afterCode</code>" in v4, "the Version 4 list names both"
+
+
+# --- a count that takes too long (2026-11-13) ---------------------------------------------------------------------
+
+class _TimeExceeded(Exception):
+    def __init__(self):
+        super().__init__("maximum statement execution time exceeded")
+        self.orig = Exception(api_v4.MYSQL_TIME_EXCEEDED, "Query execution was interrupted")
+
+
+class _FakeSession:
+    """Enough of a session for count_within(): runs nothing, raises the given error, records a rollback."""
+    def __init__(self, raise_on_count):
+        self.rolled_back, self.raise_on_count, self.statements = False, raise_on_count, []
+
+    def execute(self, stmt):
+        self.statements.append(stmt)
+        if self.raise_on_count:
+            raise self.raise_on_count
+        return type("R", (), {"scalar": lambda _s: 7})()
+
+    def rollback(self):
+        self.rolled_back = True
+
+
+def test_the_count_limit_is_a_hint_on_the_count_statement_only():
+    """Review of #353: a session setting could stay on a pooled connection after a timeout and cut a later request.
+    The limit is MySQL's optimizer hint on the one count statement, at its top level (MySQL ignores it in a
+    subquery); the statement of a distinct list counts the list as a subquery."""
+    from sqlalchemy.dialects import mysql
+    q = api.session.query(api.Specimen).filter(api.Specimen.country == "Madagascar")
+    sql = str(api_v4.count_statement(q, api.Specimen.code, 3000).compile(dialect=mysql.dialect()))
+    assert sql.startswith("SELECT /*+ MAX_EXECUTION_TIME(3000) */ count("), sql
+    sql = str(api_v4.count_statement(q, None, 20000).compile(dialect=mysql.dialect()))
+    assert sql.startswith("SELECT /*+ MAX_EXECUTION_TIME(20000) */ count(*)") and "FROM (SELECT" in sql, sql
+    # no limit of its own (total=true with a key): no hint
+    assert "MAX_EXECUTION_TIME" not in str(api_v4.count_statement(q, api.Specimen.code, None).compile(dialect=mysql.dialect()))
+    # SQLite (and any other dialect) never sees the hint
+    assert "MAX_EXECUTION_TIME" not in str(api_v4.count_statement(q, api.Specimen.code, 3000).compile(dialect=api.session.get_bind().dialect))
+    api.session.remove()
+    assert "SET SESSION max_execution_time" not in open(api_v4.__file__, encoding="utf-8").read()
+
+
+def test_count_within_turns_only_the_time_limit_into_no_total():
+    class Counted:
+        def __init__(self, session):
+            self.session = session
+
+    stmt = object()
+    real = api_v4.count_statement
+    api_v4.count_statement = lambda counted, key, ms: stmt
+    try:
+        s = _FakeSession(None)
+        assert api_v4.count_within(Counted(s), "k", 3000) == 7 and s.statements == [stmt]
+        s = _FakeSession(_TimeExceeded())
+        assert api_v4.count_within(Counted(s), None, 20000) is None and s.rolled_back
+        # the other ways MySQL reports the limit, by stage: the same
+        for code in (1317, 1028):
+            e = _TimeExceeded()
+            e.orig = Exception(code, "Query execution was interrupted, maximum statement execution time exceeded")
+            assert api_v4.count_within(Counted(_FakeSession(e)), None, 3000) is None
+            # the same codes for KILL QUERY or a shutdown: passed on (review of #353)
+            e = _TimeExceeded()
+            e.orig = Exception(code, "Query execution was interrupted")
+            try:
+                api_v4.count_within(Counted(_FakeSession(e)), None, 3000)
+                raise AssertionError("an interruption that is not the limit was reported as no total")
+            except _TimeExceeded:
+                pass
+        # total=true with a key (no limit of its own): the database's 90 s limit is not "took too long" (review of #353)
+        try:
+            api_v4.count_within(Counted(_FakeSession(_TimeExceeded())), None, None)
+            raise AssertionError("a timeout without a limit of our own was reported as no total")
+        except _TimeExceeded:
+            pass
+        # an error with no arguments is passed on as it is
+        e = _TimeExceeded()
+        e.orig = Exception()
+        try:
+            api_v4.count_within(Counted(_FakeSession(e)), None, 3000)
+            raise AssertionError("swallowed")
+        except _TimeExceeded:
+            pass
+        s = _FakeSession(ValueError("other"))
+        try:
+            api_v4.count_within(Counted(s), None, 3000)
+            raise AssertionError("the error was swallowed")
+        except ValueError:
+            pass
+        assert not s.rolled_back
+    finally:
+        api_v4.count_statement = real
+    assert api_v4.COUNT_MS[False] < api_v4.COUNT_MS[True]
+
+
+def test_a_count_that_takes_too_long_gives_the_records_without_a_total():
+    """A filter that matches nearly every record passes the no-filter rule and was counted on every first page. When
+    the count takes longer than COUNT_MS the page comes without a total and says how to go on; with a key the limit
+    is longer and the text does not offer a key."""
+    real = api_v4.count_within
+    seen = []
+
+    def too_long(counted, key, ms):
+        seen.append(ms)
+        return None
+    api_v4.count_within = too_long
+    try:
+        fresh_usage()
+        with opened():
+            r = get(MADAGASCAR + "&limit=5", key=None)
+            m = r.get_json()["metaData"]
+            assert "total" not in m and m["returned"] == 5 and m["complete"] is False and m["nextAfterCode"], m
+            assert m["totalNotGiven"].startswith("No total is given: counting the records that match these filters"
+                                                 " took longer than 3 seconds."), m
+            assert "apiKey.do" in m["totalNotGiven"]
+            assert "go on with afterCode" in m["totalNotGiven"], m
+            # a route without afterCode (/taxa, the distinct lists) is told offset (review of #353)
+            assert api_v4.TOTAL_TOO_LONG_NEXT == {True: "afterCode", False: "offset"}
+            assert "{next}" in api_v4.TOTAL_TOO_LONG and "afterCode" not in api_v4.TOTAL_TOO_LONG
+            assert r.headers[api_v4.TOTAL_NOT_GIVEN_HEADER] == "the count took too long"
+            m = meta(MADAGASCAR + "&limit=5")
+            assert "took longer than 20 seconds" in m["totalNotGiven"] and "apiKey.do" not in m["totalNotGiven"] and "Add total=true" in m["totalNotGiven"], m
+            assert seen == [api_v4.COUNT_MS[False], api_v4.COUNT_MS[True]], seen
+            # total=true with a key: counted to the end, no limit of its own
+            meta(MADAGASCAR + "&limit=5&total=true")
+            assert seen[-1] is None, seen
+            # a later page whose count took too long: no total, even when it is the last page (review of #353:
+            # its records are not all of them)
+            first = meta(MADAGASCAR + "&limit=5", key=None)
+            last = sorted(ALL)[-3]
+            m = meta(MADAGASCAR + "&limit=500&total=true&afterCode=" + last, key=None)
+            assert m["complete"] is True and "total" not in m and "took longer" in m["totalNotGiven"], m
+            assert first["nextAfterCode"], first
+            # a first page that holds every record: their number is the total, no count needed
+            m = meta(MADAGASCAR + "&limit=500")
+            assert m["total"] == N and "totalNotGiven" not in m, m
+            # walking on by afterCode still gives every record once
+            got, _pages = walk_after(MADAGASCAR, 7)
+            assert got == ALL, got
+    finally:
+        api_v4.count_within = real
 
 
 if __name__ == "__main__":
