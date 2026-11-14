@@ -90,7 +90,9 @@ PAGING = {
     'total': 'metaData.total is the number of records that match the filters, whatever limit is. It is given on the'
              ' first page (no offset, no afterCode) and on any page with total=true; total=false leaves it out.'
              ' A /v4/specimens request without any filter gets no total unless it says total=true (counting every'
-             ' specimen record takes long); metaData.totalNotGiven then says so. total=true without a filter needs an API key.',
+             ' specimen record takes long); metaData.totalNotGiven then says so. total=true without a filter needs an API key.'
+             ' A count that takes longer than 3 seconds (20 with a key) is not given either; metaData.totalNotGiven'
+             ' says so, and the records are complete page by page. total=true with a key is always counted to the end.',
     'returned': 'metaData.returned is the number of records in this answer.',
     'complete': 'metaData.complete is true when this answer reaches the end of the set.',
     'afterCode': 'On /v4/specimens and /v4/geoSpecimens, afterCode=<specimen code> gives the records after that code'
@@ -139,7 +141,8 @@ FAMILIES = {
     'allFamilies': 'allFamilies=true gives the records of every family.',
     'family': 'On /v4/specimens, family=<name> gives the records of that one family (family=vespidae).',
     'metaData': 'metaData.families says which was used: antsOnly, allFamilies or family. With ndjson=true it is in'
-                ' the header X-AntWeb-Families.',
+                ' the header X-AntWeb-Families. An empty /v4/specimens answer for specimenCode=<a specimen of another family> says'
+                ' so in metaData.familiesNote.',
     'otherRoutes': 'The other routes have no family rule: /v4/images and /v4/taxaImages give images by specimen code'
                    ' or name, and the taxon, geolocale and bioregion routes give names and lists, not specimen'
                    ' records.',
@@ -161,6 +164,16 @@ NOT_FILTERS = frozenset(('limit', 'offset', 'afterCode', 'total', 'ndjson', 'all
 TOTAL_NOT_GIVEN = ('No total is given for a request without a filter: counting every specimen record takes long.'
                    ' Add total=true to get it, or add a filter (for example country=Madagascar).')
 TOTAL_NOT_GIVEN_HEADER = 'X-AntWeb-Total-Not-Given'
+# A count may take this long (MySQL max_execution_time, for the count only; the records are read as before), 2026-11-13:
+# a filter that matches nearly every record (status=valid, georeferenced=true) passes without_filter() and was
+# counted on every first page, a read of the whole view by anyone without a key. Longer with a key.
+COUNT_MS = {False: 3000, True: 20000}    # total=true with a key: no limit of its own (count_within)
+TOTAL_TOO_LONG = ('No total is given: counting the records that match these filters took longer than {s} seconds.'
+                  ' The records are complete page by page: go on with {next} until metaData.complete is true.{key}')
+# how to go on, by route (review of #353): afterCode where the route takes it, offset elsewhere (/taxa, distinct lists)
+TOTAL_TOO_LONG_NEXT = {True: 'afterCode', False: 'offset'}
+TOTAL_TOO_LONG_KEY = ' With an API key a count may take longer (X-API-Key header; free keys: {url}/apiKey.do).'
+TOTAL_TOO_LONG_HAS_KEY = ' Add total=true to have the records counted to the end.'
 
 BOTH_PAGINGS_MESSAGE = ('Use afterCode or offset, not both. afterCode=<the last specimen code you received> gives the'
                         ' records after it; offset=<n> leaves out the first n records.')
@@ -464,6 +477,7 @@ def run(name, endpoint, admission, has_key, limits):
         g.apiV4Filters = filters
         g.apiV4Families = families      # read by ants_only() inside the route
         g.apiV4NoFilter = no_filter     # read by rows(): no total unless total=true
+        g.apiV4HasKey = has_key         # read by rows(): how long a count may take (COUNT_MS)
         inner_response = api.application.full_dispatch_request()
         found = getattr(g, 'apiV4Paging', None)     # set by rows() for the list routes
         body = inner_response.get_data()
@@ -500,6 +514,7 @@ def run(name, endpoint, admission, has_key, limits):
             if SPECIMEN_LISTS.get(name) == key:
                 add_locality_codes(name, obj[key])
         notice = limit_notice(has_key, limits, admission, count, by_code)
+        note = other_family_note(endpoint, families, count)    # once, whatever the metaData key
         for meta in ('metaData', '_metaData'):
             if isinstance(obj.get(meta), dict):
                 obj[meta]['parameters'] = [request.args.to_dict()]
@@ -513,6 +528,8 @@ def run(name, endpoint, admission, has_key, limits):
                     obj[meta].update(paging)
                 if families:
                     obj[meta]['families'] = families
+                if note:
+                    obj[meta]['familiesNote'] = note
         response = app.json.response(obj)
     notice = limit_notice(has_key, limits, admission, count, by_code)
     if notice:
@@ -531,7 +548,8 @@ def run(name, endpoint, admission, has_key, limits):
     if families:
         response.headers[FAMILIES_HEADER] = families
     if paging and paging.get('totalNotGiven'):
-        response.headers[TOTAL_NOT_GIVEN_HEADER] = 'add total=true'
+        response.headers[TOTAL_NOT_GIVEN_HEADER] = ('add total=true' if paging['totalNotGiven'] == TOTAL_NOT_GIVEN
+                                                    else 'the count took too long')
     return response, count
 
 
@@ -618,6 +636,33 @@ def ndjson_records(body):
     return records
 
 
+def other_family_note(endpoint, families, count):
+    """metaData.familiesNote (2026-11-13): an answer for one specimenCode= that is empty because the specimen is not
+    an ant says so, and how to see it (allFamilies=true); without the note an empty answer reads as "no such
+    specimen". None in every other case: records were given, the answer was not ants only, no specimenCode= was
+    sent, the code is in no specimen record, or the specimen is an ant (another filter left it out)."""
+    codes = request.args.getlist('specimenCode')
+    code = codes[0] if len(codes) == 1 else ''      # one code only: the one v3.1 filtered by
+    if count or families != ANTS_ONLY or endpoint != 'getSpecimen' or not code or code == '*':
+        return None
+    # only the code itself: with another filter, that filter may be why the answer is empty (review of #353)
+    for k, values in request.args.lists():
+        if k not in NOT_FILTERS and k != 'specimenCode' and any(v.strip() not in ('', '*') for v in values):
+            return None
+    try:
+        # the one definition of an ant (ANTS), so the note and the filter cannot disagree
+        # the view the answer comes from (it joins the taxon table, so a record without a taxon row is in no answer
+        # and gets no note: allFamilies=true would not bring it either; review of #353)
+        row = api.session.execute(text('select family, ' + ANTS.format(s='v') + ' from api3_1_specimen v where specimen_code = :c'),
+                                  {'c': code}).first()
+    finally:
+        api.session.remove()
+    if row is None or row[1] or not (row[0] or '').strip():
+        return None
+    return ('Specimen %s is in family %s, not an ant. Answers made from specimen records hold ants only unless you'
+            ' add allFamilies=true.' % (code, row[0].strip().capitalize()))
+
+
 def add_locality_codes(name, records):
     """localityCode for each specimen record (the api3_1_specimen view has no locality code; the specimen table has)."""
     if SPECIMEN_LISTS.get(name) is None:
@@ -670,10 +715,16 @@ def rows(query, limit, offset, key=None, after_code=False):
     no_filter = bool(getattr(g, 'apiV4NoFilter', False))
     if wanted == 'true' or (wanted != 'false' and first_page and not no_filter):
         counted = unlimited.order_by(None)
-        if key is not None:
-            paging['total'] = counted.with_entities(func.count(key)).scalar()
+        has_key = bool(getattr(g, 'apiV4HasKey', False))
+        # total=true asked for with a key: counted to the end (no limit of its own); otherwise COUNT_MS
+        ms = None if (has_key and wanted == 'true') else COUNT_MS[has_key]
+        total = count_within(counted, key, ms)
+        if total is None:
+            paging['totalNotGiven'] = TOTAL_TOO_LONG.format(
+                next=TOTAL_TOO_LONG_NEXT[bool(after_code)], s=COUNT_MS[has_key] // 1000,
+                key=TOTAL_TOO_LONG_HAS_KEY if has_key else TOTAL_TOO_LONG_KEY.format(url=PUBLIC_URL.rsplit('/v4', 1)[0]))
         else:
-            paging['total'] = counted.count()
+            paging['total'] = total
     elif wanted != 'false' and first_page and no_filter:
         paging['totalNotGiven'] = TOTAL_NOT_GIVEN
     if after:
@@ -681,14 +732,55 @@ def rows(query, limit, offset, key=None, after_code=False):
     found = unlimited.limit(limit + 1).offset(offset).all()
     paging['complete'] = len(found) <= limit
     found = found[:limit]
-    if paging.get('totalNotGiven') and paging['complete']:
-        # the first page holds every record: their number is the total, and it cost no count
+    if paging.get('totalNotGiven') and paging['complete'] and first_page:
+        # the first page holds every record: their number is the total, and it cost no count (the first page only:
+        # a count that took too long can be on a later page, whose records are not all of them; review of #353)
         del paging['totalNotGiven']
         paging['total'] = len(found)
     if after_code and found:
         paging['lastCode'] = getattr(found[-1], key.key)
     g.apiV4Paging = paging
     return found
+
+
+MYSQL_TIME_EXCEEDED = 3024     # ER_QUERY_TIMEOUT: maximum statement execution time exceeded
+# how MySQL may report a statement stopped by MAX_EXECUTION_TIME, depending on the stage it was in: 3024, 1317
+# (ER_QUERY_INTERRUPTED), 1028 (ER_FILSORT_ABORT, "Sort aborted: ... maximum statement execution time exceeded")
+MYSQL_TIME_LIMIT_CODES = (MYSQL_TIME_EXCEEDED, 1317, 1028)
+
+
+def count_statement(counted, key, ms):
+    """The SELECT that counts `counted`: count(key), or count(*) of it as a subquery when there is no key (the distinct
+    lists). With `ms`, MySQL's optimizer hint MAX_EXECUTION_TIME(ms) on that one statement (top level, where MySQL
+    honours it). A hint, not a session setting (review of #353): nothing stays behind on the pooled connection for the
+    next request, whatever happens to this one."""
+    if key is not None:
+        stmt = counted.with_entities(func.count(key)).statement
+    else:
+        stmt = select(func.count()).select_from(counted.statement.subquery())
+    if ms:
+        stmt = stmt.prefix_with('/*+ MAX_EXECUTION_TIME(%d) */' % int(ms), dialect='mysql')
+    return stmt
+
+
+def count_within(counted, key, ms):
+    """The count of `counted` (rows()), or None when MySQL stopped it after `ms` milliseconds (error 3024). ms None:
+    no limit of its own (the database's for every API read): then nothing is caught, as before this limit (a count
+    that fails answers HTTP 500, it is not reported as "took too long"). Any other error is passed on. SQLite (the
+    unit tests) ignores the MySQL-only hint."""
+    session = counted.session
+    try:
+        return session.execute(count_statement(counted, key, ms)).scalar()
+    except Exception as e:      # noqa: BLE001 -- only the time limit of this count is turned into "no total"
+        args = getattr(getattr(e, 'orig', None), 'args', None) or [None]
+        # 3024 is only ever the time limit; 1317 and 1028 also mean KILL QUERY or a shutdown, so only with the
+        # limit's own words (review of #353)
+        limit_hit = args[0] == MYSQL_TIME_EXCEEDED or (
+            args[0] in MYSQL_TIME_LIMIT_CODES and 'maximum statement execution time' in str(args[1:]).lower())
+        if ms is None or not limit_hit:
+            raise
+        session.rollback()
+        return None
 
 
 def ants_only(query, specimen):

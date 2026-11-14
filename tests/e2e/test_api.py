@@ -355,6 +355,8 @@ def test_v4_specimens_are_ants_only_unless_asked():
     code = other["specimenCode"]
     body = v4(f"specimenCode={code}")
     assert body["specimens"] == [] and body["metaData"]["total"] == 0, f"{code} ({family}) is in an ants-only answer"
+    note = body["metaData"].get("familiesNote") or ""
+    assert note.startswith(f"Specimen {code} is in family {family.capitalize()}, not an ant.") and "allFamilies=true" in note, body["metaData"]
     body = v4(f"specimenCode={code}&allFamilies=true")
     assert [s["specimenCode"] for s in body["specimens"]] == [code] and body["metaData"]["families"] == "allFamilies", body["metaData"]
 
@@ -491,6 +493,33 @@ def test_llms_txt_and_the_terms_on_the_api_page():
     assert "since 2002" in r.text and "CC BY 4.0" in r.text, "the terms Brian approved (2026-11-08)"
     j = new_session().get(BASE_URL + "/v3.1/", timeout=max(TIMEOUT, 120)).json()
     assert j["terms"].endswith("/api.do#terms") and j["guideForPrograms"].endswith("/llms.txt"), j
+
+
+def test_v4_a_weak_filter_answers_within_the_count_limit():
+    """A filter that matches nearly every record (status=valid) passes the no-filter rule, so its first page is
+    counted: the count may take 20 seconds with a key (api_v4.COUNT_MS, 2026-11-13), after which the page comes
+    without a total. Either way the answer is there well within a minute, with its records, and says which."""
+    if IS_PRODUCTION:
+        pytest.skip("the test key is a staging key")
+    if not api_test_key():
+        pytest.skip(f"{API_KEY_ENV} is not set: v4 cannot be asked")
+    import time
+    import requests
+    headers = {API_KEY_HEADER: api_test_key(), "User-Agent": new_session().headers["User-Agent"]}
+    start = time.monotonic()
+    r = requests.get(BASE_URL + "/v4/specimens?status=valid&limit=2", timeout=max(TIMEOUT, 120), headers=headers,
+                     allow_redirects=False)
+    took = time.monotonic() - start
+    if r.status_code == 401:
+        pytest.skip("the server refused the test key: make a new one with tools/api/create-test-key.py")
+    assert r.status_code == 200, (r.status_code, r.text[:200])
+    m = r.json()["metaData"]
+    assert len(r.json()["specimens"]) == 2 and m["complete"] is False and m.get("nextAfterCode"), m
+    assert ("total" in m) != ("totalNotGiven" in m), m
+    if "totalNotGiven" in m:
+        assert "took longer than 20 seconds" in m["totalNotGiven"], m
+        assert r.headers.get("X-AntWeb-Total-Not-Given") == "the count took too long", dict(r.headers)
+    assert took < 50, f"{took:.0f} s"
 
 
 def test_v4_front_door_and_refusals():

@@ -92,9 +92,12 @@ Numbers are the order in which things happen for `upload.do?action=specimenUploa
      `removeGenusRowsWithoutSpeciesOrSpecimen`, before the list is counted. Until then the rebuild put a genus
      without species or specimens on the list and the daily clean-up took it off, so the list's Genera moved by one
      between an upload and the next daily update. A red-flagged specimen keeps no genus on the list. A genus that
-     was on the list before the rebuild and is off it afterwards is recorded in `list_removal_log`, once. The
-     rebuild runs on the upload's own connection, in its one transaction (`SpecimenUploadJob`: one commit at the
-     end). An error in the rule that leaves the transaction intact is logged and the list stays as built; a
+     was on the list before the rebuild and is off it afterwards is recorded in `list_removal_log`, once, with the
+     source its row had before the rebuild. The record first: a genus whose record cannot be written (a lock wait
+     timeout on `list_removal_log`, for example) is not taken off the list, nor the genera after it; logged, the
+     upload goes on, and the daily clean-up applies the rule to them (Brian Fisher, 2026-11-03: no job deletes list
+     entries without a record a curator can see). The rebuild runs on the upload's own connection, in its one
+     transaction (`SpecimenUploadJob`: one commit at the end). An error in the rule that leaves the transaction intact is logged and the list stays as built; a
      deadlock, after which the database has rolled back the whole upload, is passed on, so the upload fails with
      "No changes made" instead of committing nothing and reporting success, `DBUtil.transactionRolledBack`,
      2026-11-12);
