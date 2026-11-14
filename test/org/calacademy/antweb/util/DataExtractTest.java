@@ -856,6 +856,13 @@ public class DataExtractTest extends TestCase {
         assertTrue(quotedCut.getBytes(StandardCharsets.UTF_8).length < 60000);
         assertTrue(quotedCut, quotedCut.contains("The text is longer; all of it is in manifest.txt."));
         assertEquals("a short text is shown whole, escaped", "a &lt;b&gt;\n", DataExtractJob.fitText("a <b>\n", 100));
+        // review of #355: a cut text whose escaped form has more characters than the whole raw text still says it is cut
+        StringBuilder wide = new StringBuilder();
+        for (int i = 0; i < 4000; i++) wide.append("\u00e9\u00e9\u00e9\u00e9\n");
+        String wideHtml = DataExtractJob.resultHtml(57, new DataExtract.Result(manifest(), wide.toString(), true, 1, Arrays.asList("manifest.txt")), "", "https://x.org");
+        assertTrue(DataExtractJob.fitEnd(wide.toString(), DataExtractJob.MAX_TEXT_SHOWN) < wide.length());
+        assertTrue(wideHtml, wideHtml.contains("The text is longer; all of it is in manifest.txt."));
+        assertEquals(wide.length(), DataExtractJob.fitEnd(wide.toString(), Integer.MAX_VALUE));
     }
 
     public void testTheFormKeepsAndEscapesWhatWasTyped() {

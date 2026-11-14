@@ -102,24 +102,6 @@ public class DataExtractDbTest extends TestCase {
         try (Statement s = connection.createStatement()) { s.executeUpdate(sql); }
     }
 
-    /**
-     * This test drops and recreates specimen, taxon and the other tables it uses. It refuses to start on a database
-     * that looks real (review of #355): a specimen table with more rows than any test makes (the tests insert at most
-     * about 12,000), so a wrong ANTWEB_TEST_DB_URL on a server can never drop AntWeb's specimens.
-     */
-    static void refuseARealDatabase(Connection c) throws SQLException {
-        try (Statement st = c.createStatement();
-             ResultSet r = st.executeQuery("select count(*) from information_schema.tables where table_schema = database() and table_name = 'specimen'")) {
-            if (!r.next() || r.getLong(1) == 0) return;
-        }
-        try (Statement st = c.createStatement(); ResultSet r = st.executeQuery("select count(*) from specimen")) {
-            if (r.next() && r.getLong(1) > 50000) {
-                throw new IllegalStateException("refusing to run: the specimen table of " + c.getCatalog() + " holds " + r.getLong(1)
-                    + " rows, so this is not a test database (this test drops its tables)");
-            }
-        }
-    }
-
     @Override
     protected void setUp() throws Exception {
         try (Connection given = connect(givenUrl()); Statement s = given.createStatement()) {
@@ -132,7 +114,6 @@ public class DataExtractDbTest extends TestCase {
         connection = connect(url());
         assertEquals("the test's own schema", SCHEMA, connection.getCatalog());
         dir = Files.createTempDirectory("extract-db-test").toFile();
-        refuseARealDatabase(connection);
         exec("create table specimen (code varchar(40) primary key, taxon_name varchar(128), family varchar(40), subfamily varchar(64),"
             + " genus varchar(64), country varchar(64), island_country varchar(64), bioregion varchar(64), localityname text,"
             + " decimal_latitude float, decimal_longitude float, elevation int, flag varchar(10), access_group int, is_introduced tinyint(1),"

@@ -224,9 +224,9 @@ public final class DataExtractJob {
         }
         if (note != null && !note.isEmpty()) h.append("<p id=\"extract-note\">Note: ").append(Html.esc(note)).append("</p>");
         String text = result.text;
-        String shown = fitText(text, MAX_TEXT_SHOWN);
-        boolean cut = shown.length() < text.length();
-        h.append("<pre id=\"extract-manifest\" style=\"white-space:pre-wrap\">").append(shown).append("</pre>");
+        int end = fitEnd(text, MAX_TEXT_SHOWN);
+        boolean cut = end < text.length();      // by where the cut is, not by lengths (the shown text is escaped)
+        h.append("<pre id=\"extract-manifest\" style=\"white-space:pre-wrap\">").append(Html.esc(text.substring(0, end))).append("</pre>");
         if (cut) h.append("<p class=\"aw-note\">The text is longer; all of it is in manifest.txt.</p>");
         h.append("<h3>Files</h3><ul class=\"aw-links\" id=\"extract-files\">").append(downloadLinks(jobId, result.files, result.verified, domainApp)).append("</ul>");
         h.append("<p class=\"aw-note\">The files stay on the server for ").append(DataExtractFiles.KEEP_DAYS)
@@ -236,20 +236,22 @@ public final class DataExtractJob {
 
     /** The whole lines of the text, escaped, as many as fit in maxBytes of UTF-8. */
     public static String fitText(String text, int maxBytes) {
-        StringBuilder out = new StringBuilder();
+        return Html.esc(text.substring(0, fitEnd(text, maxBytes)));
+    }
+
+    /** Where the text is cut: the end of the last whole line whose escaped UTF-8 still fits in maxBytes (text.length() when all fits). */
+    public static int fitEnd(String text, int maxBytes) {
         int bytes = 0;
         int from = 0;
         while (from < text.length()) {
             int nl = text.indexOf('\n', from);
             int end = nl < 0 ? text.length() : nl + 1;
-            String line = Html.esc(text.substring(from, end));
-            int size = line.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+            int size = Html.esc(text.substring(from, end)).getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
             if (bytes + size > maxBytes) break;
-            out.append(line);
             bytes += size;
             from = end;
         }
-        return from < text.length() ? out.toString() : Html.esc(text);
+        return from;
     }
 
     private static String join(List<Object> values) {
