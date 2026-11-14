@@ -124,7 +124,7 @@
             + " " + Html.esc(imagesFromNote) + " with label images only " + (placeImaged == 0 ? (placeLabelOnly == 1 ? "comes first" : "come first") : (placeLabelOnly == 1 ? "follows" : "follow"))
             + ", marked \"Label only\".";
         if (placeImaged == 0) { %>
-    <p class="images_place_note" data-place-imaged="0" data-place-label-only="<%= placeLabelOnly %>"><b>No specimens <%= Html.esc(imagesFromNote) %> are imaged yet.</b><%= labelOnlyNote %> The images below are of specimens collected elsewhere, to help identification.</p>
+    <p class="images_place_note" data-place-imaged="0" data-place-label-only="<%= placeLabelOnly %>"><b>No specimens <%= Html.esc(imagesFromNote) %> are imaged yet.</b><%= labelOnlyNote %> The <%= placeLabelOnly > 0 ? "other " : "" %>images below are of specimens collected elsewhere, to help identification.</p>
      <% } else { %>
     <p class="images_place_note" data-place-imaged="<%= placeImaged %>" data-place-label-only="<%= placeLabelOnly %>">Images of this <%= Html.esc(taxon.getRank()) %> from anywhere in AntWeb, to help identification. The <%= placeImaged %> imaged specimen<%= placeImaged == 1 ? "" : "s" %> <%= Html.esc(imagesFromNote) %> come first, marked "<%= Html.esc(imagesFromNote) %>".<%= labelOnlyNote %></p>
      <% }
