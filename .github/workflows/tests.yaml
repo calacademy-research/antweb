@@ -878,6 +878,9 @@ jobs:
       - name: Image counts of images.do All view and recent images (B46, B47; tests/unit/test_image_count_fixes.py)
         run: python3 tests/unit/test_image_count_fixes.py
 
+      - name: The AntCat import reads the status through Status.fromAntcat (AntCat #1617; tests/unit/test_antcat_status_import.py)
+        run: python3 tests/unit/test_antcat_status_import.py
+
       - name: Count check rules and rotation, curator tool fixes, SQL values quoted in the database classes (tests/unit/test_admin_data_fixes.py)
         run: python3 tests/unit/test_admin_data_fixes.py
 
