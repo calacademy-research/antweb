@@ -149,8 +149,9 @@ public final class DataExtractAction extends AntwebAction {
     static DataExtract.Request check(Connection connection, String countriesText, List<String> picked,
                                      boolean allFamilies, boolean noCountry,
                                      String bioregion, String note) throws SQLException, DataExtract.BadRequest {
-        Set<String> names = new LinkedHashSet<>(DataExtract.parseCountries(countriesText));
-        names.addAll(DataExtract.parseCountries(String.join("\n", picked)));
+        // typed: separated by commas, a country whose name holds a comma taken whole; picked: each name whole
+        Set<String> names = new LinkedHashSet<>(DataExtract.parseCountries(countriesText, DataExtract.commaCountryNames(connection)));
+        for (String p : picked) names.add(DataExtract.placeName(p));
         if (names.size() > MAX_COUNTRIES) throw new DataExtract.BadRequest("Too many countries (at most " + MAX_COUNTRIES + ").");
         if (note != null && note.length() > DataExtractJob.MAX_NOTE) {
             throw new DataExtract.BadRequest("The note is too long (at most " + DataExtractJob.MAX_NOTE + " characters).");

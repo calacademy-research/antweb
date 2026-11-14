@@ -797,7 +797,20 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
     /** getValidAdm1 on a given map (key: adm1 name, country name); the tests call it without a database. */
     public static @Nullable Adm1 validAdm1(MultiKeyMap<String, Adm1> adm1s, String adm1, String country) {
         if (adm1s == null) return null;
+        Adm1 exact = validAdm1Exact(adm1s, adm1, country);
+        if (exact != null) return exact;
+        // 2026-11-14: a transliterated name may end in an apostrophe (the Russian soft sign: "Amurskaya Oblast'" in the
+        // CAS TaxonWorks upload). Until #351 the upload cut a final apostrophe off every value, so such a name met
+        // AntWeb's old name "Amurskaya Oblast" (valid: Amur); since #351 it was reported as "Not valid Antweb adm1"
+        // (11-14: 17 CAS specimens, 7 Russian oblasts). The name as written first (Yemen's valid "Şan'ā'" keeps its
+        // apostrophe); only when that is not known, the name without its final apostrophe.
+        if (adm1 != null && adm1.length() > 1 && adm1.endsWith("'")) {
+            return validAdm1Exact(adm1s, adm1.substring(0, adm1.length() - 1), country);
+        }
+        return null;
+    }
 
+    private static @Nullable Adm1 validAdm1Exact(MultiKeyMap<String, Adm1> adm1s, String adm1, String country) {
         Adm1 matching_adm1 = adm1s.get(adm1, country);
 
         if (matching_adm1 == null) {

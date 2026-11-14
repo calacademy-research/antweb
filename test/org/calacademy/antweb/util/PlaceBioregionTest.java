@@ -73,6 +73,12 @@ public class PlaceBioregionTest extends TestCase {
         adm1("California", "United States", true, "", "Nearctic", "");
         adm1("Ontario", "Canada", true, "", "", "");
         adm1("Old Canadian Name", "Canada", false, "", "Oceania", "");
+        // 2026-11-14: AntWeb's valid Russian states have the map's short names; the old names lead to them
+        adm1("Amur", "Russia", true, "", "Palearctic", "");
+        adm1("Amurskaya Oblast", "Russia", false, "Amur", "", "");
+        adm1("Arkhangel'", "Russia", true, "", "Palearctic", "");
+        adm1("Şan'ā'", "Yemen", true, "", "Afrotropical", "");
+        adm1("Şan'ā", "Yemen", false, "", "", "");
     }
 
     private String bioregion(String country, String adm1) {
@@ -162,5 +168,27 @@ public class PlaceBioregionTest extends TestCase {
         assertNull(GeolocaleMgr.validAdm1(adm1s, "Chihuahua", "Canada"));
         assertNull(GeolocaleMgr.validAdm1(adm1s, null, "Mexico"));
         assertNull(GeolocaleMgr.validAdm1(null, "Chihuahua", "Mexico"));
+    }
+
+    /**
+     * 2026-11-14: a name that ends in an apostrophe AntWeb does not know is looked up without it (the CAS upload sends
+     * "Amurskaya Oblast'": the old name "Amurskaya Oblast" leads to Amur); the name as written always comes first.
+     */
+    public void testAFinalApostropheIsDroppedOnlyWhenTheNameIsNotKnown() {
+        Adm1 amur = adm1s.get("Amur", "Russia");
+        assertSame(amur, GeolocaleMgr.validAdm1(adm1s, "Amurskaya Oblast'", "Russia"));
+        assertSame(amur, GeolocaleMgr.validAdm1(adm1s, "Amurskaya Oblast", "Russia"));
+        assertSame(amur, GeolocaleMgr.validAdm1(adm1s, "Amur'", "Russia"));
+        // a valid name that ends in an apostrophe is found as written
+        assertSame(adm1s.get("Arkhangel'", "Russia"), GeolocaleMgr.validAdm1(adm1s, "Arkhangel'", "Russia"));
+        assertSame(adm1s.get("Şan'ā'", "Yemen"), GeolocaleMgr.validAdm1(adm1s, "Şan'ā'", "Yemen"));
+        // the name as written is known (an old name with no valid name): no second try without the apostrophe
+        assertNull(GeolocaleMgr.validAdm1(adm1s, "Şan'ā", "Yemen"));
+        // only one apostrophe, only at the end, only for the same country
+        assertNull(GeolocaleMgr.validAdm1(adm1s, "Amurskaya Oblast''", "Russia"));
+        assertNull(GeolocaleMgr.validAdm1(adm1s, "'Amur", "Russia"));
+        assertNull(GeolocaleMgr.validAdm1(adm1s, "Amurskaya Oblast'", "Mexico"));
+        assertNull(GeolocaleMgr.validAdm1(adm1s, "'", "Russia"));
+        assertNull(GeolocaleMgr.validAdm1(adm1s, "Unknown Oblast'", "Russia"));
     }
 }
