@@ -162,9 +162,22 @@ def test_curator_is_refused():
 
 # ---------- the administrator ----------
 
+# The jobs this module started; the admin fixture removes the files of any still on the server when the module ends
+# (review of #355: a test that failed between start and Delete left an extract on staging for 30 days, counted
+# against the 5 GB limit).
+_STARTED = []
+
+
 @pytest.fixture(scope="module")
 def admin():
-    return login("admin")
+    session = login("admin")
+    yield session
+    s, token, _id = session
+    for job in _STARTED:
+        try:
+            s.post(BASE_URL + PAGE, data={"_csrf": token, "op": "delete", "job": job}, timeout=TIMEOUT)
+        except Exception:  # noqa: BLE001 - tidying only; the test's own result stands
+            pass
 
 
 @needs("admin")
@@ -223,6 +236,9 @@ def _start(s, token, countries=None, **options):
                    timeout=TIMEOUT, allow_redirects=False)
         url = job_url(r)
         if url:
+            found = re.search(r"id=(\d+)", url)
+            if found:
+                _STARTED.append(found.group(1))
             return country, url
         assert r.status_code == 200, (country, r.status_code)
         if any(b in r.text for b in BUSY):
