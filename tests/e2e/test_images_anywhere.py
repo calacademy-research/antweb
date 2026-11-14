@@ -177,13 +177,19 @@ def test_a_label_only_specimen_is_shown_in_both_views():
     page = fetch_all_view(path)
     if not page or code not in page.lower():
         pytest.skip(f"{code} is not on {path} here")
-    if "label only" not in page.lower().split(code, 1)[1][:4000]:
+    if f'data-place-label-only="1"' not in page:
         pytest.skip(f"{code} has an image of the ant here, no longer a label-only case")
+
+    def cell_text(html):
+        """The image count of the specimen's own cell in the All view ("Label only", "No Images", "3 Images")."""
+        m = re.search(r'specimenimages\.do\?name=' + code + r'[^"]*">.*?<div class="ratio_has_images">(.*?)</div>', html.lower(), re.S)
+        return ns.text_of(m.group(1)).strip() if m else None
     only = fetch_all_view(path + "&placeOnly=true") or ""
     shown = shown_specimens(page)
     assert (code, True) in shown, f"{code} not marked as NHMB's in the view of all of AntWeb: {shown[:6]}"
     assert code in [c for c, _ in shown_specimens(only)], "placeOnly=true does not show the label-only specimen"
-    assert "label only" in only.lower().split(code, 1)[1][:4000], "its cell does not say Label only"
+    assert cell_text(page) == "label only", f"its cell in the view of all of AntWeb says {cell_text(page)!r}"
+    assert cell_text(only) == "label only", f"its cell with placeOnly=true says {cell_text(only)!r}"
     assert 'data-place-label-only="1"' in page and 'data-place-imaged="0"' in page, "the place note does not count it apart"
     assert "with label images only comes first" in page
     assert "The other images below are of specimens collected elsewhere" in page, "the note says all images are from elsewhere"
