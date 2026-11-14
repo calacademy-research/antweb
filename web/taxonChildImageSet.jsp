@@ -121,8 +121,10 @@ Examples of species with images that don't have h1 images:
                 // 2026-10-27 (Brian Fisher): the Images column's numbers, ant images only, in AntWeb and of the place.
                 String ratioImagesStr = org.calacademy.antweb.ImagesAnywhere.childImages(thisChild, overview); %>
                 <%= ratioImagesStr %>
-         <% } else if (thisChild.getHasImages()) {
-                // A specimen: its images of the ant + label images, "5 Images + label" (ImageCounts, 2026-10-27). %>
+         <% } else if (thisChild.getHasImages() || (isSpecimen && org.calacademy.antweb.ImagesAnywhere.isLabelOnly(thisChild))) {
+                // A specimen: its images of the ant + label images, "5 Images + label" (ImageCounts, 2026-10-27).
+                // 2026-11-14: a specimen with label images only says "Label only" (hasImages counts images of the ant,
+                // so it said "No Images" under its label). %>
                 <%= org.calacademy.antweb.ImageCounts.text(thisChild.getImages()) %>
          <% } else { %>
                 No Images
