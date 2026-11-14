@@ -776,6 +776,11 @@ public final class DataExtract {
         Files.move(part.toPath(), specimens.toPath(), StandardCopyOption.ATOMIC_MOVE);
         if (afterExport != null) afterExport.run();
 
+        // Between the phases the job's guards (time, disk) are asked again: the counts and the other files below can take
+        // long on a large extract (review of #355); the callback throws Stopped to end the run cleanly.
+        final long written = stats.rows;
+        Runnable checkpoint = () -> { if (progress != null) progress.accept(written); };
+        checkpoint.run();
         // The check uses the same filter as the file (ants only or all families).
         Map<List<String>, Long> database = new TreeMap<>(DataExtract::compareLists);
         try (Statement stmt = c.createStatement(); ResultSet rset = stmt.executeQuery(countSql(filter, islands, antsOnly, otherIslands))) {
@@ -786,6 +791,7 @@ public final class DataExtract {
 
         // Ants only: what is left out, by family (largest first); and the file must hold no other family.
         Map<String, Object> leftOut = null;
+        checkpoint.run();
         if (antsOnly) {
             Map<String, Object> byFamily = new LinkedHashMap<>();
             long total = 0;
@@ -809,6 +815,7 @@ public final class DataExtract {
         }
 
         // A requested country without a single specimen (also under its old names) is worth a warning.
+        checkpoint.run();
         List<String> empty = new ArrayList<>();
         Map<Integer, Long> perCountry = new HashMap<>();
         try (Statement stmt = c.createStatement(); ResultSet rset = stmt.executeQuery(perCountrySql(countries, outdated, antsOnly, islandSets))) {
@@ -826,7 +833,9 @@ public final class DataExtract {
             Stats none = new Stats("");
             File noCountryFile = new File(dir, SPECIMENS_NO_COUNTRY);
             File noCountryPart = new File(dir, SPECIMENS_NO_COUNTRY + PART);
-            writeSpecimens(c, where, noCountryPart, none, null, pageRows);
+            checkpoint.run();
+            // the guards also while the no-country file is written (its rows counted after the main file's)
+            writeSpecimens(c, where, noCountryPart, none, progress == null ? null : n -> progress.accept(written + n), pageRows);
             Files.move(noCountryPart.toPath(), noCountryFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
             long inDatabase = 0;
             try (Statement stmt = c.createStatement(); ResultSet rset = stmt.executeQuery("select count(*) from specimen s where " + where)) {
@@ -862,6 +871,7 @@ public final class DataExtract {
         files.add(genusFile);
         Map<String, Object> bio = null;
         if (!bioregion.isEmpty()) {
+            checkpoint.run();
             List<List<String>> rows = new ArrayList<>();
             try (Statement stmt = c.createStatement(); ResultSet rset = stmt.executeQuery(bioregionListSql(bioregion, antsOnly))) {
                 while (rset.next()) {

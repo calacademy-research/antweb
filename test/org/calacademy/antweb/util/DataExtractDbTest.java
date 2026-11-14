@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -83,10 +84,29 @@ public class DataExtractDbTest extends TestCase {
         try (Statement s = connection.createStatement()) { s.executeUpdate(sql); }
     }
 
+    /**
+     * This test drops and recreates specimen, taxon and the other tables it uses. It refuses to start on a database
+     * that looks real (review of #355): a specimen table with more rows than any test makes (the tests insert at most
+     * about 12,000), so a wrong ANTWEB_TEST_DB_URL on a server can never drop AntWeb's specimens.
+     */
+    static void refuseARealDatabase(Connection c) throws SQLException {
+        try (Statement st = c.createStatement();
+             ResultSet r = st.executeQuery("select count(*) from information_schema.tables where table_schema = database() and table_name = 'specimen'")) {
+            if (!r.next() || r.getLong(1) == 0) return;
+        }
+        try (Statement st = c.createStatement(); ResultSet r = st.executeQuery("select count(*) from specimen")) {
+            if (r.next() && r.getLong(1) > 50000) {
+                throw new IllegalStateException("refusing to run: the specimen table of " + c.getCatalog() + " holds " + r.getLong(1)
+                    + " rows, so this is not a test database (this test drops its tables)");
+            }
+        }
+    }
+
     @Override
     protected void setUp() throws Exception {
         connection = connect(url());
         dir = Files.createTempDirectory("extract-db-test").toFile();
+        refuseARealDatabase(connection);
         for (String t : TABLES) exec("drop table if exists " + t);
         exec("create table specimen (code varchar(40) primary key, taxon_name varchar(128), family varchar(40), subfamily varchar(64),"
             + " genus varchar(64), country varchar(64), island_country varchar(64), bioregion varchar(64), localityname text,"
@@ -863,6 +883,18 @@ public class DataExtractDbTest extends TestCase {
         return n;
     }
 
+    public void testTheGuardsAreAskedBetweenThePhasesToo() throws Exception {
+        // a small extract (fewer rows than one progress report) still asks the job's guards after its file: a run
+        // past its time is stopped there, not in the unguarded counts that follow (review of #355)
+        exec("insert into specimen (code, taxon_name, family, country) values ('casentguard1', 'myrmicinaestenamma diecki', 'formicidae', 'Mexico')");
+        try {
+            DataExtract.run(connection, dir, withHawaii(""), SITE, n -> { throw new DataExtract.Stopped("guard at " + n); });
+            fail("the guards were not asked after the file");
+        } catch (DataExtract.Stopped e) {
+            assertTrue(e.getMessage(), e.getMessage().startsWith("guard at "));
+        }
+    }
+
     public void testAZeroDateDoesNotStopTheExtract() throws Exception {
         exec("set session sql_mode = ''");
         exec("insert into specimen (code, taxon_name, family, country, last_modified, day_entered) values"
@@ -881,7 +913,9 @@ public class DataExtractDbTest extends TestCase {
         DataExtract.Result result = DataExtract.run(connection, dir, new DataExtract.Request(Arrays.asList("Canada"), ""), SITE, reports::add);
         assertTrue(result.verified);
         assertEquals(12101, result.specimens);
-        assertEquals(Arrays.asList(5000L, 10000L), reports);
+        // every 5,000 rows, then at each phase after the file (review of #355: the guards between the phases)
+        assertEquals(Arrays.asList(5000L, 10000L), reports.subList(0, 2));
+        assertTrue(reports.toString(), reports.size() >= 5 && reports.subList(2, reports.size()).stream().allMatch(n -> n == 12101L));
         List<Map<String, String>> rows = csv(DataExtract.SPECIMENS);
         assertEquals(12101, rows.size());
         assertEquals("bulk000000", rows.get(0).get("code"));

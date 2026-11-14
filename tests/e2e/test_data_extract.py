@@ -79,7 +79,10 @@ def _raw_get(session, path):
     """GET of the path exactly as written (requests would tidy doubled slashes and dot segments away)."""
     req = session.prepare_request(requests.Request("GET", BASE_URL + "/"))
     req.url = BASE_URL + path
-    return session.send(req, timeout=TIMEOUT, allow_redirects=True)
+    # send() skips what request() adds from the environment (the CA bundle the runner trusts for staging's
+    # certificate, REQUESTS_CA_BUNDLE, and proxies): add it, as every other test gets it through request()
+    settings = session.merge_environment_settings(req.url, {}, None, None, None)
+    return session.send(req, timeout=TIMEOUT, allow_redirects=True, **settings)
 
 
 def folder_addresses(folder):
