@@ -484,7 +484,11 @@ public class SpeciesListUpload extends AntwebUpload {
                         } // else A.log("Not lowercasing " + headers.get(index) + " value:" + element);
                         
                         // Here we populate vars from data for use below...
-                        if (index == statusHeader) status = element;
+                        if (index == statusHeader) {
+                            // AntCat #1617, 2026-11-14: "unjustified emendation" is filed as a synonym (Status.fromAntcat)
+                            element = Status.fromAntcat(element);
+                            status = element;
+                        }
                         if (index == currentValidRankHeader) {
                             currentValidRank = element;
                             //A.log("currentValidRank:" + currentValidRank);

@@ -129,6 +129,24 @@ public class Status {
         return b.append(")").toString();
     }
 
+    /**
+     * AntCat statuses that AntWeb files as another status, read when the daily AntCat import parses a line
+     * (SpeciesListUpload). AntCat #1617 (Brian Fisher, 2026-11-14): "unjustified emendation" (ICZN Art. 33.2.3), an
+     * available name with its own author and date and a junior objective synonym of the correctly spelled name; in
+     * the export, available false and the current valid name set, otherwise as a synonym. AntWeb treats it as a
+     * synonym, so its specimens are filed under the current valid name and every list, count and API answer reads it
+     * as one.
+     */
+    public static final String UNJUSTIFIED_EMENDATION = "unjustified emendation";
+    public static final java.util.Map<String, String> ANTCAT_STATUS_AS = java.util.Map.of(UNJUSTIFIED_EMENDATION, SYNONYM);
+
+    /** The status AntWeb stores for an AntCat status (ANTCAT_STATUS_AS; any other value as it is). */
+    public static String fromAntcat(String status) {
+        if (status == null) return null;
+        String as = ANTCAT_STATUS_AS.get(status.trim().toLowerCase());
+        return as != null ? as : status;
+    }
+
     public static boolean excludeFromImport(String status) {
         // || Status.UNAVAILABLE_MISSPELLING.equals(status)
         // || Status.ORIGINAL_COMBINATION.equals(status)
