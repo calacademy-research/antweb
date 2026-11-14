@@ -212,6 +212,13 @@ Examples of species with images that don't have h1 images:
                   if (img == null) img = ((org.calacademy.antweb.SpecimenImage) childImages.get(thumb_choice + "1"));  // hack
                   if (img == null) img = ((org.calacademy.antweb.SpecimenImage) childImages.get(thumb_choice + "2"));  // hack
                   if (img == null) img = ((org.calacademy.antweb.SpecimenImage) childImages.get("p"));
+                  // 2026-11-14 (Brian Fisher): a specimen with label images only shows its first label in every view
+                  // (it was left out of the head, profile and dorsal views); its cell says "Label only".
+                  if (img == null && org.calacademy.antweb.ImagesAnywhere.isLabelOnly(thisChild)) {
+                    for (org.calacademy.antweb.SpecimenImage li : thisChild.getImagesSorted("l|l1,*", true)) {
+                      if (li != null && li.getNumber() > 0 && org.calacademy.antweb.ImageCounts.isLabel(li.getShot())) { img = li; break; }
+                    }
+                  }
               } else {
                   img = ((org.calacademy.antweb.SpecimenImage) childImages.get(thumb_is));
                   if (img == null) img = ((org.calacademy.antweb.SpecimenImage) childImages.get(thumb_choice + "1"));  // hack

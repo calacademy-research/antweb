@@ -31,6 +31,25 @@ public class ImagesAnywhereTest extends TestCase {
             ImagesAnywhere.placeFirst(byCaste, CODE, new HashSet<>(), Collections.singletonList("CASENT0270569")));
     }
 
+    /** Brian Fisher, 2026-11-14: label-only specimens are shown, after the imaged ones of their group (place, others). */
+    public void testLabelOnlySpecimensFollowTheImagedOnesOfTheirGroup() {
+        Set<String> labelOnly = new HashSet<>(Arrays.asList("idnL", "pngL", "repL"));
+        java.util.function.Predicate<String> isLabel = labelOnly::contains;
+        // as placeFirst gives them: the place's, then the representatives, then the others
+        List<String> placed = Arrays.asList("idnL", "idn1", "repL", "rep1", "pngL", "png1");
+        Set<String> place = new HashSet<>(Arrays.asList("IDNL", "idn1"));
+        assertEquals(Arrays.asList("idn1", "idnL", "rep1", "png1", "repL", "pngL"),
+            ImagesAnywhere.labelOnlyLast(placed, CODE, isLabel, place));
+        // the place-only view (no place codes): one group
+        assertEquals(Arrays.asList("idn1", "png1", "idnL", "pngL"),
+            ImagesAnywhere.labelOnlyLast(Arrays.asList("idnL", "idn1", "pngL", "png1"), CODE, isLabel, null));
+        // nothing label only: the order is kept
+        assertEquals(Arrays.asList("b", "a"), ImagesAnywhere.labelOnlyLast(Arrays.asList("b", "a"), CODE, x -> false, place));
+        assertEquals(new ArrayList<String>(), ImagesAnywhere.labelOnlyLast(null, CODE, isLabel, place));
+        assertFalse(ImagesAnywhere.isLabelOnly(null));
+        assertFalse(ImagesAnywhere.hasAntImage(null));
+    }
+
     public void testNoPlaceCodesKeepsTheOrder() {
         List<String> list = Arrays.asList("b", "a");
         assertEquals(list, ImagesAnywhere.placeFirst(list, CODE, null, Collections.singletonList("a")));
