@@ -177,12 +177,14 @@ def test_a_label_only_specimen_is_shown_in_both_views():
     page = fetch_all_view(path)
     if not page or code not in page.lower():
         pytest.skip(f"{code} is not on {path} here")
-    if f'data-place-label-only="1"' not in page:
-        pytest.skip(f"{code} has an image of the ant here, no longer a label-only case")
+    imaged = ant_imaged_codes("myrmicinaepheidole acutilobata")
+    if imaged is None or code in imaged:
+        pytest.skip(f"{code} has an image of the ant here (or the API could not tell): no longer a label-only case")
 
     def cell_text(html):
         """The image count of the specimen's own cell in the All view ("Label only", "No Images", "3 Images")."""
-        m = re.search(r'specimenimages\.do\?name=' + code + r'[^"]*">.*?<div class="ratio_has_images">(.*?)</div>', html.lower(), re.S)
+        m = re.search(r'<div class="data_overlay"><a href="[^"]*specimenimages\.do\?name=' + re.escape(code)
+                      + r'[^"]*">.*?<div class="ratio_has_images">(.*?)</div>', html.lower(), re.S)
         return ns.text_of(m.group(1)).strip() if m else None
     only = fetch_all_view(path + "&placeOnly=true") or ""
     shown = shown_specimens(page)
