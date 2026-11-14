@@ -100,7 +100,7 @@ def is_cloudflare_challenge(r):
 def check_page(base, name, path, markers, timeout=None):
     url = base + path
     try:
-        r = get(url, timeout=timeout or PAGE_TIMEOUTS.get(name))
+        r = get(url, timeout=timeout or max(TIMEOUT, PAGE_TIMEOUTS.get(name, 0)) or None)
     except Exception as e:  # timeout, refused, DNS
         raise Fail(f"{name}: no answer from {url} ({e})")
     if is_cloudflare_challenge(r):

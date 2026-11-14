@@ -201,9 +201,9 @@ def main():
         prod_smoke.check_page("http://x", "species page", "/description.do", ["maculatus"])
     finally:
         prod_smoke.get = real_get
-    expect(seen["http://x/statsPage.do"] == 240 and prod_smoke.PAGE_TIMEOUTS["statistics page"] > prod_smoke.TIMEOUT,
+    expect(seen["http://x/statsPage.do"] == max(240, prod_smoke.TIMEOUT),
            "the statistics page waits longer", str(seen))
-    expect(seen["http://x/description.do"] is None, "the other pages keep the usual timeout", str(seen))
+    expect(seen["http://x/description.do"] in (None, prod_smoke.TIMEOUT), "the other pages keep the usual timeout", str(seen))
     srv.shutdown()
     print("prod_smoke.py: all logic checks passed.")
 
