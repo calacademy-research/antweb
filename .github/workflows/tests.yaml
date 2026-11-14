@@ -1280,6 +1280,8 @@ jobs:
           docker exec mysql mysql -uroot -pci-root -h127.0.0.1 -e "ALTER USER 'antweb'@'%' IDENTIFIED WITH mysql_native_password BY 'CHANGE_ME'"
           # IslandCountryDbTest works in a schema of its own, which it makes and drops (never the tables of ant).
           docker exec mysql mysql -uroot -pci-root -h127.0.0.1 -e "GRANT ALL ON ant_islandtest.* TO 'antweb'@'%'"
+          # DataExtractDbTest too, in ant_extracttest (review of #355).
+          docker exec mysql mysql -uroot -pci-root -h127.0.0.1 -e "GRANT ALL ON ant_extracttest.* TO 'antweb'@'%'"
           docker run --rm --network tzcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/WEB-INF:/w:ro" antweb/antweb:dev -c '
             set -e
             C=/usr/local/antweb/WEB-INF/classes
@@ -1442,7 +1444,7 @@ jobs:
           # (ants only by default, Brian Fisher 2026-11-10): the file, the check and the bioregion list use the same
           # filter, what is left out is counted by family, no family is kept, all families on request, a row that is
           # not an ant in an ants-only file is not verified; the specimens without a country in their own file.
-          # Last: it makes its own small tables and drops them.
+          # In its own schema ant_extracttest (granted above), dropped when it ends.
           docker run --rm --network tzcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
             set -e
@@ -1482,7 +1484,7 @@ jobs:
               /t/org/calacademy/antweb/home/GroupSpecimenCountDbTest.java \
               /t/org/calacademy/antweb/util/DataExtractDbTest.java \
               /t/org/calacademy/antweb/home/ListCleanupOrderDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3 home.GroupSpecimenCountDbTest:8 home.IslandCountryDbTest:7 home.AntcatIslandRowsDbTest:2 home.ListCleanupOrderDbTest:16 util.DataExtractDbTest:20; do
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3 home.GroupSpecimenCountDbTest:8 home.IslandCountryDbTest:7 home.AntcatIslandRowsDbTest:2 home.ListCleanupOrderDbTest:16 util.DataExtractDbTest:21; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

@@ -845,6 +845,17 @@ public class DataExtractTest extends TestCase {
         assertTrue(cut.getBytes(StandardCharsets.UTF_8).length < 60000);
         assertTrue(cut, cut.contains("The text is longer; all of it is in manifest.txt."));
         assertTrue(cut, cut.contains("1\n</pre>"));
+
+        // review of #355: the cut is by bytes after escaping, so accents and quotes cannot push the result past its size
+        StringBuilder quoted = new StringBuilder();
+        for (int i = 0; i < 3000; i++) quoted.append("  C\u00f4te d'Ivoire \"").append(i).append("\" \u00e9\u00e9\u00e9\u00e9\u00e9    1\n");
+        String shown = DataExtractJob.fitText(quoted.toString(), DataExtractJob.MAX_TEXT_SHOWN);
+        assertTrue(shown.getBytes(StandardCharsets.UTF_8).length <= DataExtractJob.MAX_TEXT_SHOWN);
+        assertTrue(shown, shown.endsWith("1\n") && shown.contains("&#39;") && shown.contains("&quot;"));
+        String quotedCut = DataExtractJob.resultHtml(57, new DataExtract.Result(manifest(), quoted.toString(), true, 3000, Arrays.asList("manifest.txt")), "", "https://x.org");
+        assertTrue(quotedCut.getBytes(StandardCharsets.UTF_8).length < 60000);
+        assertTrue(quotedCut, quotedCut.contains("The text is longer; all of it is in manifest.txt."));
+        assertEquals("a short text is shown whole, escaped", "a &lt;b&gt;\n", DataExtractJob.fitText("a <b>\n", 100));
     }
 
     public void testTheFormKeepsAndEscapesWhatWasTyped() {

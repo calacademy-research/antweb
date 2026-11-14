@@ -49,8 +49,11 @@ public final class DataExtractJob {
     /** A running extract stops after this many minutes (the pool closes its connection after 60). */
     public static final int MAX_MINUTES = 50;
 
-    /** The manifest text is shown whole on the job page up to this many characters (the job's result holds 60,000 bytes). */
-    static final int MAX_TEXT_SHOWN = 30000;
+    /**
+     * The manifest text is shown whole on the job page up to this many bytes, measured after HTML escaping in UTF-8
+     * (the job's result holds 60,000 bytes; review of #355: a cut by characters could pass that with accents and quotes).
+     */
+    public static final int MAX_TEXT_SHOWN = 30000;
 
     public static final int MAX_NOTE = 200;
 
@@ -130,7 +133,8 @@ public final class DataExtractJob {
                     throw new DataExtract.Stopped("The extract ran for more than " + MAX_MINUTES + " minutes and was stopped ("
                         + String.format("%,d", rows) + " specimens written, files removed). Ask for fewer countries at a time.");
                 }
-                BackgroundJobs.step("Writing specimens: " + String.format("%,d", rows) + " so far.");
+                // also called between the phases that count and check (review of #355): the number is the rows written so far
+                BackgroundJobs.step("Writing and checking the files: " + String.format("%,d", rows) + " specimens written so far.");
             });
         } catch (DataExtract.BadRequest | DataExtract.Stopped e) {
             DataExtractFiles.deleteData(folder);
@@ -220,14 +224,32 @@ public final class DataExtractJob {
         }
         if (note != null && !note.isEmpty()) h.append("<p id=\"extract-note\">Note: ").append(Html.esc(note)).append("</p>");
         String text = result.text;
-        boolean cut = text.length() > MAX_TEXT_SHOWN;
-        if (cut) text = text.substring(0, text.lastIndexOf('\n', MAX_TEXT_SHOWN) + 1);
-        h.append("<pre id=\"extract-manifest\" style=\"white-space:pre-wrap\">").append(Html.esc(text)).append("</pre>");
+        String shown = fitText(text, MAX_TEXT_SHOWN);
+        boolean cut = shown.length() < text.length();
+        h.append("<pre id=\"extract-manifest\" style=\"white-space:pre-wrap\">").append(shown).append("</pre>");
         if (cut) h.append("<p class=\"aw-note\">The text is longer; all of it is in manifest.txt.</p>");
         h.append("<h3>Files</h3><ul class=\"aw-links\" id=\"extract-files\">").append(downloadLinks(jobId, result.files, result.verified, domainApp)).append("</ul>");
         h.append("<p class=\"aw-note\">The files stay on the server for ").append(DataExtractFiles.KEEP_DAYS)
          .append(" days and are then removed. Only administrators can download them.</p>");
         return h.toString();
+    }
+
+    /** The whole lines of the text, escaped, as many as fit in maxBytes of UTF-8. */
+    public static String fitText(String text, int maxBytes) {
+        StringBuilder out = new StringBuilder();
+        int bytes = 0;
+        int from = 0;
+        while (from < text.length()) {
+            int nl = text.indexOf('\n', from);
+            int end = nl < 0 ? text.length() : nl + 1;
+            String line = Html.esc(text.substring(from, end));
+            int size = line.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+            if (bytes + size > maxBytes) break;
+            out.append(line);
+            bytes += size;
+            from = end;
+        }
+        return from < text.length() ? out.toString() : Html.esc(text);
     }
 
     private static String join(List<Object> values) {

@@ -19,6 +19,7 @@ import org.calacademy.antweb.AntwebAction;
 import org.calacademy.antweb.Login;
 import org.calacademy.antweb.util.Check;
 import org.calacademy.antweb.util.DataExtractFiles;
+import org.calacademy.antweb.util.DataExtractJob;
 import org.calacademy.antweb.util.LogMgr;
 import org.calacademy.antweb.util.DateUtil;
 import org.calacademy.antweb.util.LoginMgr;
@@ -71,7 +72,7 @@ public final class DataExtractFileAction extends AntwebAction {
         response.setHeader("X-Content-Type-Options", "nosniff");
         response.setHeader("Cache-Control", "no-store");
         response.setHeader("Content-Disposition", "attachment; filename=\"" + saveAs + "\"");
-        LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " data extract download by " + login.getName()
+        LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " data extract download by " + DataExtractJob.cleanNote(login.getName())
             + ": job " + jobId + " " + (zip ? DataExtractFiles.ZIP : file.getName()) + (verified ? "" : " (NOT VERIFIED)"));
         try (OutputStream out = response.getOutputStream()) {
             if (zip) {

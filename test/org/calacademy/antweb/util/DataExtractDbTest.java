@@ -58,19 +58,37 @@ import org.calacademy.antweb.util.DataExtract;
  * verified. The specimens without a country go in a file of their own on request, with the same choice of families.
  * Format 6: the bioregion's species list is of ants only too and says how many names of other families it leaves out.
  *
- * Makes its own small tables (specimen, taxon, ant_group, geolocale, bioregion, bioregion_taxon) and drops them
- * at the end: last in the list of the database tests. Runs in CI against MySQL 8.4 (host "mysql");
- * ANTWEB_TEST_DB_URL overrides.
+ * Works in a schema of its own (ant_extracttest), which it makes and drops: it never touches a table of the schema its
+ * address names (review of #355: it dropped specimen, taxon and four more tables in the address's schema, guarded only
+ * by a row count). The login needs rights on ant_extracttest (CI grants them to antweb; the statement is in the failure
+ * message). Runs in CI against MySQL 8.4 (host "mysql"); ANTWEB_TEST_DB_URL overrides the server.
  */
 public class DataExtractDbTest extends TestCase {
 
-    private static final String[] TABLES = {"specimen", "taxon", "ant_group", "geolocale", "bioregion", "bioregion_taxon"};
 
     private Connection connection;
     private File dir;
 
-    private static String url() {
+    /** The test's own schema: made in setUp, dropped in tearDown; nothing outside it is read or written. */
+    static final String SCHEMA = "ant_extracttest";
+
+    /** The address given (ANTWEB_TEST_DB_URL); only used to make and drop the test's own schema. */
+    private static String givenUrl() {
         return System.getenv().getOrDefault("ANTWEB_TEST_DB_URL", "jdbc:mysql://mysql:3306/ant?useSSL=false&allowPublicKeyRetrieval=true");
+    }
+
+    /** The given address with the test's own schema in place of the one it names: every connection of the test. */
+    private static String url() {
+        return inSchema(givenUrl(), SCHEMA);
+    }
+
+    static String inSchema(String url, String schema) {
+        int q = url.indexOf('?');
+        String head = q < 0 ? url : url.substring(0, q);
+        String tail = q < 0 ? "" : url.substring(q);
+        int start = head.indexOf("//");
+        int slash = head.indexOf('/', start < 0 ? 0 : start + 2);
+        return (slash < 0 ? head + "/" : head.substring(0, slash + 1)) + schema + tail;
     }
 
     private static Connection connect(String url) throws SQLException {
@@ -104,10 +122,17 @@ public class DataExtractDbTest extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
+        try (Connection given = connect(givenUrl()); Statement s = given.createStatement()) {
+            s.executeUpdate("drop database if exists " + SCHEMA);     // left by a run that stopped in setUp
+            s.executeUpdate("create database " + SCHEMA + " default charset utf8mb4");
+        } catch (SQLException e) {
+            throw new SQLException("DataExtractDbTest works in its own schema and the login may not make it. As root: grant all on "
+                + SCHEMA + ".* to '<the login>'@'%'  (" + e.getMessage() + ")", e);
+        }
         connection = connect(url());
+        assertEquals("the test's own schema", SCHEMA, connection.getCatalog());
         dir = Files.createTempDirectory("extract-db-test").toFile();
         refuseARealDatabase(connection);
-        for (String t : TABLES) exec("drop table if exists " + t);
         exec("create table specimen (code varchar(40) primary key, taxon_name varchar(128), family varchar(40), subfamily varchar(64),"
             + " genus varchar(64), country varchar(64), island_country varchar(64), bioregion varchar(64), localityname text,"
             + " decimal_latitude float, decimal_longitude float, elevation int, flag varchar(10), access_group int, is_introduced tinyint(1),"
@@ -179,7 +204,7 @@ public class DataExtractDbTest extends TestCase {
     @Override
     protected void tearDown() throws Exception {
         if (connection != null) {
-            for (String t : TABLES) exec("drop table if exists " + t);
+            exec("drop database if exists " + SCHEMA);
             connection.close();
         }
         if (dir != null) {
@@ -936,5 +961,13 @@ public class DataExtractDbTest extends TestCase {
         // nothing that looks finished: only the part file the job then removes
         assertEquals("[specimens.csv.gz.part]", Arrays.toString(dir.list()));
         assertFalse(connection.isReadOnly());
+    }
+
+    /** Every connection of the test goes to its own schema, whatever schema the given address names. */
+    public void testEveryConnectionGoesToTheTestsOwnSchema() {
+        assertEquals("jdbc:mysql://mysql:3306/ant_extracttest?useSSL=false", inSchema("jdbc:mysql://mysql:3306/ant?useSSL=false", SCHEMA));
+        assertEquals("jdbc:mysql://h/ant_extracttest", inSchema("jdbc:mysql://h/ant", SCHEMA));
+        assertEquals("jdbc:mysql://h:3391/ant_extracttest", inSchema("jdbc:mysql://h:3391", SCHEMA));
+        assertEquals("jdbc:mysql://h:3391/ant_extracttest?a=1", inSchema("jdbc:mysql://h:3391?a=1", SCHEMA));
     }
 }
