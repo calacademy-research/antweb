@@ -9,6 +9,9 @@ species. Specimen counts stay per place; images help identification wherever the
      (Leptogenys purpurea, Indonesia: the genus page showed CASENT0270569 from Papua New Guinea, the species page did
      not) against the API's specimen records, and on the day's species of the day's places of each of those kinds:
      the marked specimens are first, and they are exactly the specimens placeOnly=true shows.
+  2. A specimen with label images only (a label image may show the pinned ant with its labels) is shown in both views,
+     after the imaged specimens of its group, its cell saying "Label only", and never counted as imaged (Brian Fisher,
+     2026-11-14; until then placeOnly=true showed nothing for it: CASENT0810329, museum NHMB).
   3. The Images column of a place's list: one number, "N Images" (Brian Fisher 2026-10-28; from 10-27 to 10-28
      "T Images (P from Comoros)", which wrapped and showed "( from Comoros)" where the number script blanks a 0),
      images of the ant only (labels never count, Brian Fisher 2026-10-27): N = the images of the name in AntWeb (the
@@ -160,6 +163,34 @@ def test_place_specimens_first_and_place_only_shows_them():
     if not checked:
         pytest.skip("no species with images on the lists of the day's places " + ns.day_note())
     assert not wrong, f"{len(checked)} species {ns.day_note()}:\n" + "\n".join(wrong)
+
+
+LABEL_ONLY_CASE = ("/images.do?subfamily=myrmicinae&genus=pheidole&species=acutilobata&rank=species&museumCode=NHMB",
+                   "casent0810329")
+
+
+def test_a_label_only_specimen_is_shown_in_both_views():
+    """2. CASENT0810329 (Pheidole acutilobata, owned by NHMB) has a label image only (production 2026-11-13). It is
+    shown on the NHMB images page in the view of all of AntWeb and with placeOnly=true, in the All view and in the head
+    view, says "Label only", and the place note counts it apart from the imaged specimens."""
+    path, code = LABEL_ONLY_CASE
+    page = fetch_all_view(path)
+    if not page or code not in page.lower():
+        pytest.skip(f"{code} is not on {path} here")
+    if "label only" not in page.lower().split(code, 1)[1][:4000]:
+        pytest.skip(f"{code} has an image of the ant here, no longer a label-only case")
+    only = fetch_all_view(path + "&placeOnly=true") or ""
+    shown = shown_specimens(page)
+    assert (code, True) in shown, f"{code} not marked as NHMB's in the view of all of AntWeb: {shown[:6]}"
+    assert code in [c for c, _ in shown_specimens(only)], "placeOnly=true does not show the label-only specimen"
+    assert "label only" in only.lower().split(code, 1)[1][:4000], "its cell does not say Label only"
+    assert 'data-place-label-only="1"' in page and 'data-place-imaged="0"' in page, "the place note does not count it apart"
+    assert "with label images only comes first" in page
+    assert "The other images below are of specimens collected elsewhere" in page, "the note says all images are from elsewhere"
+    # the head view (no thumbs cookie) shows its label too
+    head = (ns.fetch(path + "&placeOnly=true") or "").lower()
+    assert re.search(r'<div class="name"><a href="[^"]*specimenimages\.do\?name=' + code, head), \
+        "the head view of placeOnly=true has no cell of the label-only specimen"
 
 
 # ------------------------------------------------------------------------------------------- 3. Images column

@@ -70,6 +70,56 @@ public final class ImagesAnywhere {
         return placeFirst(children, t -> (t instanceof Specimen) ? ((Specimen) t).getCode() : null, placeCodes, representatives);
     }
 
+    /**
+     * The children with label images only after those with an image of the ant, within the place's specimens and
+     * within the others (placeCodes null: one group); each part keeps its order. Brian Fisher, 2026-11-14: a specimen
+     * whose only images are labels is shown on a species images page, in both views (all of AntWeb and the place only),
+     * marked "Label only" (ImageCounts) and never counted as imaged; a label image may show the pinned ant with its
+     * labels, and it is easy to skip when not needed. Until then the place-only view showed nothing for such a specimen
+     * while the other view showed it among the imaged ones (production: CASENT0810329, NHMB).
+     */
+    public static <T> ArrayList<T> labelOnlyLast(List<T> children, Function<T, String> codeOf,
+                                                java.util.function.Predicate<T> labelOnly, Set<String> placeCodes) {
+        ArrayList<T> out = new ArrayList<>();
+        if (children == null) return out;
+        Set<String> place = placeCodes == null ? null : lower(placeCodes);
+        ArrayList<T> placeLabels = new ArrayList<>();
+        ArrayList<T> others = new ArrayList<>();
+        ArrayList<T> otherLabels = new ArrayList<>();
+        for (T child : children) {
+            String code = codeOf.apply(child);
+            boolean inPlace = place == null || (code != null && place.contains(code.toLowerCase()));
+            boolean label = labelOnly.test(child);
+            if (inPlace) {
+                if (label) placeLabels.add(child); else out.add(child);
+            } else {
+                if (label) otherLabels.add(child); else others.add(child);
+            }
+        }
+        out.addAll(placeLabels);
+        out.addAll(others);
+        out.addAll(otherLabels);
+        return out;
+    }
+
+    /** True when the taxon's images are labels only: no image of the ant, at least one label (ImageCounts). */
+    public static boolean isLabelOnly(Taxon t) {
+        if (t == null || t.getImages() == null) return false;
+        int[] n = ImageCounts.of(t.getImages());
+        return n[0] == 0 && n[1] > 0;
+    }
+
+    /** True when the taxon has an image of the ant (labels left out). */
+    public static boolean hasAntImage(Taxon t) {
+        return t != null && t.getImages() != null && ImageCounts.of(t.getImages())[0] > 0;
+    }
+
+    /** labelOnlyLast for the children of a species page (specimens; another kind of child counts as not label only). */
+    public static ArrayList<Taxon> labelOnlyLastSpecimens(List<Taxon> children, Set<String> placeCodes) {
+        return labelOnlyLast(children, t -> (t instanceof Specimen) ? ((Specimen) t).getCode() : null,
+            t -> (t instanceof Specimen) && isLabelOnly(t), placeCodes);
+    }
+
     /** True when the code is one of the place's specimens (case ignored). */
     public static boolean isFromPlace(String code, Set<String> placeCodes) {
         if (code == null || placeCodes == null) return false;

@@ -109,17 +109,24 @@
       if (imagesPlaceOnlyNote) { %>
     <p class="images_place_note" data-place-only="true">Only specimens <%= Html.esc(imagesFromNote) %> are shown.</p>
    <% } else if (imagesPlaceCodes != null) {
+        // Imaged = an image of the ant (ImageCounts; labels apart, as in every count). 2026-11-14 (Brian Fisher): a
+        // specimen of the place with label images only is shown too, after the imaged ones, and said here.
         int placeImaged = 0;
+        int placeLabelOnly = 0;
         if (childrenList != null) {
           for (Taxon c : childrenList) {
-            if (c instanceof Specimen && ImagesAnywhere.isFromPlace(((Specimen) c).getCode(), imagesPlaceCodes)
-                && c.getImages() != null && c.getImages().size() > 0) ++placeImaged;
+            if (!(c instanceof Specimen) || !ImagesAnywhere.isFromPlace(((Specimen) c).getCode(), imagesPlaceCodes)) continue;
+            if (ImagesAnywhere.hasAntImage(c)) ++placeImaged;
+            else if (ImagesAnywhere.isLabelOnly(c)) ++placeLabelOnly;
           }
         }
+        String labelOnlyNote = placeLabelOnly == 0 ? "" : " " + (placeLabelOnly == 1 ? "1 specimen" : placeLabelOnly + " specimens")
+            + " " + Html.esc(imagesFromNote) + " with label images only " + (placeImaged == 0 ? (placeLabelOnly == 1 ? "comes first" : "come first") : (placeLabelOnly == 1 ? "follows" : "follow"))
+            + ", marked \"Label only\".";
         if (placeImaged == 0) { %>
-    <p class="images_place_note" data-place-imaged="0"><b>No specimens <%= Html.esc(imagesFromNote) %> are imaged yet.</b> The images below are of specimens collected elsewhere, to help identification.</p>
+    <p class="images_place_note" data-place-imaged="0" data-place-label-only="<%= placeLabelOnly %>"><b>No specimens <%= Html.esc(imagesFromNote) %> are imaged yet.</b><%= labelOnlyNote %> The <%= placeLabelOnly > 0 ? "other " : "" %>images below are of specimens collected elsewhere, to help identification.</p>
      <% } else { %>
-    <p class="images_place_note" data-place-imaged="<%= placeImaged %>">Images of this <%= Html.esc(taxon.getRank()) %> from anywhere in AntWeb, to help identification. The <%= placeImaged %> imaged specimen<%= placeImaged == 1 ? "" : "s" %> <%= Html.esc(imagesFromNote) %> come first, marked "<%= Html.esc(imagesFromNote) %>".</p>
+    <p class="images_place_note" data-place-imaged="<%= placeImaged %>" data-place-label-only="<%= placeLabelOnly %>">Images of this <%= Html.esc(taxon.getRank()) %> from anywhere in AntWeb, to help identification. The <%= placeImaged %> imaged specimen<%= placeImaged == 1 ? "" : "s" %> <%= Html.esc(imagesFromNote) %> come first, marked "<%= Html.esc(imagesFromNote) %>".<%= labelOnlyNote %></p>
      <% }
       }
     }
@@ -185,7 +192,13 @@
     if (useShot) { %>
  <input form="getComparison" id="thumb_choice" type="hidden" name="shot" value="<%= choice_is %>" checked>
  <% }
-    if (totalImaged > 0) {
+    // 2026-11-14 (Brian Fisher): a species' specimens with label images only are shown too, so the cells are drawn
+    // when any specimen has an image (totalImaged counts images of the ant only).
+    boolean anyChildImage = totalImaged > 0;
+    if (!anyChildImage && taxon.isSpeciesOrSubspecies() && taxon.getChildren() != null) {
+        for (Taxon c : taxon.getChildren()) if (ImagesAnywhere.isLabelOnly(c)) { anyChildImage = true; break; }
+    }
+    if (anyChildImage) {
         ArrayList<Taxon> theChildren = taxon.getChildren();
 
         //AntwebUtil.log("taxonChildImages.jsp total:" + totalImaged + " list:" + childrenList.toString());
@@ -210,6 +223,8 @@
                 }
                 theChildren = ImagesAnywhere.placeFirstSpecimens(theChildren, imagesPlaceCodes, representatives);
               }
+              // labels only after the imaged specimens, within the place's and within the others
+              theChildren = ImagesAnywhere.labelOnlyLastSpecimens(theChildren, imagesPlaceCodes);
 			}
 
           //A.log("taxonChildImages.jsp size:" + theChildren.size());

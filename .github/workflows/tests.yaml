@@ -614,7 +614,7 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/ImagesAnywhereTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.ImagesAnywhereTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (16 tests)" /tmp/out.txt
+            grep -q "^OK (17 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the AntCat file download (nightly tries again for up to an hour before set 1, says why, no half-written or cut-off file)
@@ -798,7 +798,7 @@ jobs:
                      util.BackgroundJobsTest:16 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
                      util.JobSummaryTest:8 upload.SubfamilyFromGenusTest:9 upload.LocalityCodePlainTest:6 \
-                     util.CountrySpellingTest:8 util.PlaceBioregionTest:9 upload.IslandCountryTest:10 upload.IslandParseLineTest:9 upload.AntcatLocalityTest:9 util.QuoteTrimTest:5 util.DataExtractTest:19; do
+                     util.CountrySpellingTest:8 util.PlaceBioregionTest:10 upload.IslandCountryTest:10 upload.IslandParseLineTest:9 upload.AntcatLocalityTest:9 util.QuoteTrimTest:5 util.DataExtractTest:19; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }

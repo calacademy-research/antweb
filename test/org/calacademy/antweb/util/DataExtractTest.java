@@ -465,6 +465,18 @@ public class DataExtractTest extends TestCase {
         assertEquals(Arrays.asList("United States", "Canada"), DataExtract.parseCountries(" United States , Canada ,\n United States"));
         assertEquals(Arrays.asList("Mexico", "Cote d'Ivoire"), DataExtract.parseCountries("Mexico\r\nCote d'Ivoire"));
         assertEquals(new ArrayList<String>(), DataExtract.parseCountries(" , "));
+        // review of #355 (production 2026-11-14): two valid countries hold a comma; they are taken whole
+        List<String> commas = Arrays.asList("Bonaire, Sint Eustatius and Saba", "Saint Helena, Ascension and Tristan da Cunha");
+        assertEquals(Arrays.asList("Canada", "Saint Helena, Ascension and Tristan da Cunha", "Mexico"),
+            DataExtract.parseCountries("Canada, saint helena, ascension and tristan da cunha , Mexico", commas));
+        assertEquals(Arrays.asList("Bonaire, Sint Eustatius and Saba"), DataExtract.parseCountries("Bonaire, Sint Eustatius and Saba", commas));
+        assertEquals(Arrays.asList("Bonaire, Sint Eustatius and Saba", "Aruba"),
+            DataExtract.parseCountries("Bonaire, Sint Eustatius and Saba\nAruba", commas));
+        // only between separators: a longer typed name is split as before
+        assertEquals(Arrays.asList("Bonaire", "Sint Eustatius and Saba Islands"),
+            DataExtract.parseCountries("Bonaire, Sint Eustatius and Saba Islands", commas));
+        assertEquals(Arrays.asList("United States", "Canada"), DataExtract.parseCountries(" United States , Canada ,\n United States", commas));
+        assertEquals("Saint Helena, Ascension and Tristan da Cunha", DataExtract.placeName(" Saint Helena, Ascension and Tristan da Cunha "));
         for (String bad : new String[] {"x; drop table specimen", "a\\b", "tab\there", "x".repeat(65)}) {
             try {
                 DataExtract.parseCountries(bad);

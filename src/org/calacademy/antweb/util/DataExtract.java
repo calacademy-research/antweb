@@ -204,14 +204,68 @@ public final class DataExtract {
 
     /** "United States, Canada ,Mexico" -> the three names (also split at line ends), in order, once each. */
     public static List<String> parseCountries(String text) throws BadRequest {
+        return parseCountries(text, java.util.Collections.emptyList());
+    }
+
+    /**
+     * The names of the text, separated by commas or line breaks, in the order typed. A name that holds a comma itself
+     * (AntWeb's valid countries "Bonaire, Sint Eustatius and Saba" and "Saint Helena, Ascension and Tristan da Cunha",
+     * production 2026-11-14) is taken whole where the text has it between separators, case ignored (review of #355:
+     * split at its comma, it was refused as two unknown names, also when picked from the list).
+     */
+    public static List<String> parseCountries(String text, java.util.Collection<String> commaNames) throws BadRequest {
+        String t = text == null ? "" : text;
         Set<String> names = new LinkedHashSet<>();
-        for (String part : (text == null ? "" : text).split("[,\\r\\n]")) {
-            String n = part.trim();
-            if (n.isEmpty()) continue;
-            if (!PLACE_NAME.matcher(n).matches()) throw new BadRequest("Not a place name: " + n);
-            names.add(n);
+        int i = 0;
+        int n = t.length();
+        while (i < n) {
+            int start = i;
+            while (start < n && Character.isWhitespace(t.charAt(start))) start++;
+            if (start >= n) break;
+            String whole = null;
+            int wholeEnd = -1;
+            for (String c : commaNames) {
+                if (c == null || c.isEmpty() || !t.regionMatches(true, start, c, 0, c.length())) continue;
+                int k = start + c.length();
+                while (k < n && (t.charAt(k) == ' ' || t.charAt(k) == '\t')) k++;
+                if ((k == n || isSeparator(t.charAt(k))) && (whole == null || c.length() > whole.length())) {
+                    whole = c;
+                    wholeEnd = k;
+                }
+            }
+            if (whole != null) {
+                names.add(placeName(whole));
+                i = wholeEnd + 1;
+                continue;
+            }
+            int k = start;
+            while (k < n && !isSeparator(t.charAt(k))) k++;
+            String part = t.substring(start, k).trim();
+            if (!part.isEmpty()) names.add(placeName(part));
+            i = k + 1;
         }
         return new ArrayList<>(names);
+    }
+
+    private static boolean isSeparator(char c) {
+        return c == ',' || c == '\r' || c == '\n';
+    }
+
+    /** The name, trimmed, when it is a place name (PLACE_NAME); a BadRequest otherwise. A picked name is taken whole. */
+    public static String placeName(String name) throws BadRequest {
+        String n = name == null ? "" : name.trim();
+        if (!PLACE_NAME.matcher(n).matches()) throw new BadRequest("Not a place name: " + n);
+        return n;
+    }
+
+    /** AntWeb's valid country names that hold a comma (parseCountries takes them whole). */
+    public static List<String> commaCountryNames(Connection c) throws SQLException {
+        List<String> out = new ArrayList<>();
+        try (Statement st = c.createStatement();
+             ResultSet r = st.executeQuery("select name from geolocale where georank = 'country' and is_valid = 1 and name like '%,%' order by name")) {
+            while (r.next()) out.add(r.getString(1));
+        }
+        return out;
     }
 
     /**
