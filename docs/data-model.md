@@ -1226,12 +1226,13 @@ name (`mode = 'changed'`) or would move (`would_change`).
 **Purpose.** Uploads and admin data jobs run in the background with a status page (`jobStatus.do`): one row per job
 (Brian, 2026-10-20).
 
-**Key columns.** `kind` (`upload` or `data`), `action`, `title`, `login_id`, `login_name`, `group_id`, `status`
+**Key columns.** `kind` (`upload`, `data`, or `extract`: a data extract for a collaborator, `dataExtract.do`, since
+2026-11-10; its row is the record of who made which extract), `action`, `title`, `login_id`, `login_name`, `group_id`, `status`
 (`queued`, `running`, `finished`, `failed`, `interrupted`), `step`, `result`, `result_link`, `created`, `started`,
 `finished`.
 
 **Written by.** `BackgroundJobDb` (via `BackgroundJobs`; the SQL names the table through the constant
-`BackgroundJobDb.TABLE`). **Read by.** `jobStatus.do`, the Curate page, `countCheck.do?job=N`. Created by the
+`BackgroundJobDb.TABLE`). **Read by.** `jobStatus.do`, the Curate page, `countCheck.do?job=N`, `dataExtract.do`. Created by the
 application; record in `db/upgrade/8.113/2026-10-20-background-job.sql`.
 
 **Status.** In use.

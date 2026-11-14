@@ -4,8 +4,8 @@
 
 """Deletes old Tomcat log files inside the antweb container: dated logs 7 to 14 days old and numbered copies
 (log.3 to log.9) under /usr/local/tomcat/logs/. Run every night at 21:00 by bin/admin.sh (container cron, as root).
-Never walks the app's own web/log (managed by logrotate, docker/antweb/logrotate.conf) and never follows or
-deletes symbolic links. Docs: docs/architecture-overview.md (logs). Test: tests/unit/test_clear_disk.py.
+Never walks the app's own web/log (managed by logrotate, docker/antweb/logrotate.conf) or extracts/ (the data
+extracts of dataExtract.do, removed by the application), and never follows or deletes symbolic links. Docs: docs/architecture-overview.md (logs). Test: tests/unit/test_clear_disk.py.
 """
 
 import os
@@ -24,8 +24,10 @@ inDirs = [
 
 # Never walked: the app's own web/log (host ./logs/web, mounted at
 # /usr/local/antweb/web/log), which tomcat owns and logrotate manages
-# (docker/antweb/logrotate.conf). Links are never followed or deleted.
-SKIP_DIRS = {'web'}
+# (docker/antweb/logrotate.conf), and extracts (host ./logs/extracts): the data
+# extracts of dataExtract.do, which the application removes itself after 30 days
+# (DataExtractFiles.java). Links are never followed or deleted.
+SKIP_DIRS = {'web', 'extracts'}
 
 # -------------------------------------------------------------
 

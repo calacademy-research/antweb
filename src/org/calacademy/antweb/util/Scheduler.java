@@ -304,6 +304,8 @@ public class Scheduler extends AntwebAction {
 				  // Each step its own try: a failed step no longer skips the ones after it.
 				  try (java.sql.Connection connection = DBUtilSimple.getDataSource().getConnection()) {
 					try {
+					  // Data extracts (dataExtract.do) older than 30 days are removed, and half-written ones, before the disk is measured.
+					  LogMgr.appendLog("compute.log", "  " + DataExtractJob.dailyCleanup(), true);
 					  DailyUpdate.start("logSizeCheck");
 					  LogMgr.appendLog("compute.log", "  " + LogSizeCheck.run(connection), true);
 					} catch (Exception e) {

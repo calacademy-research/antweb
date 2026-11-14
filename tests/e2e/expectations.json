@@ -43,6 +43,8 @@
   "/curator": "ok",
   "/curators": "ok",
   "/dailyUpdate": "login",
+  "/dataExtract": "login",
+  "/dataExtractFile": "login",
   "/dbStatus": "login",
   "/defaultSpecimen": "login",
   "/deleteImages": "login",

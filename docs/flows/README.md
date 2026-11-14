@@ -8,6 +8,7 @@ Step-by-step descriptions of how data moves through AntWeb, with the class, meth
 | [image-upload.md](image-upload.md) | The Image Uploader (`imageUploadBatch.do`, one file per request): naming rules, ownership, backups of replaced images, ImageMagick and its policy, files not saved, report and email |
 | [antcat-to-antweb.md](antcat-to-antweb.md) | The AntCat export (antcat-export server, 03:00) and the AntCat (WorldAnts) import in nightly set 1: size guard, tables changed, species lists moved to current valid names, and what does not happen (existing specimens are not re-resolved) |
 | [nightly.md](nightly.md) | The 05:00 Scheduler and sets 1 to 5 step by step, restart logic, staging differences, running a set by hand, logs |
+| [data-extract.md](data-extract.md) | The admin data extract (`dataExtract.do`): form, background job, the streamed specimen query and its check against the database, the private folder, downloads, removal after 30 days |
 | [test-gaps-uploads-nightly.md](test-gaps-uploads-nightly.md) | Existing tests per step, proposed staging-only tests ranked by value, bugs and dead code found, feature backlog candidates, open questions |
 
 ### Public pages and the API (road map step 2, 2026-10-22, from master at e81a8945)

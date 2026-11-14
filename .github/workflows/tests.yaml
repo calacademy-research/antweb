@@ -745,6 +745,13 @@ jobs:
         # IslandParseLineTest: the same forms through SpecimenUploadParse.parseLine itself (the places, taxa and groups
         # in memory filled by the test, no database): the specimen it would store, and the bounds check against the
         # island's own box.
+        # DataExtractTest (2026-11-10, dataExtract.do): the extract's CSV, manifest text and manifest JSON read as the
+        # command-line tool's (tools/export/specimen_extract.py, Python's csv and json); a download is found only by job
+        # number and a name from the fixed list (no path, no link, no unfinished extract); extracts older than 30 days
+        # are removed and nothing else; the job result and the form escape what was typed. After the review of
+        # 2026-11-10: the folder is outside the web application; a job number in two folders; a half-written manifest
+        # opens no download; an extract that is not verified has no zip and says so in its file names; unfinished
+        # extracts tidied, not the running one; the disk limit; a note on one line.
         # See docs/flows/test-gaps-uploads-nightly.md.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" -v "$PWD/web:/web:ro" \
@@ -782,6 +789,7 @@ jobs:
               /t/org/calacademy/antweb/util/PlaceBioregionTest.java \
               /t/org/calacademy/antweb/upload/IslandCountryTest.java \
               /t/org/calacademy/antweb/upload/IslandParseLineTest.java \
+              /t/org/calacademy/antweb/util/DataExtractTest.java \
               /t/org/calacademy/antweb/util/QuoteTrimTest.java \
               /t/org/calacademy/antweb/upload/AntcatLocalityTest.java
             for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:15 \
@@ -790,7 +798,7 @@ jobs:
                      util.BackgroundJobsTest:16 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
                      util.JobSummaryTest:8 upload.SubfamilyFromGenusTest:9 upload.LocalityCodePlainTest:6 \
-                     util.CountrySpellingTest:8 util.PlaceBioregionTest:9 upload.IslandCountryTest:10 upload.IslandParseLineTest:9 upload.AntcatLocalityTest:9 util.QuoteTrimTest:5; do
+                     util.CountrySpellingTest:8 util.PlaceBioregionTest:9 upload.IslandCountryTest:10 upload.IslandParseLineTest:9 upload.AntcatLocalityTest:9 util.QuoteTrimTest:5 util.DataExtractTest:19; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
@@ -898,6 +906,9 @@ jobs:
 
       - name: Island countries, stored specimens filed under the island (tests/unit/test_island_countries.py; its database part runs in the MySQL 8.4 step above)
         run: python3 tests/unit/test_island_countries.py
+
+      - name: The Data extract page writes the tool's format, and an island is its own country (tests/unit/test_data_extract_tool_version.py)
+        run: python3 tests/unit/test_data_extract_tool_version.py
 
       - name: AntCat names of an island are filed under the island only (tests/unit/test_antcat_island_rows.py)
         run: python3 tests/unit/test_antcat_island_rows.py
@@ -1269,6 +1280,8 @@ jobs:
           docker exec mysql mysql -uroot -pci-root -h127.0.0.1 -e "ALTER USER 'antweb'@'%' IDENTIFIED WITH mysql_native_password BY 'CHANGE_ME'"
           # IslandCountryDbTest works in a schema of its own, which it makes and drops (never the tables of ant).
           docker exec mysql mysql -uroot -pci-root -h127.0.0.1 -e "GRANT ALL ON ant_islandtest.* TO 'antweb'@'%'"
+          # DataExtractDbTest too, in ant_extracttest (review of #355).
+          docker exec mysql mysql -uroot -pci-root -h127.0.0.1 -e "GRANT ALL ON ant_extracttest.* TO 'antweb'@'%'"
           docker run --rm --network tzcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/WEB-INF:/w:ro" antweb/antweb:dev -c '
             set -e
             C=/usr/local/antweb/WEB-INF/classes
@@ -1419,6 +1432,19 @@ jobs:
           # also when its row is on a list twice.
           # LicenseUpdateDbTest (2026-10-29): the start-up update of stored licence texts to CC BY 4.0 backs up first,
           # is a no-op on a second run and skips a missing license table. Last: it makes its own small tables.
+          # DataExtractDbTest (2026-11-10, dataExtract.do): the extract of three countries and an island named with them
+          # is complete and verified (tabs, line breaks, quotes, accents, NULL, numbers and dates as the database prints
+          # them, a zero date, 0/0 coordinates, a name without taxon row all in the file); a database count that differs
+          # is reported; an unknown or outdated country name stops before any file; an island is never in its political
+          # parent's extract (Brian Fisher, 2026-11-11: both stored forms, old island names, no specimen in two files); the connection
+          # only reads and comes back as it was; 12,000 rows streamed. After the review: every country row that is not
+          # valid refused; specimens under an old name of a country included and counted; a country without specimens a
+          # warning; two spellings of a country counted apart and verified; read in pages by code, the table free
+          # between pages (ALTER TABLE during the extract does not wait); a four-byte character whole. Formats 5 and 6
+          # (ants only by default, Brian Fisher 2026-11-10): the file, the check and the bioregion list use the same
+          # filter, what is left out is counted by family, no family is kept, all families on request, a row that is
+          # not an ant in an ants-only file is not verified; the specimens without a country in their own file.
+          # In its own schema ant_extracttest (granted above), dropped when it ends.
           docker run --rm --network tzcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
             set -e
@@ -1456,8 +1482,9 @@ jobs:
               /t/org/calacademy/antweb/home/ImagingProgressDbTest.java \
               /t/org/calacademy/antweb/util/OnePlaceJobDbTest.java \
               /t/org/calacademy/antweb/home/GroupSpecimenCountDbTest.java \
+              /t/org/calacademy/antweb/util/DataExtractDbTest.java \
               /t/org/calacademy/antweb/home/ListCleanupOrderDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3 home.GroupSpecimenCountDbTest:8 home.IslandCountryDbTest:7 home.AntcatIslandRowsDbTest:2 home.ListCleanupOrderDbTest:16; do
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3 home.GroupSpecimenCountDbTest:8 home.IslandCountryDbTest:7 home.AntcatIslandRowsDbTest:2 home.ListCleanupOrderDbTest:16 util.DataExtractDbTest:21; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

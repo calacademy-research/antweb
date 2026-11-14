@@ -43,6 +43,12 @@ def main():
             os.path.join(logs, "web", f"srfExceptions{old} 10:00:00.txt"),
             os.path.join(logs, "web", "compute.log.3"),
             os.path.join(logs, "web", "bak", f"x.{old}.log"),
+            # data extracts (dataExtract.do) live beside Tomcat's logs and are never this script's to delete,
+            # whatever their files are called
+            os.path.join(logs, "extracts", f"{old}-12", "manifest.txt"),
+            os.path.join(logs, "extracts", f"{old}-12", f"notes.{old}.txt"),
+            os.path.join(logs, "extracts", f"{old}-12", "specimens.csv.gz"),
+            os.path.join(logs, "extracts", "x.log.5"),
             os.path.join(outside, f"dump.{old}.log"),
             os.path.join(outside, "db.log.4"),
         ]
@@ -63,6 +69,7 @@ def main():
         assert os.path.islink(os.path.join(logs, "link.log.7")), "link to a file removed"
         walked = {os.path.relpath(os.path.join(d, n), logs) for d, n in cd.walkLogs(logs)}
         assert not any(w.startswith("web" + os.sep) for w in walked), walked
+        assert not any(w.startswith("extracts" + os.sep) for w in walked), walked
     print("clearDisk.py OK")
 
 

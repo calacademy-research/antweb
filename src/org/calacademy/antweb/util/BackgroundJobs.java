@@ -32,7 +32,8 @@ import org.apache.commons.logging.LogFactory;
  *
  * Duplicates: while an upload of a group (or by a login) is queued or running, a new upload of
  * the same group or by the same login is not started; the caller gets the job already there.
- * The same for an admin data job with the same action.
+ * The same for an admin data job with the same action, and for a data extract (kind "extract", one action: one
+ * extract at a time).
  *
  * The nightly run (Scheduler, utilData.do called with the scheduler's code) does not use this:
  * it runs as before, in its own request.
@@ -44,6 +45,8 @@ public final class BackgroundJobs {
     /** Job kinds. */
     public static final String UPLOAD = "upload";
     public static final String DATA = "data";
+    /** A data extract for a collaborator (dataExtract.do, DataExtractJob): read-only, administrators only. */
+    public static final String EXTRACT = "extract";
 
     /** How many jobs may wait or run at a time (all kinds). */
     public static final int MAX_ACTIVE = 20;
@@ -532,7 +535,7 @@ public final class BackgroundJobs {
     static String applicationWaitReason(Job job) {
         if (!AntwebMgr.isPostInitialized()) return "Waiting for AntWeb to finish starting up.";
         if (UtilDataAction.isInComputeProcess() || Scheduler.isRunning()) {
-            return "Waiting for the nightly data update (or another data job) to finish. Your job starts right after it.";
+            return "Waiting for the daily update (or another data job) to finish. Your job starts right after it.";
         }
         if (org.calacademy.antweb.upload.UploadAction.isInUploadProcess()) {
             return "Waiting for another upload to finish. Your job starts right after it.";

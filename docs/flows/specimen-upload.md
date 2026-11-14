@@ -184,7 +184,7 @@ The page shows "Status: Waiting / Running / Finished / Did not complete / Interr
 
 | Status | Text |
 |---|---|
-| Waiting | "Your file has been received and is waiting its turn: uploads run one at a time." and the reason, e.g. "Waiting for another upload to finish. Your job starts right after it." or "Waiting for the nightly data update (or another data job) to finish. Your job starts right after it." |
+| Waiting | "Your file has been received and is waiting its turn: uploads run one at a time." and the reason, e.g. "Waiting for another upload to finish. Your job starts right after it." or "Waiting for the daily update (or another data job) to finish. Your job starts right after it." |
 | Running | "Your file has been received and is being processed. Large files take several minutes." |
 | Finished | "Upload complete." then "Upload complete: N specimens loaded, R of them red-flagged. Upload ID U." (plus "The upload report lists lines that need your attention (some may not have been loaded)." when the report has messages) and the link "Your upload report" (the same report as in the email) |
 | Did not complete | "The upload did not complete." and the reason as plain text (the same text as in the email; crashes become "AntWeb hit an unexpected problem (case N) and made no changes. Please write to antweb@antweb.org (with the case number) so we can look into it.") |

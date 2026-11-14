@@ -43,6 +43,8 @@ ADMIN_ONLY = [
     "/sanitizeDescriptions.do",
     "/inactiveAccounts.do",
     "/apiKeys.do",
+    "/dataExtract.do",
+    "/dataExtractFile.do?job=1&file=manifest.txt",
     "/addUploader.do",
     "/viewGroups.do",
     "/viewGroup.do?id=1",

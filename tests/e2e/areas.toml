@@ -122,6 +122,9 @@ tests = [
   "test_message_log.py::test_page_shows_the_whole_message",
   "test_message_log.py::test_image_data_query_shows_at_most_5000_rows",
   "test_add_uploader.py::test_anonymous_gets_login_page",
+  "test_data_extract.py::test_page_and_download_need_login",
+  "test_data_extract.py::test_extract_folder_is_not_served",
+  "test_data_extract.py::test_source_page_linked_and_folder_private",
   "test_background_jobs.py::test_status_page_needs_login",
   "test_background_jobs.py::test_curate_page_note_is_accurate",
   "test_check57_merges.py::test_search_redirects_to_advanced_search",
@@ -467,12 +470,16 @@ tests = [
 ]
 
 [areas.downloads]
-# Search results (paged), specimen and search downloads (genus/species only, 5,000 cap), robots.txt.
+# Search results (paged), specimen and search downloads (genus/species only, 5,000 cap), robots.txt; the admin data extract.
 paths = [
   "src/org/calacademy/antweb/search/**",
   "src/org/calacademy/antweb/util/SpecimenListAction.java",
   "src/org/calacademy/antweb/util/DownloadLimits.java",
   "src/org/calacademy/antweb/home/SpecimenDb.java",
+  "src/org/calacademy/antweb/util/DataExtract*.java",
+  "src/org/calacademy/antweb/curate/DataExtract*.java",
+  "web/curate/dataExtract*.jsp",
+  "tools/export/**",
   "web/search/**",
   "web/robots.txt",
   "web/common/specimen_list.js",
@@ -485,6 +492,7 @@ tests = [
   "test_field_guide_compare.py",      # field guides and the compare tools (step 2)
   "test_search_code_lists.py",        # pasted code lists, sort, long addresses (2026-10-26)
   "test_numbers_search.py",           # search result counts against the API (2026-10-27)
+  "test_data_extract.py",             # admin data extract for a collaborator: job, manifest, downloads, access (2026-11-10)
   "test_browser.py",
 ]
 
