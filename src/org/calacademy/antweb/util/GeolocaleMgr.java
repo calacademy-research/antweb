@@ -804,6 +804,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         // AntWeb's old name "Amurskaya Oblast" (valid: Amur); since #351 it was reported as "Not valid Antweb adm1"
         // (11-14: 17 CAS specimens, 7 Russian oblasts). The name as written first (Yemen's valid "Şan'ā'" keeps its
         // apostrophe); only when that is not known, the name without its final apostrophe.
+        if (adm1s.get(adm1, country) != null) return null;   // known as written (an old name that leads nowhere): no second try
         if (adm1 != null && adm1.length() > 1 && adm1.endsWith("'")) {
             return validAdm1Exact(adm1s, adm1.substring(0, adm1.length() - 1), country);
         }

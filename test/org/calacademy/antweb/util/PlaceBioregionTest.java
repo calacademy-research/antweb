@@ -79,6 +79,8 @@ public class PlaceBioregionTest extends TestCase {
         adm1("Arkhangel'", "Russia", true, "", "Palearctic", "");
         adm1("Şan'ā'", "Yemen", true, "", "Afrotropical", "");
         adm1("Şan'ā", "Yemen", false, "", "", "");
+        adm1("Lost Oblast'", "Russia", false, "none", "", "");
+        adm1("Lost Oblast", "Russia", true, "", "Palearctic", "");
     }
 
     private String bioregion(String country, String adm1) {
@@ -183,6 +185,8 @@ public class PlaceBioregionTest extends TestCase {
         assertSame(adm1s.get("Arkhangel'", "Russia"), GeolocaleMgr.validAdm1(adm1s, "Arkhangel'", "Russia"));
         assertSame(adm1s.get("Şan'ā'", "Yemen"), GeolocaleMgr.validAdm1(adm1s, "Şan'ā'", "Yemen"));
         // the name as written is known (an old name with no valid name): no second try without the apostrophe
+        assertNull(GeolocaleMgr.validAdm1(adm1s, "Lost Oblast'", "Russia"));
+        assertSame(adm1s.get("Lost Oblast", "Russia"), GeolocaleMgr.validAdm1(adm1s, "Lost Oblast", "Russia"));
         assertNull(GeolocaleMgr.validAdm1(adm1s, "Şan'ā", "Yemen"));
         // only one apostrophe, only at the end, only for the same country
         assertNull(GeolocaleMgr.validAdm1(adm1s, "Amurskaya Oblast''", "Russia"));

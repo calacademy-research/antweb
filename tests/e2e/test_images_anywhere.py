@@ -187,8 +187,9 @@ def test_a_label_only_specimen_is_shown_in_both_views():
     assert 'data-place-label-only="1"' in page and 'data-place-imaged="0"' in page, "the place note does not count it apart"
     assert "with label images only comes first" in page
     # the head view (no thumbs cookie) shows its label too
-    head = ns.fetch(path + "&placeOnly=true") or ""
-    assert code in head.lower(), "the head view of placeOnly=true does not show the label-only specimen"
+    head = (ns.fetch(path + "&placeOnly=true") or "").lower()
+    assert re.search(r'<div class="name"><a href="[^"]*specimenimages\.do\?name=' + code, head), \
+        "the head view of placeOnly=true has no cell of the label-only specimen"
 
 
 # ------------------------------------------------------------------------------------------- 3. Images column
