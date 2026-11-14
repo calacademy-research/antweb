@@ -81,7 +81,9 @@ import static test.org.calacademy.antweb.util.NumbersTestDb.*;
  *  - a row whose removal cannot be recorded (the record's insert meets a lock wait timeout) is not deleted: the daily
  *    clean-up says it as an error of its step ("FAILED: ... no record could be written ..."), which the step's caller
  *    rolls back; the rebuild at an upload logs it, leaves the genus row on the list and goes on. Until then the
- *    failure was logged and the row deleted: a removal without a record;
+ *    failure was logged and the row deleted: a removal without a record. Since the review of #352 (2026-11-14) the
+ *    rebuild's rule goes on after such a row: the rows that need no record still go, those that need one stay
+ *    without a second wait, and the rows kept get back the source they had before the rebuild;
  *  - the rebuild's record has the source the genus row had before the rebuild, which is also what tells a curator's
  *    row and a removal recorded already;
  *  - the line counts one per name, also when a name's row is on a list twice.
@@ -627,11 +629,68 @@ public class ListCleanupOrderDbTest extends TestCase {
             assertEquals("the upload's write stands", 4321, one("select specimen_count from project where project_name = 'madants'"));
             assertEquals("still on the list after the commit", Arrays.asList(CREMATOGASTER, PHEIDOLE, HYPO), genusRows(ALL));
             assertEquals("no record, and no removal without one", 0, records().size());
-            // the next upload's rebuild, nothing in the way: off the list, with its record (the source the last rebuild gave it: none)
+            assertEquals("the row kept has its source from before the rebuild", "worldants", source(ALL, CREMATOGASTER));
+            // the next upload's rebuild, nothing in the way: off the list, with its record and that source (until
+            // 2026-11-14 the source the failed rebuild had written: none)
             new ProjTaxonDb(connection).rebuildAllAntwebList();
             connection.commit();
             assertEquals(Arrays.asList(PHEIDOLE, HYPO), genusRows(ALL));
-            assertEquals(Arrays.asList(ALL + "|" + CREMATOGASTER + "||" + ListRemovalLog.JOB_REBUILD_GENUS + "|" + ListRemovalLog.REASON_GENUS_NO_SPECIES), records());
+            assertEquals(Arrays.asList(ALL + "|" + CREMATOGASTER + "|worldants|" + ListRemovalLog.JOB_REBUILD_GENUS + "|" + ListRemovalLog.REASON_GENUS_NO_SPECIES), records());
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+
+    private String source(String project, String taxonName) throws Exception {
+        try (PreparedStatement s = connection.prepareStatement("select source from proj_taxon where project_name = ? and taxon_name = ?")) {
+            s.setString(1, project);
+            s.setString(2, taxonName);
+            try (ResultSet r = s.executeQuery()) {
+                return r.next() ? r.getString(1) : "(no row)";
+            }
+        }
+    }
+
+    /**
+     * One failed record does not end the rule for the whole list (review of #352, 2026-11-14). Three genus rows
+     * without species or specimen, in the order the rule reads them: Crematogaster, on the list before (its record
+     * waits for the record table until the lock wait timeout); a genus the rebuild itself puts on the list (no record
+     * needed: it goes); a curator's genus row that was on the list before (needs a record: kept without a try, which
+     * would wait for the same lock again). The two rows kept get back the sources they had before the rebuild; the
+     * next rebuild, with the table free, takes them off and records them with those sources. Until 2026-11-14 the
+     * first failure ended the loop and the genus the rebuild had just put on the list stayed until the daily clean-up.
+     */
+    public void testAFailedRecordInTheRebuildKeepsOnlyTheRowsThatNeedARecord() throws Exception {
+        String newGenus = MYRM + "zgenus";       // valid, not on the AntWeb-wide list before the rebuild
+        String curatorGenus = PON + "zgenus";    // valid, on the list before, from the Species List Tool
+        exec(connection, "insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus) values"
+            + " ('" + newGenus + "', 'genus', 'valid', '" + MYRM + "', 'formicidae', '" + MYRM + "', 'zgenus'),"
+            + " ('" + curatorGenus + "', 'genus', 'valid', '" + PON + "', 'formicidae', '" + PON + "', 'zgenusp')");
+        exec(connection, "insert into proj_taxon (project_name, taxon_name, source) values ('" + ALL + "', '" + curatorGenus + "', 'speciesListTool')");
+        exec(connection, "set innodb_lock_wait_timeout = 1");
+        connection.setAutoCommit(false);
+        try (Connection other = connect()) {
+            other.setAutoCommit(false);
+            exec(other, "insert into " + ListRemovalLog.TABLE + " (list_type, list_key, taxon_name, removed_at) values ('project', 'held', 'h', now())");
+            try (PreparedStatement s = other.prepareStatement("select id from " + ListRemovalLog.TABLE + " for update"); ResultSet r = s.executeQuery()) {
+                while (r.next()) { /* locked */ }
+            }
+            long start = System.currentTimeMillis();
+            new ProjTaxonDb(connection).rebuildAllAntwebList();   // does not throw
+            long took = System.currentTimeMillis() - start;
+            assertEquals("the genus the rebuild put on the list is off it; the two that need a record stay",
+                Arrays.asList(CREMATOGASTER, PHEIDOLE, HYPO, curatorGenus), genusRows(ALL));
+            assertTrue("one wait for the lock, not one per row that needs a record: " + took + " ms", took < 1900);
+            assertEquals("worldants", source(ALL, CREMATOGASTER));
+            assertEquals("the curator's row keeps the curator's source", "speciesListTool", source(ALL, curatorGenus));
+            other.rollback();
+            connection.commit();
+            assertEquals("no record, and no removal that needed one", 0, records().size());
+            new ProjTaxonDb(connection).rebuildAllAntwebList();
+            connection.commit();
+            assertEquals(Arrays.asList(PHEIDOLE, HYPO), genusRows(ALL));
+            String job = "|" + ListRemovalLog.JOB_REBUILD_GENUS + "|" + ListRemovalLog.REASON_GENUS_NO_SPECIES;
+            assertEquals(Arrays.asList(ALL + "|" + CREMATOGASTER + "|worldants" + job, ALL + "|" + curatorGenus + "|speciesListTool" + job), records());
         } finally {
             connection.setAutoCommit(true);
         }

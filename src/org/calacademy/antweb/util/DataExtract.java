@@ -225,8 +225,10 @@ public final class DataExtract {
             String whole = null;
             int wholeEnd = -1;
             for (String c : commaNames) {
-                if (c == null || c.isEmpty() || !t.regionMatches(true, start, c, 0, c.length())) continue;
-                int k = start + c.length();
+                if (c == null || c.isEmpty()) continue;
+                java.util.regex.Matcher m = commaNamePattern(c).matcher(t).region(start, n);
+                if (!m.lookingAt()) continue;
+                int k = m.end();
                 while (k < n && (t.charAt(k) == ' ' || t.charAt(k) == '\t')) k++;
                 if ((k == n || isSeparator(t.charAt(k))) && (whole == null || c.length() > whole.length())) {
                     whole = c;
@@ -245,6 +247,19 @@ public final class DataExtract {
             i = k + 1;
         }
         return new ArrayList<>(names);
+    }
+
+    /**
+     * The comma name as typed: case ignored, and any spaces (or none) on either side of its commas
+     * ("Bonaire,Sint Eustatius and Saba", "bonaire ,  sint eustatius and saba"; review of #356).
+     */
+    private static java.util.regex.Pattern commaNamePattern(String name) {
+        StringBuilder re = new StringBuilder();
+        for (String part : name.split("\\s*,\\s*", -1)) {
+            if (re.length() > 0) re.append("[ \\t]*,[ \\t]*");
+            re.append(java.util.regex.Pattern.quote(part));
+        }
+        return java.util.regex.Pattern.compile(re.toString(), java.util.regex.Pattern.CASE_INSENSITIVE | java.util.regex.Pattern.UNICODE_CASE);
     }
 
     private static boolean isSeparator(char c) {

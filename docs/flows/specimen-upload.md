@@ -94,8 +94,10 @@ Numbers are the order in which things happen for `upload.do?action=specimenUploa
      between an upload and the next daily update. A red-flagged specimen keeps no genus on the list. A genus that
      was on the list before the rebuild and is off it afterwards is recorded in `list_removal_log`, once, with the
      source its row had before the rebuild. The record first: a genus whose record cannot be written (a lock wait
-     timeout on `list_removal_log`, for example) is not taken off the list, nor the genera after it; logged, the
-     upload goes on, and the daily clean-up applies the rule to them (Brian Fisher, 2026-11-03: no job deletes list
+     timeout on `list_removal_log`, for example) is not taken off the list and gets back the source it had before
+     the rebuild; the genera after it that need a record stay too (each try would wait for the same lock), those
+     the rebuild itself put on the list, which need none, still go (review of #352, 2026-11-14); logged, the upload
+     goes on, and the daily clean-up takes the rows kept off and records them with that source (Brian Fisher, 2026-11-03: no job deletes list
      entries without a record a curator can see). The rebuild runs on the upload's own connection, in its one
      transaction (`SpecimenUploadJob`: one commit at the end). An error in the rule that leaves the transaction intact is logged and the list stays as built; a
      deadlock, after which the database has rolled back the whole upload, is passed on, so the upload fails with

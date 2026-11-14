@@ -664,8 +664,16 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
      * The rule for one list. job: the record's job name; recordOnly: when not null, only the genus rows named in it are
      * recorded, each with the source it is given there (the rebuild of the AntWeb-wide list: the rows that were on the
      * list before it, with the source they had then; a row the rebuild put on the list a moment ago, in the same
-     * transaction, was never a list entry anyone saw). A row whose record cannot be written is not deleted: the error
-     * is thrown and the rows after it stay too (deleteProjTaxon).
+     * transaction, was never a list entry anyone saw). A row whose record cannot be written is not deleted
+     * (deleteProjTaxon). The daily clean-up (recordOnly null): the error is thrown and the rows after it stay too; its
+     * caller rolls the step back. The rebuild (JOB_REBUILD_GENUS): that row stays and the loop goes on (review of #352;
+     * until 2026-11-14 the error ended the loop, and a genus row the rebuild had just put on the list, which needs no
+     * record, stayed on it until the daily clean-up). After one record has failed, the rows that need a record are
+     * kept without trying (each try would wait for the same lock until the lock wait timeout, inside the upload); the
+     * rows that need none are still removed. A row kept gets back the source it had before the rebuild
+     * (keepForCleanup). Each row's record and delete are one step (a savepoint, in a transaction):
+     * a delete that fails after its record was written takes the record back. A deadlock is always thrown: the
+     * transaction is gone (DBUtil.transactionRolledBack).
      */
     private int removeGenusRows(String projectName, String job, java.util.Map<String, String> recordOnly) throws SQLException {
         List<String[]> candidates = new ArrayList<>();   // genus row's name, subfamily, genus
@@ -676,15 +684,57 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
                 while (r.next()) candidates.add(new String[] {r.getString(1), r.getString(2), r.getString(3)});
             }
         }
+        boolean rebuild = ListRemovalLog.JOB_REBUILD_GENUS.equals(job);
+        boolean recordFailed = false;
+        List<String> kept = new ArrayList<>();
         int removed = 0;
         for (String[] genus : candidates) {
             if (Project.ALLANTWEBANTS.equals(projectName) && antwebHasSpecimenOf(genus[1], genus[2])) continue;
             boolean record = recordOnly == null || recordOnly.containsKey(genus[0]);
             String sourceBefore = recordOnly == null ? null : DBUtil.sqlLiteral(recordOnly.get(genus[0]));
-            deleteProjTaxon(genus[0], projectName, null, record ? job : null, ListRemovalLog.REASON_GENUS_NO_SPECIES, sourceBefore);
-            ++removed;
+            if (!rebuild) {
+                deleteProjTaxon(genus[0], projectName, null, record ? job : null, ListRemovalLog.REASON_GENUS_NO_SPECIES, sourceBefore);
+                ++removed;
+                continue;
+            }
+            if (record && recordFailed) {   // the record table is held: kept, the daily clean-up applies the rule
+                keepForCleanup(projectName, genus[0], recordOnly, kept);
+                continue;
+            }
+            java.sql.Savepoint step = getConnection().getAutoCommit() ? null : getConnection().setSavepoint();
+            try {
+                deleteProjTaxon(genus[0], projectName, null, record ? job : null, ListRemovalLog.REASON_GENUS_NO_SPECIES, sourceBefore);
+                ++removed;
+            } catch (SQLException e) {
+                if (DBUtil.transactionRolledBack(e)) throw e;
+                if (step != null) getConnection().rollback(step);
+                s_log.error("removeGenusRows() " + genus[0] + " stays on the list of " + projectName + ": " + e);
+                keepForCleanup(projectName, genus[0], recordOnly, kept);
+                if (record) recordFailed = true;
+            }
         }
+        if (!kept.isEmpty()) s_log.warn("removeGenusRows() " + projectName + ": " + kept.size() + " genus rows kept for the daily clean-up: "
+            + String.join(", ", kept));
         return removed;
+    }
+
+    /**
+     * A genus row the rebuild leaves on the list because its record could not be written: it gets back the source it
+     * had before the rebuild (the rebuild wrote its own on every row), so the daily clean-up's record names that
+     * source and still tells a curator's row (ListRemovalLog.recordWhereOnce; review of #352). A row that was not on
+     * the list before keeps the rebuild's. In the caller's transaction; a failure here is logged, the row stays.
+     */
+    private void keepForCleanup(String projectName, String taxonName, java.util.Map<String, String> before, List<String> kept) {
+        kept.add(taxonName);
+        if (before == null || !before.containsKey(taxonName)) return;
+        try (PreparedStatement stmt = getConnection().prepareStatement("update proj_taxon set source = ? where project_name = ? and taxon_name = ?")) {
+            stmt.setString(1, before.get(taxonName));
+            stmt.setString(2, projectName);
+            stmt.setString(3, taxonName);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            s_log.error("keepForCleanup() " + taxonName + " on the list of " + projectName + " keeps the rebuild's source: " + e);
+        }
     }
 
     /**
@@ -1077,7 +1127,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
      * row; the one before is what a reader of the list knew, and what tells a curator's row, whose removal is always
      * recorded, from one recorded already: ListRemovalLog.recordWhereOnce). The record first: when it cannot be
      * written (a lock wait timeout on list_removal_log, for example) that genus row is not taken off, nor the ones
-     * after it; logged, the upload goes on, and the daily clean-up applies the rule to them. A genus the rebuild put
+     * after it that need a record; the ones that need none still are (removeGenusRows). Logged, the upload goes on,
+     * and the daily clean-up applies the rule to the rows kept. A genus the rebuild put
      * on the list and took off again in the same transaction was not on the list before and is not after: no record
      * (it would be one for every such genus at every upload).
      */
@@ -1133,7 +1184,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             // and this list share one connection, committed once at the end: SpecimenUploadJob, TaxonWorksNightly).
             // Going on would commit an upload without its specimens and call it done. Passed on: the upload fails and
             // says so. Any other error leaves the transaction as it was and the list as built: a record of a removal
-            // that could not be written is such an error (its genus row and the ones after it stay on the list; no
+            // that could not be written is no longer thrown here (removeGenusRows keeps that row and goes on; no
             // row goes without its record).
             if (DBUtil.transactionRolledBack(e)) {
                 throw e instanceof SQLException ? (SQLException) e
