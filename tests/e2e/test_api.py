@@ -387,6 +387,13 @@ def test_v4_specimens_are_ants_only_unless_asked():
         every, ants_only = genera("&allFamilies=true"), genera("")
         assert ants_only <= every, sorted(ants_only - every)[:5]
         assert genus in every, f"{genus} of {code} is not among the genera of {country} with allFamilies=true"
+    # 2026-11-14: /v4/measurements says how many match, how many it gives and whether it reaches the end
+    m = v4("genus=camponotus&limit=5", "measurements")
+    md = m["metaData"]
+    assert md.get("returned") == len(m["measurements"]) and isinstance(md.get("complete"), bool), md
+    assert "total" in md or "totalNotGiven" in md, md
+    if "total" in md:
+        assert md["complete"] == (md["total"] <= len(m["measurements"])), md
     # a route without the rule says nothing about families and does not take the parameter
     assert "families" not in v4("genus=camponotus&limit=1", "taxa")["metaData"]
     r = requests.get(BASE_URL + "/v4/taxa?allFamilies=true", timeout=max(TIMEOUT, 120), headers=headers, allow_redirects=False)

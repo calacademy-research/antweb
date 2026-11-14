@@ -74,7 +74,7 @@ FIELDS = [
 EXTRA_PARAMS = {'getSpecimen': ('collectingEventCode', 'localityCode', 'afterCode', 'total', 'allFamilies'),
                 'getGeoSpecimens': ('afterCode', 'total', 'allFamilies'),
                 'getGeoSpeciesStats': ('allFamilies',), 'getDistinctTaxa': ('allFamilies',),
-                'getMeasurements': ('allFamilies',),
+                'getMeasurements': ('allFamilies', 'total'),
                 'getTaxa': ('total',)}
 # Old or Darwin Core names, pointed to the v4 name in the 400 reply.
 HINTS = {'collectionCode': 'collectingEventCode', 'catalogNumber': 'specimenCode', 'eventID': 'collectingEventCode',
@@ -86,7 +86,7 @@ SPECIMEN_LISTS = {'specimens': 'specimens', 'geoSpecimens': 'specimens'}
 NOT_FOR_V4 = ('up', 'log')
 # Complete sets: what the list routes say and take (the v4 front door and docs/flows/api.md).
 PAGING = {
-    'routes': ['/v4/specimens', '/v4/geoSpecimens', '/v4/taxa'],
+    'routes': ['/v4/specimens', '/v4/geoSpecimens', '/v4/taxa', '/v4/measurements'],
     'total': 'metaData.total is the number of records that match the filters, whatever limit is. It is given on the'
              ' first page (no offset, no afterCode) and on any page with total=true; total=false leaves it out.'
              ' A /v4/specimens request without any filter gets no total unless it says total=true (counting every'
