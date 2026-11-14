@@ -619,7 +619,8 @@ def test_the_key_is_never_in_logs_or_replies():
         replies.append(get("/v4/specimens?specimenCod=x", key))            # 400
         replies.append(get("/v4/specimens?minElevation=abc", key))         # 400 inside v3.1
         replies.append(get("/v4/specimens?apiKey=" + key))                 # key in the address
-        replies.append(get("/v4/specimens", key[:-1] + "Z"))               # 401
+        # 401: a different last character (the keys are random: one in 64 ends in "Z", 2026-11-13 #354's run)
+        replies.append(get("/v4/specimens", key[:-1] + ("Y" if key.endswith("Z") else "Z")))
 
         def boom(*a, **k):
             raise RuntimeError("forced error")

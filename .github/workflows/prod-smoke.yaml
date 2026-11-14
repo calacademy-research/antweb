@@ -26,7 +26,7 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-24.04
     # Waiting for AntWeb after a restart takes up to 7 minutes; the checks themselves under 3.
-    timeout-minutes: 12
+    timeout-minutes: 22
     steps:
       - uses: actions/checkout@v4
         with:
@@ -76,7 +76,9 @@ jobs:
         run: python3 tests/smoke/prod_smoke.py wait --max-seconds 420
 
       - name: Smoke run (read-only; pages through the tunnel, API through Cloudflare)
-        timeout-minutes: 3
+        # worst case: five pages at 60 s, the statistics page at 240 s (its first visit after a restart), the API
+        # calls at 60 s each: about 12 minutes
+        timeout-minutes: 13
         env:
           SMOKE_API_URL: https://www.antweb.org
         run: python3 tests/smoke/prod_smoke.py deploy
