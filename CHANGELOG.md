@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [9.4.0] - 2026-11-14
+
+API v4 open with free keys (v3.1 data routes retired, HTTP 410); oceanic islands as countries of their own (Hawaii, Galapagos Islands); endemics include AntCat type localities; imaging progress page; data extract for administrators; label-only specimens shown on species images pages; uploads and data jobs page, daily update page; faster daily update with daily count checks. Plain-language notes: release-notes/9.4.0.md. Main PRs: #337, #338, #339, #340, #341, #342, #344, #345, #347, #348, #351, #352, #353, #355, #356, #357.
+
 ## [9.3.0] - 2026-11-07
 
 Place numbers equal their lists; four views of every species and genus list; home page numbers; specimens follow AntCat names daily (uploaded name kept); clearer upload reports; API: full species names and exact country matching. Plain-language notes: release-notes/9.3.0.md. Main PRs: #316, #318, #321, #322, #324, #325, #326, #327.
