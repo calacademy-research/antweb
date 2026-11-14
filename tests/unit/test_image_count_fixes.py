@@ -27,10 +27,13 @@ def test_all_view_shows_the_list_images_of_a_name():
     block = jsp[jsp.index('<div class="ratio_has_images">'):]
     block = block[:block.index("</div>")]
     assert "thisChild.getHasImages() && !isSpecimen" in block, "the All view has no branch for names"
-    names = block[block.index("!isSpecimen"):block.index("else if (thisChild.getHasImages())")]
+    names = block[block.index("!isSpecimen"):block.index("else if (thisChild.getHasImages()")]
     # since 2026-10-27 (Brian Fisher) the Images column's numbers: ant images in AntWeb and of this place's list
     assert "ImagesAnywhere.childImages(thisChild, overview)" in names, "names do not show their Images of this place's list"
     assert "getHasImagesCount" not in names, "names show getHasImagesCount (counted for specimens only)"
+    # 2026-11-14 (Brian Fisher): a specimen with label images only says "Label only", not "No Images"
+    assert "else if (thisChild.getHasImages() || (isSpecimen && org.calacademy.antweb.ImagesAnywhere.isLabelOnly(thisChild)))" in block, \
+        "a label-only specimen's cell does not say Label only"
     # the default view shows the same number
     assert "isSpecimen ? org.calacademy.antweb.ImageCounts.text(thisChild.getImages()) : org.calacademy.antweb.ImagesAnywhere.childImages(thisChild, overview)" in jsp
 
