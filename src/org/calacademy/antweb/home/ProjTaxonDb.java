@@ -672,7 +672,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
      * kept without trying (each try would wait for the same lock until the lock wait timeout, inside the upload); the
      * rows that need none are still removed. A row kept gets back the source it had before the rebuild
      * (keepForCleanup). Each row's record and delete are one step (a savepoint, in a transaction):
-     * a delete that fails after its record was written takes the record back. A deadlock is always thrown: the
+     * a delete that fails after its record was written takes the record back. In auto-commit (an admin job, for
+     * example) there is no savepoint: a record written before a failed delete stands, for a row still on the list. A deadlock is always thrown: the
      * transaction is gone (DBUtil.transactionRolledBack).
      */
     private int removeGenusRows(String projectName, String job, java.util.Map<String, String> recordOnly) throws SQLException {
@@ -704,6 +705,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             java.sql.Savepoint step = getConnection().getAutoCommit() ? null : getConnection().setSavepoint();
             try {
                 deleteProjTaxon(genus[0], projectName, null, record ? job : null, ListRemovalLog.REASON_GENUS_NO_SPECIES, sourceBefore);
+                if (step != null) getConnection().releaseSavepoint(step);
                 ++removed;
             } catch (SQLException e) {
                 if (DBUtil.transactionRolledBack(e)) throw e;
@@ -722,9 +724,10 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
      * A genus row the rebuild leaves on the list because its record could not be written: it gets back the source it
      * had before the rebuild (the rebuild wrote its own on every row), so the daily clean-up's record names that
      * source and still tells a curator's row (ListRemovalLog.recordWhereOnce; review of #352). A row that was not on
-     * the list before keeps the rebuild's. In the caller's transaction; a failure here is logged, the row stays.
+     * the list before keeps the rebuild's. In the caller's transaction; a failure here is logged, the row stays,
+     * except a deadlock, which is thrown: the transaction, the upload's own, is gone (review of #361).
      */
-    private void keepForCleanup(String projectName, String taxonName, java.util.Map<String, String> before, List<String> kept) {
+    private void keepForCleanup(String projectName, String taxonName, java.util.Map<String, String> before, List<String> kept) throws SQLException {
         kept.add(taxonName);
         if (before == null || !before.containsKey(taxonName)) return;
         try (PreparedStatement stmt = getConnection().prepareStatement("update proj_taxon set source = ? where project_name = ? and taxon_name = ?")) {
@@ -733,6 +736,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             stmt.setString(3, taxonName);
             stmt.executeUpdate();
         } catch (SQLException e) {
+            if (DBUtil.transactionRolledBack(e)) throw e;
             s_log.error("keepForCleanup() " + taxonName + " on the list of " + projectName + " keeps the rebuild's source: " + e);
         }
     }

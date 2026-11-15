@@ -92,7 +92,8 @@ PAGING = {
              ' A /v4/specimens request without any filter gets no total unless it says total=true (counting every'
              ' specimen record takes long); metaData.totalNotGiven then says so. total=true without a filter needs an API key.'
              ' A count that takes longer than 3 seconds (20 with a key) is not given either; metaData.totalNotGiven'
-             ' says so, and the records are complete page by page. total=true with a key is always counted to the end.',
+             ' says so, and the records are complete page by page. total=true with a key is counted to the end, except on'
+             ' /v4/measurements, where the 20 seconds stay.',
     'returned': 'metaData.returned is the number of records in this answer.',
     'complete': 'metaData.complete is true when this answer reaches the end of the set.',
     'afterCode': 'On /v4/specimens and /v4/geoSpecimens, afterCode=<specimen code> gives the records after that code'

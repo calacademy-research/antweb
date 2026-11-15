@@ -641,6 +641,14 @@ public class ListCleanupOrderDbTest extends TestCase {
         }
     }
 
+    /** The server's count of row lock waits so far (InnoDB status Innodb_row_lock_waits, MySQL and MariaDB alike). */
+    private long rowLockWaits() throws Exception {
+        try (PreparedStatement s = connection.prepareStatement("show global status like 'Innodb_row_lock_waits'"); ResultSet r = s.executeQuery()) {
+            assertTrue("the server reports Innodb_row_lock_waits", r.next());
+            return r.getLong(2);
+        }
+    }
+
     private String source(String project, String taxonName) throws Exception {
         try (PreparedStatement s = connection.prepareStatement("select source from proj_taxon where project_name = ? and taxon_name = ?")) {
             s.setString(1, project);
@@ -656,7 +664,7 @@ public class ListCleanupOrderDbTest extends TestCase {
      * without species or specimen, in the order the rule reads them: Crematogaster, on the list before (its record
      * waits for the record table until the lock wait timeout); a genus the rebuild itself puts on the list (no record
      * needed: it goes); a curator's genus row that was on the list before (needs a record: kept without a try, which
-     * would wait for the same lock again). The two rows kept get back the sources they had before the rebuild; the
+     * would wait for the same lock again; the server's count of lock waits says one). The two rows kept get back the sources they had before the rebuild; the
      * next rebuild, with the table free, takes them off and records them with those sources. Until 2026-11-14 the
      * first failure ended the loop and the genus the rebuild had just put on the list stayed until the daily clean-up.
      */
@@ -675,12 +683,13 @@ public class ListCleanupOrderDbTest extends TestCase {
             try (PreparedStatement s = other.prepareStatement("select id from " + ListRemovalLog.TABLE + " for update"); ResultSet r = s.executeQuery()) {
                 while (r.next()) { /* locked */ }
             }
-            long start = System.currentTimeMillis();
+            long waitsBefore = rowLockWaits();
             new ProjTaxonDb(connection).rebuildAllAntwebList();   // does not throw
-            long took = System.currentTimeMillis() - start;
+            long waits = rowLockWaits() - waitsBefore;
             assertEquals("the genus the rebuild put on the list is off it; the two that need a record stay",
                 Arrays.asList(CREMATOGASTER, PHEIDOLE, HYPO, curatorGenus), genusRows(ALL));
-            assertTrue("one wait for the lock, not one per row that needs a record: " + took + " ms", took < 1900);
+            // counted by the server, not timed (review of #361: a time bound can fail on a slow runner)
+            assertEquals("one wait for the lock, not one per row that needs a record", 1, waits);
             assertEquals("worldants", source(ALL, CREMATOGASTER));
             assertEquals("the curator's row keeps the curator's source", "speciesListTool", source(ALL, curatorGenus));
             other.rollback();
