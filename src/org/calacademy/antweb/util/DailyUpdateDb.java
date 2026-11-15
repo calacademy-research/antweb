@@ -121,10 +121,65 @@ public final class DailyUpdateDb {
     }
 
     /**
+     * Steps whose work depends on the day: on the weekly full-count day (Sunday, PlaceViewTotalDb.weeklyFullCount) Place
+     * list totals recounts every place (2026-11-15: 2,440 places in 17 min), other days only the places whose data
+     * changed (2026-11-14: 50 places in 2.5 min). Their usual time is the median of earlier runs of the same kind of day
+     * (usualSameDayKind), so a Sunday is not compared with the weekdays: the first Sunday with the weekday median (7 min)
+     * emailed "running long" for a full count that took its normal time.
+     */
+    public static final java.util.Set<String> STEPS_BY_DAY_KIND = java.util.Set.of("placeListTotals");
+
+    /** Full-count runs (Sundays) whose durations make a full-count day's usual time: about a month. */
+    public static final int FULL_COUNT_RUNS = 4;
+
+    /** Whether the run starting at runStart is a full-count day (Sunday, Pacific). */
+    public static boolean fullCountDay(Date runStart) {
+        java.time.LocalDate day = (runStart == null ? java.time.Instant.now() : runStart.toInstant()).atZone(DailyUpdate.PACIFIC).toLocalDate();
+        return org.calacademy.antweb.home.PlaceViewTotalDb.weeklyFullCount(day);
+    }
+
+    /**
      * Usual seconds per step: the median duration of the step's ok rows in the last runs completed (with an "end" row)
-     * before the run starting at before (null: any).
+     * before the run starting at before (null: any). The steps of STEPS_BY_DAY_KIND: the median of the same kind of day
+     * only (none known yet: no usual time, so no yellow and no email until one such run is done).
      */
     public static Map<String, Long> usual(Connection c, Date before, int runs) throws SQLException {
+        Map<String, Long> out = usualAllDays(c, before, runs);
+        boolean full = fullCountDay(before);
+        for (String step : STEPS_BY_DAY_KIND) {
+            Long same = usualSameDayKind(c, step, before, full ? FULL_COUNT_RUNS : runs, full);
+            if (same == null) out.remove(step); else out.put(step, same);
+        }
+        return out;
+    }
+
+    /**
+     * The median duration of one step's ok rows in the last runs completed before before whose day is (full) or is
+     * not (!full) a full-count day. The day is told in Java (Pacific), not by the database's clock.
+     */
+    static Long usualSameDayKind(Connection c, String step, Date before, int runs, boolean full) throws SQLException {
+        String sql = "select s.run_start, timestampdiff(second, s.started, s.ended) from daily_update_step s"
+            + " join (select run_start from daily_update_step where step = 'end'" + (before == null ? "" : " and run_start < ?")
+            + " order by run_start desc limit 120) r on r.run_start = s.run_start"
+            + " where s.step = ? and s.result in ('ok', 'warning') and s.started is not null and s.ended is not null"
+            + " order by s.run_start desc";
+        List<Long> values = new ArrayList<>();
+        try (PreparedStatement p = c.prepareStatement(sql)) {
+            int i = 1;
+            if (before != null) p.setTimestamp(i++, ts(before));
+            p.setString(i, step);
+            try (ResultSet r = p.executeQuery()) {
+                while (r.next() && values.size() < runs) {
+                    Timestamp runStart = r.getTimestamp(1);
+                    if (fullCountDay(new Date(runStart.getTime())) == full) values.add(r.getLong(2));
+                }
+            }
+        }
+        return DailyUpdate.median(values);
+    }
+
+    /** Usual seconds per step over all days (usual, before STEPS_BY_DAY_KIND). */
+    private static Map<String, Long> usualAllDays(Connection c, Date before, int runs) throws SQLException {
         String sql = "select s.step, timestampdiff(second, s.started, s.ended) from daily_update_step s"
             + " join (select run_start from daily_update_step where step = 'end'" + (before == null ? "" : " and run_start < ?")
             + " order by run_start desc limit ?) r on r.run_start = s.run_start"

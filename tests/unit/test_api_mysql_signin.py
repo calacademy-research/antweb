@@ -30,6 +30,8 @@ def test_the_password_is_encrypted_with_the_servers_key():
 def test_a_first_and_a_cached_sign_in_without_ssl():
     host = os.environ.get("MYSQL_HOST")
     if not host:
+        # CI sets REQUIRE_MYSQL=1: there a missing host is a failure, not a silent skip (review of #362)
+        assert os.environ.get("REQUIRE_MYSQL") != "1", "REQUIRE_MYSQL=1 but MYSQL_HOST is not set"
         print("skip: MYSQL_HOST is not set")
         return
     for attempt in ("first (full authentication, RSA)", "second (cached)"):

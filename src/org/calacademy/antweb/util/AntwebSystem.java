@@ -243,13 +243,12 @@ public class AntwebSystem {
     String s = null;
     int count = 0;
     int i = 0;
-    while (!procDone(p)) {
-      count = count + 1;
-      while ((s = stdOut.readLine()) != null) {
-        i = i + 1;
-        s_log.info(s);
-      }
-    } 
+    // Read to the end of the output (the process closes it when it ends). Until 2026-11-15 this read only while
+    // procDone() said the process ran, so a process that ended before the first check gave no output at all.
+    while ((s = stdOut.readLine()) != null) {
+      i = i + 1;
+      s_log.info(s);
+    }
     //s_log.warn("handleStdOut() count:" + count + " i:" + i);
   }	
 
@@ -294,20 +293,21 @@ public class AntwebSystem {
     // characters in all (2026-10-22: messages.txt had lines of ~13 MB; 2,000 of them would not fit in memory).
     long total = 0;
     boolean full = false;
-    while (!procDone(p)) {
-      //int afterErrorCount = 0;
-      while ((s = stdOut.readLine()) != null) {
-        if (full) continue;  // read to the end so the process can finish
-        String line = viewLine(s);
-        total += line.length();
-        if (total > VIEW_TOTAL) {
-          strBuf.append("<br>... [output cut at " + String.format("%,d", VIEW_TOTAL) + " characters]");
-          full = true;
-          continue;
-        }
-        strBuf.append("<br>" + Html.esc(line));
+    // Read to the end of the output (the process closes it when it ends). Until 2026-11-15 this read only while
+    // procDone() said the process ran: a process that ended before the first check gave no output, and the log viewer
+    // (logMgr.do) said "File empty or not found" for a log of 105 KB (production, 2026-11-15 07:45; the same race
+    // as countLines' "wc" of 2026-10-29).
+    while ((s = stdOut.readLine()) != null) {
+      if (full) continue;  // read to the end so the process can finish
+      String line = viewLine(s);
+      total += line.length();
+      if (total > VIEW_TOTAL) {
+        strBuf.append("<br>... [output cut at " + String.format("%,d", VIEW_TOTAL) + " characters]");
+        full = true;
+        continue;
       }
-    } 
+      strBuf.append("<br>" + Html.esc(line));
+    }
     return strBuf.toString();
   }	
   

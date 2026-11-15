@@ -107,6 +107,38 @@ public class DailyUpdateDbTest extends TestCase {
         assertEquals(Long.valueOf(600), DailyUpdateDb.usual(connection, null, 7).get("set2"));
     }
 
+    /**
+     * 2026-11-15: Place list totals counts every place on Sundays (2,440 places, 17 min) and only the changed ones on
+     * the other days (about 2.5 min); the weekday median (7 min) made the first Sunday email "running long". Its usual
+     * time is the median of the same kind of day; other steps keep the median of all days.
+     */
+    public void testPlaceListTotalsIsComparedWithTheSameKindOfDay() throws Exception {
+        // 2026-11-01 and 2026-11-08 are Sundays (full counts, 1000 and 1100 s); the weekdays between take 150 s.
+        String[] days = {"2026-10-31", "2026-11-01", "2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05", "2026-11-06", "2026-11-07",
+                         "2026-11-08", "2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12", "2026-11-13", "2026-11-14"};
+        for (String day : days) {
+            boolean sunday = day.equals("2026-11-01") || day.equals("2026-11-08");
+            step(day, "placeListTotals", sunday ? (day.endsWith("01") ? 1000 : 1100) : 150, "ok");
+            step(day, "set2", 540, "ok");
+            step(day, DailyUpdate.END, 0, "ok");
+        }
+        assertTrue(DailyUpdateDb.fullCountDay(at("2026-11-15", "05:00:00")));
+        assertFalse(DailyUpdateDb.fullCountDay(at("2026-11-16", "05:00:00")));
+
+        Map<String, Long> sunday = DailyUpdateDb.usual(connection, at("2026-11-15", "05:00:00"), 7);
+        assertEquals("a Sunday: the median of the earlier Sundays (1000, 1100)", Long.valueOf(1050), sunday.get("placeListTotals"));
+        assertEquals("other steps: all days", Long.valueOf(540), sunday.get("set2"));
+        assertFalse("17 min on a Sunday is not an overrun", DailyUpdate.isOverrun(1030, sunday.get("placeListTotals")));
+
+        Map<String, Long> monday = DailyUpdateDb.usual(connection, at("2026-11-16", "05:00:00"), 7);
+        assertEquals("a weekday: the last 7 weekdays only (the Sunday of 11-08 is left out)", Long.valueOf(150), monday.get("placeListTotals"));
+
+        // No earlier Sunday (only the Saturday of 10-31 before it): no usual time (no yellow, no email), not the
+        // weekday median.
+        Map<String, Long> firstSunday = DailyUpdateDb.usual(connection, at("2026-11-01", "05:00:00"), 7);
+        assertNull(firstSunday.get("placeListTotals"));
+    }
+
     public void testLastRunsAndPrune() throws Exception {
         step("2026-11-05", "set2", 10, "ok");
         step("2026-11-06", "set2", 10, "ok");

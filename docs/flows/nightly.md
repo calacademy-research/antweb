@@ -108,7 +108,11 @@ compute.log: "Place list totals counted: N places in S s (M recounted, K unchang
 counted again). A place that fails adds "; FAILED for N places (their stored totals are shown), e.g. ...", and a run
 that counted none starts "Place list totals counted: FAILED, 0 places". The morning check reads the number of places
 and the word FAILED (`tests/e2e/test_nightly_jobs_ran.py`, `test_place_list_totals_counted_every_place`); the release
-gate does not read this line (its check 8 asks `dailyUpdate.do` whether the daily update is running).
+gate does not read this line (its check 8 asks `dailyUpdate.do` whether the daily update is running). On Sundays every place is
+counted again ("full count"; 2026-11-15: 2,440 places in 17 min), the other days only the places whose data changed
+(2026-11-14: 50 places in 2.5 min). The Daily update page therefore compares this step with the same kind of day
+(`DailyUpdateDb.STEPS_BY_DAY_KIND`: the last 4 Sundays, or the last 7 other days); the first Sunday with the weekday
+median emailed "running long" for a full count of normal length (2026-11-15).
 
 - Production 2026-11-09: 60 minutes on 11-07 and 11-08, about 4 hours on 11-09. Causes: an adm1's specimens were read
   by `specimen.adm1 = X` alone, which no index serves (the index is `country_adm1_idx` (country, adm1)), so MySQL walked
