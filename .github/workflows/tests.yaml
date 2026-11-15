@@ -150,6 +150,24 @@ jobs:
         run: |
           docker build -t antweb/api:dev -f docker/api/Dockerfile .
 
+      - name: API signs in to MySQL 8.4 with caching_sha2_password, no SSL (the cryptography package; tests/unit/test_api_mysql_signin.py)
+        run: |
+          # review of #362 (2026-11-14): the one path that needs cryptography, checked before a push to master
+          # reaches production. A first sign-in (no cached password: RSA) and a second one (cached).
+          docker network create apisign >/dev/null 2>&1 || true
+          docker run -d --name apisignmysql --network apisign -e MYSQL_ROOT_PASSWORD=ci-root mysql:8.4 >/dev/null
+          ok=0
+          for i in $(seq 1 90); do
+            if docker exec apisignmysql mysql -uroot -pci-root -h127.0.0.1 -e "select 1" >/dev/null 2>&1; then ok=1; break; fi
+            sleep 2
+          done
+          [ "$ok" = 1 ] || { docker logs apisignmysql 2>&1 | tail -30; echo "::error::MySQL did not start"; exit 1; }
+          docker exec apisignmysql mysql -uroot -pci-root -h127.0.0.1 \
+            -e "CREATE USER 'probe'@'%' IDENTIFIED WITH caching_sha2_password BY 'ci-probe'"
+          docker run --rm --network apisign --entrypoint python -e MYSQL_HOST=apisignmysql -v "$PWD/tests/unit:/t:ro" \
+            antweb/api:dev /t/test_api_mysql_signin.py
+          docker rm -f apisignmysql >/dev/null
+
       - name: Compose files are valid (prod and staging)
         run: |
           docker compose -f docker-compose.yml -f docker-compose.prod.yml config -q
@@ -1488,7 +1506,7 @@ jobs:
               /t/org/calacademy/antweb/home/GroupSpecimenCountDbTest.java \
               /t/org/calacademy/antweb/util/DataExtractDbTest.java \
               /t/org/calacademy/antweb/home/ListCleanupOrderDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3 home.GroupSpecimenCountDbTest:8 home.IslandCountryDbTest:7 home.AntcatIslandRowsDbTest:2 home.ListCleanupOrderDbTest:18 util.DataExtractDbTest:21; do
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3 home.GroupSpecimenCountDbTest:8 home.IslandCountryDbTest:7 home.AntcatIslandRowsDbTest:2 home.ListCleanupOrderDbTest:20 util.DataExtractDbTest:21; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

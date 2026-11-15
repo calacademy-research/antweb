@@ -578,6 +578,15 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
     }
 
     /**
+     * The record of a removal could not be written (deleteProjTaxon), as opposed to the delete itself failing: the
+     * rebuild's rule tells the two apart (removeGenusRows; review of #361). The state and number of the database's
+     * error stay, so a deadlock is still told from the others.
+     */
+    public static final class RecordNotWritten extends SQLException {
+        RecordNotWritten(String text, String state, int code, Throwable cause) { super(text, state, code, cause); }
+    }
+
+    /**
      * Deletes one row of a project list for the clean-ups. job, reason: the record of the removal (ListRemovalLog, written
      * just before the delete by the same condition; Brian Fisher, 2026-11-03: no job deletes list entries without a
      * record a curator can see); null job: no record (a row the rebuild itself had just put on the list). sourceSql:
@@ -590,15 +599,6 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
      * (cleanupErrors, "FAILED: ...") and their caller rolls the step back (UtilDataAction.cleanProjectLists,
      * cleanListsByHand); the rebuild of the AntWeb-wide list logs it and leaves the list as built (rebuildAllAntwebList).
      */
-    /**
-     * The record of a removal could not be written (deleteProjTaxon), as opposed to the delete itself failing: the
-     * rebuild's rule tells the two apart (removeGenusRows; review of #361). The state and number of the database's
-     * error stay, so a deadlock is still told from the others.
-     */
-    public static final class RecordNotWritten extends SQLException {
-        RecordNotWritten(String text, String state, int code, Throwable cause) { super(text, state, code, cause); }
-    }
-
     private String deleteProjTaxon(String taxonName, String projectName, String extraClause, String job, String reason, String sourceSql) throws SQLException {
         String where = " where taxon_name = " + DBUtil.sqlQuote(taxonName)
             + " and project_name = " + DBUtil.sqlQuote(projectName)
