@@ -387,13 +387,6 @@ def test_v4_specimens_are_ants_only_unless_asked():
         every, ants_only = genera("&allFamilies=true"), genera("")
         assert ants_only <= every, sorted(ants_only - every)[:5]
         assert genus in every, f"{genus} of {code} is not among the genera of {country} with allFamilies=true"
-    # 2026-11-14: /v4/measurements says how many match, how many it gives and whether it reaches the end
-    m = v4("genus=camponotus&limit=5", "measurements")
-    md = m["metaData"]
-    assert md.get("returned") == len(m["measurements"]) and isinstance(md.get("complete"), bool), md
-    assert "total" in md or "totalNotGiven" in md, md
-    if "total" in md:
-        assert md["complete"] == (md["total"] <= len(m["measurements"])), md
     # a route without the rule says nothing about families and does not take the parameter
     assert "families" not in v4("genus=camponotus&limit=1", "taxa")["metaData"]
     r = requests.get(BASE_URL + "/v4/taxa?allFamilies=true", timeout=max(TIMEOUT, 120), headers=headers, allow_redirects=False)
@@ -421,6 +414,28 @@ def test_valid_genus_filter_keeps_valid_genera():
     """Finding F7 (fixed 2026-10-26): validGenus=true compares in lower case, in SQL before limit."""
     body = _get("/v3.1/specimens?genus=camponotus&validGenus=true&limit=5&up=1").json()
     assert len(body["specimens"]) == 5, body["metaData"]
+
+
+def test_v4_measurements_give_total_returned_and_complete():
+    """2026-11-14 (#360): /v4/measurements says how many measurements match, how many it gives and whether it reaches
+    the end. Its own test (review of #360): inside the family test it was skipped with it on a database without
+    specimens of other families. Needs the staging test key."""
+    if IS_PRODUCTION:
+        pytest.skip("the test key is a staging key")
+    if not api_test_key():
+        pytest.skip(f"{API_KEY_ENV} is not set: v4 cannot be asked")
+    import requests
+    headers = {API_KEY_HEADER: api_test_key(), "User-Agent": new_session().headers["User-Agent"]}
+    r = requests.get(BASE_URL + "/v4/measurements?genus=camponotus&limit=5", timeout=max(TIMEOUT, 120), headers=headers, allow_redirects=False)
+    if r.status_code == 401:
+        pytest.skip("the server refused the test key: make a new one with tools/api/create-test-key.py")
+    assert r.status_code == 200, (r.status_code, r.text[:200])
+    m = r.json()
+    md = m["metaData"]
+    assert md.get("returned") == len(m["measurements"]) and isinstance(md.get("complete"), bool), md
+    assert "total" in md or "totalNotGiven" in md, md
+    if "total" in md:
+        assert md["complete"] == (md["total"] <= len(m["measurements"])), md
 
 
 # The documentation page does not describe /measurements yet (finding, docs/flows/public-pages-findings.md).

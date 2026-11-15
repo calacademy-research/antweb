@@ -92,7 +92,8 @@ PAGING = {
              ' A /v4/specimens request without any filter gets no total unless it says total=true (counting every'
              ' specimen record takes long); metaData.totalNotGiven then says so. total=true without a filter needs an API key.'
              ' A count that takes longer than 3 seconds (20 with a key) is not given either; metaData.totalNotGiven'
-             ' says so, and the records are complete page by page. total=true with a key is always counted to the end.',
+             ' says so, and the records are complete page by page. total=true with a key is counted to the end, except on'
+             ' /v4/measurements, where the 20 seconds stay.',
     'returned': 'metaData.returned is the number of records in this answer.',
     'complete': 'metaData.complete is true when this answer reaches the end of the set.',
     'afterCode': 'On /v4/specimens and /v4/geoSpecimens, afterCode=<specimen code> gives the records after that code'
@@ -168,6 +169,11 @@ TOTAL_NOT_GIVEN_HEADER = 'X-AntWeb-Total-Not-Given'
 # a filter that matches nearly every record (status=valid, georeferenced=true) passes without_filter() and was
 # counted on every first page, a read of the whole view by anyone without a key. Longer with a key.
 COUNT_MS = {False: 3000, True: 20000}    # total=true with a key: no limit of its own (count_within)
+# ... except on these routes, whose total=true needs no filter and no key's own rule (NO_TOTAL_WITHOUT_FILTER): the
+# count keeps its limit even with a key and total=true (review of #360, 2026-11-14: /measurements counts measurement
+# joined with the specimen view, image x trait x release rows once release 1.0 is loaded; unlimited, any key could
+# hold a worker and a MySQL thread for the 90 s statement limit on every page).
+COUNT_ALWAYS_LIMITED = ('getMeasurements',)
 TOTAL_TOO_LONG = ('No total is given: counting the records that match these filters took longer than {s} seconds.'
                   ' The records are complete page by page: go on with {next} until metaData.complete is true.{key}')
 # how to go on, by route (review of #353): afterCode where the route takes it, offset elsewhere (/taxa, distinct lists)
@@ -478,6 +484,7 @@ def run(name, endpoint, admission, has_key, limits):
         g.apiV4Families = families      # read by ants_only() inside the route
         g.apiV4NoFilter = no_filter     # read by rows(): no total unless total=true
         g.apiV4HasKey = has_key         # read by rows(): how long a count may take (COUNT_MS)
+        g.apiV4Endpoint = endpoint      # read by rows(): COUNT_ALWAYS_LIMITED
         inner_response = api.application.full_dispatch_request()
         found = getattr(g, 'apiV4Paging', None)     # set by rows() for the list routes
         body = inner_response.get_data()
@@ -716,13 +723,18 @@ def rows(query, limit, offset, key=None, after_code=False):
     if wanted == 'true' or (wanted != 'false' and first_page and not no_filter):
         counted = unlimited.order_by(None)
         has_key = bool(getattr(g, 'apiV4HasKey', False))
-        # total=true asked for with a key: counted to the end (no limit of its own); otherwise COUNT_MS
-        ms = None if (has_key and wanted == 'true') else COUNT_MS[has_key]
+        # total=true asked for with a key: counted to the end (no limit of its own), except on the routes of
+        # COUNT_ALWAYS_LIMITED; otherwise COUNT_MS
+        always_limited = getattr(g, 'apiV4Endpoint', None) in COUNT_ALWAYS_LIMITED
+        ms = None if (has_key and wanted == 'true' and not always_limited) else COUNT_MS[has_key]
         total = count_within(counted, key, ms)
         if total is None:
+            if has_key:
+                more = '' if always_limited else TOTAL_TOO_LONG_HAS_KEY
+            else:
+                more = TOTAL_TOO_LONG_KEY.format(url=PUBLIC_URL.rsplit('/v4', 1)[0])
             paging['totalNotGiven'] = TOTAL_TOO_LONG.format(
-                next=TOTAL_TOO_LONG_NEXT[bool(after_code)], s=COUNT_MS[has_key] // 1000,
-                key=TOTAL_TOO_LONG_HAS_KEY if has_key else TOTAL_TOO_LONG_KEY.format(url=PUBLIC_URL.rsplit('/v4', 1)[0]))
+                next=TOTAL_TOO_LONG_NEXT[bool(after_code)], s=COUNT_MS[has_key] // 1000, key=more)
         else:
             paging['total'] = total
     elif wanted != 'false' and first_page and no_filter:

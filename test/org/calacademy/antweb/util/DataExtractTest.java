@@ -472,6 +472,11 @@ public class DataExtractTest extends TestCase {
         assertEquals(Arrays.asList("Bonaire, Sint Eustatius and Saba"), DataExtract.parseCountries("Bonaire, Sint Eustatius and Saba", commas));
         assertEquals(Arrays.asList("Bonaire, Sint Eustatius and Saba", "Aruba"),
             DataExtract.parseCountries("Bonaire, Sint Eustatius and Saba\nAruba", commas));
+        // review of #356: typed without the space at its comma, or with more, the name is still taken whole
+        assertEquals(Arrays.asList("Bonaire, Sint Eustatius and Saba", "Aruba"),
+            DataExtract.parseCountries("Bonaire,Sint Eustatius and Saba, Aruba", commas));
+        assertEquals(Arrays.asList("Saint Helena, Ascension and Tristan da Cunha"),
+            DataExtract.parseCountries("saint helena ,  ascension and tristan da cunha", commas));
         // only between separators: a longer typed name is split as before
         assertEquals(Arrays.asList("Bonaire", "Sint Eustatius and Saba Islands"),
             DataExtract.parseCountries("Bonaire, Sint Eustatius and Saba Islands", commas));
