@@ -1064,7 +1064,42 @@ def test_measurements_give_total_returned_and_complete():
         assert "total" not in get("/v4/measurements?trait=WL&total=false").get_json()["metaData"]
         m = get("/v4/measurements?trait=WL&allFamilies=true&country=Mexico").get_json()["metaData"]
         assert (m.get("total"), m.get("complete")) == (4, True), m
-        assert get("/v4/measurements?trait=WL&total=maybe", expect=400).get_json()["error"], "total must be true or false"
+        assert get("/v4/measurements?trait=WL&total=maybe", expect=400).get_json()["error"] == api_v4.TOTAL_VALUE_MESSAGE
+        # the same in ndjson: the totals in the headers (review of #360)
+        h = get("/v4/measurements?trait=WL&limit=2&ndjson=true").headers
+        assert (h["X-AntWeb-Total"], h["X-AntWeb-Returned"], h["X-AntWeb-Complete"]) == ("3", "2", "false"), dict(h)
+        h = get("/v4/measurements?trait=WL&limit=2&offset=2&ndjson=true").headers
+        assert "X-AntWeb-Total" not in h and (h["X-AntWeb-Returned"], h["X-AntWeb-Complete"]) == ("1", "true"), dict(h)
+
+
+def test_the_measurements_count_keeps_its_limit_with_a_key():
+    """Review of #360 (2026-11-14): total=true with a key counts /v4/specimens to the end, but /v4/measurements keeps
+    the key's limit (COUNT_ALWAYS_LIMITED): its total=true needs no filter, and once release 1.0 is loaded the count
+    joins image x trait x release rows with the specimen view. A count that takes too long gives the page without a
+    total and does not tell the caller to add total=true, which it already did."""
+    real = api_v4.count_within
+    seen = []
+
+    def too_long(counted, key, ms):
+        seen.append(ms)
+        return None
+    api_v4.count_within = too_long
+    try:
+        assert api_v4.COUNT_ALWAYS_LIMITED == ("getMeasurements",)
+        fresh_usage()
+        with other_families(), opened():
+            m = meta("/v4/measurements?limit=2&total=true")
+            assert seen[-1] == api_v4.COUNT_MS[True], seen
+            assert "total" not in m and m["returned"] == 2, m
+            assert "took longer than 20 seconds" in m["totalNotGiven"] and "go on with offset" in m["totalNotGiven"], m
+            assert "Add total=true" not in m["totalNotGiven"] and "apiKey.do" not in m["totalNotGiven"], m
+            m = meta("/v4/measurements?limit=2&total=true", key=None)
+            assert seen[-1] == api_v4.COUNT_MS[False] and "apiKey.do" in m["totalNotGiven"], (seen, m)
+            # /v4/specimens with a key and total=true: still counted to the end
+            meta(MADAGASCAR + "&limit=5&total=true")
+            assert seen[-1] is None, seen
+    finally:
+        api_v4.count_within = real
 
 
 def test_one_definition_and_one_helper_for_every_route():
