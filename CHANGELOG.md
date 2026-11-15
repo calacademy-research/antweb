@@ -197,4 +197,4 @@ This file follows the [Keep a Changelog](https://keepachangelog.com/) format wit
 ---
 
 **Maintained by:** California Academy of Sciences  
-**Last Updated:** October 2026
+**Last Updated:** November 2026
