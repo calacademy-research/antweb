@@ -325,17 +325,17 @@
   "text_length": 8494,
   "title": "Species: Dorylus nigricans - AntWeb"
  },
- "/introduced.do?geolocaleId=494": {
+ "/introduced.do?geolocaleId=3178": {
   "headings": [
    "h3:Citing AntWeb",
-   "h2:Introduced for State/Province: Antananarivo"
+   "h2:Introduced for State/Province: Analamanga"
   ],
   "images": 14,
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 22,
-  "text_length": 7925,
+  "taxon_links": 15,
+  "text_length": 7754,
   "title": "Introduced - AntWeb"
  },
  "/island.do?name=Hawaii": {

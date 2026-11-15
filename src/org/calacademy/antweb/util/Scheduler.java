@@ -418,7 +418,11 @@ public class Scheduler extends AntwebAction {
         UtilDataAction.setInComputeProcess("placeViewTotals");
         DailyUpdate.start("placeListTotals");
         try (java.sql.Connection connection = DBUtilSimple.getDataSource().getConnection()) {
-            LogMgr.appendLog("compute.log", "  " + new org.calacademy.antweb.home.PlaceViewTotalDb(connection).fillAll(), true);
+            String line = new org.calacademy.antweb.home.PlaceViewTotalDb(connection).fillAll();
+            // its line is the step's message on the Daily update page, and tells a full count from a partial one
+            // (DailyUpdateDb.usualSameDayKind; 2026-11-15); "FAILED for N places" ends the step as failed
+            DailyUpdate.noteResult("placeListTotals", line);
+            LogMgr.appendLog("compute.log", "  " + line, true);
         } catch (Exception e) {
             DailyUpdate.noteFailed("placeListTotals", String.valueOf(e));
             s_log.error("runPlaceListTotals() e:" + e);
