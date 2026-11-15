@@ -199,7 +199,8 @@ def test_no_delete_without_its_record():
     record, failed, thrown, dml = (delete.index(x) for x in (
         "ListRemovalLog.recordWhereOnce(", "} catch (SQLException | RuntimeException e) {", "throw e instanceof SQLException", "stmt.executeUpdate(dml)"))
     assert record < failed < thrown < dml
-    assert "new SQLException(text, ((SQLException) e).getSQLState(), ((SQLException) e).getErrorCode(), e)" in delete
+    # a record that cannot be written is its own error, with the database's state and number (review of #361)
+    assert "new RecordNotWritten(text, ((SQLException) e).getSQLState(), ((SQLException) e).getErrorCode(), e)" in delete
     assert "return" not in delete[failed:dml]   # nothing between the failed record and the delete but the throw
     # the two clean-ups keep the error for the line; set 2's step and the jobs by hand roll back when there is one
     for signature, label in (("public String verifyProjTaxon() throws SQLException {", "genus rows: "),

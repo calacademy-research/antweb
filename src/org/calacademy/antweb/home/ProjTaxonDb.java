@@ -578,6 +578,15 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
     }
 
     /**
+     * The record of a removal could not be written (deleteProjTaxon), as opposed to the delete itself failing: the
+     * rebuild's rule tells the two apart (removeGenusRows; review of #361). The state and number of the database's
+     * error stay, so a deadlock is still told from the others.
+     */
+    public static final class RecordNotWritten extends SQLException {
+        RecordNotWritten(String text, String state, int code, Throwable cause) { super(text, state, code, cause); }
+    }
+
+    /**
      * Deletes one row of a project list for the clean-ups. job, reason: the record of the removal (ListRemovalLog, written
      * just before the delete by the same condition; Brian Fisher, 2026-11-03: no job deletes list entries without a
      * record a curator can see); null job: no record (a row the rebuild itself had just put on the list). sourceSql:
@@ -605,8 +614,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
                     + ", so the row is not deleted: " + e;
                 s_log.error("deleteProjTaxon() " + text);
                 throw e instanceof SQLException
-                    ? new SQLException(text, ((SQLException) e).getSQLState(), ((SQLException) e).getErrorCode(), e)
-                    : new SQLException(text, e);
+                    ? new RecordNotWritten(text, ((SQLException) e).getSQLState(), ((SQLException) e).getErrorCode(), e)
+                    : new RecordNotWritten(text, null, 0, e);
             }
         }
         String dml = "delete from proj_taxon " + where;
@@ -709,10 +718,23 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
                 ++removed;
             } catch (SQLException e) {
                 if (DBUtil.transactionRolledBack(e)) throw e;
-                if (step != null) getConnection().rollback(step);
+                if (step != null) {
+                    try {
+                        getConnection().rollback(step);
+                    } catch (SQLException r) {
+                        // the savepoint is gone (error 1305 after the server rolled the transaction back, for
+                        // example): going on could commit the upload without its specimens. Thrown with the state
+                        // 40001, which transactionRolledBack reads as a rollback (review of #361).
+                        r.addSuppressed(e);
+                        throw new SQLException("removeGenusRows(): the step of " + genus[0] + " could not be undone, the transaction may be gone: " + r,
+                            "40001", 0, r);
+                    }
+                }
                 s_log.error("removeGenusRows() " + genus[0] + " stays on the list of " + projectName + ": " + e);
                 keepForCleanup(projectName, genus[0], recordOnly, kept);
-                if (record) recordFailed = true;
+                // only a record that could not be written stops the tries of the next records; a failed delete
+                // after a written record (a row lock on proj_taxon) says nothing about the record table
+                if (e instanceof RecordNotWritten) recordFailed = true;
             }
         }
         if (!kept.isEmpty()) s_log.warn("removeGenusRows() " + projectName + ": " + kept.size() + " genus rows kept for the daily clean-up: "

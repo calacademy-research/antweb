@@ -660,6 +660,115 @@ public class ListCleanupOrderDbTest extends TestCase {
     }
 
     /**
+     * A record that cannot be written is its own kind of error (ProjTaxonDb.RecordNotWritten), so the rebuild tells it
+     * from a delete that fails after its record was written: only the first stops the tries of the next records
+     * (review of #361). The daily clean-up's method throws it as it is.
+     */
+    public void testARecordThatCannotBeWrittenIsItsOwnError() throws Exception {
+        connection.setAutoCommit(false);
+        try (Connection other = connect()) {
+            other.setAutoCommit(false);
+            exec(other, "insert into " + ListRemovalLog.TABLE + " (list_type, list_key, taxon_name, removed_at) values ('project', 'held', 'h', now())");
+            try (PreparedStatement s = other.prepareStatement("select id from " + ListRemovalLog.TABLE + " for update"); ResultSet r = s.executeQuery()) {
+                while (r.next()) { /* locked */ }
+            }
+            exec(connection, "set innodb_lock_wait_timeout = 1");
+            try {
+                new ProjTaxonDb(connection).removeGenusRowsWithoutSpeciesOrSpecimen(ALL);
+                fail("the record could not be written: the daily clean-up's method throws");
+            } catch (java.sql.SQLException e) {
+                assertTrue(e.getClass().getName(), e instanceof ProjTaxonDb.RecordNotWritten);
+                assertEquals("the database's error number stays (a lock wait timeout)", 1205, e.getErrorCode());
+                assertFalse("not a rollback of the transaction", org.calacademy.antweb.util.DBUtil.transactionRolledBack(e));
+            }
+            other.rollback();
+            connection.rollback();
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+
+    /**
+     * A test trigger refuses the delete of one row of the AntWeb-wide list while the session variable @fail_delete_of
+     * names it (set in the hook just before the rule, so the rebuild's own delete of the whole list is not refused).
+     */
+    private void refuseDeleteOf(String taxonName) throws Exception {
+        exec(connection, "drop trigger if exists test_refuse_delete");
+        exec(connection, "create trigger test_refuse_delete before delete on proj_taxon for each row begin"
+            + " if old.project_name = '" + ALL + "' and old.taxon_name = @fail_delete_of then"
+            + " signal sqlstate '45000' set message_text = 'test: delete refused'; end if; end");
+        ProjTaxonDb.setBeforeGenusRuleForTests(() -> {
+            try {
+                exec(connection, "set @fail_delete_of = '" + taxonName + "'");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    /**
+     * Review of #362 (2026-11-14): a delete that fails after its record was written (a row lock on proj_taxon, here a
+     * test trigger) says nothing about the record table, so the rule goes on recording: the next genus row that needs
+     * a record is removed and recorded. The failed row's own record is taken back with its step (savepoint). With
+     * "if (record) recordFailed = true" the next row was kept.
+     */
+    public void testAFailedDeleteDoesNotStopTheNextRecords() throws Exception {
+        String curatorGenus = PON + "zgenus";
+        exec(connection, "insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus) values"
+            + " ('" + curatorGenus + "', 'genus', 'valid', '" + PON + "', 'formicidae', '" + PON + "', 'zgenusp')");
+        exec(connection, "insert into proj_taxon (project_name, taxon_name, source) values ('" + ALL + "', '" + curatorGenus + "', 'speciesListTool')");
+        refuseDeleteOf(CREMATOGASTER);
+        connection.setAutoCommit(false);
+        try {
+            new ProjTaxonDb(connection).rebuildAllAntwebList();   // does not throw
+            connection.commit();
+            assertEquals("Crematogaster stays (its delete was refused); the curator's genus row is off the list",
+                Arrays.asList(CREMATOGASTER, PHEIDOLE, HYPO), genusRows(ALL));
+            String job = "|" + ListRemovalLog.JOB_REBUILD_GENUS + "|" + ListRemovalLog.REASON_GENUS_NO_SPECIES;
+            assertEquals("recorded: the curator's row only (Crematogaster's record went back with its step)",
+                Arrays.asList(ALL + "|" + curatorGenus + "|speciesListTool" + job), records());
+            assertEquals("worldants", source(ALL, CREMATOGASTER));
+        } finally {
+            connection.setAutoCommit(true);
+            exec(connection, "drop trigger if exists test_refuse_delete");
+        }
+    }
+
+    /**
+     * Review of #362: when the step of a failed row cannot be undone (the savepoint is gone, MySQL error 1305, for
+     * example after the server rolled the transaction back), the rebuild passes the error on as a rollback
+     * (DBUtil.transactionRolledBack), so the upload fails instead of committing without its specimens. A connection
+     * whose rollback to a savepoint fails stands in for the server.
+     */
+    public void testAStepThatCannotBeUndoneIsPassedOnAsARollback() throws Exception {
+        refuseDeleteOf(CREMATOGASTER);
+        final Connection real = connection;
+        Connection noSavepointRollback = (Connection) java.lang.reflect.Proxy.newProxyInstance(Connection.class.getClassLoader(),
+            new Class<?>[] {Connection.class}, (proxy, m, args) -> {
+                if ("rollback".equals(m.getName()) && args != null && args.length == 1) {
+                    throw new java.sql.SQLException("SAVEPOINT does not exist", "42000", 1305);
+                }
+                try {
+                    return m.invoke(real, args);
+                } catch (java.lang.reflect.InvocationTargetException e) {
+                    throw e.getCause();
+                }
+            });
+        connection.setAutoCommit(false);
+        try {
+            new ProjTaxonDb(noSavepointRollback).rebuildAllAntwebList();
+            fail("the step could not be undone: the rebuild must pass the error on");
+        } catch (java.sql.SQLException e) {
+            assertTrue("read as a rollback: " + e, org.calacademy.antweb.util.DBUtil.transactionRolledBack(e));
+            assertTrue(e.getMessage(), e.getMessage().contains("could not be undone"));
+        } finally {
+            connection.rollback();
+            connection.setAutoCommit(true);
+            exec(connection, "drop trigger if exists test_refuse_delete");
+        }
+    }
+
+    /**
      * One failed record does not end the rule for the whole list (review of #352, 2026-11-14). Three genus rows
      * without species or specimen, in the order the rule reads them: Crematogaster, on the list before (its record
      * waits for the record table until the lock wait timeout); a genus the rebuild itself puts on the list (no record
@@ -688,7 +797,9 @@ public class ListCleanupOrderDbTest extends TestCase {
             long waits = rowLockWaits() - waitsBefore;
             assertEquals("the genus the rebuild put on the list is off it; the two that need a record stay",
                 Arrays.asList(CREMATOGASTER, PHEIDOLE, HYPO, curatorGenus), genusRows(ALL));
-            // counted by the server, not timed (review of #361: a time bound can fail on a slow runner)
+            // counted by the server, not timed (review of #361: a time bound can fail on a slow runner). The counter is
+            // the server's, not this session's: right in CI, where the test classes run one after another against
+            // one MySQL with nothing else on it; on a server with other traffic another wait can land in it.
             assertEquals("one wait for the lock, not one per row that needs a record", 1, waits);
             assertEquals("worldants", source(ALL, CREMATOGASTER));
             assertEquals("the curator's row keeps the curator's source", "speciesListTool", source(ALL, curatorGenus));
