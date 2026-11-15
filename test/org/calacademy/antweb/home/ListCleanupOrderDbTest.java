@@ -660,6 +660,35 @@ public class ListCleanupOrderDbTest extends TestCase {
     }
 
     /**
+     * A record that cannot be written is its own kind of error (ProjTaxonDb.RecordNotWritten), so the rebuild tells it
+     * from a delete that fails after its record was written: only the first stops the tries of the next records
+     * (review of #361). The daily clean-up's method throws it as it is.
+     */
+    public void testARecordThatCannotBeWrittenIsItsOwnError() throws Exception {
+        connection.setAutoCommit(false);
+        try (Connection other = connect()) {
+            other.setAutoCommit(false);
+            exec(other, "insert into " + ListRemovalLog.TABLE + " (list_type, list_key, taxon_name, removed_at) values ('project', 'held', 'h', now())");
+            try (PreparedStatement s = other.prepareStatement("select id from " + ListRemovalLog.TABLE + " for update"); ResultSet r = s.executeQuery()) {
+                while (r.next()) { /* locked */ }
+            }
+            exec(connection, "set innodb_lock_wait_timeout = 1");
+            try {
+                new ProjTaxonDb(connection).removeGenusRowsWithoutSpeciesOrSpecimen(ALL);
+                fail("the record could not be written: the daily clean-up's method throws");
+            } catch (java.sql.SQLException e) {
+                assertTrue(e.getClass().getName(), e instanceof ProjTaxonDb.RecordNotWritten);
+                assertEquals("the database's error number stays (a lock wait timeout)", 1205, e.getErrorCode());
+                assertFalse("not a rollback of the transaction", org.calacademy.antweb.util.DBUtil.transactionRolledBack(e));
+            }
+            other.rollback();
+            connection.rollback();
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+
+    /**
      * One failed record does not end the rule for the whole list (review of #352, 2026-11-14). Three genus rows
      * without species or specimen, in the order the rule reads them: Crematogaster, on the list before (its record
      * waits for the record table until the lock wait timeout); a genus the rebuild itself puts on the list (no record
@@ -688,7 +717,9 @@ public class ListCleanupOrderDbTest extends TestCase {
             long waits = rowLockWaits() - waitsBefore;
             assertEquals("the genus the rebuild put on the list is off it; the two that need a record stay",
                 Arrays.asList(CREMATOGASTER, PHEIDOLE, HYPO, curatorGenus), genusRows(ALL));
-            // counted by the server, not timed (review of #361: a time bound can fail on a slow runner)
+            // counted by the server, not timed (review of #361: a time bound can fail on a slow runner). The counter is
+            // the server's, not this session's: right in CI, where this class runs alone against its own MySQL; on a
+            // server with other traffic another wait can land in it.
             assertEquals("one wait for the lock, not one per row that needs a record", 1, waits);
             assertEquals("worldants", source(ALL, CREMATOGASTER));
             assertEquals("the curator's row keeps the curator's source", "speciesListTool", source(ALL, curatorGenus));
