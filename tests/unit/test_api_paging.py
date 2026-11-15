@@ -777,7 +777,7 @@ def test_rows_outside_v4_is_the_query_as_it_was():
     first = [line.strip() for line in code.splitlines() if line.strip()][1:3]
     assert first == ["if not getattr(g, 'apiV4Inner', False):", "return query.all()"], first
     apisrc = open(api.__file__).read()
-    assert apisrc.count("data = api_v4.rows(") == 4, "specimens, geoSpecimens (records and distinct), taxa"
+    assert apisrc.count("data = api_v4.rows(") == 5, "specimens, geoSpecimens (records and distinct), taxa, measurements"
 
 
 # --- countries and islands --------------------------------------------------------------------------------------
@@ -1045,6 +1045,28 @@ def test_distinct_taxa_geo_species_stats_and_measurements_follow_the_same_rule()
             assert get(url + "&family=vespidae", expect=400).get_json()["unknownParameters"] == ["family"], url
 
 
+def test_measurements_give_total_returned_and_complete():
+    """2026-11-14, before the measurements release 1.0 is loaded: /v4/measurements says how many measurements match
+    (metaData.total, first page or total=true), how many it gives and whether it reaches the end, as /v4/taxa does;
+    paged with offset in the order of the measurement id. The total counts the same records as the list (ants only)."""
+    fresh_usage()
+    with other_families(), opened():
+        j = get("/v4/measurements?trait=WL&limit=2").get_json()
+        m = j["metaData"]
+        assert (m.get("total"), m.get("returned"), m.get("complete")) == (3, 2, False), m
+        assert [x["specimenCode"] for x in j["measurements"]] == ["mxant01", "mxnofam01"], j
+        j = get("/v4/measurements?trait=WL&limit=2&offset=2").get_json()
+        m = j["metaData"]
+        assert "total" not in m and (m.get("returned"), m.get("complete")) == (1, True), m
+        assert [x["specimenCode"] for x in j["measurements"]] == ["mxghost01"], j
+        m = get("/v4/measurements?trait=WL&limit=2&offset=2&total=true").get_json()["metaData"]
+        assert m.get("total") == 3, m
+        assert "total" not in get("/v4/measurements?trait=WL&total=false").get_json()["metaData"]
+        m = get("/v4/measurements?trait=WL&allFamilies=true&country=Mexico").get_json()["metaData"]
+        assert (m.get("total"), m.get("complete")) == (4, True), m
+        assert get("/v4/measurements?trait=WL&total=maybe", expect=400).get_json()["error"], "total must be true or false"
+
+
 def test_one_definition_and_one_helper_for_every_route():
     """The rule is written once (api_v4.ANTS) and applied by one function (api_v4.ants_only), called by exactly the
     routes of api_v4.FAMILY_ROUTES; no route has a family test of its own."""
@@ -1196,7 +1218,7 @@ def test_front_door_and_documentation_say_ants_only():
 def test_front_door_describes_paging():
     j = client.get("/v4/").get_json()
     p = j["paging"]
-    assert p["routes"] == ["/v4/specimens", "/v4/geoSpecimens", "/v4/taxa"], p
+    assert p["routes"] == ["/v4/specimens", "/v4/geoSpecimens", "/v4/taxa", "/v4/measurements"], p
     assert "metaData.total" in p["total"] and "metaData.nextAfterCode" in p["afterCode"], p
     assert "metaData.complete" in p["complete"] and "X-AntWeb-Next-After-Code" in p["ndjson"], p
 

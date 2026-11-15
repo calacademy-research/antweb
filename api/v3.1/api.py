@@ -1801,7 +1801,9 @@ def getMeasurements():
     query = query.offset(offset)
 
     try:
-        data = query.all()
+        # v4 only: metaData.total and complete (2026-11-14, before the measurements release 1.0 is loaded: a reader
+        # can confirm a download is complete); outside v4 this is query.all() (api_v4.rows())
+        data = api_v4.rows(query, limit, offset, Measurement.id)
     except OperationalError as error:
         return apiError("measurements", error)
     except Exception as error:
