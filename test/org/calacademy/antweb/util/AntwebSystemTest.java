@@ -20,6 +20,12 @@ public class AntwebSystemTest extends TestCase {
         }
     }
 
+    /** stderr is read with the output (review of #363): never left to fill its pipe, and the viewer shows the error. */
+    public void testTheErrorOfACommandIsInItsOutput() {
+        String out = new AntwebSystem().launchProcess("tail --lines 5 /nonexistent-antweb-test-file", true);
+        assertTrue(out, out.contains("nonexistent-antweb-test-file"));
+    }
+
     public void testAWholeFileIsReadByTail() throws Exception {
         java.io.File f = java.io.File.createTempFile("antweb-system-test", ".log");
         try {

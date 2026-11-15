@@ -209,7 +209,10 @@ public class AntwebSystem {
         //s_log.info("launchProcess() Running command: " + command);
         //AntwebUtil.logShortStackTrace(9);
       //}
-      Process p = Runtime.getRuntime().exec(command);
+      // stderr goes into the output read below (review of #363): never left unread, where a command writing more
+      // than the pipe buffer to it would block, and the log viewer shows tail's own error (no such file).
+      // The command is split on spaces, as Runtime.exec(String) did.
+      Process p = new ProcessBuilder(command.trim().split("\\s+")).redirectErrorStream(true).start();
       if (! getRetVal) {
         handleStdOut(p);
       } else {

@@ -133,10 +133,43 @@ public class DailyUpdateDbTest extends TestCase {
         Map<String, Long> monday = DailyUpdateDb.usual(connection, at("2026-11-16", "05:00:00"), 7);
         assertEquals("a weekday: the last 7 weekdays only (the Sunday of 11-08 is left out)", Long.valueOf(150), monday.get("placeListTotals"));
 
-        // No earlier Sunday (only the Saturday of 10-31 before it): no usual time (no yellow, no email), not the
-        // weekday median.
+        // No earlier full count (only the Saturday of 10-31 before it): the longest recorded run of the step, so a hung
+        // step still shows yellow and emails (review of #363), never no usual time once the step has run.
         Map<String, Long> firstSunday = DailyUpdateDb.usual(connection, at("2026-11-01", "05:00:00"), 7);
-        assertNull(firstSunday.get("placeListTotals"));
+        assertEquals(Long.valueOf(150), firstSunday.get("placeListTotals"));
+        assertNull("no recorded run at all: no usual time", DailyUpdateDb.usual(connection, at("2026-10-31", "05:00:00"), 7).get("placeListTotals"));
+    }
+
+    /** A step that took seconds, started at 05:00 of day, with its recorded line. */
+    private void step(String day, String key, long seconds, String result, String detail) throws Exception {
+        Date run = at(day, "05:00:00");
+        DailyUpdateDb.start(connection, run, key, DailyUpdate.index(key) + 1, run);
+        DailyUpdateDb.end(connection, run, key, new Date(run.getTime() + seconds * 1000), result, detail);
+    }
+
+    /**
+     * Review of #363: an earlier run's kind is what the step recorded, not its weekday. A Tuesday that counted every
+     * place (new counting rules, old fingerprints: production 2026-11-10, 1,987 places, 584 s) joins the full counts;
+     * a Sunday that counted few joins the partial ones; a row without the line goes by its weekday.
+     */
+    public void testAnEarlierRunIsAFullCountByWhatItRecorded() throws Exception {
+        assertTrue(DailyUpdateDb.wasFullCount("Place list totals counted: 2440 places in 1030 s (2440 recounted, 0 unchanged); recounted because: full count 2440", at("2026-11-15", "05:00:00")));
+        assertTrue("a weekday full count", DailyUpdateDb.wasFullCount("1987 places in 584 s (1987 recounted, 0 unchanged)", at("2026-11-10", "05:00:00")));
+        assertFalse(DailyUpdateDb.wasFullCount("2435 places in 152 s (50 recounted, 2385 unchanged)", at("2026-11-14", "05:00:00")));
+        assertFalse("a Sunday that counted few", DailyUpdateDb.wasFullCount("2435 places in 60 s (40 recounted, 2395 unchanged)", at("2026-11-15", "05:00:00")));
+        assertTrue("no line: by its day (Sunday)", DailyUpdateDb.wasFullCount(null, at("2026-11-08", "05:00:00")));
+        assertFalse("no line: by its day (weekday)", DailyUpdateDb.wasFullCount("Place list totals counted: FAILED, 0 places", at("2026-11-09", "05:00:00")));
+
+        step("2026-11-08", "placeListTotals", 140, "ok", "2435 places in 140 s (45 recounted, 2390 unchanged)");    // a Sunday, partial
+        step("2026-11-08", DailyUpdate.END, 0, "ok");
+        step("2026-11-10", "placeListTotals", 584, "ok", "1987 places in 584 s (1987 recounted, 0 unchanged)");    // a Tuesday, full
+        step("2026-11-10", DailyUpdate.END, 0, "ok");
+        step("2026-11-11", "placeListTotals", 150, "ok", "2435 places in 150 s (50 recounted, 2385 unchanged)");
+        step("2026-11-11", DailyUpdate.END, 0, "ok");
+        assertEquals("a Sunday: the Tuesday full count, not the partial Sunday", Long.valueOf(584),
+            DailyUpdateDb.usual(connection, at("2026-11-15", "05:00:00"), 7).get("placeListTotals"));
+        assertEquals("a weekday: the partial runs (140, 150)", Long.valueOf(145),
+            DailyUpdateDb.usual(connection, at("2026-11-16", "05:00:00"), 7).get("placeListTotals"));
     }
 
     public void testLastRunsAndPrune() throws Exception {

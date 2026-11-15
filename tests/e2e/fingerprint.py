@@ -43,7 +43,7 @@ KEY_PAGES = [
     "/group.do?id=12",
     "/artists.do?sortBy=name",
     "/endemic.do?geolocaleId=2",
-    "/introduced.do?geolocaleId=494",
+    "/introduced.do?geolocaleId=3178",   # Analamanga; until 2026-11-15 Antananarivo (494), emptied when the CAS specimens moved to the regions
     "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&subregion=Eastern Africa&country=Comoros&resultRank=specimen",
     "/statsPage.do",
     "/bioregions.do",
