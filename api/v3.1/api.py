@@ -230,8 +230,10 @@ apiPublicBase = prodServer + "/v3.1"
 
 
 def specimenApiUrl(code):
-    """The public /specimens address of one specimen (the accepted parameter is specimenCode)."""
-    return apiPublicBase + "/specimens?specimenCode=" + urllib.parse.quote(str(code), safe="")
+    """The public /specimens address of one specimen (the accepted parameter is specimenCode). 2026-11-16: v4's address
+    once v4 is open (v3.1's data routes then answer 410), v3.1's while it is closed."""
+    base = prodServer + "/v4" if globals().get("V4_OPEN") else apiPublicBase
+    return base + "/specimens?specimenCode=" + urllib.parse.quote(str(code), safe="")
 apiUri = "api.do"   # the version-neutral address of the documentation page (apiV3.1.do still opens it; 2026-11-09)
 
 globalMessage = "Either the server is overloaded or there is an error in the application."

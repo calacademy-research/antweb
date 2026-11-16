@@ -77,6 +77,12 @@ def test_images_url_is_public_with_specimen_code():
                     "https://www.antweb.org/v3.1/specimens?specimenCode=b"], urls
     assert "specimenCode" in api.acceptedParams("getSpecimen")
     assert api.specimenApiUrl("a b&c") == "https://www.antweb.org/v3.1/specimens?specimenCode=a%20b%26c"
+    # 2026-11-16: once v4 is open, v3.1's data routes answer 410, so the link is v4's
+    was, api.V4_OPEN = api.V4_OPEN, True
+    try:
+        assert api.specimenApiUrl("a1") == "https://www.antweb.org/v4/specimens?specimenCode=a1"
+    finally:
+        api.V4_OPEN = was
 
 
 def test_images_name_the_photographer_and_the_collection():
