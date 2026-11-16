@@ -1476,6 +1476,10 @@ class Image(Base):
     hasTiff = Column('has_tiff', String)
     artist = Column('artist', Integer)          # the photographer: artist.id (2026-11-16)
 
+    def __repr__(self):
+        return "<Image(id='%s', shotType='%s', code='%s', uploadDate='%s', shotNumber='%s', hasTiff='%s')>" % (
+            self.id, self.shotType, self.code, self.uploadDate, self.shotNumber, self.hasTiff)
+
 
 class Artist(Base):
     """A photographer credited on images (table artist; the image page's "Photographer", artist.do?id=)."""
@@ -1529,10 +1533,6 @@ def imageCredits(image):
         , 'uploaderId': gid
         , 'uploaderUrl': GROUP_PAGE + str(gid) if gid else None
     }
-
-    def __repr__(self):
-        return "<Image(id='%s', shotType='%s', code='%s', uploadDate='%s', shotNumber='%s', hasTiff='%s')>" % (
-            self.id, self.shotType, self.code, self.uploadDate, self.shotNumber, self.hasTiff)
 
 
 def imagesBySpecimen(data):
@@ -1599,7 +1599,7 @@ def getImages():
     # the photographer and the collection of each image (2026-11-16): one lookup per image of the page, by key
     # (group_image may hold more than one collection for an image: the lowest group id is given)
     groupId = session.query(func.min(GroupImage.groupId)).filter(GroupImage.imageId == Image.id).correlate(Image).scalar_subquery()
-    query = session.query(Image, Artist.name, groupId.label('gid')).outerjoin(Artist, Artist.id == Image.artist)
+    query = session.query(Image, Artist.id, Artist.name, groupId.label('gid')).outerjoin(Artist, Artist.id == Image.artist)
     if since != '*':
         if not since.isdigit():
             return badRequest('since must be a whole number of days')
@@ -1631,8 +1631,8 @@ def getImages():
     except Exception as error:
         return apiError("images", error)
     data = []
-    for image, photographer, gid in rows:
-        image.photographer, image.photographerId = photographer, (image.artist if photographer else None)
+    for image, artistId, photographer, gid in rows:
+        image.photographer, image.photographerId = photographer, artistId    # None when the artist row is missing
         image.uploader, image.uploaderId = groupNames.get(gid), (gid if gid in groupNames else None)
         data.append(image)
 
