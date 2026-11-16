@@ -387,7 +387,7 @@ def apply_sql(table, plans, schema):
         out.append("update geolocale set country = " + n + " where " + exact("country", p.old))
         # the specimens: only those in the backup (2026-11-16 review: one uploaded under the old name after the backup was
         # made is left for the next run, which the report's "left over" shows, so --rollback can undo every change)
-        backed = " and code in (select code from " + table + "_specimen)"
+        backed = " and code in (select code from " + table + "_specimen)"   # fast: report_or_apply adds the backup's primary key (code) before this runs
         out.append("update specimen set country = " + n + " where " + exact("country", p.old) + backed)
         if schema.has("specimen", "island_country"):
             out.append("update specimen set island_country = " + n + " where " + exact("island_country", p.old) + backed)

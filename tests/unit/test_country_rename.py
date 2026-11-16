@@ -428,6 +428,15 @@ class Busy(http.server.BaseHTTPRequestHandler):
         pass
 
 
+class Idle(Busy):
+    def do_GET(self):
+        body = b"idle"
+        self.send_response(200)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
 def test_with_a_database():
     if not CONTAINER:
         print("MySQL part skipped (COUNTRY_RENAME_DB_CONTAINER not set).")
@@ -558,7 +567,12 @@ def test_with_a_database():
             assert back[t] == before[t], (t, sorted(set(back[t]) ^ set(before[t]))[:6])
         # ... except a specimen a curator changed after the rename: it keeps what the curator wrote
         assert drop_run_tables()
-        assert tool(d, "--apply", "--even-if-busy", "--only", "Turkey").returncode == 0
+        # AntWeb answers idle (the path production takes, 2026-11-16 review): --apply goes on without --even-if-busy
+        idle = http.server.HTTPServer(("127.0.0.1", 0), Idle)
+        threading.Thread(target=idle.serve_forever, daemon=True).start()
+        out = tool(d, "--apply", "--only", "Turkey", "--app", "http://127.0.0.1:" + str(idle.server_address[1]))
+        idle.shutdown()
+        assert out.returncode == 0 and "Applied." in out.stdout and "even-if-busy" not in out.stdout, out.stderr + out.stdout
         mysql("update specimen set country = 'Greece' where code = 'tr2'")
         table = [r[0] for r in mysql("show tables like 'country_rename_%'") if cr.TABLE_NAME.match(r[0])][0]
         assert tool(d, "--rollback", table).returncode == 0
