@@ -115,7 +115,7 @@ counted again ("full count"; 2026-11-15: 2,440 places in 17 min), the other days
 partial ones; an earlier run's kind is what it recorded (its line, now also the step's message: full when it recounted
 at least ten times as many places as it left unchanged), so a weekday full count after a change of the counting rules
 joins the full counts. When no earlier run of the expected kind exists, the longest recorded run is the usual time
-(never none, so a hung step still emails). The first Sunday with the weekday median emailed "running long" for a full
+(never none, so a hung step still emails); on a weekday with no partial run among the last 120 runs that is likely a full count (about 17 min), so a hung 2.5-minute step would email only after about 34 min. The first Sunday with the weekday median emailed "running long" for a full
 count of normal length (2026-11-15). A line with "FAILED for N places" now also ends the step as failed (email).
 
 - Production 2026-11-09: 60 minutes on 11-07 and 11-08, about 4 hours on 11-09. Causes: an adm1's specimens were read
