@@ -9,7 +9,8 @@
 # Six kinds of line.
 #
 # 1. country,level,shape,antweb_state[,new]
-#    country: AntWeb's valid country. level: the level of the boundary file (ADM1, ADM2 ...). shape: the file's
+#    country: AntWeb's valid country, or an old name of it (read through AntWeb's old names, so the rows keep
+#    working after tools/place/country_rename.py gives a country its current name). level: the level of the boundary file (ADM1, ADM2 ...). shape: the file's
 #    shapeName, as the report shows it (a name spoilt in the boundary file is shown put right). antweb_state:
 #    AntWeb's valid state the shape lies in (several shapes may lie in one state). A row is used only when AntWeb
 #    has that state as a valid state of the country, unless the fifth cell is the word new: then the state is
