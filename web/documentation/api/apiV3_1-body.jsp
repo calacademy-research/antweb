@@ -448,6 +448,7 @@
         <h2>Images</h2>
             <br>
          	<b>Function:</b> Query for images in the antweb database.
+            <p>Each image gives its four sizes (urls: low, med, high, thumbview, on static.antweb.org since 2026-11-16) and, for crediting it, <b>photographer</b>, <b>photographerId</b> and <b>photographerUrl</b> (the photographer's AntWeb page), and <b>uploader</b>, <b>uploaderId</b> and <b>uploaderUrl</b> (the collection that uploaded it), as the image page shows them; empty (null) where the image has none. Images and data are CC BY 4.0: credit the photographer, AntWeb and the specimen code.</p>
             <p><b>Parameters:</b>
         <table class="arguments">
             <tr>

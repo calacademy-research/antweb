@@ -10,7 +10,7 @@
 
 **Citation:** research and publications substantially based on AntWeb should cite AntWeb with the version or access date and keep the original specimen codes and provenance: "AntWeb. Version [version shown in the page header]. California Academy of Sciences, online at https://www.antweb.org. Accessed [day month year]." Citing an aggregator alone does not credit the AntWeb source.
 
-**Images and licence:** AntWeb images and data are licensed CC BY 4.0. Credit the photographer, AntWeb and the specimen code, and link to the AntWeb record where practical.
+**Images and licence:** AntWeb images and data are licensed CC BY 4.0. Credit the photographer, AntWeb and the specimen code, and link to the AntWeb record where practical. Each image in /v4/images names its photographer and the collection that uploaded it (photographer, photographerId, uploader, uploaderId); its files are on static.antweb.org.
 
 **Collaboration and contributions:** for taxonomic revisions, country or regional lists and large studies that depend on AntWeb, contact the AntWeb team early to explore collaboration. Coauthorship follows real contributions; it is not a condition of reuse. Please contribute new specimen photographs, especially of type specimens, updated identifications, type designations and publication links back to AntWeb, with photographer and contributor credit.
 
