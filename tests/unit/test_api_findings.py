@@ -55,8 +55,10 @@ def setup():
         _specimen("a6", "aulacopone", "heteroponerinae", lat=-18.9, lon=47.5),
     ])
     s.add_all([api.Image(id="3", code="b", shotType="h", shotNumber="1"),
-               api.Image(id="1", code="a", shotType="p", shotNumber="1"),
-               api.Image(id="2", code="a", shotType="h", shotNumber="1")])
+               api.Image(id="1", code="a", shotType="p", shotNumber="1", artist=7),
+               api.Image(id="2", code="a", shotType="h", shotNumber="1", artist=99)])   # 99: no such artist
+    s.add_all([api.Artist(id=7, name="April Nobile"), api.AntGroup(id=1, name="California Academy of Sciences"),
+               api.AntGroup(id=5, name="Other"), api.GroupImage(imageId=1, groupId=5), api.GroupImage(imageId=1, groupId=1)])
     s.commit()
 
 
@@ -75,6 +77,22 @@ def test_images_url_is_public_with_specimen_code():
                     "https://www.antweb.org/v3.1/specimens?specimenCode=b"], urls
     assert "specimenCode" in api.acceptedParams("getSpecimen")
     assert api.specimenApiUrl("a b&c") == "https://www.antweb.org/v3.1/specimens?specimenCode=a%20b%26c"
+
+
+def test_images_name_the_photographer_and_the_collection():
+    """2026-11-16 (Steve Shattuck, AntWiki): each image gives photographer, photographerId, uploader and uploaderId,
+    with the AntWeb pages, as the image page shows them; the files on static.antweb.org (not behind the bot check)."""
+    images = {i["imageId"]: i for rec in get("/images?up=1")["images"] for i in rec["images"]}
+    one = images["1"]
+    assert (one["photographer"], one["photographerId"], one["photographerUrl"]) == \
+        ("April Nobile", 7, "https://www.antweb.org/artist.do?id=7"), one
+    assert (one["uploader"], one["uploaderId"], one["uploaderUrl"]) == \
+        ("California Academy of Sciences", 1, "https://www.antweb.org/group.do?id=1"), "the lowest group id: " + str(one)
+    assert one["urls"] == ["https://static.antweb.org/images/a/a_p_1_" + s + ".jpg" for s in ("low", "med", "high", "thumbview")], one
+    for missing in (images["2"], images["3"]):   # an artist id with no artist row; no artist and no group
+        assert all(missing[k] is None for k in ("photographer", "photographerId", "photographerUrl")), missing
+    assert all(images["3"][k] is None for k in ("uploader", "uploaderId", "uploaderUrl")), images["3"]
+    assert not any("www.antweb.org/images" in u for i in images.values() for u in i["urls"])
 
 
 def test_images_of_nothing_is_an_empty_list():
@@ -109,7 +127,9 @@ def _sql_of(url):
     get(url)
     selects = [s for s in STATEMENTS if s.lstrip().upper().startswith("SELECT")]
     assert selects, url
-    return selects[-1]
+    # the route's paged query (LIMIT): /images also reads the names of the images' collections after it (2026-11-16)
+    paged = [s for s in selects if " LIMIT " in s.upper()]
+    return (paged or selects)[-1]
 
 
 def test_paged_routes_have_a_fixed_order():

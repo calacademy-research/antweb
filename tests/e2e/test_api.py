@@ -416,6 +416,33 @@ def test_valid_genus_filter_keeps_valid_genera():
     assert len(body["specimens"]) == 5, body["metaData"]
 
 
+def test_v4_images_credit_the_photographer_and_load_from_static():
+    """2026-11-16 (Steve Shattuck, AntWiki): every image of /v4/images names its photographer and the collection that
+    uploaded it, with ids and AntWeb pages, and its files are on static.antweb.org (the www.antweb.org/images
+    addresses are behind the bot check). Needs the staging test key."""
+    if IS_PRODUCTION:
+        pytest.skip("the test key is a staging key")
+    if not api_test_key():
+        pytest.skip(f"{API_KEY_ENV} is not set: v4 cannot be asked")
+    import requests
+    headers = {API_KEY_HEADER: api_test_key(), "User-Agent": new_session().headers["User-Agent"]}
+    r = requests.get(BASE_URL + "/v4/images?limit=25", timeout=max(TIMEOUT, 120), headers=headers, allow_redirects=False)
+    if r.status_code == 401:
+        pytest.skip("the server refused the test key: make a new one with tools/api/create-test-key.py")
+    assert r.status_code == 200, (r.status_code, r.text[:200])
+    images = [i for rec in r.json()["images"] for i in rec["images"]]
+    assert images, "no images on this host"
+    keys = {"photographer", "photographerId", "photographerUrl", "uploader", "uploaderId", "uploaderUrl"}
+    assert all(keys <= set(i) for i in images), sorted(images[0])
+    credited = [i for i in images if i["photographer"]]
+    assert credited, "no image of the first page names its photographer"
+    assert all(i["photographerUrl"] == "https://www.antweb.org/artist.do?id=" + str(i["photographerId"]) for i in credited), credited[0]
+    assert all(i["uploaderUrl"] == "https://www.antweb.org/group.do?id=" + str(i["uploaderId"]) for i in images if i["uploaderId"])
+    assert all(u.startswith("https://static.antweb.org/images/") for i in images for u in i["urls"]), images[0]["urls"]
+    head = requests.head(images[0]["urls"][1], timeout=60)
+    assert head.status_code == 200 and head.headers.get("content-type", "").startswith("image/"), (images[0]["urls"][1], head.status_code)
+
+
 def test_v4_measurements_give_total_returned_and_complete():
     """2026-11-14 (#360): /v4/measurements says how many measurements match, how many it gives and whether it reaches
     the end. Its own test (review of #360): inside the family test it was skipped with it on a database without

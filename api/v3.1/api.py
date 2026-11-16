@@ -1474,10 +1474,65 @@ class Image(Base):
     uploadDate = Column('upload_date', String)
     shotNumber = Column('shot_number', String)
     hasTiff = Column('has_tiff', String)
+    artist = Column('artist', Integer)          # the photographer: artist.id (2026-11-16)
 
     def __repr__(self):
         return "<Image(id='%s', shotType='%s', code='%s', uploadDate='%s', shotNumber='%s', hasTiff='%s')>" % (
             self.id, self.shotType, self.code, self.uploadDate, self.shotNumber, self.hasTiff)
+
+
+class Artist(Base):
+    """A photographer credited on images (table artist; the image page's "Photographer", artist.do?id=)."""
+    __tablename__ = 'artist'
+
+    id = Column(Integer, primary_key=True)
+    name = Column('name', String)
+
+
+class GroupImage(Base):
+    """The collections (upload groups) an image belongs to (table group_image; the image page's "Uploaded By")."""
+    __tablename__ = 'group_image'
+
+    imageId = Column('image_id', Integer, primary_key=True)
+    groupId = Column('group_id', Integer, primary_key=True)
+
+
+class AntGroup(Base):
+    """An upload group (table ant_group; group.do?id=)."""
+    __tablename__ = 'ant_group'
+
+    id = Column(Integer, primary_key=True)
+    name = Column('name', String)
+
+
+# Image files are served from static.antweb.org (2026-11-16): the www.antweb.org/images addresses are behind the
+# site's bot challenge, so a program could not load them (GBIF got 403 on the newest images, 2026-11-11). The same
+# files, all four sizes.
+STATIC_IMAGES = 'https://static.antweb.org/images/'
+ARTIST_PAGE = 'https://www.antweb.org/artist.do?id='
+GROUP_PAGE = 'https://www.antweb.org/group.do?id='
+
+
+def imageUrls(code, shotType, shotNumber):
+    """The four sizes of one image, on static.antweb.org: low, med, high, thumbview."""
+    base = STATIC_IMAGES + (code or '') + '/' + (code or '') + '_' + (shotType or '') + '_' + str(shotNumber)
+    return [base + '_low.jpg', base + '_med.jpg', base + '_high.jpg', base + '_thumbview.jpg']
+
+
+def imageCredits(image):
+    """Who to credit for an image (Steve Shattuck, 2026-11-15: AntWiki's specimen image template must name the
+    photographer; it scraped the image page for it): photographer and uploader (the collection), with their ids and
+    pages, as the image page shows them. None where the image has none. Read from attributes getImages sets."""
+    pid = getattr(image, 'photographerId', None) or None
+    gid = getattr(image, 'uploaderId', None) or None
+    return {
+        'photographer': getattr(image, 'photographer', None) if pid else None
+        , 'photographerId': pid
+        , 'photographerUrl': ARTIST_PAGE + str(pid) if pid else None
+        , 'uploader': getattr(image, 'uploader', None) if gid else None
+        , 'uploaderId': gid
+        , 'uploaderUrl': GROUP_PAGE + str(gid) if gid else None
+    }
 
 
 def imagesBySpecimen(data):
@@ -1492,22 +1547,15 @@ def imagesBySpecimen(data):
     images = []
     for image in data:
         imageCount += 1
-        base = 'https://www.antweb.org/images/' + (image.code or '') + '/' + (image.code or '') + '_' \
-               + (image.shotType or '') + '_' + str(image.shotNumber)
-        # print('code' + image.code + ' base:' + base)
-        urls = [base + '_low.jpg'
-            , base + '_med.jpg'
-            , base + '_high.jpg'
-            , base + '_thumbview.jpg'
-                ]
         imageDict = {
             'imageId': image.id
             , 'shotType': image.shotType
-            , "urls": urls
+            , "urls": imageUrls(image.code, image.shotType, image.shotNumber)
             , 'uploadDate': image.uploadDate
             , 'shotNumber': image.shotNumber
             , 'hasTiff': image.hasTiff
         }
+        imageDict.update(imageCredits(image))
         if tCode != image.code:
             if tCode != '':  # we have one to insert. (Is not the first record).
                 specimenDict = {
@@ -1548,7 +1596,10 @@ def getImages():
     limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return apiDown()
 
-    query = session.query(Image)
+    # the photographer and the collection of each image (2026-11-16): one lookup per image of the page, by key
+    # (group_image may hold more than one collection for an image: the lowest group id is given)
+    groupId = session.query(func.min(GroupImage.groupId)).filter(GroupImage.imageId == Image.id).correlate(Image).scalar_subquery()
+    query = session.query(Image, Artist.id, Artist.name, groupId.label('gid')).outerjoin(Artist, Artist.id == Image.artist)
     if since != '*':
         if not since.isdigit():
             return badRequest('since must be a whole number of days')
@@ -1572,11 +1623,18 @@ def getImages():
     query = query.offset(offset)
 
     try:
-        data = query.all()
+        rows = query.all()
+        groupIds = sorted({r.gid for r in rows if r.gid})
+        groupNames = dict(session.query(AntGroup.id, AntGroup.name).filter(AntGroup.id.in_(groupIds)).all()) if groupIds else {}
     except OperationalError as error:
         return apiError("images", error)
     except Exception as error:
         return apiError("images", error)
+    data = []
+    for image, artistId, photographer, gid in rows:
+        image.photographer, image.photographerId = photographer, artistId    # None when the artist row is missing
+        image.uploader, image.uploaderId = groupNames.get(gid), (gid if gid in groupNames else None)
+        data.append(image)
 
     dataList, specimenCount, imageCount = imagesBySpecimen(data)
 
@@ -1884,13 +1942,7 @@ class TaxaImage(Base):
             imagesDict = specimenDict['images']
 
             if all(image['imageId'] != taxaImage.uid for image in imagesDict):
-                base = 'https://www.antweb.org/images/' + (taxaImage.code or '') + '/' + (taxaImage.code or '') + '_' \
-                       + (taxaImage.shotType or '') + '_' + str(taxaImage.shotNumber)
-                urls = [base + '_low.jpg'
-                    , base + '_med.jpg'
-                    , base + '_high.jpg'
-                    , base + '_thumbview.jpg'
-                        ]
+                urls = imageUrls(taxaImage.code, taxaImage.shotType, taxaImage.shotNumber)
                 imageDict = {
                     'imageId': taxaImage.uid
                     , 'shotType': taxaImage.shotType

@@ -156,6 +156,15 @@ public class DailyUpdateTest extends TestCase {
         assertEquals("failed", DailyUpdate.resultOf("FAILED: the upload stopped"));
         assertEquals("failed", DailyUpdate.resultOf("taxon parents: 3 changed; AntCat list and Global column NOT recounted (e)"));
         assertEquals("failed", DailyUpdate.resultOf("SKIPPED BY GUARD: archive has 10 records"));   // the guard needs a look
+        // Place list totals (review of #363): its line is the step's message; the stored part keeps "(R recounted, U
+        // unchanged)", which tells a full count from a partial one; "FAILED for N places" ends the step as failed.
+        String sunday = "Place list totals counted: 2440 places in 1030 s (2440 recounted, 0 unchanged); recounted because: full count 2440; comparing 21 s, counting 1007 s";
+        String monday = "Place list totals counted: 2440 places in 280 s (79 recounted, 2361 unchanged); recounted because: data changed 79 (list rows 58, specimen names 50); comparing 22 s, counting 252 s";
+        assertEquals("ok", DailyUpdate.resultOf(sunday));
+        assertEquals("ok", DailyUpdate.resultOf(monday));
+        assertTrue(org.calacademy.antweb.util.DailyUpdateDb.wasFullCount(sunday.substring(0, Math.min(500, sunday.length())), null));
+        assertFalse(org.calacademy.antweb.util.DailyUpdateDb.wasFullCount(monday.substring(0, Math.min(500, monday.length())), null));
+        assertEquals("failed", DailyUpdate.resultOf(monday + "; FAILED for 2 places (their stored totals are shown), e.g. 12, 13"));
     }
 
     public void testDurationAndTimes() {
