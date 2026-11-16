@@ -385,10 +385,12 @@ def apply_sql(table, plans, schema):
         out.append("update geolocale set valid_name = " + n + " where georank = 'country' and " + exact("valid_name", p.old) + " and id <> " + vid)
         out.append("update geolocale set parent = " + n + " where georank = 'adm1' and " + exact("parent", p.old))
         out.append("update geolocale set country = " + n + " where " + exact("country", p.old))
-        # the specimens
-        out.append("update specimen set country = " + n + " where " + exact("country", p.old))
+        # the specimens: only those in the backup (2026-11-16 review: one uploaded under the old name after the backup was
+        # made is left for the next run, which the report's "left over" shows, so --rollback can undo every change)
+        backed = " and code in (select code from " + table + "_specimen)"   # fast: report_or_apply adds the backup's primary key (code) before this runs
+        out.append("update specimen set country = " + n + " where " + exact("country", p.old) + backed)
         if schema.has("specimen", "island_country"):
-            out.append("update specimen set island_country = " + n + " where " + exact("island_country", p.old))
+            out.append("update specimen set island_country = " + n + " where " + exact("island_country", p.old) + backed)
         # the curators assigned to the country; one who has both names keeps one row
         if schema.has("login_country"):
             out.append("delete a from login_country a join login_country b on b.login_id = a.login_id where "
@@ -657,7 +659,7 @@ def main(argv=None):
     a.add_argument("--rollback", metavar="TABLE", help="put back the names kept in this run's backup tables")
     a.add_argument("--only", default=None, help="only these renames: old names, comma separated (default: all of the list)")
     a.add_argument("--rename", action="append", metavar="OLD=NEW", help="a rename that is not in the list (may be repeated)")
-    a.add_argument("--even-if-busy", action="store_true", help="--apply although AntWeb says an upload or a data job is running")
+    a.add_argument("--even-if-busy", action="store_true", help="--apply although AntWeb does not answer idle (only when it is stopped on purpose)")
     a.add_argument("--project", default=None, help="AntWeb project folder (default /root/antweb or /root/antweb-next)")
     a.add_argument("--container", default="antweb_mysql_1")
     a.add_argument("--app", default="http://127.0.0.1:8081", help="AntWeb's local address, asked whether it is busy")
@@ -702,11 +704,14 @@ def report_or_apply(args, project, now, stamp):
         loose = schema.not_transactional()
         if loose:
             sys.exit("Nothing changed: these tables cannot take part in a transaction (not InnoDB): " + ", ".join(loose))
+        # 2026-11-16 review: only "idle" lets it go on; busy, no answer, an error or a starting page stops it (as
+        # island_countries.py), unless --even-if-busy (AntWeb stopped on purpose)
         busy = busy_answer(args.app + "/util.do?action=isBusy")
-        if busy.startswith("busy") and not args.even_if_busy:
-            sys.exit("Nothing changed: AntWeb says \"" + busy + "\". Run it again when the upload or the daily update has ended.")
-        if not busy:
-            note = "AntWeb did not answer at " + args.app + " (not running?): it was not asked whether an upload is running.\n"
+        if busy != "idle":
+            said = "says \"" + busy[:120] + "\"" if busy else "did not answer at " + args.app
+            if not args.even_if_busy:
+                sys.exit("Nothing changed: AntWeb " + said + ". Run it again when AntWeb answers idle (no upload, no daily update).")
+            note = "AntWeb " + said + "; --even-if-busy: applied without its idle answer.\n"
         table = "country_rename_backup_" + stamp
         if run_sql(project, "show tables like '" + table + "%'", args.container):
             sys.exit("Table " + table + " exists already: wait a minute and run it again.")

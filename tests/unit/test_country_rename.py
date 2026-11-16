@@ -155,6 +155,10 @@ def test_apply_sql_swap():
         if "Ivory Coast'" in q and " where " in q and "id = " not in q.split(" where ")[1][:8]:
             assert "hex(convert(" in q, q
     assert "adm1 =" not in text and "set adm1" not in text
+    # only the specimens in the backup change (2026-11-16 review), so a rollback undoes every change
+    for q in sql:
+        if q.startswith("update specimen set"):
+            assert q.endswith(" and code in (select code from country_rename_backup_20261110_1700_specimen)"), q
 
 
 def test_apply_sql_rename_adds_the_old_name():
@@ -424,6 +428,15 @@ class Busy(http.server.BaseHTTPRequestHandler):
         pass
 
 
+class Idle(Busy):
+    def do_GET(self):
+        body = b"idle"
+        self.send_response(200)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
 def test_with_a_database():
     if not CONTAINER:
         print("MySQL part skipped (COUNTRY_RENAME_DB_CONTAINER not set).")
@@ -462,21 +475,25 @@ def test_with_a_database():
         server.shutdown()
         assert out.returncode != 0 and "AntWeb says \"busy: upload\"" in out.stderr, out.stderr + out.stdout
         assert snapshot() == before and not mysql("show tables like 'country_rename_%'")
+        # 2b. AntWeb does not answer (2026-11-16 review): --apply stops too, unless --even-if-busy
+        out = tool(d, "--apply")
+        assert out.returncode != 0 and "AntWeb did not answer at http://127.0.0.1:9" in out.stderr, out.stderr + out.stdout
+        assert snapshot() == before and not mysql("show tables like 'country_rename_%'")
 
         # 3. a statement fails in the middle (here: the database refuses the specimens, after the places were renamed):
         #    the whole run is undone
         mysql("create trigger country_rename_test before update on specimen for each row signal sqlstate '45000' set message_text = 'refused for the test'")
-        out = tool(d, "--apply", "--only", "Swaziland,Turkey")
+        out = tool(d, "--apply", "--even-if-busy", "--only", "Swaziland,Turkey")
         mysql("drop trigger country_rename_test")
         assert out.returncode != 0 and "Nothing changed (the transaction was undone and the backup tables dropped)" in out.stderr, (out.stderr + out.stdout)[-600:]
         assert "refused for the test" in out.stderr
         assert snapshot() == before and not mysql("show tables like 'country_rename_%'")
 
         # 4. --apply
-        out = tool(d, "--apply")
+        out = tool(d, "--apply", "--even-if-busy")
         assert out.returncode == 0, out.stderr + out.stdout
         assert "Applied. Record and backup tables: country_rename_backup_" in out.stdout and "old name: 0 (as expected)" in out.stdout, out.stdout
-        assert "AntWeb did not answer at http://127.0.0.1:9" in out.stdout and "NOW reload the names AntWeb keeps in memory" in out.stdout
+        assert "AntWeb did not answer at http://127.0.0.1:9; --even-if-busy: applied without its idle answer" in out.stdout and "NOW reload the names AntWeb keeps in memory" in out.stdout
         table = [r[0] for r in mysql("show tables like 'country_rename_%'") if cr.TABLE_NAME.match(r[0])][0]
         # the countries keep their ids; the old names are not-valid rows that point to the new ones
         valid = {r[0]: r[1] for r in mysql("select id, name from geolocale where georank = 'country' and is_valid = 1")}
@@ -534,7 +551,7 @@ def test_with_a_database():
         after = snapshot()
 
         # 5. a second run: all done, nothing to change, no new tables
-        out = tool(d, "--apply")
+        out = tool(d, "--apply", "--even-if-busy")
         assert out.returncode == 0 and "Nothing to change." in out.stdout and out.stdout.count("already renamed; only what is still") == 7, out.stdout
         assert "possible: 7; specimens that change: 0" in out.stdout
         assert snapshot() == after and len([r for r in mysql("show tables like 'country_rename_%'") if cr.TABLE_NAME.match(r[0])]) == 1
@@ -550,7 +567,12 @@ def test_with_a_database():
             assert back[t] == before[t], (t, sorted(set(back[t]) ^ set(before[t]))[:6])
         # ... except a specimen a curator changed after the rename: it keeps what the curator wrote
         assert drop_run_tables()
-        assert tool(d, "--apply", "--only", "Turkey").returncode == 0
+        # AntWeb answers idle (the path production takes, 2026-11-16 review): --apply goes on without --even-if-busy
+        idle = http.server.HTTPServer(("127.0.0.1", 0), Idle)
+        threading.Thread(target=idle.serve_forever, daemon=True).start()
+        out = tool(d, "--apply", "--only", "Turkey", "--app", "http://127.0.0.1:" + str(idle.server_address[1]))
+        idle.shutdown()
+        assert out.returncode == 0 and "Applied." in out.stdout and "even-if-busy" not in out.stdout, out.stderr + out.stdout
         mysql("update specimen set country = 'Greece' where code = 'tr2'")
         table = [r[0] for r in mysql("show tables like 'country_rename_%'") if cr.TABLE_NAME.match(r[0])][0]
         assert tool(d, "--rollback", table).returncode == 0
@@ -559,7 +581,7 @@ def test_with_a_database():
         assert snapshot() == before and drop_run_tables()
 
         # 7. one rename at a time; then an upload stores the old name (AntWeb's memory not yet reloaded): the next run carries it
-        out = tool(d, "--apply", "--only", "Ivory Coast")
+        out = tool(d, "--apply", "--even-if-busy", "--only", "Ivory Coast")
         assert out.returncode == 0 and "Renames: 1; possible: 1; specimens that change: 3" in out.stdout, out.stdout
         assert one("select name from geolocale where id = 158") == "Turkey" and one("select name from geolocale where id = 48") == "Côte d'Ivoire"
         assert drop_run_tables()
@@ -567,7 +589,7 @@ def test_with_a_database():
               "insert into place_specimen_name values ('country', 'Ivory Coast', 'a', 1), ('country', 'Ivory Coast', 'z', 1)")
         out = tool(d, "--only", "Ivory Coast")
         assert "already renamed; only what is still under the old name is carried" in out.stdout and "specimens that change: 1" in out.stdout, out.stdout
-        out = tool(d, "--apply", "--only", "Ivory Coast")
+        out = tool(d, "--apply", "--even-if-busy", "--only", "Ivory Coast")
         assert out.returncode == 0 and "old name: 0 (as expected)" in out.stdout, out.stdout
         assert one("select country from specimen where code = 'ci9'") == "Côte d'Ivoire"
         assert sorted(tuple(r) for r in mysql("select taxon_name, specimens from place_specimen_name where list_key = 'Côte d''Ivoire'")) == [
@@ -581,7 +603,7 @@ def test_with_a_database():
               "insert into geolocale (id, name, georank, is_valid, parent) values (600, 'Hhohho', 'adm1', 1, 'Eswatini'), "
               "(601, 'Eswatini', 'country', 0, 'Southern Africa'); update geolocale set valid_name = 'Swaziland' where id = 601; "
               "update geolocale set is_valid = 1 where id = 8681")
-        out = tool(d, "--apply")
+        out = tool(d, "--apply", "--even-if-busy")
         assert out.returncode == 0, out.stderr + out.stdout
         assert "Renames: 7; possible: 4" in out.stdout, out.stdout
         for line in ("NOT RENAMED: the name Türkiye already has page text (1 fields)",

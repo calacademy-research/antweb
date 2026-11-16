@@ -698,8 +698,9 @@ public class PlaceViewTotalDb {
      * for this, because it removes the rows of every place that is not in the list it is given.
      *
      * Returns true when the place was counted and stored. False, and nothing done, for a place the daily update does not
-     * count either (counts(): the AntWeb-wide list; or not a place with totals). False also when the count fails: never
-     * thrown, so the page that called it is still shown; getLastFailure() then says why. A place whose count failed
+     * count either (counts(): the AntWeb-wide list; or not a place with totals). False also when the count fails: not
+     * thrown, so the page that called it is still shown; getLastFailure() then says why. The one exception: inside a
+     * caller's transaction that MySQL rolled back (a deadlock), TransactionRolledBack is thrown (2026-11-16). A place whose count failed
      * loses its totals and its state, as a place that fails in the daily fill does: its page then shows the place's own
      * stored counts, marked data-view-counted="false" (the number tests wait for the count instead of comparing), and
      * the next daily update counts it ("new place"). Keeping the totals would show, as counted, numbers from before the
@@ -723,6 +724,13 @@ public class PlaceViewTotalDb {
             return true;
         } catch (SQLException | RuntimeException e) {
             lastFailure = e.getMessage() == null ? e.toString() : e.getMessage();
+            if (inCallersTransaction() && rolledBackTransaction(e)) {
+                // Review of PR #341 (2026-11-16): MySQL ended the caller's whole transaction (a deadlock rolls it back).
+                // Going on would remove the totals in a new transaction and let the job commit as if its work so far
+                // had been saved; thrown instead, so the job's own handler reports the failure (UtilDataAction).
+                s_log.warn("recountPlace() " + tk[0] + " " + tk[1] + ": the caller's transaction was rolled back by MySQL. e:" + e);
+                throw new TransactionRolledBack("recountPlace " + tk[0] + " " + tk[1] + ": " + lastFailure, e);
+            }
             s_log.warn("recountPlace() " + tk[0] + " " + tk[1] + " not counted; its list totals are removed until the next daily update. e:" + e);
             try {
                 removePlace(tk);
@@ -731,6 +739,38 @@ public class PlaceViewTotalDb {
             }
             return false;
         }
+    }
+
+    /**
+     * Thrown by recountPlace when it runs inside a caller's transaction (autocommit off) and MySQL rolled that whole
+     * transaction back (a deadlock: SQLState 40001, error 1213): the caller's work so far is gone, so the caller must not
+     * go on and commit (2026-11-16, review of PR #341).
+     */
+    public static class TransactionRolledBack extends RuntimeException {
+        public TransactionRolledBack(String message, Throwable cause) { super(message, cause); }
+    }
+
+    /** True when the connection is in a caller's transaction (autocommit off); false when it cannot tell. */
+    private boolean inCallersTransaction() {
+        try {
+            return !connection.getAutoCommit();
+        } catch (SQLException | RuntimeException e) {
+            return false;
+        }
+    }
+
+    /**
+     * True when the error, or one it was caused by, is one after which MySQL has rolled back the whole transaction: a
+     * deadlock (SQLState 40001 or error 1213). A lock wait timeout (1205) rolls back only the statement, by default.
+     */
+    public static boolean rolledBackTransaction(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause() == t ? null : t.getCause()) {
+            if (t instanceof SQLException) {
+                SQLException q = (SQLException) t;
+                if ("40001".equals(q.getSQLState()) || q.getErrorCode() == 1213) return true;
+            }
+        }
+        return false;
     }
 
     /**
