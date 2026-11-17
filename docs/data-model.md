@@ -211,6 +211,7 @@ unused and backup is a search of the code for SQL that names the table (2026-10-
 | `taxon_set_parked` | [5](#taxon_set_parked) | in use (2026-10-19) |
 | `place_genus_curation` | [5](#place_genus_curation) | in use (2026-11-02) |
 | `place_specimen_name` | [5](#place_specimen_name) | in use (2026-11-02) |
+| `place_update` | [4](#place_update) | in use (2026-11-16; report mode) |
 | `list_removal_log` | [5](#list_removal_log) | in use (2026-11-03) |
 | `image` | [6](#image) | in use |
 | `group_image` | [6](#group_image) | in use |
@@ -295,6 +296,7 @@ first deletes the group's specimens (`specimen.access_group`), then inserts the 
 | `is_introduced`, `is_endemic` | flags (0/1) |
 | `image_count` | number of images of this specimen, nightly set 4 (`ImageCountDb.countSpecimenImages`) |
 | `previous_determinations` | earlier identifications, newest first, separated by ` \| ` (TaxonWorks upload; `db/upgrade/8.110`) |
+| `adm1_verbatim` | the state the curator uploaded, kept when the coordinates give another one (Places from coordinates, decided 2026-11-16: the derived state goes into `adm1`); empty until the apply mode of the daily place step (`db/upgrade/9.4.0/2026-11-16-place-update.sql`) |
 | `taxonworks_co_id` | TaxonWorks collection object id (CAS nightly upload) |
 | `flag`, `issue` | upload checks (red flag and its reason) |
 | `other` | every uploaded column AntWeb has no column for (longtext) |
@@ -550,6 +552,28 @@ day since 2026-10-28).
 **Numbers.** #1 to #5, #7 to #10, #97, #128.
 
 **Status.** In use.
+
+### `place_update`
+
+**Purpose.** What the coordinates say a specimen's country and state should be, per daily run (Places from
+coordinates, decided by Brian Fisher 2026-11-16: the coordinates decide; one week of reports first). Until the apply
+mode exists every row is a proposal (mode `report`); from then on the step writes the proposal into `specimen` and marks
+the row `applied = 1`.
+
+**Key.** `id`; indexes on (`run_date`, `upload_group`) and `code`.
+
+**Key columns.** `run_date`, `mode` (report, apply), `code` (specimen.code), `upload_group` (ant_group.name), `field`
+(country or adm1), `stored_value` (not `stored`: a reserved word in MySQL), `proposed` (AntWeb's valid name), `basis`, `flag` (another state within the stated
+error), `note`, `applied`.
+
+**Written by.** `tools/place/place_daily.py` (host cron `tools/place/antweb-place-daily.cron`, 09:10 Pacific, after
+the daily update): it runs `tools/place/place_corrections.py` (read-only) for every group and loads its
+`corrections.csv`; one transaction replaces the same day's rows; runs older than 60 days are deleted. Created by
+`db/upgrade/9.4.0/2026-11-16-place-update.sql`.
+
+**Read by.** Admins in MySQL for now (the report by collection); a page follows with the apply mode.
+
+**Status.** In use (report mode).
 
 ## 5. Species lists of places
 

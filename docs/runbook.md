@@ -1257,6 +1257,42 @@ python3 /root/antweb-island-countries/island_countries.py --project /root/antweb
    reload the places (step 4) and let the daily update (or step 5, with its reload at the end) build the lists and
    numbers again.
 
+### Places from coordinates (daily place step)
+
+Decided by Brian 2026-11-16 (Claude Doc "Places from coordinates: proposal"): a specimen with coordinates gets the
+country and state its coordinates fall in; the curator's value is kept in `specimen.adm1_verbatim`; one week of
+reports before anything is applied. Step 1, report mode: `tools/place/place_daily.py` runs
+`tools/place/place_corrections.py` (read-only) for every group every morning and keeps its proposals in the table
+`place_update`. It never writes to `specimen`. Log: `journalctl -t place-daily`; working folders
+`/root/antweb-place-fix/daily/<date>` (14 kept).
+
+Install, staging first (the table, a dry run, a real run, the rows). Not while an upload or data job runs
+(`jobStatus.do`) and not 05:00 to 08:15: the file's ALTER needs a moment's lock on `specimen` (capped at 5 s).
+
+```
+# ssh root@165.232.136.170   (staging: /root/antweb-next and its etc/db.properties)
+F=/root/antweb-next/etc/db.properties; docker exec -i -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant < /root/antweb-next/db/upgrade/9.4.0/2026-11-16-place-update.sql
+python3 /root/antweb-next/tools/place/place_daily.py --dry-run
+python3 /root/antweb-next/tools/place/place_daily.py
+```
+
+Production (the same three, from /root/antweb), then the cron line (09:10 daily):
+
+```
+install -m 644 /root/antweb/tools/place/antweb-place-daily.cron /etc/cron.d/antweb-place-daily && grep -v '^#' /etc/cron.d/antweb-place-daily
+```
+
+Read a day's report by collection:
+
+```
+# ssh root@165.232.137.86
+F=/root/antweb/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select upload_group, field, count(*) n from place_update where run_date = curdate() group by upload_group, field order by n desc limit 30;"
+```
+
+Every run writes one line to `journalctl -t place-daily`, "place-daily report: ..." or "place-daily FAILED: ...".
+Stop it: `rm /etc/cron.d/antweb-place-daily`. Remove it: also `DROP TABLE place_update` (reports only) and
+`ALTER TABLE specimen DROP COLUMN adm1_verbatim` (empty until the apply mode).
+
 ## One-off image exports
 
 ### Pheidole major-worker heads for Jack Longino (2026-10-27)
