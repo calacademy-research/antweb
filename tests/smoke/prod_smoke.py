@@ -143,7 +143,7 @@ def check_speed(base, name, path, limit, tries=2, marker=None):
         # per run, and read the page once more. The pages after it are then timed as usual, so a deploy during a run
         # costs one wait, not a skip of every remaining page (review of 4f594d9).
         _RESTART_SEEN.append(name)
-        if wait_until_up(SPEED_WAIT, after=f"after a restart during the page speed run ({name})") == 0:
+        if wait_until_up(SPEED_WAIT, after=f"after a restart during the page speed run ({name})", level="warning") == 0:
             try:
                 secs = timed_page(base, name, path, speed_timeout(limit), marker)
             except Fail as e:
@@ -156,6 +156,8 @@ def check_speed(base, name, path, limit, tries=2, marker=None):
             raise Skip(f"{name}: AntWeb was restarting, not timed ({last_fail})")
         raise last_fail
     msg = f"{best:.1f} s (limit {limit:.0f} s)"
+    if best > limit and _RESTART_SEEN:   # AntWeb restarted during this run: its caches may still be loading
+        raise Skip(f"{name}: {msg} after a restart during this run, not counted: {path}")
     if best > limit:
         raise Fail(f"{name}: slow, {msg}: {path}")
     if last_fail is not None:   # an error on one read is kept in the log even when the other read was quick
@@ -478,7 +480,7 @@ WAIT_READ_TIMEOUT = 30   # wait_until_up: seconds per read of the home page
 WAIT_POLL = 15           # wait_until_up: seconds between reads
 
 
-def wait_until_up(max_seconds, poll=WAIT_POLL, after="after the deploy"):
+def wait_until_up(max_seconds, poll=WAIT_POLL, after="after the deploy", level="error"):
     """After a restart AntWeb needs 2 to 4 minutes; wait until the home page shows its numbers."""
     end = time.time() + max_seconds
     while True:
@@ -491,7 +493,7 @@ def wait_until_up(max_seconds, poll=WAIT_POLL, after="after the deploy"):
         except Exception as e:
             print(f"not yet: {e}")
         if time.time() > end:
-            print(f"::error::AntWeb did not answer within {max_seconds} seconds {after}")
+            print(f"::{level}::AntWeb did not answer within {max_seconds} seconds {after}")
             return 1
         time.sleep(poll)
 

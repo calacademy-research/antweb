@@ -315,13 +315,29 @@ def main():
         waits = []
         prod_smoke._RESTART_SEEN.clear()
 
-        def back_up(secs, poll=15, after=""):
+        def back_up(secs, poll=15, after="", level="error"):
             waits.append(after)
             prod_smoke.get = lambda url, timeout=None: prod_smoke.Resp(200, "page", url, {})
             return 0
         prod_smoke.wait_until_up = back_up
         msg = prod_smoke.check_speed("http://x", "species images", "/images.do", 4.0)
         expect(len(waits) == 1 and "after waiting for a restart" in msg, "a restart: wait once, then the page is timed (" + msg + ")")
+        # after that restart, a page over its limit is a skip (caches loading), not a failure
+        clock2 = {"t": 0.0}
+        real_now2 = prod_smoke._now
+        prod_smoke._now = lambda: clock2["t"]
+
+        def slow(url, timeout=None):
+            clock2["t"] += 9.0
+            return prod_smoke.Resp(200, "page", url, {})
+        prod_smoke.get = slow
+        try:
+            prod_smoke.check_speed("http://x", "genus images", "/images.do", 4.0)
+            expect(False, "slow after a restart is a skip")
+        except prod_smoke.Skip as e:
+            expect("after a restart" in str(e), "a slow page after a restart in the run is skipped, not failed (" + str(e) + ")")
+        finally:
+            prod_smoke._now = real_now2
         # a later page that meets a restart in the same run is skipped without waiting again
         prod_smoke.get = closed
         try:
