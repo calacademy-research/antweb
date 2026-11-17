@@ -75,15 +75,15 @@ PAGE_TIMEOUTS = {"statistics page": 240}
 # the run red. First limits (2026-11-17, production before PR #368 and staging after it); to be tightened from the
 # times the runs record. No Cloudflare in between.
 SPEED_PAGES = [
-    ("species page", "/description.do?genus=pheidole&species=megacephala&rank=species", 2.0),
-    ("species images", "/images.do?genus=pheidole&species=megacephala&rank=species", 4.0),
-    ("species specimens", "/browse.do?genus=pheidole&species=megacephala&rank=species", 4.0),
-    ("genus page", "/browse.do?genus=pheidole&rank=genus", 8.0),
-    ("genus images", "/images.do?genus=pheidole&rank=genus", 10.0),
-    ("subfamily page", "/browse.do?subfamily=myrmicinae&rank=subfamily", 5.0),
-    ("genus list of Madagascar", "/taxonomicPage.do?rank=genus&countryName=Madagascar", 6.0),
-    ("specimen page", "/specimen.do?name=casent0103190", 2.0),
-    ("home page", "/", 2.0),
+    ("species page", "/description.do?genus=pheidole&species=megacephala&rank=species", 2.0, "megacephala"),
+    ("species images", "/images.do?genus=pheidole&species=megacephala&rank=species", 4.0, "megacephala"),
+    ("species specimens", "/browse.do?genus=pheidole&species=megacephala&rank=species", 4.0, "megacephala"),
+    ("genus page", "/browse.do?genus=pheidole&rank=genus", 8.0, "Pheidole"),
+    ("genus images", "/images.do?genus=pheidole&rank=genus", 10.0, "Pheidole"),
+    ("subfamily page", "/browse.do?subfamily=myrmicinae&rank=subfamily", 5.0, "Myrmicinae"),
+    ("genus list of Madagascar", "/taxonomicPage.do?rank=genus&countryName=Madagascar", 6.0, "Madagascar"),
+    ("specimen page", "/specimen.do?name=casent0103190", 2.0, "casent0103190"),
+    ("home page", "/", 2.0, "AntWeb in numbers"),
 ]
 
 
@@ -92,15 +92,16 @@ _now = time.monotonic   # the clock of the timings (monotonic: a clock step cann
 
 def speed_timeout(limit):
     """Seconds one timed read may wait for the server: three times the limit, at least 20. Nine pages, two reads each
-    and a pause between, stay under the workflow's 15 minutes even when production hangs, so the run reports its times
+    and a pause between, stay under the workflow's 20 minutes even when production hangs, so the run reports its times
     (urllib's timeout is per socket wait: a page that trickles in slowly could take longer; the job limit still holds)."""
     return max(3 * limit, 20)
 
 
-def timed_page(base, name, path, timeout=None):
-    """Seconds for one read of the page (it must answer as check_page wants: 200, no error page)."""
+def timed_page(base, name, path, timeout=None, marker=None):
+    """Seconds for one read of the page (it must answer as check_page wants: 200, no error page, its marker text, so a
+    quick "not found" page never passes)."""
     t = _now()
-    check_page(base, name, path, [], timeout=timeout)
+    check_page(base, name, path, [marker] if marker else [], timeout=timeout)
     return _now() - t
 
 
@@ -116,14 +117,14 @@ def restarting(fail):
                                 "Remote end closed"))
 
 
-def check_speed(base, name, path, limit, tries=2):
+def check_speed(base, name, path, limit, tries=2, marker=None):
     """The best of up to two reads; Fail when even the best is over the limit or no read got an answer in time.
     A read that fails is tried again after RETRY_PAUSE; when every read failed because AntWeb was restarting, the
     page is skipped ("site restarting"), so a red run always means a slow or broken page (review of a6fd607)."""
     best, last_fail, all_restarting = None, None, True
     for attempt in range(tries):
         try:
-            secs = timed_page(base, name, path, speed_timeout(limit))
+            secs = timed_page(base, name, path, speed_timeout(limit), marker)
         except Fail as e:
             last_fail = e
             all_restarting = all_restarting and restarting(e)
@@ -140,6 +141,9 @@ def check_speed(base, name, path, limit, tries=2):
     msg = f"{best:.1f} s (limit {limit:.0f} s)"
     if best > limit:
         raise Fail(f"{name}: slow, {msg}: {path}")
+    if last_fail is not None:   # an error on one read is kept in the log even when the other read was quick
+        print(f"::warning title=One read failed: {name}::{last_fail}")
+        msg += f"; one read failed first: {last_fail}"
     return msg
 
 
@@ -152,7 +156,8 @@ def all_skipped_fails(results):
 
 
 def speed_checks():
-    return [(f"speed: {name}", lambda n=name, p=path, l=limit: check_speed(SITE, n, p, l)) for name, path, limit in SPEED_PAGES]
+    return [(f"speed: {name}", lambda n=name, p=path, l=limit, m=marker: check_speed(SITE, n, p, l, marker=m))
+            for name, path, limit, marker in SPEED_PAGES]
 
 
 class Fail(Exception):
@@ -478,6 +483,10 @@ def main(argv):
         today = dt.date.fromisoformat(t) if t else dt.datetime.now(PACIFIC).date()
         return report(f"Morning check: daily update of {today}", run_checks([("daily update", lambda: check_daily_update(SITE, today))]))
     if mode == "speed":
+        # A run that starts during a restart would time cold pages: wait until AntWeb answers (up to 7 minutes) and
+        # read the home page once, then time (review of 6803a55).
+        if wait_until_up(int(os.environ.get("SMOKE_SPEED_WAIT", "420"))) != 0:
+            return report("Page speed (read-only)", [("FAIL", "speed: any page", "AntWeb did not answer before timing", 0.0)])
         return report("Page speed (read-only)", all_skipped_fails(run_checks(speed_checks())))
     if mode == "wait":
         secs = int(argv[argv.index("--max-seconds") + 1]) if "--max-seconds" in argv else 420
