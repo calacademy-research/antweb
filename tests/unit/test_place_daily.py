@@ -43,8 +43,8 @@ def test_rows_from_corrections():
         rows = pd.rows_of(corrections_file(d, SAMPLE), "2026-11-17", "report")
     assert [r["code"] for r in rows] == ["casent0266850", "psw1", "x9"], rows
     one = rows[0]
-    assert (one["field"], one["stored"], one["proposed"], one["upload_group"], one["mode"]) == ("adm1", "Toliara", "Menabe", "California Academy of Sciences", "report")
-    assert rows[1]["stored"] is None and rows[1]["flag"] == "within the stated error of Vakinankaratra"
+    assert (one["field"], one["stored_value"], one["proposed"], one["upload_group"], one["mode"]) == ("adm1", "Toliara", "Menabe", "California Academy of Sciences", "report")
+    assert rows[1]["stored_value"] is None and rows[1]["flag"] == "within the stated error of Vakinankaratra"
     assert rows[2]["field"] == "country" and rows[2]["proposed"] == "Côte d'Ivoire"
 
 

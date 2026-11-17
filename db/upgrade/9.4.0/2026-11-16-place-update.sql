@@ -9,7 +9,7 @@
 --     code                 specimen.code
 --     upload_group         the upload group's name (ant_group.name), for the report by collection
 --     field                country or adm1
---     stored               what the specimen has (blank when nothing)
+--     stored_value         what the specimen has (blank when nothing; not `stored`, a reserved word in MySQL)
 --     proposed             AntWeb's valid name the coordinates give
 --     basis                why, in plain words (place_corrections.py's basis)
 --     flag                 "within the stated error of <state>" when another state is that near
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS place_update (
   code varchar(128) NOT NULL,
   upload_group varchar(100) NULL,
   field varchar(16) NOT NULL,
-  stored varchar(128) NULL,
+  stored_value varchar(128) NULL,
   proposed varchar(128) NOT NULL,
   basis varchar(255) NULL,
   flag varchar(255) NULL,

@@ -563,7 +563,7 @@ the row `applied = 1`.
 **Key.** `id`; indexes on (`run_date`, `upload_group`) and `code`.
 
 **Key columns.** `run_date`, `mode` (report, apply), `code` (specimen.code), `upload_group` (ant_group.name), `field`
-(country or adm1), `stored`, `proposed` (AntWeb's valid name), `basis`, `flag` (another state within the stated
+(country or adm1), `stored_value` (not `stored`: a reserved word in MySQL), `proposed` (AntWeb's valid name), `basis`, `flag` (another state within the stated
 error), `note`, `applied`.
 
 **Written by.** `tools/place/place_daily.py` (host cron `tools/place/antweb-place-daily.cron`, 09:10 Pacific, after

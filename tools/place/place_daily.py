@@ -47,8 +47,8 @@ OUT_ROOT = "/root/antweb-place-fix/daily"
 KEEP_FOLDERS = 14
 KEEP_DAYS = 60
 BATCH = 500
-COLUMNS = ("run_date", "mode", "code", "upload_group", "field", "stored", "proposed", "basis", "flag", "note")
-WIDTH = {"code": 128, "upload_group": 100, "field": 16, "stored": 128, "proposed": 128, "basis": 255, "flag": 255, "note": 255}
+COLUMNS = ("run_date", "mode", "code", "upload_group", "field", "stored_value", "proposed", "basis", "flag", "note")
+WIDTH = {"code": 128, "upload_group": 100, "field": 16, "stored_value": 128, "proposed": 128, "basis": 255, "flag": 255, "note": 255}
 
 
 def quote(value):
@@ -66,7 +66,7 @@ def rows_of(corrections_csv, run_date, mode):
             if not r.get("specimen_code") or not r.get("proposed_value"):
                 continue
             row = {"run_date": run_date, "mode": mode, "code": r["specimen_code"], "upload_group": r.get("upload_group") or None,
-                   "field": r.get("field") or "", "stored": r.get("current_value") or None, "proposed": r["proposed_value"],
+                   "field": r.get("field") or "", "stored_value": r.get("current_value") or None, "proposed": r["proposed_value"],
                    "basis": r.get("basis") or None, "flag": r.get("other_state_flag") or None, "note": r.get("note") or None}
             for k, w in WIDTH.items():
                 if row[k] is not None and len(row[k]) > w:
