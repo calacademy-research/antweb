@@ -44,6 +44,18 @@ public class BrowseAction extends DescriptionAction {
     private static final ConcurrencyLimiter s_mapComparisonLimiter = new ConcurrencyLimiter(2);
     private static final ConcurrencyLimiter s_getComparisonLimiter = new ConcurrencyLimiter(2);
 
+    /**
+     * True when the taxon is of exactly this rank. Not instanceof: Species extends Genus extends Subfamily extends
+     * Family, so "taxon instanceof Subfamily" is true on every genus and species page too. 2026-11-17 (Jack Longino,
+     * Brian Fisher: species images pages had become slow): the genus rows of the whole subfamily and the subfamily rows
+     * of the family, meant for subfamily and family pages, were read on every genus and species page (about 5 of the
+     * 7 seconds of images.do for Pheidole megacephala on staging), and the Fossil button of a subfamily page checked the
+     * whole family.
+     */
+    public static boolean isRank(Taxon taxon, String rank) {
+        return taxon != null && rank != null && rank.equals(taxon.getRank());
+    }
+
     /*
     BrowseAction called with browseForm in session:
       browse.do, navigateHierarchy, getComparison, oneView, mapComparison, description.do,
@@ -491,11 +503,11 @@ public class BrowseAction extends DescriptionAction {
 			// 2026-11-02: the Fossil button only when the children of the list have fossil names here (one EXISTS query)
 			if (!global && !taxon.isSpeciesOrSubspecies()) {
 			  ListView.setHasFossil(request, connection, overview, Rank.getNextRank(taxon.getRank()),
-			      taxon instanceof Family ? null : taxon.getSubfamily(), taxon instanceof Genus ? taxon.getGenus() : null);
+			      isRank(taxon, Rank.FAMILY) ? null : taxon.getSubfamily(), isRank(taxon, Rank.GENUS) ? taxon.getGenus() : null);
 			}
 			// 2026-11-02 (views): the genus rows of a subfamily in a place, as on the genus list: Species, Not curated and
 			// species imaged in the view, and the rows the view shows (ListView.GenusRows; the header counts the rows shown).
-			if (taxon instanceof Subfamily && !global && ListView.hasViews(overview) && org.calacademy.antweb.home.GenusOnly.typeAndKey(overview) != null) {
+			if (isRank(taxon, Rank.SUBFAMILY) && !global && ListView.hasViews(overview) && org.calacademy.antweb.home.GenusOnly.typeAndKey(overview) != null) {
 			  try {
 			    ListView.GenusRows genusRows = ListView.loadGenusRows(connection, overview, statusSetStr, taxon.getSubfamily());
 			    taxon.setChildren(genusRows.filter(taxon.getChildren()));
@@ -507,7 +519,7 @@ public class BrowseAction extends DescriptionAction {
 
 			// 2026-11-03 (B77): the subfamily rows of the family in a place: their Genera are the genus rows of their browse
 			// pages in the view (ListView.SubfamilyRows), as on the place's subfamily list.
-			if (taxon instanceof Family && !global && ListView.hasViews(overview) && org.calacademy.antweb.home.GenusOnly.typeAndKey(overview) != null) {
+			if (isRank(taxon, Rank.FAMILY) && !global && ListView.hasViews(overview) && org.calacademy.antweb.home.GenusOnly.typeAndKey(overview) != null) {
 			  try {
 			    request.setAttribute(PlaceTaxonNotes.SUBFAMILY_ROWS, ListView.loadSubfamilyRows(connection, overview, statusSetStr));
 			  } catch (SQLException | RuntimeException e) {
@@ -518,7 +530,7 @@ public class BrowseAction extends DescriptionAction {
 			// 2026-11-02: a genus in a place in the view Not curated (reached from the genus row's Not curated number): the
 			// header gives the stored breakdown ("3,392 specimens not curated: 298 morphospecies (2,820 specimens), 572
 			// identified only to genus"); the rows added from specimens collected here show their specimens (one genus read).
-			if (taxon instanceof Genus && !global && StatusSet.LIST_NOT_CURATED.equals(statusSetStr)) {
+			if (isRank(taxon, Rank.GENUS) && !global && StatusSet.LIST_NOT_CURATED.equals(statusSetStr)) {
 			  org.calacademy.antweb.home.PlaceGenusCurationDb.Row ncRow = org.calacademy.antweb.home.PlaceGenusCurationDb.read(connection, overview,
 			      taxon.getSubfamily(), taxon.getGenus());
 			  if (ncRow != null) request.setAttribute(PlaceTaxonNotes.NOT_CURATED_HEADER, ncRow.breakdown());
@@ -526,7 +538,7 @@ public class BrowseAction extends DescriptionAction {
 			// The rows added from specimens collected here (not on the list) say how many were collected here, linked to them:
 			// in the view Not curated, and (2026-11-03: they showed a dash) in Curated and All specimen names on country and
 			// adm1 pages, the places whose lists take those names from specimens (ListView.addsSpecimenNames). One genus read.
-			if (taxon instanceof Genus && !global && (StatusSet.LIST_NOT_CURATED.equals(statusSetStr) || ListView.addsSpecimenNames(overview))) {
+			if (isRank(taxon, Rank.GENUS) && !global && (StatusSet.LIST_NOT_CURATED.equals(statusSetStr) || ListView.addsSpecimenNames(overview))) {
 			  try {
 			    ListView.PlaceSpecimens genusSpecimens = ListView.loadPlaceSpecimens(connection, overview, taxon.getSubfamily(), taxon.getGenus());
 			    if (genusSpecimens != null) request.setAttribute(PlaceTaxonNotes.PLACE_SPECIMENS, genusSpecimens);

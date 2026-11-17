@@ -62,6 +62,10 @@ jobs:
         # 2026-10-24: an apostrophe in a comment ended a quoted sh -c script early; the step failed only on GitHub.
         run: python3 tests/unit/test_workflow_shell.py
 
+      - name: browse.do and images.do decide page work by exact rank, never instanceof (tests/unit/test_browse_rank_checks.py)
+        # 2026-11-17: species pages read the genus rows of their whole subfamily (Species extends Genus extends Subfamily).
+        run: python3 tests/unit/test_browse_rank_checks.py
+
       - name: Each Java test step expects the number of tests its class has (tests/unit/test_ci_test_counts.py)
         run: python3 tests/unit/test_ci_test_counts.py
 
@@ -644,6 +648,20 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.ImagesAnywhereTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (17 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the rank checks of browse.do and images.do (exact rank, not instanceof; 2026-11-17)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/BrowseAction.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/BrowseActionRankTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.BrowseActionRankTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (4 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the AntCat file download (nightly tries again for up to an hour before set 1, says why, no half-written or cut-off file)

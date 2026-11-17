@@ -25,6 +25,7 @@ tests = [
   "test_curator.py",            # curator login, admin pages refused, CSRF, remember-me
   "test_curate_cleanup.py",     # admin tools refused to anonymous visitors and curators
   "test_parallel_safety.py",    # answers that must not change while another request or an upload runs
+  "test_page_speed.py",         # species images and specimen pages answer within 4 s (2026-11-17)
 ]
 
 [full_when]
@@ -46,6 +47,7 @@ paths = [
 tests = [
   "test_public_pages_rest.py",         # collections pages, adm1 reports and downloads, API doc, old recent edits address (2026-11-03)
   "test_imaging_progress.py",          # anonymous, read-only (2026-11-08)
+  "test_page_speed.py",                # anonymous, read-only (2026-11-17)
   # whole files
   "test_actions.py",
   "test_api.py",
