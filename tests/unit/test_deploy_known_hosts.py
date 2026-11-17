@@ -20,7 +20,8 @@ def main():
     for ip in ("165.232.137.86", "64.225.91.165", "165.232.136.170"):
         assert any(l.startswith(ip + " ssh-ed25519 ") for l in pinned), "no ed25519 key pinned for " + ip
     for wf in (".github/workflows/deploy.yaml", ".github/workflows/deploy-staging.yaml", ".github/workflows/e2e.yaml",
-               ".github/workflows/prod-smoke.yaml", ".github/workflows/prod-morning.yaml"):
+               ".github/workflows/prod-smoke.yaml", ".github/workflows/prod-morning.yaml",
+               ".github/workflows/prod-speed.yaml"):
         s = read(wf)
         assert "ssh-keyscan -H" not in s, wf + ": still trusts any key"
         assert ".github/known_hosts" in s and "comm -12" in s, wf + ": does not compare with the pinned keys"

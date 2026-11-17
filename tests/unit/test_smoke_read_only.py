@@ -47,7 +47,7 @@ def problems():
         for m in re.finditer(r"urllib\.request\.Request\(([^)]*)\)", text):
             if 'method="GET"' not in m.group(1):
                 out.append(f"{rel}: a urllib Request without method=\"GET\"")
-    for wf in (".github/workflows/prod-smoke.yaml", ".github/workflows/prod-morning.yaml"):
+    for wf in (".github/workflows/prod-smoke.yaml", ".github/workflows/prod-morning.yaml", ".github/workflows/prod-speed.yaml"):
         p = os.path.join(ROOT, wf)
         if not os.path.exists(p):
             out.append(f"{wf} is missing")
