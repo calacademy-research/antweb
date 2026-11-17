@@ -232,6 +232,14 @@ def main():
             expect(False, "a page slow twice fails")
         except prod_smoke.Fail as e:
             expect("slow, 8.0 s (limit 4 s)" in str(e) and "/images.do" in str(e), "a page slow twice fails with its time (" + str(e) + ")")
+        # AntWeb's time is until the first bytes (ttfb); the transfer of a large page is shown, not judged
+        def big_page(url, timeout=None):
+            clock["t"] += 8.0
+            return prod_smoke.Resp(200, "page", url, {}, ttfb=1.5)
+        prod_smoke.get = big_page
+        msg = prod_smoke.check_speed("http://x", "subfamily page", "/browse.do", 5.0)
+        expect(msg.startswith("1.5 s") and "whole read with transfer 8.0 s" in msg,
+               "the time judged is AntWeb's (first bytes), the whole read is shown beside it (" + msg + ")")
         # a first read that fails is tried again; a restart (502, initializing) on every read is a skip, not slow
         pauses = []
         real_sleep = prod_smoke._sleep

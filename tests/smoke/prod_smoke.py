@@ -73,7 +73,8 @@ PAGE_TIMEOUTS = {"statistics page": 240}
 # rely on users telling us"; Jack Longino had noticed species images pages taking 5 to 10 s). Pages that do the most
 # work, each with a limit of about twice its usual time on production, so a page several times slower than usual turns
 # the run red. First limits (2026-11-17, production before PR #368 and staging after it); to be tightened from the
-# times the runs record. No Cloudflare in between.
+# times the runs record. A time is AntWeb's: until the page's first bytes arrive through the SSH tunnel, no Cloudflare
+# in between (timed_page; the whole read, transfer included, is in the summary beside it).
 SPEED_PAGES = [
     ("species page", "/description.do?genus=pheidole&species=megacephala&rank=species", 2.0, "megacephala"),
     ("species images", "/images.do?genus=pheidole&species=megacephala&rank=species", 4.0, "megacephala"),
@@ -97,12 +98,21 @@ def speed_timeout(limit):
     return max(3 * limit, 20)
 
 
+_LAST_WHOLE = [None]   # seconds of the last timed read with the page's transfer, for the summary
+
+
 def timed_page(base, name, path, timeout=None, marker=None):
-    """Seconds for one read of the page (it must answer as check_page wants: 200, no error page, its marker text, so a
-    quick "not found" page never passes)."""
+    """Seconds AntWeb took to answer one read of the page: until its first bytes arrive (the page's database work is
+    done by then). The whole read, transfer through the tunnel to the GitHub runner included, goes to the summary only:
+    Tomcat sends pages uncompressed, so a large page (the Myrmicinae page) took 7.7 s through the tunnel on 2026-11-17
+    for about 2 s of AntWeb's own time. The page must answer as check_page wants: 200, no error page, its marker text,
+    so a quick "not found" page never passes."""
     t = _now()
-    check_page(base, name, path, [marker] if marker else [], timeout=timeout)
-    return _now() - t
+    r = check_page(base, name, path, [marker] if marker else [], timeout=timeout)
+    whole = _now() - t
+    _LAST_WHOLE[0] = whole
+    ttfb = getattr(r, "ttfb", None)
+    return ttfb if isinstance(ttfb, (int, float)) else whole
 
 
 SPEED_WAIT = 300   # seconds the speed run waits for AntWeb to answer before timing (a restart takes 2 to 4 minutes)
@@ -156,6 +166,8 @@ def check_speed(base, name, path, limit, tries=2, marker=None):
             raise Skip(f"{name}: AntWeb was restarting, not timed ({last_fail})")
         raise last_fail
     msg = f"{best:.1f} s (limit {limit:.0f} s)"
+    if _LAST_WHOLE[0] is not None and _LAST_WHOLE[0] > best + 0.05:
+        msg += f"; whole read with transfer {_LAST_WHOLE[0]:.1f} s"
     if best > limit and _RESTART_SEEN:   # AntWeb restarted during this run: its caches may still be loading
         raise Skip(f"{name}: {msg} after a restart during this run, not counted: {path}")
     if best > limit:
@@ -189,16 +201,19 @@ class Skip(Exception):
 
 
 class Resp:
-    def __init__(self, status, text, url, headers):
+    def __init__(self, status, text, url, headers, ttfb=None):
         self.status, self.text, self.url, self.headers = status, text, url, headers
+        self.ttfb = ttfb   # seconds until the status line and headers arrived (None: not measured)
 
 
 def get(url, timeout=None):
     """One GET call, no session state, no body. HTTP errors come back as a Resp too."""
     req = urllib.request.Request(url, method="GET", headers={"User-Agent": USER_AGENT, "Accept": "*/*"})
+    started = time.monotonic()
     try:
         with urllib.request.urlopen(req, timeout=timeout or TIMEOUT) as r:
-            return Resp(r.status, r.read().decode("utf-8", "replace"), r.geturl(), dict(r.headers))
+            ttfb = time.monotonic() - started
+            return Resp(r.status, r.read().decode("utf-8", "replace"), r.geturl(), dict(r.headers), ttfb)
     except urllib.error.HTTPError as e:
         body = e.read().decode("utf-8", "replace") if e.fp else ""
         return Resp(e.code, body, url, dict(e.headers or {}))
