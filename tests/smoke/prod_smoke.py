@@ -91,8 +91,9 @@ _now = time.monotonic   # the clock of the timings (monotonic: a clock step cann
 
 
 def speed_timeout(limit):
-    """Seconds one timed read may take: three times the limit, at least 20. Nine pages, two reads each, stay under the
-    workflow's 15 minutes even when production hangs, so the run always reports its times."""
+    """Seconds one timed read may wait for the server: three times the limit, at least 20. Nine pages, two reads each
+    and a pause between, stay under the workflow's 15 minutes even when production hangs, so the run reports its times
+    (urllib's timeout is per socket wait: a page that trickles in slowly could take longer; the job limit still holds)."""
     return max(3 * limit, 20)
 
 
@@ -103,14 +104,39 @@ def timed_page(base, name, path, timeout=None):
     return _now() - t
 
 
+RETRY_PAUSE = 30   # seconds before the second read when the first got no answer (a restart takes 2 to 4 minutes)
+_sleep = time.sleep
+
+
+def restarting(fail):
+    """Whether a failed read looks like AntWeb restarting (deploys, the watchdog and reboot_checker restart it at any
+    hour), not like a slow page: a 502/503 from Caddy, "initializing", or no connection."""
+    t = str(fail)
+    return any(k in t for k in ("HTTP 502", "HTTP 503", "still initializing", "Connection refused", "Connection reset",
+                                "Remote end closed"))
+
+
 def check_speed(base, name, path, limit, tries=2):
-    """The best of up to two reads; Fail when even the best is over the limit (or a read gets no answer in time)."""
-    best = None
-    for _ in range(tries):
-        secs = timed_page(base, name, path, speed_timeout(limit))
+    """The best of up to two reads; Fail when even the best is over the limit or no read got an answer in time.
+    A read that fails is tried again after RETRY_PAUSE; when every read failed because AntWeb was restarting, the
+    page is skipped ("site restarting"), so a red run always means a slow or broken page (review of a6fd607)."""
+    best, last_fail, all_restarting = None, None, True
+    for attempt in range(tries):
+        try:
+            secs = timed_page(base, name, path, speed_timeout(limit))
+        except Fail as e:
+            last_fail = e
+            all_restarting = all_restarting and restarting(e)
+            if attempt + 1 < tries:
+                _sleep(RETRY_PAUSE)
+            continue
         best = secs if best is None else min(best, secs)
         if best <= limit:
             break
+    if best is None:
+        if all_restarting:
+            raise Skip(f"{name}: AntWeb was restarting, not timed ({last_fail})")
+        raise last_fail
     msg = f"{best:.1f} s (limit {limit:.0f} s)"
     if best > limit:
         raise Fail(f"{name}: slow, {msg}: {path}")

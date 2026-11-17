@@ -230,12 +230,47 @@ def main():
             expect(False, "a page slow twice fails")
         except prod_smoke.Fail as e:
             expect("slow, 8.0 s (limit 4 s)" in str(e) and "/images.do" in str(e), "a page slow twice fails with its time (" + str(e) + ")")
+        # a first read that fails is tried again; a restart (502, initializing) on every read is a skip, not slow
+        pauses = []
+        real_sleep = prod_smoke._sleep
+        prod_smoke._sleep = lambda s: pauses.append(s)
+        try:
+            answers = []
+
+            def fake_get3(url, timeout=None):
+                clock["t"] += 1.0
+                kind = answers.pop(0)
+                if kind == "502":
+                    return prod_smoke.Resp(502, "Bad gateway", url, {})
+                if kind == "init":
+                    return prod_smoke.Resp(200, "Server is initializing", url, {})
+                if kind == "timeout":
+                    raise TimeoutError("timed out")
+                return prod_smoke.Resp(200, "page", url, {})
+            prod_smoke.get = fake_get3
+            answers[:] = ["502", "ok"]
+            msg = prod_smoke.check_speed("http://x", "species images", "/images.do", 4.0)
+            expect(msg.startswith("1.0 s") and pauses == [prod_smoke.RETRY_PAUSE], "a 502 then an answer: timed by the second read (" + msg + ")")
+            answers[:] = ["502", "init"]
+            try:
+                prod_smoke.check_speed("http://x", "species images", "/images.do", 4.0)
+                expect(False, "a restart on both reads is skipped")
+            except prod_smoke.Skip as e:
+                expect("restarting" in str(e), "a restart on both reads is skipped, not called slow (" + str(e) + ")")
+            answers[:] = ["timeout", "timeout"]
+            try:
+                prod_smoke.check_speed("http://x", "species images", "/images.do", 4.0)
+                expect(False, "no answer twice fails")
+            except prod_smoke.Fail as e:
+                expect("no answer" in str(e), "no answer on both reads fails (" + str(e) + ")")
+        finally:
+            prod_smoke._sleep = real_sleep
     finally:
         prod_smoke.get = real_get
         prod_smoke._now = real_now
     expect(all(limit > 0 and path.startswith("/") for _, path, limit in prod_smoke.SPEED_PAGES) and len(prod_smoke.SPEED_PAGES) >= 5,
            "every speed page has a path and a limit")
-    worst = sum(2 * prod_smoke.speed_timeout(limit) for _, _, limit in prod_smoke.SPEED_PAGES)
+    worst = sum(2 * prod_smoke.speed_timeout(limit) + prod_smoke.RETRY_PAUSE for _, _, limit in prod_smoke.SPEED_PAGES)
     wf = open(os.path.join(ROOT, ".github", "workflows", "prod-speed.yaml")).read()
     minutes = int(re.search(r"timeout-minutes:\s*(\d+)", wf).group(1))
     expect(worst + 120 < minutes * 60, f"the worst case ({worst} s of reads) ends before the workflow's {minutes} minutes")
