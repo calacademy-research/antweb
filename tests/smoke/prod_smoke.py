@@ -98,21 +98,21 @@ def speed_timeout(limit):
     return max(3 * limit, 20)
 
 
-_LAST_WHOLE = [None]   # seconds of the last timed read with the page's transfer, for the summary
+WHOLE_FACTOR = 3   # the whole read (transfer included) may take up to 3 x the page's limit; beyond, the page fails
 
 
 def timed_page(base, name, path, timeout=None, marker=None):
     """Seconds AntWeb took to answer one read of the page: until its first bytes arrive (the page's database work is
     done by then). The whole read, transfer through the tunnel to the GitHub runner included, goes to the summary only:
     Tomcat sends pages uncompressed, so a large page (the Myrmicinae page) took 7.7 s through the tunnel on 2026-11-17
-    for about 2 s of AntWeb's own time. The page must answer as check_page wants: 200, no error page, its marker text,
-    so a quick "not found" page never passes."""
+    for about 2 s of AntWeb's own time. Work done while the JSP renders comes after the first bytes, so the whole read
+    is judged too, against WHOLE_FACTOR x the limit (review of 4bf60a9). The page must answer as check_page wants: 200, no error page, its marker text,
+    so a quick "not found" page never passes. Returns (AntWeb's time, the whole read)."""
     t = _now()
     r = check_page(base, name, path, [marker] if marker else [], timeout=timeout)
     whole = _now() - t
-    _LAST_WHOLE[0] = whole
     ttfb = getattr(r, "ttfb", None)
-    return ttfb if isinstance(ttfb, (int, float)) else whole
+    return (ttfb if isinstance(ttfb, (int, float)) else whole), whole
 
 
 SPEED_WAIT = 300   # seconds the speed run waits for AntWeb to answer before timing (a restart takes 2 to 4 minutes)
@@ -135,18 +135,19 @@ def check_speed(base, name, path, limit, tries=2, marker=None):
     """The best of up to two reads; Fail when even the best is over the limit or no read got an answer in time.
     A read that fails is tried again after RETRY_PAUSE; when every read failed because AntWeb was restarting, the
     page is skipped ("site restarting"), so a red run always means a slow or broken page (review of a6fd607)."""
-    best, last_fail, all_restarting = None, None, True
+    best, best_whole, last_fail, all_restarting = None, None, None, True
     for attempt in range(tries):
         try:
-            secs = timed_page(base, name, path, speed_timeout(limit), marker)
+            secs, whole = timed_page(base, name, path, speed_timeout(limit), marker)
         except Fail as e:
             last_fail = e
             all_restarting = all_restarting and restarting(e)
             if attempt + 1 < tries:
                 _sleep(RETRY_PAUSE)
             continue
-        best = secs if best is None else min(best, secs)
-        if best <= limit:
+        if best is None or secs < best:
+            best, best_whole = secs, whole   # the pair of one read, never mixed across reads
+        if best <= limit and best_whole <= WHOLE_FACTOR * limit:
             break
     if best is None and all_restarting and not _RESTART_SEEN:
         # The first page of the run to meet a restart (a deploy, the watchdog): wait until AntWeb answers again, once
@@ -155,19 +156,22 @@ def check_speed(base, name, path, limit, tries=2, marker=None):
         _RESTART_SEEN.append(name)
         if wait_until_up(SPEED_WAIT, after=f"after a restart during the page speed run ({name})", level="warning") == 0:
             try:
-                secs = timed_page(base, name, path, speed_timeout(limit), marker)
+                secs, whole = timed_page(base, name, path, speed_timeout(limit), marker)
             except Fail as e:
                 raise Skip(f"{name}: read right after a restart failed, not timed ({e})")
-            if secs > limit:   # caches still loading: not a slow page
-                raise Skip(f"{name}: {secs:.1f} s right after a restart (limit {limit:.0f} s), not counted")
-            return f"{secs:.1f} s (limit {limit:.0f} s), read after waiting for a restart"
+            if secs > limit or whole > WHOLE_FACTOR * limit:   # caches still loading: not a slow page
+                raise Skip(f"{name}: {secs:.1f} s (whole read {whole:.1f} s) right after a restart (limit {limit:.0f} s), not counted")
+            return f"{secs:.1f} s (limit {limit:.0f} s; whole read with transfer {whole:.1f} s), read after waiting for a restart"
     if best is None:
         if all_restarting:
             raise Skip(f"{name}: AntWeb was restarting, not timed ({last_fail})")
         raise last_fail
     msg = f"{best:.1f} s (limit {limit:.0f} s)"
-    if _LAST_WHOLE[0] is not None and _LAST_WHOLE[0] > best + 0.05:
-        msg += f"; whole read with transfer {_LAST_WHOLE[0]:.1f} s"
+    if best_whole > best + 0.05:
+        msg += f"; whole read with transfer {best_whole:.1f} s"
+    if best_whole > WHOLE_FACTOR * limit:   # a page whose body comes slowly (work done while it renders) is slow too
+        best = max(best, best_whole / WHOLE_FACTOR)
+        msg += f" (over {WHOLE_FACTOR} x the limit)"
     if best > limit and _RESTART_SEEN:   # AntWeb restarted during this run: its caches may still be loading
         raise Skip(f"{name}: {msg} after a restart during this run, not counted: {path}")
     if best > limit:
