@@ -281,7 +281,8 @@ def main():
         prod_smoke._now = real_now
     expect(all(limit > 0 and path.startswith("/") for _, path, limit, _m in prod_smoke.SPEED_PAGES) and len(prod_smoke.SPEED_PAGES) >= 5,
            "every speed page has a path and a limit")
-    worst = 420 + sum(2 * prod_smoke.speed_timeout(limit) + prod_smoke.RETRY_PAUSE for _, _, limit, _m in prod_smoke.SPEED_PAGES)
+    # the wait may overrun by one read (30 s) and one poll (15 s); setup (checkout, tunnel) gets 120 s below
+    worst = prod_smoke.SPEED_WAIT + 45 + sum(2 * prod_smoke.speed_timeout(limit) + prod_smoke.RETRY_PAUSE for _, _, limit, _m in prod_smoke.SPEED_PAGES)
     wf = open(os.path.join(ROOT, ".github", "workflows", "prod-speed.yaml")).read()
     minutes = int(re.search(r"timeout-minutes:\s*(\d+)", wf).group(1))
     expect(worst + 120 < minutes * 60, f"the worst case ({worst} s of reads) ends before the workflow's {minutes} minutes")
@@ -291,8 +292,21 @@ def main():
     # no page answered during the whole run: red, never green (every check skipped as restarting)
     skipped = [("skip", "speed: " + n, "AntWeb was restarting", 0.0) for n, _, _, _ in prod_smoke.SPEED_PAGES]
     expect(any(r[0] == "FAIL" for r in prod_smoke.all_skipped_fails(skipped)), "a run where no page answered is red")
-    mixed = skipped[:-1] + [("pass", "speed: home page", "1.0 s", 1.0)]
-    expect(not any(r[0] == "FAIL" for r in prod_smoke.all_skipped_fails(mixed)), "one page answering keeps the skips as skips")
+    mostly = skipped[:-1] + [("pass", "speed: home page", "1.0 s", 1.0)]
+    expect(any(r[0] == "FAIL" for r in prod_smoke.all_skipped_fails(mostly)), "a run where most pages were skipped is red")
+    few = [("pass", "speed: " + n, "1.0 s", 1.0) for n, _, _, _ in prod_smoke.SPEED_PAGES[:-1]] + [skipped[-1]]
+    expect(not any(r[0] == "FAIL" for r in prod_smoke.all_skipped_fails(few)), "one restarting page among answering ones stays a skip")
+    # a refused connection is not a restart (it is also a dead tunnel): it fails, it is not skipped
+    expect(not prod_smoke.restarting(prod_smoke.Fail("x: no answer from http://127.0.0.1:18081/ ([Errno 111] Connection refused)")),
+           "a refused connection is not counted as a restart")
+    expect(prod_smoke.restarting(prod_smoke.Fail("x: HTTP 502 for /")), "a 502 is counted as a restart")
+    # AntWeb never answers before timing: red with its own line (SMOKE_SPEED_WAIT=0, the stand-in challenges every page)
+    os.environ["SMOKE_SPEED_WAIT"] = "0"
+    try:
+        code, out = run("speed", mode="challenge")
+    finally:
+        os.environ.pop("SMOKE_SPEED_WAIT", None)
+    expect(code == 1 and "did not answer before timing" in out, "speed: AntWeb not answering before timing is red", out)
     srv.shutdown()
     print("prod_smoke.py: all logic checks passed.")
 

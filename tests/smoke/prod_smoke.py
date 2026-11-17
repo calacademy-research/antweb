@@ -92,7 +92,7 @@ _now = time.monotonic   # the clock of the timings (monotonic: a clock step cann
 
 def speed_timeout(limit):
     """Seconds one timed read may wait for the server: three times the limit, at least 20. Nine pages, two reads each
-    and a pause between, stay under the workflow's 20 minutes even when production hangs, so the run reports its times
+    and a pause between, stay under the workflow's 25 minutes even when production hangs, so the run reports its times
     (urllib's timeout is per socket wait: a page that trickles in slowly could take longer; the job limit still holds)."""
     return max(3 * limit, 20)
 
@@ -105,16 +105,18 @@ def timed_page(base, name, path, timeout=None, marker=None):
     return _now() - t
 
 
+SPEED_WAIT = 300   # seconds the speed run waits for AntWeb to answer before timing (a restart takes 2 to 4 minutes)
 RETRY_PAUSE = 30   # seconds before the second read when the first got no answer (a restart takes 2 to 4 minutes)
 _sleep = time.sleep
 
 
 def restarting(fail):
     """Whether a failed read looks like AntWeb restarting (deploys, the watchdog and reboot_checker restart it at any
-    hour), not like a slow page: a 502/503 from Caddy, "initializing", or no connection."""
+    hour), not like a slow page: "initializing", or a 502/503. A refused or dropped connection is not counted: through
+    the tunnel it is also what a dead tunnel or Tomcat dropping connections under load gives (review of 4963a94), and
+    the run already waits until AntWeb answers before timing."""
     t = str(fail)
-    return any(k in t for k in ("HTTP 502", "HTTP 503", "still initializing", "Connection refused", "Connection reset",
-                                "Remote end closed"))
+    return any(k in t for k in ("HTTP 502", "HTTP 503", "still initializing"))
 
 
 def check_speed(base, name, path, limit, tries=2, marker=None):
@@ -148,10 +150,11 @@ def check_speed(base, name, path, limit, tries=2, marker=None):
 
 
 def all_skipped_fails(results):
-    """A run in which no page could be timed at all is red: AntWeb down for the whole run (or the tunnel dead) must
-    never give a green run (review of 81747f9). One restarting page among answering ones stays a skip."""
-    if results and all(r[0] == "skip" for r in results):
-        results = results + [("FAIL", "speed: any page", "no page answered during the whole run (AntWeb down, or the tunnel)", 0.0)]
+    """A run in which most pages could not be timed is red: AntWeb down (or restarting) for most of the run must never
+    give a green run (reviews of 81747f9 and 4963a94). One or a few restarting pages among answering ones stay skips."""
+    skipped = sum(1 for r in results if r[0] == "skip")
+    if results and skipped * 2 > len(results):
+        results = results + [("FAIL", "speed: the run", f"{skipped} of {len(results)} pages could not be timed", 0.0)]
     return results
 
 
@@ -485,7 +488,7 @@ def main(argv):
     if mode == "speed":
         # A run that starts during a restart would time cold pages: wait until AntWeb answers (up to 7 minutes) and
         # read the home page once, then time (review of 6803a55).
-        if wait_until_up(int(os.environ.get("SMOKE_SPEED_WAIT", "420"))) != 0:
+        if wait_until_up(int(os.environ.get("SMOKE_SPEED_WAIT", str(SPEED_WAIT)))) != 0:
             return report("Page speed (read-only)", [("FAIL", "speed: any page", "AntWeb did not answer before timing", 0.0)])
         return report("Page speed (read-only)", all_skipped_fails(run_checks(speed_checks())))
     if mode == "wait":
