@@ -73,7 +73,7 @@ PAGE_TIMEOUTS = {"statistics page": 240}
 # rely on users telling us"; Jack Longino had noticed species images pages taking 5 to 10 s). Pages that do the most
 # work, each with a limit of about twice its usual time on production, so a page several times slower than usual turns
 # the run red. First limits (2026-11-17, production before PR #368 and staging after it); to be tightened from the
-# times the runs record. Times through the SSH tunnel (no Cloudflare in between).
+# times the runs record. No Cloudflare in between.
 SPEED_PAGES = [
     ("species page", "/description.do?genus=pheidole&species=megacephala&rank=species", 2.0),
     ("species images", "/images.do?genus=pheidole&species=megacephala&rank=species", 4.0),
@@ -141,6 +141,14 @@ def check_speed(base, name, path, limit, tries=2):
     if best > limit:
         raise Fail(f"{name}: slow, {msg}: {path}")
     return msg
+
+
+def all_skipped_fails(results):
+    """A run in which no page could be timed at all is red: AntWeb down for the whole run (or the tunnel dead) must
+    never give a green run (review of 81747f9). One restarting page among answering ones stays a skip."""
+    if results and all(r[0] == "skip" for r in results):
+        results = results + [("FAIL", "speed: any page", "no page answered during the whole run (AntWeb down, or the tunnel)", 0.0)]
+    return results
 
 
 def speed_checks():
@@ -470,7 +478,7 @@ def main(argv):
         today = dt.date.fromisoformat(t) if t else dt.datetime.now(PACIFIC).date()
         return report(f"Morning check: daily update of {today}", run_checks([("daily update", lambda: check_daily_update(SITE, today))]))
     if mode == "speed":
-        return report("Page speed (read-only)", run_checks(speed_checks()))
+        return report("Page speed (read-only)", all_skipped_fails(run_checks(speed_checks())))
     if mode == "wait":
         secs = int(argv[argv.index("--max-seconds") + 1]) if "--max-seconds" in argv else 420
         return wait_until_up(secs)

@@ -1,7 +1,7 @@
 name: Production page speed
 
 # Read-only timing of the pages that do the most work on production (tests/smoke/prod_smoke.py speed; one GET per
-# page, a second only when the first was over the limit, no sign-in; tests/unit/test_smoke_read_only.py). Red when a
+# page, a second when the first was over the limit or failed, no sign-in; tests/unit/test_smoke_read_only.py). Red when a
 # page is over its limit (about twice its usual time), so a slowdown is seen within hours instead of from users
 # (2026-11-17: species images pages had taken 5 to 10 s for about a week before Jack Longino said so). The summary of
 # each run lists every page's time: the runs are the log (Actions > Production page speed).

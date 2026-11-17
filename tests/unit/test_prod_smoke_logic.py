@@ -88,6 +88,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if d is None:
                 return self._send(404, "<h1>Page not found</h1>")
             return self._send(200, json.dumps(d), "application/json")
+        if mode == "speedok":   # the page speed run: every page answers at once
+            return self._send(200, "<html><body>page</body></html>")
         if mode == "challenge":
             return self._send(403, CHALLENGE, headers={"cf-mitigated": "challenge"})
         if path not in BODY:
@@ -274,6 +276,14 @@ def main():
     wf = open(os.path.join(ROOT, ".github", "workflows", "prod-speed.yaml")).read()
     minutes = int(re.search(r"timeout-minutes:\s*(\d+)", wf).group(1))
     expect(worst + 120 < minutes * 60, f"the worst case ({worst} s of reads) ends before the workflow's {minutes} minutes")
+    # the whole speed run through main and report, against the stand-in (2026-11-17, review of 81747f9)
+    code, out = run("speed", mode="speedok")
+    expect(code == 0 and out.count("speed: ") >= len(prod_smoke.SPEED_PAGES), "prod_smoke.py speed: every page timed, green", out)
+    # no page answered during the whole run: red, never green (every check skipped as restarting)
+    skipped = [("skip", "speed: " + n, "AntWeb was restarting", 0.0) for n, _, _ in prod_smoke.SPEED_PAGES]
+    expect(any(r[0] == "FAIL" for r in prod_smoke.all_skipped_fails(skipped)), "a run where no page answered is red")
+    mixed = skipped[:-1] + [("pass", "speed: home page", "1.0 s", 1.0)]
+    expect(not any(r[0] == "FAIL" for r in prod_smoke.all_skipped_fails(mixed)), "one page answering keeps the skips as skips")
     srv.shutdown()
     print("prod_smoke.py: all logic checks passed.")
 
