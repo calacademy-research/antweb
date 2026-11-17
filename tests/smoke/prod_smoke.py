@@ -92,7 +92,7 @@ _now = time.monotonic   # the clock of the timings (monotonic: a clock step cann
 
 def speed_timeout(limit):
     """Seconds one timed read may wait for the server: three times the limit, at least 20. Nine pages, two reads each
-    and a pause between, stay under the workflow's 25 minutes even when production hangs, so the run reports its times
+    and a pause between, stay under the workflow's 30 minutes even when production hangs, so the run reports its times
     (urllib's timeout is per socket wait: a page that trickles in slowly could take longer; the job limit still holds)."""
     return max(3 * limit, 20)
 
@@ -106,6 +106,7 @@ def timed_page(base, name, path, timeout=None, marker=None):
 
 
 SPEED_WAIT = 300   # seconds the speed run waits for AntWeb to answer before timing (a restart takes 2 to 4 minutes)
+_RESTART_SEEN = []   # the page that met a restart in this run (check_speed waits for AntWeb once per run)
 RETRY_PAUSE = 30   # seconds before the second read when the first got no answer (a restart takes 2 to 4 minutes)
 _sleep = time.sleep
 
@@ -115,7 +116,7 @@ def restarting(fail):
     hour), not like a slow page. Through the tunnel (127.0.0.1:18081 -> Tomcat's 127.0.0.1:8081, no Caddy) a stopped
     container shows as the connection closed or reset by the far end, then "initializing" while the caches load; a 502
     or 503 only if a proxy is in between. A refused connection is not counted: that is the tunnel itself gone. A run in
-    which most pages were skipped is red anyway (all_skipped_fails), so a long outage is never green (review of 52a7ae4)."""
+    which most pages were skipped is red anyway (all_skipped_fails), so a long outage is never green (reviews of 4963a94 and 52a7ae4)."""
     t = str(fail)
     return any(k in t for k in ("still initializing", "Remote end closed", "Connection reset", "HTTP 502", "HTTP 503"))
 
@@ -137,6 +138,19 @@ def check_speed(base, name, path, limit, tries=2, marker=None):
         best = secs if best is None else min(best, secs)
         if best <= limit:
             break
+    if best is None and all_restarting and not _RESTART_SEEN:
+        # The first page of the run to meet a restart (a deploy, the watchdog): wait until AntWeb answers again, once
+        # per run, and read the page once more. The pages after it are then timed as usual, so a deploy during a run
+        # costs one wait, not a skip of every remaining page (review of 4f594d9).
+        _RESTART_SEEN.append(name)
+        if wait_until_up(SPEED_WAIT, after=f"after a restart during the page speed run ({name})") == 0:
+            try:
+                secs = timed_page(base, name, path, speed_timeout(limit), marker)
+            except Fail as e:
+                raise Skip(f"{name}: read right after a restart failed, not timed ({e})")
+            if secs > limit:   # caches still loading: not a slow page
+                raise Skip(f"{name}: {secs:.1f} s right after a restart (limit {limit:.0f} s), not counted")
+            return f"{secs:.1f} s (limit {limit:.0f} s), read after waiting for a restart"
     if best is None:
         if all_restarting:
             raise Skip(f"{name}: AntWeb was restarting, not timed ({last_fail})")

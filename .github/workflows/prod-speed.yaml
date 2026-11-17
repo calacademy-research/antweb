@@ -14,7 +14,8 @@ on:
 
 concurrency:
   group: prod-speed
-  # A run by hand waits for a scheduled one instead of cancelling it (a cancelled run leaves no times).
+  # A run by hand waits for a running scheduled one instead of cancelling it (a cancelled run leaves no times);
+  # GitHub keeps one waiting run, so a second waiting run replaces the first.
   cancel-in-progress: false
 
 permissions:
@@ -23,7 +24,7 @@ permissions:
 jobs:
   speed:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
