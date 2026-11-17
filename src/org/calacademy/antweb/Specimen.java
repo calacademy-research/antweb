@@ -1560,6 +1560,20 @@ For a locality name without code (this name has special characters):
     public void setFlag(String flag) {
       this.flag = flag;
     }
+
+    /**
+     * The specimen has a red flag. Its photos are not counted as imaged anywhere (Brian Fisher, 2026-11-09; the SQL
+     * form is SpecimenDb.notRedFlagged, which MySQL compares without case).
+     */
+    public boolean isRedFlagged() {
+      return flag != null && "red".equalsIgnoreCase(flag.trim());
+    }
+
+    /** A child of a species page that counts as imaged: a photo of the ant and no red flag (2026-11-09 rule). */
+    public static boolean countsAsImaged(Taxon t) {
+      if (t == null || !t.getHasImages()) return false;
+      return !(t instanceof Specimen) || !((Specimen) t).isRedFlagged();
+    }
     
     public String getIssue() {
       return issue;

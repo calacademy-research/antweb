@@ -1498,6 +1498,9 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
             children.toArray(childrenArray);
 
             for (Taxon taxon : childrenArray) {   // was getChildren()
+                // 2026-11-17: a red-flagged specimen's photos are not counted (2026-11-09 rule); the header said
+                // "(28 imaged)" where the genus page's indet line, counted in SQL, said 22 (Myrmica (indet)).
+                if (taxon instanceof Specimen && ((Specimen) taxon).isRedFlagged()) continue;
                 boolean hasImage = taxon.hasImage(shot);
                 if (!hasImage) hasImage = taxon.hasImage(shot2);
                 if (!hasImage) hasImage = taxon.hasImage(shot3);

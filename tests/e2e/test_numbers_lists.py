@@ -410,9 +410,10 @@ def test_species_browse_imaged_count_equals_the_specimens_with_images():
         b = _browse_numbers(html)
         rows = ns.list_rows(html)
         _consistent(where, b, len(rows), wrong)
-        with_photos = sum(1 for r in rows if not r["no_photos"])
+        # a red-flagged specimen keeps its photos but is not counted imaged (2026-11-09; on this header since 2026-11-17)
+        with_photos = sum(1 for r in rows if not r["no_photos"] and not r["red_flag"])
         if b["n"] is not None and len(rows) == b["n"] and with_photos != b["m"]:
-            wrong.append(f"{where}: {b['m']} imaged, {with_photos} of the {len(rows)} specimens listed have photos")
+            wrong.append(f"{where}: {b['m']} imaged, {with_photos} of the {len(rows)} specimens listed have photos and no red flag")
         counts = _api_image_counts(link)
         codes = _specimen_codes(html)
         if counts is not None and codes and all(c in counts for c in codes) and len(codes) == b["n"]:

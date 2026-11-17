@@ -243,18 +243,19 @@ def header(html):
     return (0, text) if text.startswith("No ") else (None, text)
 
 
-ROW_START = re.compile(r'<div class="specimen_layout( no_photos)?">')
+# A red-flagged specimen's row carries data-red-flag="1" (2026-11-17): it keeps its photos but is not counted imaged.
+ROW_START = re.compile(r'<div class="specimen_layout( no_photos)?"( data-red-flag="1")?>')
 
 
 def list_rows(html):
     """The rows of a list (taxonReportBody.jsp, specimenReport.jsp): one dict per row with the HTML of the row,
     whether it has photos (specimen lists), and the taxon name of its description.do link (taxon lists)."""
-    starts = [(m.start(), bool(m.group(1))) for m in ROW_START.finditer(html)]
+    starts = [(m.start(), bool(m.group(1)), bool(m.group(2))) for m in ROW_START.finditer(html)]
     rows = []
-    for i, (pos, no_photos) in enumerate(starts):
+    for i, (pos, no_photos, red_flag) in enumerate(starts):
         end = starts[i + 1][0] if i + 1 < len(starts) else len(html)
         chunk = html[pos:end]
-        rows.append({"html": chunk, "no_photos": no_photos, "name": taxon_name_of(chunk),
+        rows.append({"html": chunk, "no_photos": no_photos, "red_flag": red_flag, "name": taxon_name_of(chunk),
                      "endemic": 'title="Endemic"' in chunk.split("description.do?")[0],
                      "introduced": 'title="Introduced"' in chunk.split("description.do?")[0]})
     return rows
