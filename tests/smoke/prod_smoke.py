@@ -87,18 +87,27 @@ SPEED_PAGES = [
 ]
 
 
-def timed_page(base, name, path):
+_now = time.monotonic   # the clock of the timings (monotonic: a clock step cannot change a duration); tests replace it
+
+
+def speed_timeout(limit):
+    """Seconds one timed read may take: three times the limit, at least 20. Nine pages, two reads each, stay under the
+    workflow's 15 minutes even when production hangs, so the run always reports its times."""
+    return max(3 * limit, 20)
+
+
+def timed_page(base, name, path, timeout=None):
     """Seconds for one read of the page (it must answer as check_page wants: 200, no error page)."""
-    t = time.time()
-    check_page(base, name, path, [])
-    return time.time() - t
+    t = _now()
+    check_page(base, name, path, [], timeout=timeout)
+    return _now() - t
 
 
 def check_speed(base, name, path, limit, tries=2):
-    """The best of up to two reads; Fail when even the best is over the limit."""
+    """The best of up to two reads; Fail when even the best is over the limit (or a read gets no answer in time)."""
     best = None
     for _ in range(tries):
-        secs = timed_page(base, name, path)
+        secs = timed_page(base, name, path, speed_timeout(limit))
         best = secs if best is None else min(best, secs)
         if best <= limit:
             break
