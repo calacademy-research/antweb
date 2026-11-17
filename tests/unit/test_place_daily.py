@@ -68,6 +68,35 @@ def test_one_load_is_one_transaction_that_replaces_today():
     assert len([s for s in pd.statements(many, "2026-11-17", "report") if s.startswith("INSERT")]) == 3
 
 
+def test_a_code_too_long_is_skipped_never_cut():
+    with tempfile.TemporaryDirectory() as d:
+        rows = pd.rows_of(corrections_file(d, [{"specimen_code": "c" * 129, "field": "adm1", "proposed_value": "P"},
+                                               {"specimen_code": "ok", "field": "adm1", "proposed_value": "P"}]), "2026-11-17", "report")
+    assert [r["code"] for r in rows] == ["ok"], rows
+
+
+def test_a_failed_run_is_logged():
+    lines = []
+    was_log, was_main = pd.log, pd.main
+    pd.log = lines.append
+    try:
+        pd.main = lambda argv=None: (_ for _ in ()).throw(RuntimeError("mysql failed: Access denied"))
+        assert pd.run([]) == 1 and lines == ["place-daily FAILED: RuntimeError: mysql failed: Access denied"], lines
+        del lines[:]
+        pd.main = lambda argv=None: sys.exit("place-daily: another run holds /run/x; nothing done")
+        assert pd.run([]) == 1 and lines == ["place-daily FAILED: place-daily: another run holds /run/x; nothing done"], lines
+        del lines[:]
+        pd.main = lambda argv=None: 0
+        assert pd.run([]) == 0 and lines == []
+    finally:
+        pd.log, pd.main = was_log, was_main
+
+
+def test_the_upgrade_file_caps_its_lock_wait():
+    sql = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "db", "upgrade", "9.4.0", "2026-11-16-place-update.sql")).read()
+    assert sql.index("SET SESSION lock_wait_timeout = 5;") < sql.index("'ALTER TABLE specimen ADD")
+
+
 def test_quote_escapes():
     assert pd.quote(None) == "NULL"
     assert pd.quote("a'b\\c") == "'a''b\\\\c'"
@@ -131,7 +160,7 @@ def test_old_folders_are_pruned():
 def test_the_cron_line_runs_report_mode_on_production():
     cron = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "tools", "place", "antweb-place-daily.cron")).read()
     line = [l for l in cron.splitlines() if l and not l.startswith(("#", "SHELL", "PATH", "MAILTO"))]
-    assert line == ["10 9 * * * root /usr/bin/python3 /root/antweb/tools/place/place_daily.py >/dev/null 2>&1"], line
+    assert line[0].startswith("10 9 * * * root /usr/bin/python3 /root/antweb/tools/place/place_daily.py >/dev/null 2>&1"), line
 
 
 if __name__ == "__main__":

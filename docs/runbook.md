@@ -1266,7 +1266,8 @@ reports before anything is applied. Step 1, report mode: `tools/place/place_dail
 `place_update`. It never writes to `specimen`. Log: `journalctl -t place-daily`; working folders
 `/root/antweb-place-fix/daily/<date>` (14 kept).
 
-Install, staging first (the table, a dry run, a real run, the rows):
+Install, staging first (the table, a dry run, a real run, the rows). Not while an upload or data job runs
+(`jobStatus.do`) and not 05:00 to 08:15: the file's ALTER needs a moment's lock on `specimen` (capped at 5 s).
 
 ```
 # ssh root@165.232.136.170   (staging: /root/antweb-next and its etc/db.properties)
@@ -1284,9 +1285,11 @@ install -m 644 /root/antweb/tools/place/antweb-place-daily.cron /etc/cron.d/antw
 Read a day's report by collection:
 
 ```
+# ssh root@165.232.137.86
 F=/root/antweb/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select upload_group, field, count(*) n from place_update where run_date = curdate() group by upload_group, field order by n desc limit 30;"
 ```
 
+Every run writes one line to `journalctl -t place-daily`, "place-daily report: ..." or "place-daily FAILED: ...".
 Stop it: `rm /etc/cron.d/antweb-place-daily`. Remove it: also `DROP TABLE place_update` (reports only) and
 `ALTER TABLE specimen DROP COLUMN adm1_verbatim` (empty until the apply mode).
 

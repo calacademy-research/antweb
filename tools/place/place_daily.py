@@ -20,7 +20,7 @@ What it does, in report mode:
      same day are replaced (a rerun is safe). Runs older than 60 days are deleted. These are the only writes, and only
      to place_update.
   4. Prints one summary line (and logs it with logger -t place-daily): proposals by field, by upload group (top 5),
-     how long it took.
+     how long it took. A failed run logs "place-daily FAILED: <why>" there too and exits 1 (run()).
 It never writes to specimen. Rollback: none needed (report rows only); to stop it, remove /etc/cron.d/antweb-place-daily.
 
 The database login is read from <project>/etc/db.properties and goes to docker through the environment (as in
@@ -68,6 +68,8 @@ def rows_of(corrections_csv, run_date, mode):
             row = {"run_date": run_date, "mode": mode, "code": r["specimen_code"], "upload_group": r.get("upload_group") or None,
                    "field": r.get("field") or "", "stored_value": r.get("current_value") or None, "proposed": r["proposed_value"],
                    "basis": r.get("basis") or None, "flag": r.get("other_state_flag") or None, "note": r.get("note") or None}
+            if len(row["code"]) > WIDTH["code"]:   # a cut code would name another specimen: skipped, never cut
+                continue
             for k, w in WIDTH.items():
                 if row[k] is not None and len(row[k]) > w:
                     row[k] = row[k][:w]
@@ -159,5 +161,19 @@ def main(argv=None, corrections=None):
     return 0
 
 
+def run(argv=None):
+    """main, with every failure logged too (cron sends the output nowhere): the journal shows a line for every run."""
+    try:
+        return main(argv)
+    except SystemExit as e:
+        if e.code not in (0, None):
+            log("place-daily FAILED: " + str(e.code))
+            return 1
+        return 0
+    except Exception as e:   # noqa: BLE001 - any failure must reach the journal
+        log("place-daily FAILED: " + type(e).__name__ + ": " + str(e)[:500])
+        return 1
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(run())

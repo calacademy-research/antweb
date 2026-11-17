@@ -4,7 +4,7 @@
 -- it applies (mode apply, a later pull request).
 --
 --   place_update           one row per specimen and field the step proposes to change, per run
---     run_date             the day of the run (the step keeps the last 60 runs)
+--     run_date             the day of the run (rows older than 60 days are deleted by the step)
 --     mode                 report: proposed only; apply: written to specimen (with applied = 1)
 --     code                 specimen.code
 --     upload_group         the upload group's name (ant_group.name), for the report by collection
@@ -20,8 +20,11 @@
 --                            the derived state goes into specimen.adm1, which every page reads). Empty until the
 --                            apply mode; the upload fills it in step 2.
 --
--- Safe to run twice. Rollback: DROP TABLE place_update; ALTER TABLE specimen DROP COLUMN adm1_verbatim (both empty or
+-- Run when no upload or data job is running (jobStatus.do), not 05:00 to 08:15: the ALTER is INSTANT but needs a
+-- moment's exclusive lock on specimen; the lock wait is capped at 5 s (it fails instead of queueing pages). Safe to run twice. Rollback: DROP TABLE place_update; ALTER TABLE specimen DROP COLUMN adm1_verbatim (both empty or
 -- reports only until the apply mode).
+
+SET SESSION lock_wait_timeout = 5;
 
 CREATE TABLE IF NOT EXISTS place_update (
   id bigint NOT NULL AUTO_INCREMENT,
