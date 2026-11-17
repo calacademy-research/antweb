@@ -73,15 +73,18 @@ PAGE_TIMEOUTS = {"statistics page": 240}
 # rely on users telling us"; Jack Longino had noticed species images pages taking 5 to 10 s). Pages that do the most
 # work, each with a limit of about twice its usual time on production, so a page several times slower than usual turns
 # the run red. First limits (2026-11-17, production before PR #368 and staging after it); to be tightened from the
-# times the runs record. A time is AntWeb's: until the page's first bytes arrive through the SSH tunnel, no Cloudflare
+# times the runs record. 2026-11-17 15:20, the first runs: the Pheidole genus page 7.3 s, its images 8.3 s and the
+# Myrmicinae page 7.6 s of AntWeb's own time (the Myrmicinae page reads the Images of every genus row live, one query per
+# 500 names: StatisticsDb.antImagedNames); limits about twice that until those pages are made faster (road map).
+# A time is AntWeb's: until the page's first bytes arrive through the SSH tunnel, no Cloudflare
 # in between (timed_page; the whole read, transfer included, is in the summary beside it).
 SPEED_PAGES = [
     ("species page", "/description.do?genus=pheidole&species=megacephala&rank=species", 2.0, "megacephala"),
     ("species images", "/images.do?genus=pheidole&species=megacephala&rank=species", 4.0, "megacephala"),
     ("species specimens", "/browse.do?genus=pheidole&species=megacephala&rank=species", 4.0, "megacephala"),
-    ("genus page", "/browse.do?genus=pheidole&rank=genus", 8.0, "Pheidole"),
-    ("genus images", "/images.do?genus=pheidole&rank=genus", 10.0, "Pheidole"),
-    ("subfamily page", "/browse.do?subfamily=myrmicinae&rank=subfamily", 5.0, "Myrmicinae"),
+    ("genus page", "/browse.do?genus=pheidole&rank=genus", 14.0, "Pheidole"),
+    ("genus images", "/images.do?genus=pheidole&rank=genus", 16.0, "Pheidole"),
+    ("subfamily page", "/browse.do?subfamily=myrmicinae&rank=subfamily", 15.0, "Myrmicinae"),
     ("genus list of Madagascar", "/taxonomicPage.do?rank=genus&countryName=Madagascar", 6.0, "Madagascar"),
     ("specimen page", "/specimen.do?name=casent0103190", 2.0, "casent0103190"),
     ("home page", "/", 2.0, "AntWeb in numbers"),
