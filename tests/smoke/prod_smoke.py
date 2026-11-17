@@ -73,7 +73,8 @@ PAGE_TIMEOUTS = {"statistics page": 240}
 # rely on users telling us"; Jack Longino had noticed species images pages taking 5 to 10 s). Pages that do the most
 # work, each with a limit of about twice its usual time on production, so a page several times slower than usual turns
 # the run red. First limits (2026-11-17, production before PR #368 and staging after it); to be tightened from the
-# times the runs record. No Cloudflare in between.
+# times the runs record. A time is AntWeb's: until the page's first bytes arrive through the SSH tunnel, no Cloudflare
+# in between (timed_page; the whole read, transfer included, is in the summary beside it).
 SPEED_PAGES = [
     ("species page", "/description.do?genus=pheidole&species=megacephala&rank=species", 2.0, "megacephala"),
     ("species images", "/images.do?genus=pheidole&species=megacephala&rank=species", 4.0, "megacephala"),
@@ -97,12 +98,21 @@ def speed_timeout(limit):
     return max(3 * limit, 20)
 
 
+WHOLE_FACTOR = 3   # the whole read (transfer included) may take up to 3 x the page's limit; beyond, the page fails
+
+
 def timed_page(base, name, path, timeout=None, marker=None):
-    """Seconds for one read of the page (it must answer as check_page wants: 200, no error page, its marker text, so a
-    quick "not found" page never passes)."""
+    """Seconds AntWeb took to answer one read of the page: until its first bytes arrive (the page's database work is
+    done by then). The whole read, transfer through the tunnel to the GitHub runner included, goes to the summary only:
+    Tomcat sends pages uncompressed, so a large page (the Myrmicinae page) took 7.7 s through the tunnel on 2026-11-17
+    for about 2 s of AntWeb's own time. Work done while the JSP renders comes after the first bytes, so the whole read
+    is judged too, against WHOLE_FACTOR x the limit (review of 4bf60a9). The page must answer as check_page wants: 200, no error page, its marker text,
+    so a quick "not found" page never passes. Returns (AntWeb's time, the whole read)."""
     t = _now()
-    check_page(base, name, path, [marker] if marker else [], timeout=timeout)
-    return _now() - t
+    r = check_page(base, name, path, [marker] if marker else [], timeout=timeout)
+    whole = _now() - t
+    ttfb = getattr(r, "ttfb", None)
+    return (ttfb if isinstance(ttfb, (int, float)) else whole), whole
 
 
 SPEED_WAIT = 300   # seconds the speed run waits for AntWeb to answer before timing (a restart takes 2 to 4 minutes)
@@ -125,18 +135,21 @@ def check_speed(base, name, path, limit, tries=2, marker=None):
     """The best of up to two reads; Fail when even the best is over the limit or no read got an answer in time.
     A read that fails is tried again after RETRY_PAUSE; when every read failed because AntWeb was restarting, the
     page is skipped ("site restarting"), so a red run always means a slow or broken page (review of a6fd607)."""
-    best, last_fail, all_restarting = None, None, True
+    best, best_whole, last_fail, all_restarting = None, None, None, True
     for attempt in range(tries):
         try:
-            secs = timed_page(base, name, path, speed_timeout(limit), marker)
+            secs, whole = timed_page(base, name, path, speed_timeout(limit), marker)
         except Fail as e:
             last_fail = e
             all_restarting = all_restarting and restarting(e)
             if attempt + 1 < tries:
                 _sleep(RETRY_PAUSE)
             continue
-        best = secs if best is None else min(best, secs)
-        if best <= limit:
+        # the better read is the one with the lower score, max(first bytes, whole / WHOLE_FACTOR): both numbers count
+        # (review of f655978), and the pair reported is of that one read
+        if best is None or max(secs, whole / WHOLE_FACTOR) < max(best, best_whole / WHOLE_FACTOR):
+            best, best_whole = secs, whole
+        if best <= limit and best_whole <= WHOLE_FACTOR * limit:
             break
     if best is None and all_restarting and not _RESTART_SEEN:
         # The first page of the run to meet a restart (a deploy, the watchdog): wait until AntWeb answers again, once
@@ -145,17 +158,22 @@ def check_speed(base, name, path, limit, tries=2, marker=None):
         _RESTART_SEEN.append(name)
         if wait_until_up(SPEED_WAIT, after=f"after a restart during the page speed run ({name})", level="warning") == 0:
             try:
-                secs = timed_page(base, name, path, speed_timeout(limit), marker)
+                secs, whole = timed_page(base, name, path, speed_timeout(limit), marker)
             except Fail as e:
                 raise Skip(f"{name}: read right after a restart failed, not timed ({e})")
-            if secs > limit:   # caches still loading: not a slow page
-                raise Skip(f"{name}: {secs:.1f} s right after a restart (limit {limit:.0f} s), not counted")
-            return f"{secs:.1f} s (limit {limit:.0f} s), read after waiting for a restart"
+            if secs > limit or whole > WHOLE_FACTOR * limit:   # caches still loading: not a slow page
+                raise Skip(f"{name}: {secs:.1f} s (whole read {whole:.1f} s) right after a restart (limit {limit:.0f} s), not counted")
+            return f"{secs:.1f} s (limit {limit:.0f} s; whole read with transfer {whole:.1f} s), read after waiting for a restart"
     if best is None:
         if all_restarting:
             raise Skip(f"{name}: AntWeb was restarting, not timed ({last_fail})")
         raise last_fail
     msg = f"{best:.1f} s (limit {limit:.0f} s)"
+    if best_whole > best + 0.05:
+        msg += f"; whole read with transfer {best_whole:.1f} s"
+    if best_whole > WHOLE_FACTOR * limit:   # a page whose body comes slowly (work done while it renders) is slow too
+        best = max(best, best_whole / WHOLE_FACTOR)
+        msg += f" (over {WHOLE_FACTOR} x the limit)"
     if best > limit and _RESTART_SEEN:   # AntWeb restarted during this run: its caches may still be loading
         raise Skip(f"{name}: {msg} after a restart during this run, not counted: {path}")
     if best > limit:
@@ -189,16 +207,19 @@ class Skip(Exception):
 
 
 class Resp:
-    def __init__(self, status, text, url, headers):
+    def __init__(self, status, text, url, headers, ttfb=None):
         self.status, self.text, self.url, self.headers = status, text, url, headers
+        self.ttfb = ttfb   # seconds until the status line and headers arrived (None: not measured)
 
 
 def get(url, timeout=None):
     """One GET call, no session state, no body. HTTP errors come back as a Resp too."""
     req = urllib.request.Request(url, method="GET", headers={"User-Agent": USER_AGENT, "Accept": "*/*"})
+    started = time.monotonic()
     try:
         with urllib.request.urlopen(req, timeout=timeout or TIMEOUT) as r:
-            return Resp(r.status, r.read().decode("utf-8", "replace"), r.geturl(), dict(r.headers))
+            ttfb = time.monotonic() - started
+            return Resp(r.status, r.read().decode("utf-8", "replace"), r.geturl(), dict(r.headers), ttfb)
     except urllib.error.HTTPError as e:
         body = e.read().decode("utf-8", "replace") if e.fp else ""
         return Resp(e.code, body, url, dict(e.headers or {}))

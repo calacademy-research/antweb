@@ -232,6 +232,46 @@ def main():
             expect(False, "a page slow twice fails")
         except prod_smoke.Fail as e:
             expect("slow, 8.0 s (limit 4 s)" in str(e) and "/images.do" in str(e), "a page slow twice fails with its time (" + str(e) + ")")
+        # AntWeb's time is until the first bytes (ttfb); the transfer of a large page is shown, not judged
+        def big_page(url, timeout=None):
+            clock["t"] += 8.0
+            return prod_smoke.Resp(200, "page", url, {}, ttfb=1.5)
+        prod_smoke.get = big_page
+        msg = prod_smoke.check_speed("http://x", "subfamily page", "/browse.do", 5.0)
+        expect(msg.startswith("1.5 s") and "whole read with transfer 8.0 s" in msg,
+               "the time judged is AntWeb's (first bytes), the whole read is shown beside it (" + msg + ")")
+        # the body coming slowly (over 3 x the limit) fails even when the first bytes were quick
+        def trickle(url, timeout=None):
+            clock["t"] += 20.0
+            return prod_smoke.Resp(200, "page", url, {}, ttfb=1.0)
+        prod_smoke.get = trickle
+        try:
+            prod_smoke.check_speed("http://x", "subfamily page", "/browse.do", 5.0)
+            expect(False, "a slow whole read fails")
+        except prod_smoke.Fail as e:
+            expect("whole read with transfer 20.0 s" in str(e) and "over 3 x" in str(e), "a whole read over 3 x the limit fails (" + str(e) + ")")
+        # a quick first byte with a stalled body, then a read that passes both: the second read counts
+        pairs2 = [(1.0, 20.0), (1.5, 8.0)]
+
+        def stall_then_ok(url, timeout=None):
+            ttfb, whole = pairs2.pop(0)
+            clock["t"] += whole
+            return prod_smoke.Resp(200, "page", url, {}, ttfb=ttfb)
+        prod_smoke.get = stall_then_ok
+        msg = prod_smoke.check_speed("http://x", "subfamily page", "/browse.do", 5.0)
+        expect(msg.startswith("1.5 s") and "8.0 s" in msg, "a read that passes both checks wins over a stalled one (" + msg + ")")
+        # two reads: the message pairs the time and the whole read of the same read
+        pairs = [(5.0, 5.2), (6.0, 14.0)]
+
+        def two(url, timeout=None):
+            ttfb, whole = pairs.pop(0)
+            clock["t"] += whole
+            return prod_smoke.Resp(200, "page", url, {}, ttfb=ttfb)
+        prod_smoke.get = two
+        try:
+            prod_smoke.check_speed("http://x", "species images", "/images.do", 4.0)
+        except prod_smoke.Fail as e:
+            expect("5.0 s" in str(e) and "5.2 s" in str(e) and "14.0" not in str(e), "the best read's own pair is reported (" + str(e) + ")")
         # a first read that fails is tried again; a restart (502, initializing) on every read is a skip, not slow
         pauses = []
         real_sleep = prod_smoke._sleep
@@ -288,6 +328,10 @@ def main():
     wf = open(os.path.join(ROOT, ".github", "workflows", "prod-speed.yaml")).read()
     minutes = int(re.search(r"timeout-minutes:\s*(\d+)", wf).group(1))
     expect(worst + 120 < minutes * 60, f"the worst case ({worst} s of reads) ends before the workflow's {minutes} minutes")
+    # the real get() measures the time to the first bytes (stand-in server)
+    STATE.clear(); STATE.update(mode="speedok")
+    r = prod_smoke.get(BASE + "/")
+    expect(isinstance(r.ttfb, float) and 0 <= r.ttfb, "get() records the time to the first bytes (" + repr(r.ttfb) + ")")
     # the whole speed run through main and report, against the stand-in (2026-11-17, review of 81747f9)
     code, out = run("speed", mode="speedok")
     expect(code == 0 and out.count("speed: ") >= len(prod_smoke.SPEED_PAGES), "prod_smoke.py speed: every page timed, green", out)
