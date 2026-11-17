@@ -5,6 +5,8 @@ Release gate checks 9 and 10 (docs/runbook.md, "Production smoke run and morning
   deploy   a few public pages and the API answer: HTTP 200, no Java stack trace or error page, the text each
            page should show, and the page header shows the commit that was just deployed.
   morning  the daily update that started today (Pacific) ended and did not fail (dailyUpdate.do?format=json).
+  speed    the pages that have been slow before answer within their limit (best of two tries); each time is
+           printed and kept in the run's summary, so the runs of the Production page speed workflow are the log.
 
 READ-ONLY, ALWAYS: this file only sends GET calls, never signs in, keeps no session state and sends no form data. Production
 never gets a test that writes. tests/unit/test_smoke_read_only.py checks this file for that, and
@@ -24,6 +26,7 @@ Settings (environment):
 
   python3 tests/smoke/prod_smoke.py deploy
   python3 tests/smoke/prod_smoke.py morning
+  python3 tests/smoke/prod_smoke.py speed
   python3 tests/smoke/prod_smoke.py wait --max-seconds 420    (until the home page answers after a restart)
 
 Exit 0: every check passed or was skipped (a skip says why). Exit 1: at least one check failed.
@@ -64,6 +67,49 @@ PAGES = [
 # tables then (about 1 to 2 minutes on production), and the deploy check is that first visit. It failed twice on
 # 11-13 at 60 s while the page was fine a minute later.
 PAGE_TIMEOUTS = {"statistics page": 240}
+
+
+# Page speed (2026-11-17, Brian Fisher: "we should keep a log that lets us know of an issue in this regard and not
+# rely on users telling us"; Jack Longino had noticed species images pages taking 5 to 10 s). Pages that do the most
+# work, each with a limit of about twice its usual time on production, so a page several times slower than usual turns
+# the run red. First limits (2026-11-17, production before PR #368 and staging after it); to be tightened from the
+# times the runs record. Times through the SSH tunnel (no Cloudflare in between).
+SPEED_PAGES = [
+    ("species page", "/description.do?genus=pheidole&species=megacephala&rank=species", 2.0),
+    ("species images", "/images.do?genus=pheidole&species=megacephala&rank=species", 4.0),
+    ("species specimens", "/browse.do?genus=pheidole&species=megacephala&rank=species", 4.0),
+    ("genus page", "/browse.do?genus=pheidole&rank=genus", 8.0),
+    ("genus images", "/images.do?genus=pheidole&rank=genus", 10.0),
+    ("subfamily page", "/browse.do?subfamily=myrmicinae&rank=subfamily", 5.0),
+    ("genus list of Madagascar", "/taxonomicPage.do?rank=genus&countryName=Madagascar", 6.0),
+    ("specimen page", "/specimen.do?name=casent0103190", 2.0),
+    ("home page", "/", 2.0),
+]
+
+
+def timed_page(base, name, path):
+    """Seconds for one read of the page (it must answer as check_page wants: 200, no error page)."""
+    t = time.time()
+    check_page(base, name, path, [])
+    return time.time() - t
+
+
+def check_speed(base, name, path, limit, tries=2):
+    """The best of up to two reads; Fail when even the best is over the limit."""
+    best = None
+    for _ in range(tries):
+        secs = timed_page(base, name, path)
+        best = secs if best is None else min(best, secs)
+        if best <= limit:
+            break
+    msg = f"{best:.1f} s (limit {limit:.0f} s)"
+    if best > limit:
+        raise Fail(f"{name}: slow, {msg}: {path}")
+    return msg
+
+
+def speed_checks():
+    return [(f"speed: {name}", lambda n=name, p=path, l=limit: check_speed(SITE, n, p, l)) for name, path, limit in SPEED_PAGES]
 
 
 class Fail(Exception):
@@ -388,6 +434,8 @@ def main(argv):
         t = os.environ.get("SMOKE_TODAY")
         today = dt.date.fromisoformat(t) if t else dt.datetime.now(PACIFIC).date()
         return report(f"Morning check: daily update of {today}", run_checks([("daily update", lambda: check_daily_update(SITE, today))]))
+    if mode == "speed":
+        return report("Page speed (read-only)", run_checks(speed_checks()))
     if mode == "wait":
         secs = int(argv[argv.index("--max-seconds") + 1]) if "--max-seconds" in argv else 420
         return wait_until_up(secs)

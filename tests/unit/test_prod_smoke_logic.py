@@ -204,6 +204,34 @@ def main():
     expect(seen["http://x/statsPage.do"] == max(240, prod_smoke.TIMEOUT),
            "the statistics page waits longer", str(seen))
     expect(seen["http://x/description.do"] in (None, prod_smoke.TIMEOUT), "the other pages keep the usual timeout", str(seen))
+    # page speed (2026-11-17): the best of two reads counts; over the limit fails and says the time and the limit
+    clock = {"t": 0.0, "reads": []}
+    real_time = prod_smoke.time.time
+
+    def fake_get2(url, timeout=None):
+        clock["reads"].append(url)
+        clock["t"] += clock["costs"].pop(0)
+        return prod_smoke.Resp(200, "page", url, {})
+    prod_smoke.get = fake_get2
+    prod_smoke.time.time = lambda: clock["t"]
+    try:
+        clock.update(costs=[1.0])
+        msg = prod_smoke.check_speed("http://x", "species images", "/images.do", 4.0)
+        expect(msg.startswith("1.0 s") and len(clock["reads"]) == 1, "a quick page is read once (" + msg + ")")
+        clock.update(costs=[9.0, 3.0], reads=[])
+        msg = prod_smoke.check_speed("http://x", "species images", "/images.do", 4.0)
+        expect(msg.startswith("3.0 s") and len(clock["reads"]) == 2, "a slow first read is tried again, the best counts (" + msg + ")")
+        clock.update(costs=[9.0, 8.0], reads=[])
+        try:
+            prod_smoke.check_speed("http://x", "species images", "/images.do", 4.0)
+            expect(False, "a page slow twice fails")
+        except prod_smoke.Fail as e:
+            expect("slow, 8.0 s (limit 4 s)" in str(e) and "/images.do" in str(e), "a page slow twice fails with its time (" + str(e) + ")")
+    finally:
+        prod_smoke.get = real_get
+        prod_smoke.time.time = real_time
+    expect(all(limit > 0 and path.startswith("/") for _, path, limit in prod_smoke.SPEED_PAGES) and len(prod_smoke.SPEED_PAGES) >= 5,
+           "every speed page has a path and a limit")
     srv.shutdown()
     print("prod_smoke.py: all logic checks passed.")
 
