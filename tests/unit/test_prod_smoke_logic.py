@@ -282,7 +282,7 @@ def main():
     expect(all(limit > 0 and path.startswith("/") for _, path, limit, _m in prod_smoke.SPEED_PAGES) and len(prod_smoke.SPEED_PAGES) >= 5,
            "every speed page has a path and a limit")
     # the wait may overrun by one read (30 s) and one poll (15 s); setup (checkout, tunnel) gets 120 s below
-    worst = prod_smoke.SPEED_WAIT + 45 + sum(2 * prod_smoke.speed_timeout(limit) + prod_smoke.RETRY_PAUSE for _, _, limit, _m in prod_smoke.SPEED_PAGES)
+    worst = prod_smoke.SPEED_WAIT + prod_smoke.WAIT_READ_TIMEOUT + prod_smoke.WAIT_POLL + sum(2 * prod_smoke.speed_timeout(limit) + prod_smoke.RETRY_PAUSE for _, _, limit, _m in prod_smoke.SPEED_PAGES)
     wf = open(os.path.join(ROOT, ".github", "workflows", "prod-speed.yaml")).read()
     minutes = int(re.search(r"timeout-minutes:\s*(\d+)", wf).group(1))
     expect(worst + 120 < minutes * 60, f"the worst case ({worst} s of reads) ends before the workflow's {minutes} minutes")
@@ -296,9 +296,25 @@ def main():
     expect(any(r[0] == "FAIL" for r in prod_smoke.all_skipped_fails(mostly)), "a run where most pages were skipped is red")
     few = [("pass", "speed: " + n, "1.0 s", 1.0) for n, _, _, _ in prod_smoke.SPEED_PAGES[:-1]] + [skipped[-1]]
     expect(not any(r[0] == "FAIL" for r in prod_smoke.all_skipped_fails(few)), "one restarting page among answering ones stays a skip")
-    # a refused connection is not a restart (it is also a dead tunnel): it fails, it is not skipped
+    # a refused connection is the tunnel itself gone: it fails, it is not skipped
     expect(not prod_smoke.restarting(prod_smoke.Fail("x: no answer from http://127.0.0.1:18081/ ([Errno 111] Connection refused)")),
            "a refused connection is not counted as a restart")
+    # a restart behind the tunnel: the far end closes the connection twice -> the page is skipped, not failed
+    import http.client as _hc
+    real_get_r = prod_smoke.get
+    real_sleep_r = prod_smoke._sleep
+
+    def closed(url, timeout=None):
+        raise _hc.RemoteDisconnected("Remote end closed connection without response")
+    prod_smoke.get, prod_smoke._sleep = closed, (lambda s: None)
+    try:
+        try:
+            prod_smoke.check_speed("http://x", "species images", "/images.do", 4.0)
+            expect(False, "a restart behind the tunnel is skipped")
+        except prod_smoke.Skip as e:
+            expect("restarting" in str(e), "a restart behind the tunnel (remote end closed) is skipped (" + str(e) + ")")
+    finally:
+        prod_smoke.get, prod_smoke._sleep = real_get_r, real_sleep_r
     expect(prod_smoke.restarting(prod_smoke.Fail("x: HTTP 502 for /")), "a 502 is counted as a restart")
     # AntWeb never answers before timing: red with its own line (SMOKE_SPEED_WAIT=0, the stand-in challenges every page)
     os.environ["SMOKE_SPEED_WAIT"] = "0"
