@@ -984,6 +984,9 @@ jobs:
       - name: Place corrections for TaxonWorks, the missing country and state from coordinates (tests/unit/test_place_corrections.py)
         run: python3 tests/unit/test_place_corrections.py
 
+      - name: Daily place step, report mode, without a database (tests/unit/test_place_daily.py)
+        run: python3 tests/unit/test_place_daily.py
+
       - name: Pheidole head export, plan and contact sheets without a database (tests/unit/test_pheidole_export.py)
         run: python3 tests/unit/test_pheidole_export.py
 
