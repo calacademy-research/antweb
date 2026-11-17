@@ -145,8 +145,10 @@ def check_speed(base, name, path, limit, tries=2, marker=None):
             if attempt + 1 < tries:
                 _sleep(RETRY_PAUSE)
             continue
-        if best is None or secs < best:
-            best, best_whole = secs, whole   # the pair of one read, never mixed across reads
+        # the better read is the one with the lower score, max(first bytes, whole / WHOLE_FACTOR): both numbers count
+        # (review of f655978), and the pair reported is of that one read
+        if best is None or max(secs, whole / WHOLE_FACTOR) < max(best, best_whole / WHOLE_FACTOR):
+            best, best_whole = secs, whole
         if best <= limit and best_whole <= WHOLE_FACTOR * limit:
             break
     if best is None and all_restarting and not _RESTART_SEEN:

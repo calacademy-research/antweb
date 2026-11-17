@@ -250,6 +250,16 @@ def main():
             expect(False, "a slow whole read fails")
         except prod_smoke.Fail as e:
             expect("whole read with transfer 20.0 s" in str(e) and "over 3 x" in str(e), "a whole read over 3 x the limit fails (" + str(e) + ")")
+        # a quick first byte with a stalled body, then a read that passes both: the second read counts
+        pairs2 = [(1.0, 20.0), (1.5, 8.0)]
+
+        def stall_then_ok(url, timeout=None):
+            ttfb, whole = pairs2.pop(0)
+            clock["t"] += whole
+            return prod_smoke.Resp(200, "page", url, {}, ttfb=ttfb)
+        prod_smoke.get = stall_then_ok
+        msg = prod_smoke.check_speed("http://x", "subfamily page", "/browse.do", 5.0)
+        expect(msg.startswith("1.5 s") and "8.0 s" in msg, "a read that passes both checks wins over a stalled one (" + msg + ")")
         # two reads: the message pairs the time and the whole read of the same read
         pairs = [(5.0, 5.2), (6.0, 14.0)]
 
