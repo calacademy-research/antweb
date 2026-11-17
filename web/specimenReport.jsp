@@ -293,8 +293,11 @@ if (sortedBy == null) {
             <!-- specimenReport.jsp search and specimen list -->
 <%          // no-photos mark exactly where the row says "No Images": a specimen with label images only is not marked (2026-10-30)
             boolean srNoPhotos = !thisChild.getHasImages()
-                && !(thisChild instanceof Specimen && ((Specimen) thisChild).getLabelImageCount() > 0); %>
-            <div class="specimen_layout<% if (srNoPhotos) { %> no_photos<% } %>">
+                && !(thisChild instanceof Specimen && ((Specimen) thisChild).getLabelImageCount() > 0);
+            // 2026-11-17: a red-flagged specimen keeps its photos but is not counted as imaged (2026-11-09 rule); the row
+            // says so to the tests (data-red-flag), which recount the header's "(M imaged)" from the rows.
+            boolean srRedFlag = thisChild instanceof Specimen && ((Specimen) thisChild).isRedFlagged(); %>
+            <div class="specimen_layout<% if (srNoPhotos) { %> no_photos<% } %>"<% if (srRedFlag) { %> data-red-flag="1"<% } %>>
                 <div class="sd_checkbox">
                 <% String indexNote = "";
                    if (LoginMgr.isAdmin(request)) indexNote = (srNumberOffset + index + 1) + ".&nbsp;&nbsp;";

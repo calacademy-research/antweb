@@ -124,7 +124,8 @@ if (childrenList != null) {
   Taxon[] childrenArray = new Taxon[childrenCount];
   childrenList.toArray(childrenArray);
   for (Taxon t : childrenArray) {
-	if (t != null && t.getHasImages()) {
+	// 2026-11-17: imaged = a photo of the ant and no red flag (2026-11-09 rule), as the genus page's indet line counts
+	if (org.calacademy.antweb.Specimen.countsAsImaged(t)) {
 	   ++imagedSpecimenCount;
 	}
   }
