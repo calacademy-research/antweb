@@ -974,8 +974,9 @@ public final class ListView {
         boolean hasColumn = org.calacademy.antweb.home.PlaceGenusCurationDb.typeAndKey(overview) != null;
         rows.withCuration(hasColumn, hasColumn ? org.calacademy.antweb.home.PlaceGenusCurationDb.read(connection, overview) : null);
         // Images: of the species of the genus in the view, those with an image of the ant anywhere in AntWeb (labels never
-        // count; Brian Fisher, 2026-11-02, 18:40). One query per 500 names (StatisticsDb.antImagedNames).
-        rows.withImaged(view.countByGenusOf(org.calacademy.antweb.home.StatisticsDb.antImagedNames(connection, view.taxonNames())));
+        // count; Brian Fisher, 2026-11-02, 18:40). From the imaged names kept in memory (StatisticsDb.antImagedNamesKept,
+        // 2026-11-17: asked once per 500 names, it was about 5 of the 7.6 s of the Myrmicinae page).
+        rows.withImaged(view.countByGenusOf(org.calacademy.antweb.home.StatisticsDb.antImagedNamesKept(connection, view.taxonNames())));
         return rows;
     }
 

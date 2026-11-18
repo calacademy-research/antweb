@@ -385,7 +385,8 @@ museum
      * in AntWeb, has a photo of the ant; label photos do not count, so a name with only label photos is unimaged; nor do
      * photos of red-flagged specimens (2026-11-09), so a name whose only photos are of red-flagged specimens is unimaged. Used by
      * taxonomicPage.do?isImaged=false (TaxaPage.findUnimaged) and, in Python, by the API's /unimagedGeolocaleTaxa
-     * (imagedTaxaSql in api/v3.1/api.py). Returns the names of the given ones that are imaged.
+     * (imagedTaxaSql in api/v3.1/api.py). Returns the names of the given ones that are imaged (read now; the list pages
+     * use antImagedNamesKept).
      */
     public static java.util.Set<String> antImagedNames(Connection connection, java.util.Collection<String> names) throws SQLException {
         java.util.Set<String> imaged = new java.util.HashSet<>();
@@ -402,6 +403,121 @@ museum
             }
         }
         return imaged;
+    }
+
+    /**
+     * The same rule as antImagedNames, from the imaged names kept in memory (allAntImagedNames: at most 10 minutes old,
+     * read again after every specimen upload is committed). For the genus rows' Images of the list pages (ListView.loadGenusRows),
+     * which ask for every name of a subfamily or a place. Returns the given names that are imaged.
+     */
+    public static java.util.Set<String> antImagedNamesKept(Connection connection, java.util.Collection<String> names) throws SQLException {
+        java.util.Set<String> all = allAntImagedNames(connection);
+        if (all == null) return antImagedNames(connection, names);   // the first read is still running: ask directly
+        java.util.Set<String> imaged = new java.util.HashSet<>();
+        for (String name : names) {
+            if (name != null && all.contains(name.toLowerCase(java.util.Locale.ROOT))) imaged.add(name);
+        }
+        return imaged;
+    }
+
+    /*
+     * Every imaged name, read with one query and kept in memory (2026-11-17, road map 11: the Myrmicinae page took
+     * 7.6 s, about 5 s of it in antImagedNames, which asked once per 500 names; the page-speed log, prod-speed.yaml,
+     * shows it). Read again when older than IMAGED_NAMES_MAX_AGE_MS, and after a specimen upload is committed
+     * (imagedNamesChanged, from SpecimenUploadJob after its commit) and after an image upload is finished
+     * (ImageUploadBatchAction.finish). A read that was going on when imagedNamesChanged
+     * came (it may not see the upload) is used but not kept as fresh (the change count, KeptNames; reviews of 53d28ae
+     * and 387bd55). Each read writes its count and time to the log (allAntImagedNames() read N names in
+     * M ms). Names are compared without case, as MySQL's "in" compared them. Other changes (the TaxonWorks upload of
+     * the daily update, image deletions, red flags set by hand) show within the 10 minutes.
+     */
+    static final long IMAGED_NAMES_MAX_AGE_MS = 10 * 60 * 1000L;
+
+    /** The kept names with when their read started and the change count they were read at, published together. */
+    private static final class KeptNames {
+        final java.util.Set<String> names;
+        final long readStarted;
+        final long generation;
+        KeptNames(java.util.Set<String> names, long readStarted, long generation) {
+            this.names = names;
+            this.readStarted = readStarted;
+            this.generation = generation;
+        }
+    }
+
+    private static final java.util.concurrent.atomic.AtomicReference<KeptNames> s_kept = new java.util.concurrent.atomic.AtomicReference<>();
+    private static final java.util.concurrent.atomic.AtomicLong s_imagedNamesGeneration = new java.util.concurrent.atomic.AtomicLong();
+    private static final java.util.concurrent.atomic.AtomicBoolean s_imagedNamesReading = new java.util.concurrent.atomic.AtomicBoolean(false);
+    /** After a failed read no request tries again for this long (review of 75c504e: a failing query was retried by every page). */
+    static final long IMAGED_NAMES_RETRY_MS = 60 * 1000L;
+    private static volatile long s_imagedNamesFailedAt = 0;
+
+    /**
+     * The imaged names (lower case): fresh when read at the current change count (imagedNamesChanged raises it) and
+     * less than IMAGED_NAMES_MAX_AGE_MS ago. One request at a time reads it again; the others use the previous set, or,
+     * before the first read is done, null: antImagedNamesKept then asks the database directly for its names, as before
+     * (reviews of 387bd55 and 7def4d5: after a restart every list page ran the whole query at once, and waiting would
+     * hold a pool connection each). An upload committed during a read is never lost (the change count of KeptNames).
+     */
+    static java.util.Set<String> allAntImagedNames(Connection connection) throws SQLException {
+        KeptNames kept = s_kept.get();
+        if (kept != null && fresh(kept)) return kept.names;
+        if (System.currentTimeMillis() - s_imagedNamesFailedAt < IMAGED_NAMES_RETRY_MS) {
+            return kept != null ? kept.names : null;   // a read failed less than a minute ago: no new attempt yet
+        }
+        if (!s_imagedNamesReading.compareAndSet(false, true)) {
+            return kept != null ? kept.names : null;   // another request reads it: the previous set, or null (ask directly)
+        }
+        try {
+            return readAndKeep(connection).names;
+        } catch (SQLException e) {
+            s_imagedNamesFailedAt = System.currentTimeMillis();
+            // the previous set, or before any read null: the page then asks the database directly (review of 6643156)
+            s_log.warn("allAntImagedNames() could not read the names" + (kept == null ? ", asked directly: " : " again, the previous ones are used: ") + e);
+            return kept == null ? null : kept.names;
+        } finally {
+            s_imagedNamesReading.set(false);
+        }
+    }
+
+    private static boolean fresh(KeptNames kept) {
+        return kept.generation == s_imagedNamesGeneration.get()
+            && System.currentTimeMillis() - kept.readStarted < IMAGED_NAMES_MAX_AGE_MS;
+    }
+
+    private static KeptNames readAndKeep(Connection connection) throws SQLException {
+        long generation = s_imagedNamesGeneration.get();
+        long started = System.currentTimeMillis();
+        java.util.Set<String> read = java.util.Collections.unmodifiableSet(readAntImagedNames(connection));
+        KeptNames kept = new KeptNames(read, started, generation);   // stale at once if an upload was committed meanwhile
+        s_kept.set(kept);
+        s_log.info("allAntImagedNames() read " + read.size() + " imaged names in " + (System.currentTimeMillis() - started) + " ms");
+        return kept;
+    }
+
+    /** One query: every name with a photo of the ant on a specimen that is not red-flagged, lower case. */
+    static java.util.Set<String> readAntImagedNames(Connection connection) throws SQLException {
+        java.util.Set<String> names = new java.util.HashSet<>();
+        try (PreparedStatement stmt = connection.prepareStatement(ANT_IMAGED_NAMES_SQL);
+             ResultSet r = stmt.executeQuery()) {
+            while (r.next()) {
+                String n = r.getString(1);
+                if (n != null) names.add(n.toLowerCase(java.util.Locale.ROOT));
+            }
+        }
+        return names;
+    }
+
+    /** The imaged names are read again by the next request that needs them (after a specimen upload is committed). */
+    public static void imagedNamesChanged() {
+        s_imagedNamesGeneration.incrementAndGet();
+    }
+
+    /** For tests, whose data changes between tests: forget the kept names. */
+    public static void forgetImagedNames() {
+        s_kept.set(null);
+        s_imagedNamesFailedAt = 0;
+        s_imagedNamesReading.set(false);
     }
 
     /** Names with a photo of the ant anywhere in AntWeb (antImagedNames; add "and s.taxon_name in (...)"). */

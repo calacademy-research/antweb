@@ -52,6 +52,7 @@ public class PlaceGenusCurationDbTest extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
+        org.calacademy.antweb.home.StatisticsDb.forgetImagedNames();   // the genus rows' Images are kept in memory (2026-11-17)
         connection = connect();
         fill(connection);
         exec("alter table taxon add column subspecies varchar(64)");   // as the live table

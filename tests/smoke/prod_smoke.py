@@ -107,8 +107,8 @@ WHOLE_FACTOR = 3   # the whole read (transfer included) may take up to 3 x the p
 def timed_page(base, name, path, timeout=None, marker=None):
     """Seconds AntWeb took to answer one read of the page: until its first bytes arrive (the page's database work is
     done by then). The whole read, transfer through the tunnel to the GitHub runner included, goes to the summary only:
-    Tomcat sends pages uncompressed, so a large page (the Myrmicinae page) took 7.7 s through the tunnel on 2026-11-17
-    for about 2 s of AntWeb's own time. Work done while the JSP renders comes after the first bytes, so the whole read
+    Tomcat sends pages uncompressed, so a large page's transfer to the runner can add to its time (on 2026-11-17 it did
+    not explain the Myrmicinae page's 7.7 s: 7.6 s of it was AntWeb's own time, the genus rows' Images, road map 11). Work done while the JSP renders comes after the first bytes, so the whole read
     is judged too, against WHOLE_FACTOR x the limit (review of 4bf60a9). The page must answer as check_page wants: 200, no error page, its marker text,
     so a quick "not found" page never passes. Returns (AntWeb's time, the whole read)."""
     t = _now()

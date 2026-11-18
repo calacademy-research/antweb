@@ -419,6 +419,8 @@ public final class ImageUploadBatchAction extends AntwebAction {
             // Only the request that completes the upload sends the email (a second finish at the same moment does not).
             if (imageUploadDb.completeImageUpload(imageUpload)) {
                 if (count > 0) new ImageUploaderAction().writeRecentImages(connection);
+                // the list pages' imaged names are read again: the new photos count at once (2026-11-17)
+                if (count > 0) org.calacademy.antweb.home.StatisticsDb.imagedNamesChanged();
                 int notSaved = countNotSaved(connection, batchId, saved);
                 s_log.info("finish() batch:" + batchId + " login:" + accessLogin.getId() + " images:" + count + " notSaved:" + notSaved);
                 // Images saved: files whose four sizes and image row were made. image_count also counts
