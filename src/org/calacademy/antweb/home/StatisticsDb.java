@@ -412,6 +412,7 @@ museum
      */
     public static java.util.Set<String> antImagedNamesKept(Connection connection, java.util.Collection<String> names) throws SQLException {
         java.util.Set<String> all = allAntImagedNames(connection);
+        if (all == null) return antImagedNames(connection, names);   // the first read is still running: ask directly
         java.util.Set<String> imaged = new java.util.HashSet<>();
         for (String name : names) {
             if (name != null && all.contains(name.toLowerCase(java.util.Locale.ROOT))) imaged.add(name);
@@ -423,7 +424,8 @@ museum
      * Every imaged name, read with one query and kept in memory (2026-11-17, road map 11: the Myrmicinae page took
      * 7.6 s, about 5 s of it in antImagedNames, which asked once per 500 names; the page-speed log, prod-speed.yaml,
      * shows it). Read again when older than IMAGED_NAMES_MAX_AGE_MS, and after a specimen upload is committed
-     * (imagedNamesChanged, from SpecimenUploadJob after its commit). A read that was going on when imagedNamesChanged
+     * (imagedNamesChanged, from SpecimenUploadJob after its commit) and after an image upload is finished
+     * (ImageUploadBatchAction.finish). A read that was going on when imagedNamesChanged
      * came (it may not see the upload) is used but not kept as fresh (the change count, KeptNames; reviews of 53d28ae
      * and 387bd55). Each read writes its count and time to the log (allAntImagedNames() read N names in
      * M ms). Names are compared without case, as MySQL's "in" compared them. Other changes (the TaxonWorks upload of
@@ -446,29 +448,24 @@ museum
     private static final java.util.concurrent.atomic.AtomicReference<KeptNames> s_kept = new java.util.concurrent.atomic.AtomicReference<>();
     private static final java.util.concurrent.atomic.AtomicLong s_imagedNamesGeneration = new java.util.concurrent.atomic.AtomicLong();
     private static final java.util.concurrent.atomic.AtomicBoolean s_imagedNamesReading = new java.util.concurrent.atomic.AtomicBoolean(false);
-    private static final Object s_firstRead = new Object();
 
     /**
      * The imaged names (lower case): fresh when read at the current change count (imagedNamesChanged raises it) and
-     * less than IMAGED_NAMES_MAX_AGE_MS ago. A stale set is read again by one request while the others use it; the very
-     * first read is made by one request while the others wait for it (review of 387bd55: after a restart every list
-     * page ran the whole query at once). The change count is checked against the one the read started with, never
-     * written after the check, so an upload committed during a read is never lost.
+     * less than IMAGED_NAMES_MAX_AGE_MS ago. One request at a time reads it again; the others use the previous set, or,
+     * before the first read is done, null: antImagedNamesKept then asks the database directly for its names, as before
+     * (reviews of 387bd55 and 7def4d5: after a restart every list page ran the whole query at once, and waiting would
+     * hold a pool connection each). An upload committed during a read is never lost (the change count of KeptNames).
      */
     static java.util.Set<String> allAntImagedNames(Connection connection) throws SQLException {
         KeptNames kept = s_kept.get();
         if (kept != null && fresh(kept)) return kept.names;
-        if (kept == null) {
-            synchronized (s_firstRead) {
-                kept = s_kept.get();
-                if (kept != null) return kept.names;
-                return readAndKeep(connection).names;
-            }
+        if (!s_imagedNamesReading.compareAndSet(false, true)) {
+            return kept != null ? kept.names : null;   // another request reads it: the previous set, or null (ask directly)
         }
-        if (!s_imagedNamesReading.compareAndSet(false, true)) return kept.names;   // another request reads it
         try {
             return readAndKeep(connection).names;
         } catch (SQLException e) {
+            if (kept == null) throw e;
             s_log.warn("allAntImagedNames() could not read the names again, the previous ones are used: " + e);
             return kept.names;
         } finally {
