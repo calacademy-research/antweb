@@ -429,7 +429,7 @@ museum
      * came (it may not see the upload) is used but not kept as fresh (the change count, KeptNames; reviews of 53d28ae
      * and 387bd55). Each read writes its count and time to the log (allAntImagedNames() read N names in
      * M ms). Names are compared without case, as MySQL's "in" compared them. Other changes (the TaxonWorks upload of
-     * the daily update, image uploads, red flags set by hand) show within the 10 minutes.
+     * the daily update, image deletions, red flags set by hand) show within the 10 minutes.
      */
     static final long IMAGED_NAMES_MAX_AGE_MS = 10 * 60 * 1000L;
 
@@ -465,9 +465,9 @@ museum
         try {
             return readAndKeep(connection).names;
         } catch (SQLException e) {
-            if (kept == null) throw e;
-            s_log.warn("allAntImagedNames() could not read the names again, the previous ones are used: " + e);
-            return kept.names;
+            // the previous set, or before any read null: the page then asks the database directly (review of 6643156)
+            s_log.warn("allAntImagedNames() could not read the names" + (kept == null ? ", asked directly: " : " again, the previous ones are used: ") + e);
+            return kept == null ? null : kept.names;
         } finally {
             s_imagedNamesReading.set(false);
         }
