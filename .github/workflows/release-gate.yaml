@@ -79,12 +79,14 @@ jobs:
           REPO: ${{ github.repository }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          set -uo pipefail
+          set +e -uo pipefail   # a closed gate exits 1: go on with the next PR
+          # --known-failures is newer than the gate on master until this workflow's own PR is merged
+          kf=""; python3 tools/release/gate.py --help | grep -q -- --known-failures && kf="--known-failures /tmp/known.toml"
           for pr in $(gh api "repos/$REPO/pulls?state=open&base=master&per_page=100" --jq '.[].number'); do
             head=$(gh api "repos/$REPO/pulls/$pr" --jq .head.sha)
             gh api -H "Accept: application/vnd.github.raw" "repos/$REPO/contents/tests/e2e/known-failures.toml?ref=$head" > /tmp/known.toml 2>/dev/null \
               || cp tests/e2e/known-failures.toml /tmp/known.toml
-            python3 tools/release/gate.py "$pr" --known-failures /tmp/known.toml > /tmp/gate.txt 2>&1
+            python3 tools/release/gate.py "$pr" $kf > /tmp/gate.txt 2>&1
             code=$?
             cat /tmp/gate.txt
             { echo "### PR #$pr"; echo '```'; cat /tmp/gate.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
