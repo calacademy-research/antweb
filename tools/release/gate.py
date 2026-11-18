@@ -94,6 +94,15 @@ NIGHTLY_LABEL = "nightly-checked"
 
 # ---- the checks, as plain functions (tests/unit/test_release_gate.py) ----
 
+def label_is_for_head(label_events, label, head_date):
+    """True when the label was last added at or after the head commit's date: a label put on an earlier commit does
+    not pass check 4 for a newer one (review of ae01dd6), even if the workflow could not remove it. Dates are ISO 8601
+    UTC strings as the GitHub API gives them."""
+    added = [e.get("created_at") or "" for e in label_events
+             if e.get("event") == "labeled" and (e.get("label") or {}).get("name") == label]
+    return bool(added) and max(added) >= head_date
+
+
 def no_site_code(files):
     """True when every changed file is outside the site (NO_SITE_PATHS): staging has nothing to run."""
     return bool(files) and all(any(fnmatch.fnmatch(f, p) for p in NO_SITE_PATHS) for f in files)
@@ -369,7 +378,10 @@ def main(argv=None):
 
     nightly = nightly_files(files)
     if NIGHTLY_LABEL in [l.get("name") for l in pr.get("labels") or []]:
-        args.nightly_checked = True   # the label: Claude read the staging nightly of this head (removed on a new commit)
+        # the label: Claude read the staging nightly of this head; it counts only if put on after the head's commit
+        head_date = gh(f"repos/{REPO}/commits/{head}")["commit"]["committer"]["date"]
+        if label_is_for_head(gh_all(f"repos/{REPO}/issues/{args.pr}/events?per_page=100"), NIGHTLY_LABEL, head_date):
+            args.nightly_checked = True
     check(4, "nightly", not nightly or args.nightly_checked,
           "no nightly code changed" if not nightly else
           ("nightly checked (--nightly-checked)" if args.nightly_checked else

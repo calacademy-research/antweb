@@ -4,11 +4,14 @@ name: Release gate
 # "release-gate" on the head of every open pull request, green when GATE OPEN. Required on master since Brian's yes of
 # 2026-11-17 (a repository setting). Re-evaluated when anything the checks read changes: a push or label or text change
 # on a PR, a comment (the Claude review), a finished Tests, End-to-end, Deploy Staging or Claude review run, and every
-# hour (checks 6 and 8 change with the time of day). Every open PR is evaluated each time (there are few).
+# hour and at 04:46 Pacific (checks 6 and 8 change with the time of day: a status stays as written until the next run,
+# so Claude still runs the gate by hand at merge time). Every open PR is evaluated each time (there are few).
 # Read-only except for the statuses it writes and the nightly-checked label it removes when a PR gets a new commit.
-# The gate's code comes from master, the known-failures list from each PR's head (a PR may add an entry).
+# pull_request_target, not pull_request: the workflow file and the gate's code always come from master, so a PR cannot
+# change what writes its own status (review of ae01dd6). No PR code runs here; the known-failures list is read from
+# each PR's head as data (a PR may add an entry).
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, labeled, unlabeled, edited]
   issue_comment:
     types: [created, edited]
@@ -17,6 +20,7 @@ on:
     types: [completed]
   schedule:
     - cron: "7 * * * *"
+    - cron: "46 11,12 * * *"   # 04:46 Pacific in summer and in winter: the daily update window opens at 04:45
   workflow_dispatch:
 
 concurrency:
@@ -41,7 +45,7 @@ jobs:
           persist-credentials: false
 
       - name: A new commit drops the nightly-checked label (check 4 is for one commit)
-        if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
+        if: github.event_name == 'pull_request_target' && github.event.action == 'synchronize'
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
@@ -50,6 +54,7 @@ jobs:
       # Check 8 reads dailyUpdate.do?format=json through an SSH tunnel to Tomcat's local port on the production server
       # (Cloudflare would challenge a robot). Same key and pinned host keys as Deploy. Without the tunnel check 8 fails.
       - name: Tunnel to production (read-only use)
+        continue-on-error: true   # without it check 8 fails as "unknown": every PR still gets its (red) status
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
@@ -96,6 +101,8 @@ jobs:
               state=failure; desc=$(grep -m1 ' FAIL ' /tmp/gate.txt | sed 's/  */ /g' | cut -c1-138)
               [ -n "$desc" ] || desc="GATE CLOSED (the gate did not finish: see the run)"
             fi
+            # a push while the gate ran: the next run (the push starts one) writes the new head's status
+            [ "$(gh api "repos/$REPO/pulls/$pr" --jq .head.sha)" = "$head" ] || { echo "PR #$pr got a new commit: no status"; continue; }
             gh api -X POST "repos/$REPO/statuses/$head" -f state="$state" -f context=release-gate \
               -f description="$desc" -f target_url="$RUN_URL" >/dev/null
           done

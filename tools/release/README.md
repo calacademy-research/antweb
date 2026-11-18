@@ -33,7 +33,14 @@ finished Tests, End-to-end tests, Deploy Staging or Claude review run, and every
   passes a PR that changes only files outside the site (`NO_SITE_PATHS`: docs, unit tests, the production smoke and
   speed checks, the release tools, this workflow).
 - Check 4: Claude adds the label `nightly-checked` once the staging nightly ran the PR's head clean (morning
-  compute.log and tests read). The workflow removes it when the PR gets a new commit.
+  compute.log and tests read). It counts only when added after the head's commit (`label_is_for_head`); the workflow
+  also removes it when the PR gets a new commit.
+- Checks 6 and 8 depend on the time: a status stays as written until the next run (hourly, and at 04:46 Pacific),
+  so Claude still runs the gate by hand at merge time.
+- The workflow runs on `pull_request_target`: its file and the gate's code come from master, so a PR cannot change
+  what writes its own status. No PR code runs in it.
+- Check 2 and the staging procedure: the PR is staged as `git checkout --detach <head>; git merge -s ours
+  origin/staging`, a commit with the head's tree; the full e2e run is for the PR head (label full-e2e).
 - Check 8 reads `dailyUpdate.do?format=json` through an SSH tunnel to production (the Deploy key, pinned host keys).
 - The gate's code comes from master; the known-failures list from each PR's head, so a PR may add an entry.
 

@@ -165,6 +165,20 @@ def test_staged_by_tree():
     assert gate.staged_by_tree("T-head", [], trees.get) is None
 
 
+def test_label_is_for_head():
+    ev = lambda kind, name, at: {"event": kind, "label": {"name": name}, "created_at": at}
+    head = "2026-11-17T20:00:00Z"
+    assert gate.label_is_for_head([ev("labeled", "nightly-checked", "2026-11-18T15:30:00Z")], "nightly-checked", head)
+    # put on before the head's commit (an earlier commit's label that was not removed): not for this head
+    assert not gate.label_is_for_head([ev("labeled", "nightly-checked", "2026-11-17T19:00:00Z")], "nightly-checked", head)
+    # the latest time it was added counts; other labels and unlabel events do not
+    assert gate.label_is_for_head([ev("labeled", "nightly-checked", "2026-11-17T19:00:00Z"),
+                                   ev("unlabeled", "nightly-checked", "2026-11-17T21:00:00Z"),
+                                   ev("labeled", "nightly-checked", "2026-11-18T15:00:00Z")], "nightly-checked", head)
+    assert not gate.label_is_for_head([ev("labeled", "full-e2e", "2026-11-18T15:00:00Z")], "nightly-checked", head)
+    assert not gate.label_is_for_head([], "nightly-checked", head)
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
