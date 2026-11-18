@@ -1116,7 +1116,6 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         new ProjTaxonCountDb(getConnection()).allAntwebImageCount();
         finishRegenerateAllAntweb();
         new ProjectDb(getConnection()).updateCounts("allantwebants");      // Project counts
-        StatisticsDb.imagedNamesChanged();   // the imaged names kept in memory are read again (2026-11-17)
 
         s_log.info("regenerateAllAntweb() completed.");
 

@@ -18,7 +18,8 @@ import static test.org.calacademy.antweb.util.NumbersTestDb.*;
  * pheidole a x no photo.
  *
  *   - the same answer as the live rule (antImagedNames), names compared without case;
- *   - a new photo is not seen until the names are read again: after a specimen upload (imagedNamesChanged) at once;
+ *   - a new photo is not seen until the names are read again: after a specimen upload is committed
+ *     (imagedNamesChanged, SpecimenUploadJob) at once;
  *   - photos of a red-flagged specimen never count (2026-11-09), in the kept names too.
  *
  * Runs in CI against MySQL 8.4 (.github/workflows/tests.yaml); ANTWEB_TEST_DB_URL overrides.
@@ -62,7 +63,7 @@ public class ImagedNamesKeptDbTest extends TestCase {
         assertFalse("kept names: read again only when old or after an upload",
             StatisticsDb.antImagedNamesKept(connection, Arrays.asList(HB)).contains(HB));
         assertTrue("the live rule sees it at once", StatisticsDb.antImagedNames(connection, Arrays.asList(HB)).contains(HB));
-        StatisticsDb.imagedNamesChanged();   // ProjTaxonDb.regenerateAllAntweb, at the end of every specimen upload
+        StatisticsDb.imagedNamesChanged();   // SpecimenUploadJob, after the upload is committed
         assertTrue(StatisticsDb.antImagedNamesKept(connection, Arrays.asList(HB)).contains(HB));
     }
 

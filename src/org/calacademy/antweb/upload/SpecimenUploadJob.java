@@ -118,6 +118,8 @@ public final class SpecimenUploadJob implements BackgroundJobs.Work {
             uploadDetails.finish(accessLogin, null, connection);
 
             connection.commit();
+            // the imaged names the list pages keep in memory are read again, now that the upload is committed (2026-11-17)
+            org.calacademy.antweb.home.StatisticsDb.imagedNamesChanged();
             notice.complete = true;
             notice.uploadId = uploadDetails.getReportUploadId();   // the upload_id recorded in the upload table
             AntwebUtil.logCount();

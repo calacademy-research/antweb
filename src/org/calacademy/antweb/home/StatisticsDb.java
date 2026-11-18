@@ -407,7 +407,7 @@ museum
 
     /**
      * The same rule as antImagedNames, from the imaged names kept in memory (allAntImagedNames: at most 10 minutes old,
-     * read again after every specimen upload). For the genus rows' Images of the list pages (ListView.loadGenusRows),
+     * read again after every specimen upload is committed). For the genus rows' Images of the list pages (ListView.loadGenusRows),
      * which ask for every name of a subfamily or a place. Returns the given names that are imaged.
      */
     public static java.util.Set<String> antImagedNamesKept(Connection connection, java.util.Collection<String> names) throws SQLException {
@@ -422,14 +422,16 @@ museum
     /*
      * Every imaged name, read with one query and kept in memory (2026-11-17, road map 11: the Myrmicinae page took
      * 7.6 s, about 5 s of it in antImagedNames, which asked once per 500 names; the page-speed log, prod-speed.yaml,
-     * shows it). Read again when older than IMAGED_NAMES_MAX_AGE_MS, and at once after a specimen upload rebuilds the
-     * AntWeb-wide list (imagedNamesChanged, from ProjTaxonDb.regenerateAllAntweb). While one request reads it again,
-     * the others use the previous set; only the very first read is waited for. Names are compared without case, as
-     * MySQL's "in" compared them.
+     * shows it). Read again when older than IMAGED_NAMES_MAX_AGE_MS, and after a specimen upload is committed
+     * (imagedNamesChanged, from SpecimenUploadJob after its commit). A read that was going on when imagedNamesChanged
+     * came (it may not see the upload) is used but not kept as fresh (s_imagedNamesGeneration; review of 53d28ae).
+     * While one request reads again, the others use the previous set; a failed read keeps the previous set. Names are
+     * compared without case, as MySQL's "in" compared them.
      */
     static final long IMAGED_NAMES_MAX_AGE_MS = 10 * 60 * 1000L;
     private static volatile java.util.Set<String> s_imagedNames = null;
     private static volatile long s_imagedNamesAt = 0;
+    private static final java.util.concurrent.atomic.AtomicLong s_imagedNamesGeneration = new java.util.concurrent.atomic.AtomicLong();
     private static final java.util.concurrent.atomic.AtomicBoolean s_imagedNamesReading = new java.util.concurrent.atomic.AtomicBoolean(false);
 
     /** The imaged names (lower case), at most IMAGED_NAMES_MAX_AGE_MS old, or being read again by another request. */
@@ -437,11 +439,14 @@ museum
         java.util.Set<String> current = s_imagedNames;
         if (current != null && System.currentTimeMillis() - s_imagedNamesAt < IMAGED_NAMES_MAX_AGE_MS) return current;
         if (current != null && !s_imagedNamesReading.compareAndSet(false, true)) return current;   // another request reads it
+        long generation = s_imagedNamesGeneration.get();
+        long started = System.currentTimeMillis();
         try {
-            java.util.Set<String> read = readAntImagedNames(connection);
-            s_imagedNames = java.util.Collections.unmodifiableSet(read);
-            s_imagedNamesAt = System.currentTimeMillis();
-            return s_imagedNames;
+            java.util.Set<String> read = java.util.Collections.unmodifiableSet(readAntImagedNames(connection));
+            s_imagedNames = read;
+            // kept as fresh only when no upload was committed while it was read; its age counts from the start of the read
+            s_imagedNamesAt = s_imagedNamesGeneration.get() == generation ? started : 0;
+            return read;
         } catch (SQLException e) {
             if (current == null) throw e;
             s_log.warn("allAntImagedNames() could not read the names again, the previous ones are used: " + e);
@@ -464,8 +469,9 @@ museum
         return names;
     }
 
-    /** The imaged names are read again by the next request that needs them (after a specimen upload). */
+    /** The imaged names are read again by the next request that needs them (after a specimen upload is committed). */
     public static void imagedNamesChanged() {
+        s_imagedNamesGeneration.incrementAndGet();
         s_imagedNamesAt = 0;
     }
 
