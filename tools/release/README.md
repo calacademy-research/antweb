@@ -20,5 +20,23 @@ After the merge: production deployed this commit (Deploy workflow, header commit
 run, and the next production nightly ran clean including set 5 (compute.log).
 
 Decided by Brian Fisher, 2026-11-05 (claude/antweb-release-gate-draft.md in the project): Claude runs the gate by
-hand for a week; then it becomes a required check on master (a repository setting, Brian's yes needed).
+hand for a week; then it becomes a required check on master (a repository setting; Brian's yes 2026-11-17).
+
+## The gate as a GitHub check (2026-11-17)
+
+`.github/workflows/release-gate.yaml` runs the gate for every open pull request and writes the commit status
+`release-gate` on its head: green for GATE OPEN, red with the first failing check otherwise; the run's summary has
+each PR's full output. It runs again on a push, label or text change of a PR, a comment (the Claude review), a
+finished Tests, End-to-end tests, Deploy Staging or Claude review run, and every hour at :07.
+
+- Check 2 finds the staging deploy of a PR staged as a `merge -s ours` commit by its files (the head's tree), and
+  passes a PR that changes only files outside the site (`NO_SITE_PATHS`: docs, unit tests, the production smoke and
+  speed checks, the release tools, this workflow).
+- Check 4: Claude adds the label `nightly-checked` once the staging nightly ran the PR's head clean (morning
+  compute.log and tests read). The workflow removes it when the PR gets a new commit.
+- Check 8 reads `dailyUpdate.do?format=json` through an SSH tunnel to production (the Deploy key, pinned host keys).
+- The gate's code comes from master; the known-failures list from each PR's head, so a PR may add an entry.
+
+By hand, the gate still runs as before (`python3 tools/release/gate.py N`), with `--nightly-checked` and
+`--daily-update-checked` when those were read by hand.
 Tests: tests/unit/test_release_gate.py.

@@ -1,0 +1,99 @@
+name: Release gate
+
+# The release gate (tools/release/gate.py, decided by Brian Fisher 2026-11-05) as a GitHub check: commit status
+# "release-gate" on the head of every open pull request, green when GATE OPEN. Required on master since Brian's yes of
+# 2026-11-17 (a repository setting). Re-evaluated when anything the checks read changes: a push or label or text change
+# on a PR, a comment (the Claude review), a finished Tests, End-to-end, Deploy Staging or Claude review run, and every
+# hour (checks 6 and 8 change with the time of day). Every open PR is evaluated each time (there are few).
+# Read-only except for the statuses it writes and the nightly-checked label it removes when a PR gets a new commit.
+# The gate's code comes from master, the known-failures list from each PR's head (a PR may add an entry).
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled, edited]
+  issue_comment:
+    types: [created, edited]
+  workflow_run:
+    workflows: ["Tests", "End-to-end tests", "Deploy Staging", "Claude review"]
+    types: [completed]
+  schedule:
+    - cron: "7 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: release-gate
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+  statuses: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          persist-credentials: false
+
+      - name: A new commit drops the nightly-checked label (check 4 is for one commit)
+        if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh api -X DELETE "repos/${{ github.repository }}/issues/$PR/labels/nightly-checked" >/dev/null 2>&1 || true
+
+      # Check 8 reads dailyUpdate.do?format=json through an SSH tunnel to Tomcat's local port on the production server
+      # (Cloudflare would challenge a robot). Same key and pinned host keys as Deploy. Without the tunnel check 8 fails.
+      - name: Tunnel to production (read-only use)
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          # Host key check, as the deploys do: production must answer with a key pinned in .github/known_hosts.
+          ssh-keyscan -t ed25519,ecdsa,rsa "$SSH_HOST" 2>/dev/null | awk '{print $2" "$3}' | sort -u > /tmp/scanned
+          cut -d" " -f2,3 .github/known_hosts | sort -u > /tmp/pinned
+          if [ -z "$(comm -12 /tmp/scanned /tmp/pinned)" ]; then
+            echo "::error::Production did not answer with a pinned host key (.github/known_hosts). Check stopped."
+            exit 1
+          fi
+          comm -12 /tmp/scanned /tmp/pinned | sed "s|^|$SSH_HOST |" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          ssh -o StrictHostKeyChecking=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ConnectTimeout=30 \
+            -f -N -L 18081:127.0.0.1:8081 "$SSH_USER@$SSH_HOST"
+          rm -f ~/.ssh/id_rsa
+          echo "ANTWEB_DAILY_UPDATE_URL=http://127.0.0.1:18081/dailyUpdate.do?format=json" >> "$GITHUB_ENV"
+
+      - name: Gate every open pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -uo pipefail
+          for pr in $(gh api "repos/$REPO/pulls?state=open&base=master&per_page=100" --jq '.[].number'); do
+            head=$(gh api "repos/$REPO/pulls/$pr" --jq .head.sha)
+            gh api -H "Accept: application/vnd.github.raw" "repos/$REPO/contents/tests/e2e/known-failures.toml?ref=$head" > /tmp/known.toml 2>/dev/null \
+              || cp tests/e2e/known-failures.toml /tmp/known.toml
+            python3 tools/release/gate.py "$pr" --known-failures /tmp/known.toml > /tmp/gate.txt 2>&1
+            code=$?
+            cat /tmp/gate.txt
+            { echo "### PR #$pr"; echo '```'; cat /tmp/gate.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            if [ "$code" = 0 ]; then
+              state=success; desc="GATE OPEN"
+            else
+              state=failure; desc=$(grep -m1 ' FAIL ' /tmp/gate.txt | sed 's/  */ /g' | cut -c1-138)
+              [ -n "$desc" ] || desc="GATE CLOSED (the gate did not finish: see the run)"
+            fi
+            gh api -X POST "repos/$REPO/statuses/$head" -f state="$state" -f context=release-gate \
+              -f description="$desc" -f target_url="$RUN_URL" >/dev/null
+          done

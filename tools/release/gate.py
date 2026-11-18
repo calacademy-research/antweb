@@ -8,11 +8,14 @@ and pastes the result into the pull request. The checks (decided by Brian Fisher
 tools/release/README.md):
 
  1. tests     The "Tests" workflow (compile, unit tests) passed on the PR head.
- 2. staging   The PR head was deployed to staging ("Deploy Staging" passed for that commit) and the FULL end-to-end
-              run for that commit finished; a failed test is allowed only if check 3 lists it.
+ 2. staging   The PR head was deployed to staging ("Deploy Staging" passed for that commit, or for the staging commit
+              with the same files: staged_by_tree) and the FULL end-to-end run for that commit finished; a failed test
+              is allowed only if check 3 lists it. A PR that changes only files outside the site (NO_SITE_PATHS:
+              docs, unit tests, production smoke and speed checks, release tools) needs no staging run.
  3. known     Every failure of that run is in tests/e2e/known-failures.toml, and no entry there has expired.
- 4. nightly   A PR that changes nightly code (NIGHTLY_PATHS) has run through a staging nightly: --nightly-checked
-              says Claude read the morning compute.log for this commit and the morning tests passed.
+ 4. nightly   A PR that changes nightly code (NIGHTLY_PATHS) has run through a staging nightly: --nightly-checked,
+              or the PR label nightly-checked, says Claude read the morning compute.log for this commit and the morning
+              tests passed.
  5. review    The latest Claude review comment is for the head commit and starts "No blocking issues";
               --no-review "reason" when there is none (for example, the review credit is used up).
  6. window    Not between 04:45 and 08:15 Pacific (the daily update).
@@ -76,7 +79,34 @@ NIGHTLY_PATHS = [
 ]
 
 
+# Files that are not part of the site: a PR that changes only these needs no staging run (check 2). Production smoke
+# and speed checks, unit tests, docs and the release tools run on GitHub or by hand, never on the site. tests/e2e is
+# not here: e2e tests run against staging.
+NO_SITE_PATHS = [
+    "docs/*", "*.md", "release-notes/*", "tools/release/*", "tests/unit/*", "tests/smoke/*",
+    ".github/workflows/prod-*.yaml", ".github/workflows/release-gate.yaml",
+]
+
+# The label Claude puts on a PR once the staging nightly ran its head clean (check 4); the gate workflow removes it
+# when the PR gets a new commit.
+NIGHTLY_LABEL = "nightly-checked"
+
+
 # ---- the checks, as plain functions (tests/unit/test_release_gate.py) ----
+
+def no_site_code(files):
+    """True when every changed file is outside the site (NO_SITE_PATHS): staging has nothing to run."""
+    return bool(files) and all(any(fnmatch.fnmatch(f, p) for p in NO_SITE_PATHS) for f in files)
+
+
+def staged_by_tree(head_tree, staging_runs, tree_of):
+    """The successful Deploy Staging run whose commit has the PR head's tree, or None. Claude pushes a PR to staging as
+    a "merge -s ours" commit on top of the staging branch: a different commit with the same files (the PR head's tree),
+    so the run is never for the head's own sha (2026-11-17: check 2 was closed by hand on every PR)."""
+    for run in sorted(staging_runs, key=lambda r: r.get("created_at") or "", reverse=True):
+        if run.get("conclusion") == "success" and tree_of(run["head_sha"]) == head_tree:
+            return run
+    return None
 
 def window_closed(now):
     """True between 04:45 and 08:15 Pacific, when the nightly run works and nothing is merged."""
@@ -290,6 +320,8 @@ def main(argv=None):
                     help="the morning compute.log and morning tests were read for this commit (check 4); also: "
                          "dailyUpdate.do was read by hand and the daily update is not running (check 8)")
     ap.add_argument("--no-review", metavar="REASON", help="no Claude review, and why (check 5)")
+    ap.add_argument("--known-failures", metavar="FILE", help="the known-failures list to read (the gate workflow passes "
+                    "the PR head's copy; default tests/e2e/known-failures.toml of this checkout)")
     args = ap.parse_args(argv)
 
     pr = gh(f"repos/{REPO}/pulls/{args.pr}")
@@ -309,10 +341,17 @@ def main(argv=None):
           f"Tests {tests[-1]['conclusion'] or tests[-1]['status']}" if tests else "no Tests run for the head")
 
     deploys = runs_for(head, "Deploy Staging")
+    deployed = bool(deploys) and deploys[-1]["conclusion"] == "success"
+    if not deployed:
+        tree = lambda sha: gh(f"repos/{REPO}/commits/{sha}")["commit"]["tree"]["sha"]
+        staging_runs = gh(f"repos/{REPO}/actions/workflows/deploy-staging.yaml/runs?branch=staging&per_page=30")["workflow_runs"]
+        deployed = staged_by_tree(tree(head), staging_runs, tree) is not None
     run, notes = full_e2e_run(head)
     failed = failed_tests(notes) if run else set()
-    entries = read_known_failures()
-    if not deploys or deploys[-1]["conclusion"] != "success":
+    entries = read_known_failures(Path(args.known_failures)) if args.known_failures else read_known_failures()
+    if no_site_code(files):
+        check(2, "staging", True, "no site code changed (" + ", ".join(sorted({Path(f).parts[0] for f in files})[:4]) + "): no staging run needed")
+    elif not deployed:
         check(2, "staging", False, "the head was not deployed to staging")
     elif not run:
         check(2, "staging", False, "no finished full e2e run for the head (add the full-e2e label)")
@@ -329,6 +368,8 @@ def main(argv=None):
           or f"{len(entries)} known failures listed, none expired")
 
     nightly = nightly_files(files)
+    if NIGHTLY_LABEL in [l.get("name") for l in pr.get("labels") or []]:
+        args.nightly_checked = True   # the label: Claude read the staging nightly of this head (removed on a new commit)
     check(4, "nightly", not nightly or args.nightly_checked,
           "no nightly code changed" if not nightly else
           ("nightly checked (--nightly-checked)" if args.nightly_checked else

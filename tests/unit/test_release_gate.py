@@ -141,6 +141,30 @@ def test_daily_check():
         assert "nightly" not in gate.daily_check(fetch, by_hand)[1].replace("--daily-update-checked", "")
 
 
+def test_no_site_code():
+    # only docs, unit tests, the production checks, the release tools: no staging run needed (check 2)
+    assert gate.no_site_code(["tests/smoke/prod_smoke.py", ".github/workflows/prod-speed.yaml", "docs/runbook.md",
+                              "tests/unit/test_prod_smoke_logic.py", "tools/release/gate.py", "README.md"])
+    assert gate.no_site_code([".github/workflows/release-gate.yaml"])
+    # anything of the site, the e2e tests (they run against staging) or the other workflows needs staging
+    for f in ("src/org/calacademy/antweb/BrowseAction.java", "web/showBrowse-body.jsp", "tests/e2e/test_api.py",
+              "api/v3.1/api.py", "docker/antweb/Dockerfile", ".github/workflows/tests.yaml", "db/upgrade/x.sql"):
+        assert not gate.no_site_code(["docs/runbook.md", f]), f
+    assert not gate.no_site_code([])
+
+
+def test_staged_by_tree():
+    # Claude stages a PR as a "merge -s ours" commit: another sha with the head's tree
+    trees = {"stage1": "T-old", "stage2": "T-head", "stage3": "T-head"}
+    runs = [{"head_sha": "stage1", "conclusion": "success", "created_at": "2026-11-17T10:00:00Z"},
+            {"head_sha": "stage2", "conclusion": "failure", "created_at": "2026-11-17T11:00:00Z"},
+            {"head_sha": "stage3", "conclusion": "success", "created_at": "2026-11-17T12:00:00Z"}]
+    assert gate.staged_by_tree("T-head", runs, trees.get)["head_sha"] == "stage3"
+    assert gate.staged_by_tree("T-head", runs[:2], trees.get) is None        # the one with the tree failed
+    assert gate.staged_by_tree("T-other", runs, trees.get) is None
+    assert gate.staged_by_tree("T-head", [], trees.get) is None
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
