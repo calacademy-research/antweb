@@ -47,6 +47,23 @@ public class SearchRulesTest extends TestCase {
         assertEquals(2, GenericSearch.searchEntries("sp.collectioncode", "BLF001\nBLF002").size());
     }
 
+    /** 2026-11-17: 275 pasted codes with the default "contains" took over a minute (a like '%..%' each); a list is exact. */
+    public void testAListOfCodesIsMatchedExactly() {
+        assertEquals("sp.code in ('CASENT4042552', 'CASENT4042553', 'casent''x')",
+            clause("sp.code", "contains", "CASENT4042552\nCASENT4042553 casent'x"));
+        assertEquals("sp.code in ('a1', 'b2')", clause("sp.code", "equals", "a1, b2"));
+        assertEquals("one code keeps contains", "sp.code like '%casent0001%'", clause("sp.code", "contains", "casent0001"));
+        assertTrue("not equals keeps excluding each", clause("sp.code", "notEquals", "a1 b2").contains(" and "));
+        assertEquals("sp.collectioncode in ('BLF001', 'BLF002')", clause("sp.collectioncode", "contains", "BLF001\nBLF002"));
+        assertTrue("other boxes are not changed", clause("sp.localityname", "contains", "Santa Cruz, Bolivia").contains(" or "));
+        // the rule chosen: a list of parts of codes is matched exactly too (it finds only whole codes that equal them)
+        assertEquals("sp.code in ('0123456', '0123457')", clause("sp.code", "contains", "0123456 0123457"));
+        assertEquals("the alias equal", "sp.code in ('a1', 'b2')", clause("sp.code", "equal", "a1 b2"));
+        assertEquals("equals", GenericSearch.codeSearchType("sp.code", "contains", 2));
+        assertEquals("contains", GenericSearch.codeSearchType("sp.code", "contains", 1));
+        assertEquals("notEquals", GenericSearch.codeSearchType("sp.code", "notEquals", 3));
+    }
+
     public void testNotEqualsExcludesEveryEntry() {
         assertEquals("sp.family != 'Formicidae' and sp.family != 'Apidae'", clause("sp.family", "notEquals", "Formicidae, Apidae"));
         assertEquals("sp.family != 'Formicidae'", clause("sp.family", "notEquals", "Formicidae"));

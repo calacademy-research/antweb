@@ -43,9 +43,10 @@ public class AdvancedSearchAction extends AntwebAction {
 		addToSearch(sb, "locality name", searchParameters.getLocalityName(), searchParameters.getLocalityNameSearchType());
 		addToSearch(sb, "adm2", searchParameters.getAdm2(), searchParameters.getAdm2SearchType());
 
-		addToSearch(sb, "locality code", searchParameters.getLocalityCode(), searchParameters.getLocalityCodeSearchType());
-		addToSearch(sb, "collection code", searchParameters.getCollectionCode(), searchParameters.getCollectionCodeSearchType());
-		addToSearch(sb, "specimen code", searchParameters.getSpecimenCode(), searchParameters.getSpecimenCodeSearchType());
+		// a list of codes is matched exactly whatever was chosen (GenericSearch.codeSearchType, 2026-11-17): say so
+		addToSearch(sb, "locality code", searchParameters.getLocalityCode(), codeType("sp.localitycode", searchParameters.getLocalityCodeSearchType(), searchParameters.getLocalityCode()));
+		addToSearch(sb, "collection code", searchParameters.getCollectionCode(), codeType("sp.collectioncode", searchParameters.getCollectionCodeSearchType(), searchParameters.getCollectionCode()));
+		addToSearch(sb, "specimen code", searchParameters.getSpecimenCode(), codeType("sp.code", searchParameters.getSpecimenCodeSearchType(), searchParameters.getSpecimenCode()));
 		addToSearch(sb, "collected by", searchParameters.getCollectedBy(), searchParameters.getCollectedBySearchType());
 		addToSearch(sb, "museum code", searchParameters.getMuseumCode(), searchParameters.getMuseumCodeSearchType());		
 		addToSearch(sb, "method", searchParameters.getMethod(), searchParameters.getMethodSearchType());
@@ -82,6 +83,10 @@ public class AdvancedSearchAction extends AntwebAction {
 		return prefix + sb;
 	}
 	
+	private static String codeType(String property, String searchType, String value) {
+		return GenericSearch.codeSearchType(property, searchType, GenericSearch.searchEntries(property, value).size());
+	}
+
 	private void addToSearch(StringBuffer sb, String field, String value, String searchModifier) {
         //s_log.warn("addToSearch()");		
 	

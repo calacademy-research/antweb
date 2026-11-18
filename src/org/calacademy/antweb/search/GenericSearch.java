@@ -760,6 +760,19 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
     /** Code fields: codes have no spaces (UploadUtil.cleanCode), so a value may be a pasted list of codes. */
     static final Set<String> CODE_PROPERTIES = Set.of("sp.code", "sp.localitycode", "sp.collectioncode");
 
+    /**
+     * The search type used for a code box (CODE_PROPERTIES) with this many entries: a list of two or more codes is
+     * matched exactly ("equals"), whatever was chosen except "not equals" (2026-11-17, Brian Fisher: 275 pasted codes
+     * with Contains took over a minute). A list of parts of codes ("0123456 0123457") therefore finds only specimens
+     * whose whole code is one of them; one entry keeps Contains. The results page says "equals" for such a list
+     * (AdvancedSearchAction) and the form's help says so (search/instruct.jsp).
+     */
+    public static String codeSearchType(String property, String searchType, int entries) {
+        if (!CODE_PROPERTIES.contains(property) || entries < 2 || isNegative(searchType)) return searchType;
+        if (searchType == null || "contains".equals(searchType) || "equal".equals(searchType) || "equals".equals(searchType)) return "equals";
+        return searchType;
+    }
+
     public static boolean isNegative(String searchType) {
         return "notEquals".equals(searchType) || "notEqual".equals(searchType);
     }
@@ -843,6 +856,17 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
         //A.log("getSearchString() property:" + property + " value:" + value);
 
         List<String> elements = searchEntries(property, value);
+        // A list in a code box (two or more codes, pasted from a spreadsheet) is matched exactly, as one "in" list:
+        // with "contains" every code was a "like '%code%'" over the whole specimen table, and 275 pasted codes took
+        // over a minute (Brian Fisher, 2026-11-17; "equals" 0.2 s). One code keeps "contains" (a part of a code).
+        searchType = codeSearchType(property, searchType, elements.size());
+        if (CODE_PROPERTIES.contains(property) && elements.size() > 1 && "equals".equals(searchType)) {
+            StringBuilder in = new StringBuilder(property).append(" in (");
+            for (int i = 0; i < elements.size(); i++) {
+                in.append(i == 0 ? "'" : ", '").append(singleQuoted(elements.get(i))).append("'");
+            }
+            return in.append(")").toString();
+        }
         // Several entries: any of them may match; for "not equals", none of them may (2026-10-27: was "or",
         // so "not equals A, B" matched every specimen).
         String join = isNegative(searchType) ? " and " : " or ";
