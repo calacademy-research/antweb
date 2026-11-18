@@ -448,6 +448,9 @@ museum
     private static final java.util.concurrent.atomic.AtomicReference<KeptNames> s_kept = new java.util.concurrent.atomic.AtomicReference<>();
     private static final java.util.concurrent.atomic.AtomicLong s_imagedNamesGeneration = new java.util.concurrent.atomic.AtomicLong();
     private static final java.util.concurrent.atomic.AtomicBoolean s_imagedNamesReading = new java.util.concurrent.atomic.AtomicBoolean(false);
+    /** After a failed read no request tries again for this long (review of 75c504e: a failing query was retried by every page). */
+    static final long IMAGED_NAMES_RETRY_MS = 60 * 1000L;
+    private static volatile long s_imagedNamesFailedAt = 0;
 
     /**
      * The imaged names (lower case): fresh when read at the current change count (imagedNamesChanged raises it) and
@@ -459,12 +462,16 @@ museum
     static java.util.Set<String> allAntImagedNames(Connection connection) throws SQLException {
         KeptNames kept = s_kept.get();
         if (kept != null && fresh(kept)) return kept.names;
+        if (System.currentTimeMillis() - s_imagedNamesFailedAt < IMAGED_NAMES_RETRY_MS) {
+            return kept != null ? kept.names : null;   // a read failed less than a minute ago: no new attempt yet
+        }
         if (!s_imagedNamesReading.compareAndSet(false, true)) {
             return kept != null ? kept.names : null;   // another request reads it: the previous set, or null (ask directly)
         }
         try {
             return readAndKeep(connection).names;
         } catch (SQLException e) {
+            s_imagedNamesFailedAt = System.currentTimeMillis();
             // the previous set, or before any read null: the page then asks the database directly (review of 6643156)
             s_log.warn("allAntImagedNames() could not read the names" + (kept == null ? ", asked directly: " : " again, the previous ones are used: ") + e);
             return kept == null ? null : kept.names;
@@ -509,6 +516,7 @@ museum
     /** For tests, whose data changes between tests: forget the kept names. */
     public static void forgetImagedNames() {
         s_kept.set(null);
+        s_imagedNamesFailedAt = 0;
         s_imagedNamesReading.set(false);
     }
 
