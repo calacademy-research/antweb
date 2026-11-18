@@ -8,9 +8,9 @@ and pastes the result into the pull request. The checks (decided by Brian Fisher
 tools/release/README.md):
 
  1. tests     The "Tests" workflow (compile, unit tests) passed on the PR head.
- 2. staging   The PR head was deployed to staging ("Deploy Staging" passed for that commit, or for the staging commit
-              with the same files: staged_by_tree) and the FULL end-to-end run for that commit finished; a failed test
-              is allowed only if check 3 lists it. A PR that changes only files outside the site (NO_SITE_PATHS:
+ 2. staging   The FULL end-to-end run of the PR head finished while staging had the head's code (the last staging
+              deploy before the run was of the head, or of the "merge -s ours" staging commit with the head's files:
+              staging_had_head); a failed test is allowed only if check 3 lists it. A PR that changes only files outside the site (NO_SITE_PATHS:
               docs, unit tests, production smoke and speed checks, release tools) needs no staging run.
  3. known     Every failure of that run is in tests/e2e/known-failures.toml, and no entry there has expired.
  4. nightly   A PR that changes nightly code (NIGHTLY_PATHS) has run through a staging nightly: --nightly-checked,
@@ -106,6 +106,18 @@ def nightly_checked_by_comment(comments, head):
             if head.startswith(m.group(1)):
                 return True
     return False
+
+
+def e2e_while_staged(e2e_created, staging_runs, tree_of, head_tree):
+    """True when the newest staging deploy that finished before the e2e run started deployed the head's tree, and
+    succeeded: the run tested this PR's code (review of 7c371b0: a later PR staged in between would otherwise pass
+    check 2 for the first). Deploys of other trees after it, before the run, mean staging had other code."""
+    before = [r for r in staging_runs if (r.get("updated_at") or r.get("created_at") or "") <= e2e_created
+              and r.get("status", "completed") == "completed"]
+    if not before:
+        return False
+    last = max(before, key=lambda r: r.get("updated_at") or r.get("created_at") or "")
+    return last.get("conclusion") == "success" and tree_of(last["head_sha"]) == head_tree
 
 
 def no_site_code(files):
@@ -303,6 +315,26 @@ def gh_all(path, key=None):
     return items
 
 
+_TREES = {}
+
+
+def tree_of(sha):
+    """The commit's tree (one API call per commit, kept for the run)."""
+    if sha not in _TREES:
+        _TREES[sha] = gh(f"repos/{REPO}/commits/{sha}")["commit"]["tree"]["sha"]
+    return _TREES[sha]
+
+
+def staging_had_head(head, run):
+    """Whether staging ran the head's code when its full e2e run started: a Deploy Staging run of the head itself, or
+    the deploy before the run had the head's tree (a "merge -s ours" staging commit, staged_by_tree)."""
+    own = [r for r in runs_for(head, "Deploy Staging") if r.get("conclusion") == "success"]
+    if own and min(r.get("updated_at") or r["created_at"] for r in own) <= run["created_at"]:
+        return True
+    staging_runs = gh(f"repos/{REPO}/actions/workflows/deploy-staging.yaml/runs?branch=staging&per_page=15")["workflow_runs"]
+    return e2e_while_staged(run["created_at"], staging_runs, tree_of, tree_of(head))
+
+
 def runs_for(sha, name):
     runs = gh_all(f"repos/{REPO}/actions/runs?head_sha={sha}&per_page=100", "workflow_runs")
     return sorted([r for r in runs if r["name"] == name], key=lambda r: r["created_at"])
@@ -335,8 +367,6 @@ def main(argv=None):
                     help="the morning compute.log and morning tests were read for this commit (check 4); also: "
                          "dailyUpdate.do was read by hand and the daily update is not running (check 8)")
     ap.add_argument("--no-review", metavar="REASON", help="no Claude review, and why (check 5)")
-    ap.add_argument("--known-failures", metavar="FILE", help="the known-failures list to read (the gate workflow passes "
-                    "the PR head's copy; default tests/e2e/known-failures.toml of this checkout)")
     args = ap.parse_args(argv)
 
     pr = gh(f"repos/{REPO}/pulls/{args.pr}")
@@ -355,21 +385,15 @@ def main(argv=None):
     check(1, "tests", bool(tests) and tests[-1]["conclusion"] == "success",
           f"Tests {tests[-1]['conclusion'] or tests[-1]['status']}" if tests else "no Tests run for the head")
 
-    deploys = runs_for(head, "Deploy Staging")
-    deployed = bool(deploys) and deploys[-1]["conclusion"] == "success"
-    if not deployed:
-        tree = lambda sha: gh(f"repos/{REPO}/commits/{sha}")["commit"]["tree"]["sha"]
-        staging_runs = gh(f"repos/{REPO}/actions/workflows/deploy-staging.yaml/runs?branch=staging&per_page=30")["workflow_runs"]
-        deployed = staged_by_tree(tree(head), staging_runs, tree) is not None
     run, notes = full_e2e_run(head)
     failed = failed_tests(notes) if run else set()
-    entries = read_known_failures(Path(args.known_failures)) if args.known_failures else read_known_failures()
+    entries = read_known_failures()
     if no_site_code(files):
         check(2, "staging", True, "no site code changed (" + ", ".join(sorted({Path(f).parts[0] for f in files})[:4]) + "): no staging run needed")
-    elif not deployed:
-        check(2, "staging", False, "the head was not deployed to staging")
     elif not run:
         check(2, "staging", False, "no finished full e2e run for the head (add the full-e2e label)")
+    elif not staging_had_head(head, run):
+        check(2, "staging", False, "the head was not on staging during its full e2e run (stage it, then run the full e2e again)")
     else:
         # a failed run passes only with named failures that are all listed: a run that failed without naming its
         # tests (a crash, a collection error) never passes (review of #330)

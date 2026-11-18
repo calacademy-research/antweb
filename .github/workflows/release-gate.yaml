@@ -1,8 +1,8 @@
 name: Release gate
 
 # The release gate (tools/release/gate.py, decided by Brian Fisher 2026-11-05) as a GitHub check: commit status
-# "release-gate" on the head of every open pull request, green when GATE OPEN. Required on master since Brian's yes of
-# 2026-11-17 (a repository setting). Re-evaluated when anything the checks read changes: a push or label or text change
+# "release-gate" on the head of every open pull request, green when GATE OPEN. Brian's yes of 2026-11-17 to make it a
+# required check on master (a repository setting, turned on once this has been green on real PRs). Re-evaluated when anything the checks read changes: a push or label or text change
 # on a PR, a comment (the Claude review), a finished Tests, End-to-end, Deploy Staging or Claude review run, and every
 # hour and at 04:46 Pacific (checks 6 and 8 change with the time of day: a status stays as written until the next run,
 # so Claude still runs the gate by hand at merge time). Every open PR is evaluated each time (there are few).
@@ -23,9 +23,11 @@ on:
     - cron: "46 11,12 * * *"   # 04:46 Pacific in summer and in winter: the daily update window opens at 04:45
   workflow_dispatch:
 
+# Runs wait for each other, none is cancelled: any GitHub user's comment starts a run, and a cancelled run could leave
+# a PR's status from an older head (review of 7c371b0). GitHub keeps one waiting run; it gates every PR anyway.
 concurrency:
   group: release-gate
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read

@@ -29,8 +29,9 @@ hand for a week; then it becomes a required check on master (a repository settin
 each PR's full output. It runs again on a push, label or text change of a PR, a comment (the Claude review), a
 finished Tests, End-to-end tests, Deploy Staging or Claude review run, and every hour at :07.
 
-- Check 2 finds the staging deploy of a PR staged as a `merge -s ours` commit by its files (the head's tree), and
-  passes a PR that changes only files outside the site (`NO_SITE_PATHS`: docs, unit tests, the production smoke and
+- Check 2 asks that the PR's full e2e run started while staging had the PR's code: the last staging deploy before
+  the run was of the head or of its `merge -s ours` staging commit (same files, the head's tree). It passes a PR that
+  changes only files outside the site (`NO_SITE_PATHS`: docs, unit tests, the production smoke and
   speed checks, the release tools, this workflow).
 - Check 4: Claude writes a PR comment with the line `nightly-checked: <head sha>` once the staging nightly ran that
   commit clean (morning compute.log and tests read). It is tied to the sha: it never passes another commit. Only

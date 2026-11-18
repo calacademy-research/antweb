@@ -179,6 +179,22 @@ def test_nightly_checked_by_comment():
     assert not gate.nightly_checked_by_comment([c("nightly-checked: 387b")], head)
     assert not gate.nightly_checked_by_comment([c("the nightly was checked")], head)
 
+
+def test_e2e_while_staged():
+    trees = {"a": "T-A", "b": "T-B", "a2": "T-A"}
+    runs = [{"head_sha": "a", "conclusion": "success", "updated_at": "2026-11-17T10:05:00Z"},
+            {"head_sha": "b", "conclusion": "success", "updated_at": "2026-11-17T11:05:00Z"}]
+    # PR A's full run started while A was on staging
+    assert gate.e2e_while_staged("2026-11-17T10:30:00Z", runs, trees.get, "T-A")
+    # PR B was staged before A's run started: A's run tested B's code
+    assert not gate.e2e_while_staged("2026-11-17T11:30:00Z", runs, trees.get, "T-A")
+    assert gate.e2e_while_staged("2026-11-17T11:30:00Z", runs, trees.get, "T-B")
+    # A staged again (another commit, same tree) and its deploy failed: no
+    failed = runs + [{"head_sha": "a2", "conclusion": "failure", "updated_at": "2026-11-17T12:05:00Z"}]
+    assert not gate.e2e_while_staged("2026-11-17T12:30:00Z", failed, trees.get, "T-A")
+    # no deploy before the run: no
+    assert not gate.e2e_while_staged("2026-11-17T09:00:00Z", runs, trees.get, "T-A")
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
