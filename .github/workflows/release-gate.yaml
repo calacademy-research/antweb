@@ -1,0 +1,100 @@
+name: Release gate
+
+# The release gate (tools/release/gate.py, decided by Brian Fisher 2026-11-05) as a GitHub check: commit status
+# "release-gate" on the head of every open pull request, green when GATE OPEN. Brian's yes of 2026-11-17 to make it a
+# required check on master (a repository setting, turned on once this has been green on real PRs). Re-evaluated when
+# anything the checks read changes: a push or label or text change on a PR of this repository (not a fork's), a
+# finished Tests, End-to-end, Deploy Staging or Claude review run (that run writes the review comment; no comment
+# trigger, since any GitHub user can comment: review of bf87d37), every hour and at 04:46 Pacific (checks 6 and 8 change with the time of day: a status stays as written until the next run,
+# so Claude still runs the gate by hand at merge time). Every open PR is evaluated each time (there are few).
+# Read-only except for the statuses it writes.
+# pull_request_target, not pull_request: the workflow file and the gate's code always come from master, so a PR cannot
+# change what writes its own status (review of ae01dd6). No PR code runs here, and the known-failures list is master's
+# (review of c3e1f3c: a PR could otherwise list its own failures); a new entry is merged in its own PR first.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, labeled, unlabeled, edited]
+  workflow_run:
+    workflows: ["Tests", "End-to-end tests", "Deploy Staging", "Claude review"]
+    types: [completed]
+  schedule:
+    - cron: "7 * * * *"
+    - cron: "46 11,12 * * *"   # 04:46 Pacific in summer and in winter: the daily update window opens at 04:45
+  workflow_dispatch:
+
+# Runs wait for each other, none is cancelled: a cancelled run could leave a PR's status from an older head (review of
+# 7c371b0). GitHub keeps one waiting run; it gates every PR anyway.
+concurrency:
+  group: release-gate
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+  statuses: write
+  pull-requests: read
+
+jobs:
+  gate:
+    # a fork's PR never starts it (the job reads a production key for the tunnel)
+    if: github.event_name != 'pull_request_target' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          persist-credentials: false
+
+      # Check 8 reads dailyUpdate.do?format=json through an SSH tunnel to Tomcat's local port on the production server
+      # (Cloudflare would challenge a robot). Same key and pinned host keys as Deploy. Without the tunnel check 8 fails.
+      - name: Tunnel to production (read-only use)
+        continue-on-error: true   # without it check 8 fails as "unknown": every PR still gets its (red) status
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          trap 'rm -f ~/.ssh/id_rsa' EXIT   # the key leaves the disk whatever happens (review of bf87d37)
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          # Host key check, as the deploys do: production must answer with a key pinned in .github/known_hosts.
+          ssh-keyscan -t ed25519,ecdsa,rsa "$SSH_HOST" 2>/dev/null | awk '{print $2" "$3}' | sort -u > /tmp/scanned
+          cut -d" " -f2,3 .github/known_hosts | sort -u > /tmp/pinned
+          if [ -z "$(comm -12 /tmp/scanned /tmp/pinned)" ]; then
+            echo "::error::Production did not answer with a pinned host key (.github/known_hosts). Check stopped."
+            exit 1
+          fi
+          comm -12 /tmp/scanned /tmp/pinned | sed "s|^|$SSH_HOST |" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          ssh -o StrictHostKeyChecking=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ConnectTimeout=30 \
+            -f -N -L 18081:127.0.0.1:8081 "$SSH_USER@$SSH_HOST"
+          rm -f ~/.ssh/id_rsa
+          echo "ANTWEB_DAILY_UPDATE_URL=http://127.0.0.1:18081/dailyUpdate.do?format=json" >> "$GITHUB_ENV"
+
+      - name: Gate every open pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set +e -uo pipefail   # a closed gate exits 1: go on with the next PR
+          for pr in $(gh api "repos/$REPO/pulls?state=open&base=master&per_page=100" --jq '.[].number'); do
+            head=$(gh api "repos/$REPO/pulls/$pr" --jq .head.sha)
+            python3 tools/release/gate.py "$pr" > /tmp/gate.txt 2>&1
+            code=$?
+            cat /tmp/gate.txt
+            { echo "### PR #$pr"; echo '```'; cat /tmp/gate.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            if [ "$code" = 0 ]; then
+              state=success; desc="GATE OPEN"
+            else
+              state=failure; desc=$(grep -m1 ' FAIL ' /tmp/gate.txt | sed 's/  */ /g' | cut -c1-138)
+              [ -n "$desc" ] || desc="GATE CLOSED (the gate did not finish: see the run)"
+            fi
+            # a push while the gate ran: the next run (the push starts one) writes the new head's status
+            [ "$(gh api "repos/$REPO/pulls/$pr" --jq .head.sha)" = "$head" ] || { echo "PR #$pr got a new commit: no status"; continue; }
+            gh api -X POST "repos/$REPO/statuses/$head" -f state="$state" -f context=release-gate \
+              -f description="$desc" -f target_url="$RUN_URL" >/dev/null
+          done

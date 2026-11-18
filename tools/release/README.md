@@ -20,5 +20,33 @@ After the merge: production deployed this commit (Deploy workflow, header commit
 run, and the next production nightly ran clean including set 5 (compute.log).
 
 Decided by Brian Fisher, 2026-11-05 (claude/antweb-release-gate-draft.md in the project): Claude runs the gate by
-hand for a week; then it becomes a required check on master (a repository setting, Brian's yes needed).
+hand for a week; then it becomes a required check on master (a repository setting; Brian's yes 2026-11-17).
+
+## The gate as a GitHub check (2026-11-17)
+
+`.github/workflows/release-gate.yaml` runs the gate for every open pull request and writes the commit status
+`release-gate` on its head: green for GATE OPEN, red with the first failing check otherwise; the run's summary has
+each PR's full output. It runs again on a push, label or text change of a PR (not a fork's), a finished Tests,
+End-to-end tests, Deploy Staging or Claude review run (which writes the review comment), every hour at :07 and at
+04:46 Pacific.
+
+- Check 2 asks that the PR's full e2e run started while staging had the PR's code: the last staging deploy before
+  the run was of the head or of its `merge -s ours` staging commit (same files, the head's tree), and no deploy of
+  other code started before the run ended. It passes a PR that
+  changes only files outside the site (`NO_SITE_PATHS`: docs, unit tests, the production smoke and
+  speed checks, the release tools, this workflow).
+- Check 4: Claude writes a PR comment with the line `nightly-checked: <head sha>` once the staging nightly ran that
+  commit clean (morning compute.log and tests read). It is tied to the sha: it never passes another commit. Only
+  comments of members and collaborators count.
+- Checks 6 and 8 depend on the time: a status stays as written until the next run (hourly, and at 04:46 Pacific),
+  so Claude still runs the gate by hand at merge time.
+- The workflow runs on `pull_request_target`: its file and the gate's code come from master, so a PR cannot change
+  what writes its own status. No PR code runs in it.
+- Check 2 and the staging procedure: the PR is staged as `git checkout --detach <head>; git merge -s ours
+  origin/staging`, a commit with the head's tree; the full e2e run is for the PR head (label full-e2e).
+- Check 8 reads `dailyUpdate.do?format=json` through an SSH tunnel to production (the Deploy key, pinned host keys).
+- The gate's code and the known-failures list come from master: a new known failure is merged in its own PR first.
+
+By hand, the gate still runs as before (`python3 tools/release/gate.py N`), with `--nightly-checked` and
+`--daily-update-checked` when those were read by hand.
 Tests: tests/unit/test_release_gate.py.

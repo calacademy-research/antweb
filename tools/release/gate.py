@@ -8,11 +8,14 @@ and pastes the result into the pull request. The checks (decided by Brian Fisher
 tools/release/README.md):
 
  1. tests     The "Tests" workflow (compile, unit tests) passed on the PR head.
- 2. staging   The PR head was deployed to staging ("Deploy Staging" passed for that commit) and the FULL end-to-end
-              run for that commit finished; a failed test is allowed only if check 3 lists it.
+ 2. staging   The FULL end-to-end run of the PR head finished while staging had the head's code (the last staging
+              deploy before the run was of the head, or of the "merge -s ours" staging commit with the head's files:
+              staging_had_head); a failed test is allowed only if check 3 lists it. A PR that changes only files outside the site (NO_SITE_PATHS:
+              docs, unit tests, production smoke and speed checks, release tools) needs no staging run.
  3. known     Every failure of that run is in tests/e2e/known-failures.toml, and no entry there has expired.
- 4. nightly   A PR that changes nightly code (NIGHTLY_PATHS) has run through a staging nightly: --nightly-checked
-              says Claude read the morning compute.log for this commit and the morning tests passed.
+ 4. nightly   A PR that changes nightly code (NIGHTLY_PATHS) has run through a staging nightly: --nightly-checked,
+              or a PR comment line "nightly-checked: <head sha>", says Claude read the morning compute.log for this
+              commit and the morning tests passed.
  5. review    The latest Claude review comment is for the head commit and starts "No blocking issues";
               --no-review "reason" when there is none (for example, the review credit is used up).
  6. window    Not between 04:45 and 08:15 Pacific (the daily update).
@@ -76,7 +79,69 @@ NIGHTLY_PATHS = [
 ]
 
 
+# Files that are not part of the site: a PR that changes only these needs no staging run (check 2). Production smoke
+# and speed checks, unit tests, docs and the release tools run on GitHub or by hand, never on the site. tests/e2e is
+# not here: e2e tests run against staging.
+NO_SITE_PATHS = [
+    "docs/*", "release-notes/*", "tools/release/*", "tests/unit/*", "tests/smoke/*",
+    ".github/workflows/prod-*.yaml", ".github/workflows/release-gate.yaml",
+]
+
+# Check 4 by a PR comment: Claude writes a line "nightly-checked: <head sha>" once the staging nightly ran that commit
+# clean (morning compute.log and tests read). Tied to the sha, so it never passes another commit (reviews of ae01dd6
+# and c3e1f3c: a label could stay on a newer or an older head); only members and collaborators count.
+NIGHTLY_MARK = re.compile(r"^nightly-checked:\s*([0-9a-f]{7,40})\b", re.M)
+TRUSTED = {"OWNER", "MEMBER", "COLLABORATOR"}
+
+
 # ---- the checks, as plain functions (tests/unit/test_release_gate.py) ----
+
+def nightly_checked_by_comment(comments, head):
+    """True when a member or collaborator wrote "nightly-checked: <sha>" for this head (the sha, or its first 7 or more
+    characters)."""
+    for c in comments:
+        if c.get("author_association") not in TRUSTED:
+            continue
+        for m in NIGHTLY_MARK.finditer(c.get("body") or ""):
+            if head.startswith(m.group(1)):
+                return True
+    return False
+
+
+def e2e_while_staged(e2e_start, e2e_end, staging_runs, tree_of, head_tree):
+    """True when staging had the head's code for the whole full e2e run: the newest staging deploy that finished before
+    the run started deployed the head's tree and succeeded, and no deploy of another tree started before the run ended
+    (reviews of 7c371b0 and bf87d37: a PR staged before or during the run would otherwise pass check 2 for another PR).
+    A deploy of the head's own commit has the head's tree, so it counts the same way."""
+    stamp = lambda r: r.get("updated_at") or r.get("created_at") or ""
+    before = [r for r in staging_runs if r.get("status", "completed") == "completed" and stamp(r) <= e2e_start]
+    if not before:
+        return False
+    last = max(before, key=stamp)
+    if last.get("conclusion") != "success" or tree_of(last["head_sha"]) != head_tree:
+        return False
+    # deploys that ran into the test run: created before it ended and not finished when it started (review of 1832d16:
+    # one created before the last finished but still running at the start)
+    during = [r for r in staging_runs if r is not last and (r.get("created_at") or "") <= e2e_end
+              and not (r.get("status", "completed") == "completed" and stamp(r) <= e2e_start)]
+    return all(tree_of(r["head_sha"]) == head_tree for r in during)
+
+
+def no_site_code(files):
+    """True when every changed file is outside the site (NO_SITE_PATHS): staging has nothing to run."""
+    top_md = lambda f: "/" not in f and f.endswith(".md")   # README.md and the like: top level only (review of bf87d37)
+    return bool(files) and all(top_md(f) or any(fnmatch.fnmatch(f, p) for p in NO_SITE_PATHS) for f in files)
+
+
+def staged_by_tree(head_tree, staging_runs, tree_of):
+    """The successful Deploy Staging run whose commit has the PR head's tree, or None. Claude pushes a PR to staging as
+    a "merge -s ours" commit on top of the staging branch: a different commit with the same files (the PR head's tree),
+    so the run is never for the head's own sha (2026-11-17: check 2 was closed by hand on every PR)."""
+    # the newest deploy of that tree decides: a failed redeploy after a good one is not passed (review of c3e1f3c)
+    for run in sorted(staging_runs, key=lambda r: r.get("created_at") or "", reverse=True):
+        if run.get("status", "completed") == "completed" and tree_of(run["head_sha"]) == head_tree:
+            return run if run.get("conclusion") == "success" else None
+    return None
 
 def window_closed(now):
     """True between 04:45 and 08:15 Pacific, when the nightly run works and nothing is merged."""
@@ -258,6 +323,26 @@ def gh_all(path, key=None):
     return items
 
 
+_TREES = {}
+
+
+def tree_of(sha):
+    """The commit's tree (one API call per commit, kept for the run)."""
+    if sha not in _TREES:
+        _TREES[sha] = gh(f"repos/{REPO}/commits/{sha}")["commit"]["tree"]["sha"]
+    return _TREES[sha]
+
+
+def staging_had_head(head, run):
+    """Whether staging ran the head's code for the whole full e2e run (e2e_while_staged), from the last staging deploys:
+    of the head itself or of its "merge -s ours" staging commit (the head's tree)."""
+    staging_runs = gh(f"repos/{REPO}/actions/workflows/deploy-staging.yaml/runs?branch=staging&per_page={STAGING_HISTORY}")["workflow_runs"]
+    return e2e_while_staged(run["created_at"], run.get("updated_at") or run["created_at"], staging_runs, tree_of, tree_of(head))
+
+
+STAGING_HISTORY = 15   # staging deploys read for check 2 (the newest ones)
+
+
 def runs_for(sha, name):
     runs = gh_all(f"repos/{REPO}/actions/runs?head_sha={sha}&per_page=100", "workflow_runs")
     return sorted([r for r in runs if r["name"] == name], key=lambda r: r["created_at"])
@@ -308,14 +393,16 @@ def main(argv=None):
     check(1, "tests", bool(tests) and tests[-1]["conclusion"] == "success",
           f"Tests {tests[-1]['conclusion'] or tests[-1]['status']}" if tests else "no Tests run for the head")
 
-    deploys = runs_for(head, "Deploy Staging")
     run, notes = full_e2e_run(head)
     failed = failed_tests(notes) if run else set()
     entries = read_known_failures()
-    if not deploys or deploys[-1]["conclusion"] != "success":
-        check(2, "staging", False, "the head was not deployed to staging")
+    if no_site_code(files):
+        check(2, "staging", True, "no site code changed (" + ", ".join(sorted({Path(f).parts[0] for f in files})[:4]) + "): no staging run needed")
     elif not run:
         check(2, "staging", False, "no finished full e2e run for the head (add the full-e2e label)")
+    elif not staging_had_head(head, run):
+        check(2, "staging", False, "the head was not on staging for its whole full e2e run, or that run is older than the last "
+              f"{STAGING_HISTORY} staging deploys (stage it, then run the full e2e again)")
     else:
         # a failed run passes only with named failures that are all listed: a run that failed without naming its
         # tests (a crash, a collection error) never passes (review of #330)
@@ -329,16 +416,19 @@ def main(argv=None):
           or f"{len(entries)} known failures listed, none expired")
 
     nightly = nightly_files(files)
+    comments = gh_all(f"repos/{REPO}/issues/{args.pr}/comments?per_page=100")
+    if nightly and nightly_checked_by_comment(comments, head):
+        args.nightly_checked = True   # "nightly-checked: <head sha>" in a PR comment
     check(4, "nightly", not nightly or args.nightly_checked,
           "no nightly code changed" if not nightly else
           ("nightly checked (--nightly-checked)" if args.nightly_checked else
            f"nightly code changed ({', '.join(Path(f).name for f in nightly[:4])}): wait for a staging nightly, "
-           "then --nightly-checked"))
+           "then --nightly-checked or a PR comment \"nightly-checked: <sha>\""))
 
     if args.no_review:
         check(5, "review", True, f"no review: {args.no_review}")
     else:
-        ok, text = review_state(gh_all(f"repos/{REPO}/issues/{args.pr}/comments?per_page=100"), head)
+        ok, text = review_state(comments, head)
         check(5, "review", ok, text)
 
     closed = window_closed(dt.datetime.now(dt.timezone.utc))

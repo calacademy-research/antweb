@@ -141,6 +141,73 @@ def test_daily_check():
         assert "nightly" not in gate.daily_check(fetch, by_hand)[1].replace("--daily-update-checked", "")
 
 
+def test_no_site_code():
+    # only docs, unit tests, the production checks, the release tools: no staging run needed (check 2)
+    assert gate.no_site_code(["tests/smoke/prod_smoke.py", ".github/workflows/prod-speed.yaml", "docs/runbook.md",
+                              "tests/unit/test_prod_smoke_logic.py", "tools/release/gate.py", "README.md"])
+    assert gate.no_site_code([".github/workflows/release-gate.yaml"])
+    # markdown at the top level only: one inside the site needs staging
+    assert not gate.no_site_code(["web/help/howto.md"]) and not gate.no_site_code(["docker/antweb/NOTES.md"])
+    # anything of the site, the e2e tests (they run against staging) or the other workflows needs staging
+    for f in ("src/org/calacademy/antweb/BrowseAction.java", "web/showBrowse-body.jsp", "tests/e2e/test_api.py",
+              "api/v3.1/api.py", "docker/antweb/Dockerfile", ".github/workflows/tests.yaml", "db/upgrade/x.sql"):
+        assert not gate.no_site_code(["docs/runbook.md", f]), f
+    assert not gate.no_site_code([])
+
+
+def test_staged_by_tree():
+    # Claude stages a PR as a "merge -s ours" commit: another sha with the head's tree
+    trees = {"stage1": "T-old", "stage2": "T-head", "stage3": "T-head"}
+    runs = [{"head_sha": "stage1", "conclusion": "success", "created_at": "2026-11-17T10:00:00Z"},
+            {"head_sha": "stage2", "conclusion": "failure", "created_at": "2026-11-17T11:00:00Z"},
+            {"head_sha": "stage3", "conclusion": "success", "created_at": "2026-11-17T12:00:00Z"}]
+    assert gate.staged_by_tree("T-head", runs, trees.get)["head_sha"] == "stage3"
+    assert gate.staged_by_tree("T-head", runs[:2], trees.get) is None        # the one with the tree failed
+    # a failed redeploy of the same tree after a good one: the newest decides
+    later = runs + [{"head_sha": "stage4", "conclusion": "failure", "created_at": "2026-11-17T13:00:00Z"}]
+    assert gate.staged_by_tree("T-head", later, dict(trees, stage4="T-head").get) is None
+    assert gate.staged_by_tree("T-other", runs, trees.get) is None
+    assert gate.staged_by_tree("T-head", [], trees.get) is None
+
+
+def test_nightly_checked_by_comment():
+    head = "387bd550c905e9dbccecd6175e6a0e095e826164"
+    c = lambda body, who="OWNER": {"body": body, "author_association": who}
+    assert gate.nightly_checked_by_comment([c("Morning read.\nnightly-checked: 387bd55")], head)
+    assert gate.nightly_checked_by_comment([c("nightly-checked: " + head, "COLLABORATOR")], head)
+    # another commit's sha, an outsider, too short a sha, or no mark: no
+    assert not gate.nightly_checked_by_comment([c("nightly-checked: 53d28ae")], head)
+    assert not gate.nightly_checked_by_comment([c("nightly-checked: 387bd55", "NONE")], head)
+    assert not gate.nightly_checked_by_comment([c("nightly-checked: 387b")], head)
+    assert not gate.nightly_checked_by_comment([c("the nightly was checked")], head)
+
+
+def test_e2e_while_staged():
+    trees = {"a": "T-A", "b": "T-B", "a2": "T-A"}
+    runs = [{"head_sha": "a", "conclusion": "success", "created_at": "2026-11-17T10:00:00Z", "updated_at": "2026-11-17T10:05:00Z"},
+            {"head_sha": "b", "conclusion": "success", "created_at": "2026-11-17T11:00:00Z", "updated_at": "2026-11-17T11:05:00Z"}]
+    w = lambda start, end, rs=runs, tree="T-A": gate.e2e_while_staged(start, end, rs, trees.get, tree)
+    # PR A's full run while A was on staging
+    assert w("2026-11-17T10:10:00Z", "2026-11-17T10:50:00Z")
+    # PR B staged before A's run started (A deployed by its own commit, then B): A's run tested B's code
+    assert not w("2026-11-17T11:30:00Z", "2026-11-17T12:10:00Z")
+    assert w("2026-11-17T11:30:00Z", "2026-11-17T12:10:00Z", tree="T-B")
+    # B's deploy started during A's run (still running or finished after the start): staging changed under the run
+    assert not w("2026-11-17T10:30:00Z", "2026-11-17T11:10:00Z")
+    running = runs[:1] + [{"head_sha": "b", "status": "in_progress", "created_at": "2026-11-17T10:40:00Z"}]
+    assert not w("2026-11-17T10:30:00Z", "2026-11-17T11:10:00Z", running)
+    # A staged again (same tree) during its run: fine; its deploy failed before the run: no
+    again = runs[:1] + [{"head_sha": "a2", "conclusion": "success", "created_at": "2026-11-17T10:40:00Z", "updated_at": "2026-11-17T10:45:00Z"}]
+    assert w("2026-11-17T10:30:00Z", "2026-11-17T11:00:00Z", again)
+    failed = runs + [{"head_sha": "a2", "conclusion": "failure", "created_at": "2026-11-17T12:00:00Z", "updated_at": "2026-11-17T12:05:00Z"}]
+    assert not w("2026-11-17T12:30:00Z", "2026-11-17T13:00:00Z", failed)
+    # B created before A's deploy finished, still running when A's run started: no
+    overlap = [{"head_sha": "a", "conclusion": "success", "created_at": "2026-11-17T10:00:00Z", "updated_at": "2026-11-17T10:05:00Z"},
+               {"head_sha": "b", "conclusion": "success", "created_at": "2026-11-17T10:03:00Z", "updated_at": "2026-11-17T10:20:00Z"}]
+    assert not w("2026-11-17T10:10:00Z", "2026-11-17T10:50:00Z", overlap)
+    # no deploy before the run: no
+    assert not w("2026-11-17T09:00:00Z", "2026-11-17T09:40:00Z")
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
