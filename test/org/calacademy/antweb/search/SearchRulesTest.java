@@ -56,6 +56,12 @@ public class SearchRulesTest extends TestCase {
         assertTrue("not equals keeps excluding each", clause("sp.code", "notEquals", "a1 b2").contains(" and "));
         assertEquals("sp.collectioncode in ('BLF001', 'BLF002')", clause("sp.collectioncode", "contains", "BLF001\nBLF002"));
         assertTrue("other boxes are not changed", clause("sp.localityname", "contains", "Santa Cruz, Bolivia").contains(" or "));
+        // the rule chosen: a list of parts of codes is matched exactly too (it finds only whole codes that equal them)
+        assertEquals("sp.code in ('0123456', '0123457')", clause("sp.code", "contains", "0123456 0123457"));
+        assertEquals("the alias equal", "sp.code in ('a1', 'b2')", clause("sp.code", "equal", "a1 b2"));
+        assertEquals("equals", GenericSearch.codeSearchType("sp.code", "contains", 2));
+        assertEquals("contains", GenericSearch.codeSearchType("sp.code", "contains", 1));
+        assertEquals("notEquals", GenericSearch.codeSearchType("sp.code", "notEquals", 3));
     }
 
     public void testNotEqualsExcludesEveryEntry() {

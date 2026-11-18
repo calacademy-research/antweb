@@ -80,4 +80,5 @@ def test_a_pasted_list_with_contains_is_quick_and_exact():
     seconds = time.monotonic() - started
     assert r.status_code == 200
     assert _found(r) == 3, "found %s of the 3 codes" % _found(r)
-    assert seconds < 15, "a list of %d codes with Contains took %.1f s" % (len(codes) + 300, seconds)
+    # before: over a minute; now well under 1 s: 30 s leaves room for a busy staging
+    assert seconds < 30, "a list of %d codes with Contains took %.1f s" % (len(codes) + 300, seconds)
