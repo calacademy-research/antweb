@@ -83,7 +83,7 @@ NIGHTLY_PATHS = [
 # and speed checks, unit tests, docs and the release tools run on GitHub or by hand, never on the site. tests/e2e is
 # not here: e2e tests run against staging.
 NO_SITE_PATHS = [
-    "docs/*", "*.md", "release-notes/*", "tools/release/*", "tests/unit/*", "tests/smoke/*",
+    "docs/*", "release-notes/*", "tools/release/*", "tests/unit/*", "tests/smoke/*",
     ".github/workflows/prod-*.yaml", ".github/workflows/release-gate.yaml",
 ]
 
@@ -108,21 +108,26 @@ def nightly_checked_by_comment(comments, head):
     return False
 
 
-def e2e_while_staged(e2e_created, staging_runs, tree_of, head_tree):
-    """True when the newest staging deploy that finished before the e2e run started deployed the head's tree, and
-    succeeded: the run tested this PR's code (review of 7c371b0: a later PR staged in between would otherwise pass
-    check 2 for the first). Deploys of other trees after it, before the run, mean staging had other code."""
-    before = [r for r in staging_runs if (r.get("updated_at") or r.get("created_at") or "") <= e2e_created
-              and r.get("status", "completed") == "completed"]
+def e2e_while_staged(e2e_start, e2e_end, staging_runs, tree_of, head_tree):
+    """True when staging had the head's code for the whole full e2e run: the newest staging deploy that finished before
+    the run started deployed the head's tree and succeeded, and no deploy of another tree started before the run ended
+    (reviews of 7c371b0 and bf87d37: a PR staged before or during the run would otherwise pass check 2 for another PR).
+    A deploy of the head's own commit has the head's tree, so it counts the same way."""
+    stamp = lambda r: r.get("updated_at") or r.get("created_at") or ""
+    before = [r for r in staging_runs if r.get("status", "completed") == "completed" and stamp(r) <= e2e_start]
     if not before:
         return False
-    last = max(before, key=lambda r: r.get("updated_at") or r.get("created_at") or "")
-    return last.get("conclusion") == "success" and tree_of(last["head_sha"]) == head_tree
+    last = max(before, key=stamp)
+    if last.get("conclusion") != "success" or tree_of(last["head_sha"]) != head_tree:
+        return False
+    during = [r for r in staging_runs if stamp(last) < (r.get("created_at") or "") <= e2e_end]
+    return all(tree_of(r["head_sha"]) == head_tree for r in during)
 
 
 def no_site_code(files):
     """True when every changed file is outside the site (NO_SITE_PATHS): staging has nothing to run."""
-    return bool(files) and all(any(fnmatch.fnmatch(f, p) for p in NO_SITE_PATHS) for f in files)
+    top_md = lambda f: "/" not in f and f.endswith(".md")   # README.md and the like: top level only (review of bf87d37)
+    return bool(files) and all(top_md(f) or any(fnmatch.fnmatch(f, p) for p in NO_SITE_PATHS) for f in files)
 
 
 def staged_by_tree(head_tree, staging_runs, tree_of):
@@ -326,13 +331,10 @@ def tree_of(sha):
 
 
 def staging_had_head(head, run):
-    """Whether staging ran the head's code when its full e2e run started: a Deploy Staging run of the head itself, or
-    the deploy before the run had the head's tree (a "merge -s ours" staging commit, staged_by_tree)."""
-    own = [r for r in runs_for(head, "Deploy Staging") if r.get("conclusion") == "success"]
-    if own and min(r.get("updated_at") or r["created_at"] for r in own) <= run["created_at"]:
-        return True
+    """Whether staging ran the head's code for the whole full e2e run (e2e_while_staged), from the last staging deploys:
+    of the head itself or of its "merge -s ours" staging commit (the head's tree)."""
     staging_runs = gh(f"repos/{REPO}/actions/workflows/deploy-staging.yaml/runs?branch=staging&per_page=15")["workflow_runs"]
-    return e2e_while_staged(run["created_at"], staging_runs, tree_of, tree_of(head))
+    return e2e_while_staged(run["created_at"], run.get("updated_at") or run["created_at"], staging_runs, tree_of, tree_of(head))
 
 
 def runs_for(sha, name):

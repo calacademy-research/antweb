@@ -2,9 +2,10 @@ name: Release gate
 
 # The release gate (tools/release/gate.py, decided by Brian Fisher 2026-11-05) as a GitHub check: commit status
 # "release-gate" on the head of every open pull request, green when GATE OPEN. Brian's yes of 2026-11-17 to make it a
-# required check on master (a repository setting, turned on once this has been green on real PRs). Re-evaluated when anything the checks read changes: a push or label or text change
-# on a PR, a comment (the Claude review), a finished Tests, End-to-end, Deploy Staging or Claude review run, and every
-# hour and at 04:46 Pacific (checks 6 and 8 change with the time of day: a status stays as written until the next run,
+# required check on master (a repository setting, turned on once this has been green on real PRs). Re-evaluated when
+# anything the checks read changes: a push or label or text change on a PR of this repository (not a fork's), a
+# finished Tests, End-to-end, Deploy Staging or Claude review run (that run writes the review comment; no comment
+# trigger, since any GitHub user can comment: review of bf87d37), every hour and at 04:46 Pacific (checks 6 and 8 change with the time of day: a status stays as written until the next run,
 # so Claude still runs the gate by hand at merge time). Every open PR is evaluated each time (there are few).
 # Read-only except for the statuses it writes.
 # pull_request_target, not pull_request: the workflow file and the gate's code always come from master, so a PR cannot
@@ -13,8 +14,6 @@ name: Release gate
 on:
   pull_request_target:
     types: [opened, synchronize, reopened, labeled, unlabeled, edited]
-  issue_comment:
-    types: [created, edited]
   workflow_run:
     workflows: ["Tests", "End-to-end tests", "Deploy Staging", "Claude review"]
     types: [completed]
@@ -23,8 +22,8 @@ on:
     - cron: "46 11,12 * * *"   # 04:46 Pacific in summer and in winter: the daily update window opens at 04:45
   workflow_dispatch:
 
-# Runs wait for each other, none is cancelled: any GitHub user's comment starts a run, and a cancelled run could leave
-# a PR's status from an older head (review of 7c371b0). GitHub keeps one waiting run; it gates every PR anyway.
+# Runs wait for each other, none is cancelled: a cancelled run could leave a PR's status from an older head (review of
+# 7c371b0). GitHub keeps one waiting run; it gates every PR anyway.
 concurrency:
   group: release-gate
   cancel-in-progress: false
@@ -37,6 +36,8 @@ permissions:
 
 jobs:
   gate:
+    # a fork's PR never starts it (the job reads a production key for the tunnel)
+    if: github.event_name != 'pull_request_target' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -56,6 +57,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p ~/.ssh
+          trap 'rm -f ~/.ssh/id_rsa' EXIT   # the key leaves the disk whatever happens (review of bf87d37)
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           # Host key check, as the deploys do: production must answer with a key pinned in .github/known_hosts.

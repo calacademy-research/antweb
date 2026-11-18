@@ -146,6 +146,8 @@ def test_no_site_code():
     assert gate.no_site_code(["tests/smoke/prod_smoke.py", ".github/workflows/prod-speed.yaml", "docs/runbook.md",
                               "tests/unit/test_prod_smoke_logic.py", "tools/release/gate.py", "README.md"])
     assert gate.no_site_code([".github/workflows/release-gate.yaml"])
+    # markdown at the top level only: one inside the site needs staging
+    assert not gate.no_site_code(["web/help/howto.md"]) and not gate.no_site_code(["docker/antweb/NOTES.md"])
     # anything of the site, the e2e tests (they run against staging) or the other workflows needs staging
     for f in ("src/org/calacademy/antweb/BrowseAction.java", "web/showBrowse-body.jsp", "tests/e2e/test_api.py",
               "api/v3.1/api.py", "docker/antweb/Dockerfile", ".github/workflows/tests.yaml", "db/upgrade/x.sql"):
@@ -182,18 +184,25 @@ def test_nightly_checked_by_comment():
 
 def test_e2e_while_staged():
     trees = {"a": "T-A", "b": "T-B", "a2": "T-A"}
-    runs = [{"head_sha": "a", "conclusion": "success", "updated_at": "2026-11-17T10:05:00Z"},
-            {"head_sha": "b", "conclusion": "success", "updated_at": "2026-11-17T11:05:00Z"}]
-    # PR A's full run started while A was on staging
-    assert gate.e2e_while_staged("2026-11-17T10:30:00Z", runs, trees.get, "T-A")
-    # PR B was staged before A's run started: A's run tested B's code
-    assert not gate.e2e_while_staged("2026-11-17T11:30:00Z", runs, trees.get, "T-A")
-    assert gate.e2e_while_staged("2026-11-17T11:30:00Z", runs, trees.get, "T-B")
-    # A staged again (another commit, same tree) and its deploy failed: no
-    failed = runs + [{"head_sha": "a2", "conclusion": "failure", "updated_at": "2026-11-17T12:05:00Z"}]
-    assert not gate.e2e_while_staged("2026-11-17T12:30:00Z", failed, trees.get, "T-A")
+    runs = [{"head_sha": "a", "conclusion": "success", "created_at": "2026-11-17T10:00:00Z", "updated_at": "2026-11-17T10:05:00Z"},
+            {"head_sha": "b", "conclusion": "success", "created_at": "2026-11-17T11:00:00Z", "updated_at": "2026-11-17T11:05:00Z"}]
+    w = lambda start, end, rs=runs, tree="T-A": gate.e2e_while_staged(start, end, rs, trees.get, tree)
+    # PR A's full run while A was on staging
+    assert w("2026-11-17T10:10:00Z", "2026-11-17T10:50:00Z")
+    # PR B staged before A's run started (A deployed by its own commit, then B): A's run tested B's code
+    assert not w("2026-11-17T11:30:00Z", "2026-11-17T12:10:00Z")
+    assert w("2026-11-17T11:30:00Z", "2026-11-17T12:10:00Z", tree="T-B")
+    # B's deploy started during A's run (still running or finished after the start): staging changed under the run
+    assert not w("2026-11-17T10:30:00Z", "2026-11-17T11:10:00Z")
+    running = runs[:1] + [{"head_sha": "b", "status": "in_progress", "created_at": "2026-11-17T10:40:00Z"}]
+    assert not w("2026-11-17T10:30:00Z", "2026-11-17T11:10:00Z", running)
+    # A staged again (same tree) during its run: fine; its deploy failed before the run: no
+    again = runs[:1] + [{"head_sha": "a2", "conclusion": "success", "created_at": "2026-11-17T10:40:00Z", "updated_at": "2026-11-17T10:45:00Z"}]
+    assert w("2026-11-17T10:30:00Z", "2026-11-17T11:00:00Z", again)
+    failed = runs + [{"head_sha": "a2", "conclusion": "failure", "created_at": "2026-11-17T12:00:00Z", "updated_at": "2026-11-17T12:05:00Z"}]
+    assert not w("2026-11-17T12:30:00Z", "2026-11-17T13:00:00Z", failed)
     # no deploy before the run: no
-    assert not gate.e2e_while_staged("2026-11-17T09:00:00Z", runs, trees.get, "T-A")
+    assert not w("2026-11-17T09:00:00Z", "2026-11-17T09:40:00Z")
 
 if __name__ == "__main__":
     for name, fn in list(globals().items()):

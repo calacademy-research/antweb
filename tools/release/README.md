@@ -26,11 +26,13 @@ hand for a week; then it becomes a required check on master (a repository settin
 
 `.github/workflows/release-gate.yaml` runs the gate for every open pull request and writes the commit status
 `release-gate` on its head: green for GATE OPEN, red with the first failing check otherwise; the run's summary has
-each PR's full output. It runs again on a push, label or text change of a PR, a comment (the Claude review), a
-finished Tests, End-to-end tests, Deploy Staging or Claude review run, and every hour at :07.
+each PR's full output. It runs again on a push, label or text change of a PR (not a fork's), a finished Tests,
+End-to-end tests, Deploy Staging or Claude review run (which writes the review comment), every hour at :07 and at
+04:46 Pacific.
 
 - Check 2 asks that the PR's full e2e run started while staging had the PR's code: the last staging deploy before
-  the run was of the head or of its `merge -s ours` staging commit (same files, the head's tree). It passes a PR that
+  the run was of the head or of its `merge -s ours` staging commit (same files, the head's tree), and no deploy of
+  other code started before the run ended. It passes a PR that
   changes only files outside the site (`NO_SITE_PATHS`: docs, unit tests, the production smoke and
   speed checks, the release tools, this workflow).
 - Check 4: Claude writes a PR comment with the line `nightly-checked: <head sha>` once the staging nightly ran that
