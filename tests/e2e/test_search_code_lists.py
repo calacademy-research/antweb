@@ -66,3 +66,18 @@ def test_long_list_and_its_sort_arrow_are_answered():
     _, sorted_r = _search(text, "&sortBy=code&sortOrder=down")
     assert sorted_r.status_code == 200, "the sort arrow of that search: %d" % sorted_r.status_code
     assert _found(sorted_r) == 3
+
+
+def test_a_pasted_list_with_contains_is_quick_and_exact():
+    """2026-11-17 (Brian Fisher): 275 pasted CASENT codes with the default "Contains" took over a minute (a like
+    '%code%' over every specimen for each code); "Equals" 0.2 s. A list in a code box is now matched exactly."""
+    import time
+    codes = _codes()
+    text = "\n".join(codes + ["zzcode%06d" % i for i in range(300)])
+    url = BASE_URL + SEARCH + "&specimenCodeSearchType=contains&specimenCode=" + quote_plus(text)
+    started = time.monotonic()
+    r = new_session().get(url, timeout=max(TIMEOUT, 120))
+    seconds = time.monotonic() - started
+    assert r.status_code == 200
+    assert _found(r) == 3, "found %s of the 3 codes" % _found(r)
+    assert seconds < 15, "a list of %d codes with Contains took %.1f s" % (len(codes) + 300, seconds)

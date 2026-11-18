@@ -113,8 +113,8 @@ public class LocalityCodePlainTest extends TestCase {
         Search plain = new Search();
         assertEquals("sp.localityname = 'O''Brien\\\\x'", plain.field("sp.localityname", "equals", "O'Brien\\x"));
         assertEquals("sp.habitat like '%5\"%'", plain.field("sp.habitat", "contains", "5\""));
-        // Not one quoted code: read as before (two codes).
-        assertEquals("sp.localitycode = 'a' or sp.localitycode = 'b'", search.getCodeSearchString("sp.localitycode", "equals", "\"a\" \"b\""));
+        // Not one quoted code: read as a list of two codes, matched exactly (one "in" list since 2026-11-17).
+        assertEquals("sp.localitycode in ('a', 'b')", search.getCodeSearchString("sp.localitycode", "equals", "\"a\" \"b\""));
     }
 
     /** GenericSearch.getSearchString is protected: reached through a subclass. */
