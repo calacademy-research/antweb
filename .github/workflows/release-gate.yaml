@@ -6,10 +6,10 @@ name: Release gate
 # on a PR, a comment (the Claude review), a finished Tests, End-to-end, Deploy Staging or Claude review run, and every
 # hour and at 04:46 Pacific (checks 6 and 8 change with the time of day: a status stays as written until the next run,
 # so Claude still runs the gate by hand at merge time). Every open PR is evaluated each time (there are few).
-# Read-only except for the statuses it writes and the nightly-checked label it removes when a PR gets a new commit.
+# Read-only except for the statuses it writes.
 # pull_request_target, not pull_request: the workflow file and the gate's code always come from master, so a PR cannot
-# change what writes its own status (review of ae01dd6). No PR code runs here; the known-failures list is read from
-# each PR's head as data (a PR may add an entry).
+# change what writes its own status (review of ae01dd6). No PR code runs here, and the known-failures list is master's
+# (review of c3e1f3c: a PR could otherwise list its own failures); a new entry is merged in its own PR first.
 on:
   pull_request_target:
     types: [opened, synchronize, reopened, labeled, unlabeled, edited]
@@ -31,8 +31,7 @@ permissions:
   contents: read
   actions: read
   statuses: write
-  pull-requests: write
-  issues: write
+  pull-requests: read
 
 jobs:
   gate:
@@ -43,13 +42,6 @@ jobs:
         with:
           ref: master
           persist-credentials: false
-
-      - name: A new commit drops the nightly-checked label (check 4 is for one commit)
-        if: github.event_name == 'pull_request_target' && github.event.action == 'synchronize'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR: ${{ github.event.pull_request.number }}
-        run: gh api -X DELETE "repos/${{ github.repository }}/issues/$PR/labels/nightly-checked" >/dev/null 2>&1 || true
 
       # Check 8 reads dailyUpdate.do?format=json through an SSH tunnel to Tomcat's local port on the production server
       # (Cloudflare would challenge a robot). Same key and pinned host keys as Deploy. Without the tunnel check 8 fails.
@@ -85,13 +77,9 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set +e -uo pipefail   # a closed gate exits 1: go on with the next PR
-          # --known-failures is newer than the gate on master until this workflow's own PR is merged
-          kf=""; python3 tools/release/gate.py --help | grep -q -- --known-failures && kf="--known-failures /tmp/known.toml"
           for pr in $(gh api "repos/$REPO/pulls?state=open&base=master&per_page=100" --jq '.[].number'); do
             head=$(gh api "repos/$REPO/pulls/$pr" --jq .head.sha)
-            gh api -H "Accept: application/vnd.github.raw" "repos/$REPO/contents/tests/e2e/known-failures.toml?ref=$head" > /tmp/known.toml 2>/dev/null \
-              || cp tests/e2e/known-failures.toml /tmp/known.toml
-            python3 tools/release/gate.py "$pr" $kf > /tmp/gate.txt 2>&1
+            python3 tools/release/gate.py "$pr" > /tmp/gate.txt 2>&1
             code=$?
             cat /tmp/gate.txt
             { echo "### PR #$pr"; echo '```'; cat /tmp/gate.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

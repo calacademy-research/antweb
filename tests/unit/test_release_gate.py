@@ -161,23 +161,23 @@ def test_staged_by_tree():
             {"head_sha": "stage3", "conclusion": "success", "created_at": "2026-11-17T12:00:00Z"}]
     assert gate.staged_by_tree("T-head", runs, trees.get)["head_sha"] == "stage3"
     assert gate.staged_by_tree("T-head", runs[:2], trees.get) is None        # the one with the tree failed
+    # a failed redeploy of the same tree after a good one: the newest decides
+    later = runs + [{"head_sha": "stage4", "conclusion": "failure", "created_at": "2026-11-17T13:00:00Z"}]
+    assert gate.staged_by_tree("T-head", later, dict(trees, stage4="T-head").get) is None
     assert gate.staged_by_tree("T-other", runs, trees.get) is None
     assert gate.staged_by_tree("T-head", [], trees.get) is None
 
 
-def test_label_is_for_head():
-    ev = lambda kind, name, at: {"event": kind, "label": {"name": name}, "created_at": at}
-    head = "2026-11-17T20:00:00Z"
-    assert gate.label_is_for_head([ev("labeled", "nightly-checked", "2026-11-18T15:30:00Z")], "nightly-checked", head)
-    # put on before the head's commit (an earlier commit's label that was not removed): not for this head
-    assert not gate.label_is_for_head([ev("labeled", "nightly-checked", "2026-11-17T19:00:00Z")], "nightly-checked", head)
-    # the latest time it was added counts; other labels and unlabel events do not
-    assert gate.label_is_for_head([ev("labeled", "nightly-checked", "2026-11-17T19:00:00Z"),
-                                   ev("unlabeled", "nightly-checked", "2026-11-17T21:00:00Z"),
-                                   ev("labeled", "nightly-checked", "2026-11-18T15:00:00Z")], "nightly-checked", head)
-    assert not gate.label_is_for_head([ev("labeled", "full-e2e", "2026-11-18T15:00:00Z")], "nightly-checked", head)
-    assert not gate.label_is_for_head([], "nightly-checked", head)
-
+def test_nightly_checked_by_comment():
+    head = "387bd550c905e9dbccecd6175e6a0e095e826164"
+    c = lambda body, who="OWNER": {"body": body, "author_association": who}
+    assert gate.nightly_checked_by_comment([c("Morning read.\nnightly-checked: 387bd55")], head)
+    assert gate.nightly_checked_by_comment([c("nightly-checked: " + head, "COLLABORATOR")], head)
+    # another commit's sha, an outsider, too short a sha, or no mark: no
+    assert not gate.nightly_checked_by_comment([c("nightly-checked: 53d28ae")], head)
+    assert not gate.nightly_checked_by_comment([c("nightly-checked: 387bd55", "NONE")], head)
+    assert not gate.nightly_checked_by_comment([c("nightly-checked: 387b")], head)
+    assert not gate.nightly_checked_by_comment([c("the nightly was checked")], head)
 
 if __name__ == "__main__":
     for name, fn in list(globals().items()):

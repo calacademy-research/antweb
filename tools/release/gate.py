@@ -14,8 +14,8 @@ tools/release/README.md):
               docs, unit tests, production smoke and speed checks, release tools) needs no staging run.
  3. known     Every failure of that run is in tests/e2e/known-failures.toml, and no entry there has expired.
  4. nightly   A PR that changes nightly code (NIGHTLY_PATHS) has run through a staging nightly: --nightly-checked,
-              or the PR label nightly-checked, says Claude read the morning compute.log for this commit and the morning
-              tests passed.
+              or a PR comment line "nightly-checked: <head sha>", says Claude read the morning compute.log for this
+              commit and the morning tests passed.
  5. review    The latest Claude review comment is for the head commit and starts "No blocking issues";
               --no-review "reason" when there is none (for example, the review credit is used up).
  6. window    Not between 04:45 and 08:15 Pacific (the daily update).
@@ -87,20 +87,25 @@ NO_SITE_PATHS = [
     ".github/workflows/prod-*.yaml", ".github/workflows/release-gate.yaml",
 ]
 
-# The label Claude puts on a PR once the staging nightly ran its head clean (check 4); the gate workflow removes it
-# when the PR gets a new commit.
-NIGHTLY_LABEL = "nightly-checked"
+# Check 4 by a PR comment: Claude writes a line "nightly-checked: <head sha>" once the staging nightly ran that commit
+# clean (morning compute.log and tests read). Tied to the sha, so it never passes another commit (reviews of ae01dd6
+# and c3e1f3c: a label could stay on a newer or an older head); only members and collaborators count.
+NIGHTLY_MARK = re.compile(r"^nightly-checked:\s*([0-9a-f]{7,40})\b", re.M)
+TRUSTED = {"OWNER", "MEMBER", "COLLABORATOR"}
 
 
 # ---- the checks, as plain functions (tests/unit/test_release_gate.py) ----
 
-def label_is_for_head(label_events, label, head_date):
-    """True when the label was last added at or after the head commit's date: a label put on an earlier commit does
-    not pass check 4 for a newer one (review of ae01dd6), even if the workflow could not remove it. Dates are ISO 8601
-    UTC strings as the GitHub API gives them."""
-    added = [e.get("created_at") or "" for e in label_events
-             if e.get("event") == "labeled" and (e.get("label") or {}).get("name") == label]
-    return bool(added) and max(added) >= head_date
+def nightly_checked_by_comment(comments, head):
+    """True when a member or collaborator wrote "nightly-checked: <sha>" for this head (the sha, or its first 7 or more
+    characters)."""
+    for c in comments:
+        if c.get("author_association") not in TRUSTED:
+            continue
+        for m in NIGHTLY_MARK.finditer(c.get("body") or ""):
+            if head.startswith(m.group(1)):
+                return True
+    return False
 
 
 def no_site_code(files):
@@ -112,9 +117,10 @@ def staged_by_tree(head_tree, staging_runs, tree_of):
     """The successful Deploy Staging run whose commit has the PR head's tree, or None. Claude pushes a PR to staging as
     a "merge -s ours" commit on top of the staging branch: a different commit with the same files (the PR head's tree),
     so the run is never for the head's own sha (2026-11-17: check 2 was closed by hand on every PR)."""
+    # the newest deploy of that tree decides: a failed redeploy after a good one is not passed (review of c3e1f3c)
     for run in sorted(staging_runs, key=lambda r: r.get("created_at") or "", reverse=True):
-        if run.get("conclusion") == "success" and tree_of(run["head_sha"]) == head_tree:
-            return run
+        if run.get("status", "completed") == "completed" and tree_of(run["head_sha"]) == head_tree:
+            return run if run.get("conclusion") == "success" else None
     return None
 
 def window_closed(now):
@@ -377,21 +383,19 @@ def main(argv=None):
           or f"{len(entries)} known failures listed, none expired")
 
     nightly = nightly_files(files)
-    if NIGHTLY_LABEL in [l.get("name") for l in pr.get("labels") or []]:
-        # the label: Claude read the staging nightly of this head; it counts only if put on after the head's commit
-        head_date = gh(f"repos/{REPO}/commits/{head}")["commit"]["committer"]["date"]
-        if label_is_for_head(gh_all(f"repos/{REPO}/issues/{args.pr}/events?per_page=100"), NIGHTLY_LABEL, head_date):
-            args.nightly_checked = True
+    comments = gh_all(f"repos/{REPO}/issues/{args.pr}/comments?per_page=100")
+    if nightly and nightly_checked_by_comment(comments, head):
+        args.nightly_checked = True   # "nightly-checked: <head sha>" in a PR comment
     check(4, "nightly", not nightly or args.nightly_checked,
           "no nightly code changed" if not nightly else
           ("nightly checked (--nightly-checked)" if args.nightly_checked else
            f"nightly code changed ({', '.join(Path(f).name for f in nightly[:4])}): wait for a staging nightly, "
-           "then --nightly-checked"))
+           "then --nightly-checked or a PR comment \"nightly-checked: <sha>\""))
 
     if args.no_review:
         check(5, "review", True, f"no review: {args.no_review}")
     else:
-        ok, text = review_state(gh_all(f"repos/{REPO}/issues/{args.pr}/comments?per_page=100"), head)
+        ok, text = review_state(comments, head)
         check(5, "review", ok, text)
 
     closed = window_closed(dt.datetime.now(dt.timezone.utc))

@@ -32,9 +32,9 @@ finished Tests, End-to-end tests, Deploy Staging or Claude review run, and every
 - Check 2 finds the staging deploy of a PR staged as a `merge -s ours` commit by its files (the head's tree), and
   passes a PR that changes only files outside the site (`NO_SITE_PATHS`: docs, unit tests, the production smoke and
   speed checks, the release tools, this workflow).
-- Check 4: Claude adds the label `nightly-checked` once the staging nightly ran the PR's head clean (morning
-  compute.log and tests read). It counts only when added after the head's commit (`label_is_for_head`); the workflow
-  also removes it when the PR gets a new commit.
+- Check 4: Claude writes a PR comment with the line `nightly-checked: <head sha>` once the staging nightly ran that
+  commit clean (morning compute.log and tests read). It is tied to the sha: it never passes another commit. Only
+  comments of members and collaborators count.
 - Checks 6 and 8 depend on the time: a status stays as written until the next run (hourly, and at 04:46 Pacific),
   so Claude still runs the gate by hand at merge time.
 - The workflow runs on `pull_request_target`: its file and the gate's code come from master, so a PR cannot change
@@ -42,7 +42,7 @@ finished Tests, End-to-end tests, Deploy Staging or Claude review run, and every
 - Check 2 and the staging procedure: the PR is staged as `git checkout --detach <head>; git merge -s ours
   origin/staging`, a commit with the head's tree; the full e2e run is for the PR head (label full-e2e).
 - Check 8 reads `dailyUpdate.do?format=json` through an SSH tunnel to production (the Deploy key, pinned host keys).
-- The gate's code comes from master; the known-failures list from each PR's head, so a PR may add an entry.
+- The gate's code and the known-failures list come from master: a new known failure is merged in its own PR first.
 
 By hand, the gate still runs as before (`python3 tools/release/gate.py N`), with `--nightly-checked` and
 `--daily-update-checked` when those were read by hand.
