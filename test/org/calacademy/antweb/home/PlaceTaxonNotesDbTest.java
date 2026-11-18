@@ -48,6 +48,7 @@ public class PlaceTaxonNotesDbTest extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
+        org.calacademy.antweb.home.StatisticsDb.forgetImagedNames();   // the genus rows' Images are kept in memory (2026-11-17)
         connection = connect();
         fill(connection);
         exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus, species) values"

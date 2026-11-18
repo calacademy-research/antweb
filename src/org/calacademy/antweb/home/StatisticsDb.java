@@ -385,7 +385,8 @@ museum
      * in AntWeb, has a photo of the ant; label photos do not count, so a name with only label photos is unimaged; nor do
      * photos of red-flagged specimens (2026-11-09), so a name whose only photos are of red-flagged specimens is unimaged. Used by
      * taxonomicPage.do?isImaged=false (TaxaPage.findUnimaged) and, in Python, by the API's /unimagedGeolocaleTaxa
-     * (imagedTaxaSql in api/v3.1/api.py). Returns the names of the given ones that are imaged.
+     * (imagedTaxaSql in api/v3.1/api.py). Returns the names of the given ones that are imaged (read now; the list pages
+     * use antImagedNamesKept).
      */
     public static java.util.Set<String> antImagedNames(Connection connection, java.util.Collection<String> names) throws SQLException {
         java.util.Set<String> imaged = new java.util.HashSet<>();
@@ -402,6 +403,77 @@ museum
             }
         }
         return imaged;
+    }
+
+    /**
+     * The same rule as antImagedNames, from the imaged names kept in memory (allAntImagedNames: at most 10 minutes old,
+     * read again after every specimen upload). For the genus rows' Images of the list pages (ListView.loadGenusRows),
+     * which ask for every name of a subfamily or a place. Returns the given names that are imaged.
+     */
+    public static java.util.Set<String> antImagedNamesKept(Connection connection, java.util.Collection<String> names) throws SQLException {
+        java.util.Set<String> all = allAntImagedNames(connection);
+        java.util.Set<String> imaged = new java.util.HashSet<>();
+        for (String name : names) {
+            if (name != null && all.contains(name.toLowerCase(java.util.Locale.ROOT))) imaged.add(name);
+        }
+        return imaged;
+    }
+
+    /*
+     * Every imaged name, read with one query and kept in memory (2026-11-17, road map 11: the Myrmicinae page took
+     * 7.6 s, about 5 s of it in antImagedNames, which asked once per 500 names; the page-speed log, prod-speed.yaml,
+     * shows it). Read again when older than IMAGED_NAMES_MAX_AGE_MS, and at once after a specimen upload rebuilds the
+     * AntWeb-wide list (imagedNamesChanged, from ProjTaxonDb.regenerateAllAntweb). While one request reads it again,
+     * the others use the previous set; only the very first read is waited for. Names are compared without case, as
+     * MySQL's "in" compared them.
+     */
+    static final long IMAGED_NAMES_MAX_AGE_MS = 10 * 60 * 1000L;
+    private static volatile java.util.Set<String> s_imagedNames = null;
+    private static volatile long s_imagedNamesAt = 0;
+    private static final java.util.concurrent.atomic.AtomicBoolean s_imagedNamesReading = new java.util.concurrent.atomic.AtomicBoolean(false);
+
+    /** The imaged names (lower case), at most IMAGED_NAMES_MAX_AGE_MS old, or being read again by another request. */
+    static java.util.Set<String> allAntImagedNames(Connection connection) throws SQLException {
+        java.util.Set<String> current = s_imagedNames;
+        if (current != null && System.currentTimeMillis() - s_imagedNamesAt < IMAGED_NAMES_MAX_AGE_MS) return current;
+        if (current != null && !s_imagedNamesReading.compareAndSet(false, true)) return current;   // another request reads it
+        try {
+            java.util.Set<String> read = readAntImagedNames(connection);
+            s_imagedNames = java.util.Collections.unmodifiableSet(read);
+            s_imagedNamesAt = System.currentTimeMillis();
+            return s_imagedNames;
+        } catch (SQLException e) {
+            if (current == null) throw e;
+            s_log.warn("allAntImagedNames() could not read the names again, the previous ones are used: " + e);
+            return current;
+        } finally {
+            if (current != null) s_imagedNamesReading.set(false);
+        }
+    }
+
+    /** One query: every name with a photo of the ant on a specimen that is not red-flagged, lower case. */
+    static java.util.Set<String> readAntImagedNames(Connection connection) throws SQLException {
+        java.util.Set<String> names = new java.util.HashSet<>();
+        try (PreparedStatement stmt = connection.prepareStatement(ANT_IMAGED_NAMES_SQL);
+             ResultSet r = stmt.executeQuery()) {
+            while (r.next()) {
+                String n = r.getString(1);
+                if (n != null) names.add(n.toLowerCase(java.util.Locale.ROOT));
+            }
+        }
+        return names;
+    }
+
+    /** The imaged names are read again by the next request that needs them (after a specimen upload). */
+    public static void imagedNamesChanged() {
+        s_imagedNamesAt = 0;
+    }
+
+    /** For tests, whose data changes between tests: forget the kept names. */
+    public static void forgetImagedNames() {
+        s_imagedNames = null;
+        s_imagedNamesAt = 0;
+        s_imagedNamesReading.set(false);
     }
 
     /** Names with a photo of the ant anywhere in AntWeb (antImagedNames; add "and s.taxon_name in (...)"). */

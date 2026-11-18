@@ -1475,6 +1475,9 @@ jobs:
           # project whose list loses a genus without species in set 5's list check is counted again; for the AntCat list
           # and Fossil Ants the species rows of their view Valid are stored too (valid < curated when the list has
           # morphospecies, equal without; never valid_species_count), and the old address value opens Curated.
+          # ImagedNamesKeptDbTest (2026-11-17): the list pages' genus rows read the imaged names kept in memory
+          # (StatisticsDb.antImagedNamesKept): the same answer as the live rule, without case; a new photo seen after a
+          # specimen upload; red-flagged specimens never count.
           # ImagingProgressDbTest (2026-11-08): the imaging progress page's table (a label-only name is unimaged; a name
           # imaged elsewhere is imaged but not imaged from here; all of AntWeb = the home page numbers; the unimaged list
           # and CSV; the count check finds a wrong row; photos of red-flagged specimens do not count, 2026-11-09; the
@@ -1564,8 +1567,9 @@ jobs:
               /t/org/calacademy/antweb/util/OnePlaceJobDbTest.java \
               /t/org/calacademy/antweb/home/GroupSpecimenCountDbTest.java \
               /t/org/calacademy/antweb/util/DataExtractDbTest.java \
-              /t/org/calacademy/antweb/home/ListCleanupOrderDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:6 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3 home.GroupSpecimenCountDbTest:8 home.IslandCountryDbTest:7 home.AntcatIslandRowsDbTest:2 home.ListCleanupOrderDbTest:20 util.DataExtractDbTest:21; do
+              /t/org/calacademy/antweb/home/ListCleanupOrderDbTest.java \
+              /t/org/calacademy/antweb/home/ImagedNamesKeptDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:6 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3 home.GroupSpecimenCountDbTest:8 home.IslandCountryDbTest:7 home.AntcatIslandRowsDbTest:2 home.ListCleanupOrderDbTest:20 util.DataExtractDbTest:21 home.ImagedNamesKeptDbTest:3; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
