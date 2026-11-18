@@ -424,36 +424,71 @@ museum
      * 7.6 s, about 5 s of it in antImagedNames, which asked once per 500 names; the page-speed log, prod-speed.yaml,
      * shows it). Read again when older than IMAGED_NAMES_MAX_AGE_MS, and after a specimen upload is committed
      * (imagedNamesChanged, from SpecimenUploadJob after its commit). A read that was going on when imagedNamesChanged
-     * came (it may not see the upload) is used but not kept as fresh (s_imagedNamesGeneration; review of 53d28ae).
-     * While one request reads again, the others use the previous set; a failed read keeps the previous set. Names are
-     * compared without case, as MySQL's "in" compared them.
+     * came (it may not see the upload) is used but not kept as fresh (the change count, KeptNames; reviews of 53d28ae
+     * and 387bd55). Each read writes its count and time to the log (allAntImagedNames() read N names in
+     * M ms). Names are compared without case, as MySQL's "in" compared them. Other changes (the TaxonWorks upload of
+     * the daily update, image uploads, red flags set by hand) show within the 10 minutes.
      */
     static final long IMAGED_NAMES_MAX_AGE_MS = 10 * 60 * 1000L;
-    private static volatile java.util.Set<String> s_imagedNames = null;
-    private static volatile long s_imagedNamesAt = 0;
+
+    /** The kept names with when their read started and the change count they were read at, published together. */
+    private static final class KeptNames {
+        final java.util.Set<String> names;
+        final long readStarted;
+        final long generation;
+        KeptNames(java.util.Set<String> names, long readStarted, long generation) {
+            this.names = names;
+            this.readStarted = readStarted;
+            this.generation = generation;
+        }
+    }
+
+    private static final java.util.concurrent.atomic.AtomicReference<KeptNames> s_kept = new java.util.concurrent.atomic.AtomicReference<>();
     private static final java.util.concurrent.atomic.AtomicLong s_imagedNamesGeneration = new java.util.concurrent.atomic.AtomicLong();
     private static final java.util.concurrent.atomic.AtomicBoolean s_imagedNamesReading = new java.util.concurrent.atomic.AtomicBoolean(false);
+    private static final Object s_firstRead = new Object();
 
-    /** The imaged names (lower case), at most IMAGED_NAMES_MAX_AGE_MS old, or being read again by another request. */
+    /**
+     * The imaged names (lower case): fresh when read at the current change count (imagedNamesChanged raises it) and
+     * less than IMAGED_NAMES_MAX_AGE_MS ago. A stale set is read again by one request while the others use it; the very
+     * first read is made by one request while the others wait for it (review of 387bd55: after a restart every list
+     * page ran the whole query at once). The change count is checked against the one the read started with, never
+     * written after the check, so an upload committed during a read is never lost.
+     */
     static java.util.Set<String> allAntImagedNames(Connection connection) throws SQLException {
-        java.util.Set<String> current = s_imagedNames;
-        if (current != null && System.currentTimeMillis() - s_imagedNamesAt < IMAGED_NAMES_MAX_AGE_MS) return current;
-        if (current != null && !s_imagedNamesReading.compareAndSet(false, true)) return current;   // another request reads it
+        KeptNames kept = s_kept.get();
+        if (kept != null && fresh(kept)) return kept.names;
+        if (kept == null) {
+            synchronized (s_firstRead) {
+                kept = s_kept.get();
+                if (kept != null) return kept.names;
+                return readAndKeep(connection).names;
+            }
+        }
+        if (!s_imagedNamesReading.compareAndSet(false, true)) return kept.names;   // another request reads it
+        try {
+            return readAndKeep(connection).names;
+        } catch (SQLException e) {
+            s_log.warn("allAntImagedNames() could not read the names again, the previous ones are used: " + e);
+            return kept.names;
+        } finally {
+            s_imagedNamesReading.set(false);
+        }
+    }
+
+    private static boolean fresh(KeptNames kept) {
+        return kept.generation == s_imagedNamesGeneration.get()
+            && System.currentTimeMillis() - kept.readStarted < IMAGED_NAMES_MAX_AGE_MS;
+    }
+
+    private static KeptNames readAndKeep(Connection connection) throws SQLException {
         long generation = s_imagedNamesGeneration.get();
         long started = System.currentTimeMillis();
-        try {
-            java.util.Set<String> read = java.util.Collections.unmodifiableSet(readAntImagedNames(connection));
-            s_imagedNames = read;
-            // kept as fresh only when no upload was committed while it was read; its age counts from the start of the read
-            s_imagedNamesAt = s_imagedNamesGeneration.get() == generation ? started : 0;
-            return read;
-        } catch (SQLException e) {
-            if (current == null) throw e;
-            s_log.warn("allAntImagedNames() could not read the names again, the previous ones are used: " + e);
-            return current;
-        } finally {
-            if (current != null) s_imagedNamesReading.set(false);
-        }
+        java.util.Set<String> read = java.util.Collections.unmodifiableSet(readAntImagedNames(connection));
+        KeptNames kept = new KeptNames(read, started, generation);   // stale at once if an upload was committed meanwhile
+        s_kept.set(kept);
+        s_log.info("allAntImagedNames() read " + read.size() + " imaged names in " + (System.currentTimeMillis() - started) + " ms");
+        return kept;
     }
 
     /** One query: every name with a photo of the ant on a specimen that is not red-flagged, lower case. */
@@ -472,13 +507,11 @@ museum
     /** The imaged names are read again by the next request that needs them (after a specimen upload is committed). */
     public static void imagedNamesChanged() {
         s_imagedNamesGeneration.incrementAndGet();
-        s_imagedNamesAt = 0;
     }
 
     /** For tests, whose data changes between tests: forget the kept names. */
     public static void forgetImagedNames() {
-        s_imagedNames = null;
-        s_imagedNamesAt = 0;
+        s_kept.set(null);
         s_imagedNamesReading.set(false);
     }
 
