@@ -120,7 +120,10 @@ def e2e_while_staged(e2e_start, e2e_end, staging_runs, tree_of, head_tree):
     last = max(before, key=stamp)
     if last.get("conclusion") != "success" or tree_of(last["head_sha"]) != head_tree:
         return False
-    during = [r for r in staging_runs if stamp(last) < (r.get("created_at") or "") <= e2e_end]
+    # deploys that ran into the test run: created before it ended and not finished when it started (review of 1832d16:
+    # one created before the last finished but still running at the start)
+    during = [r for r in staging_runs if r is not last and (r.get("created_at") or "") <= e2e_end
+              and not (r.get("status", "completed") == "completed" and stamp(r) <= e2e_start)]
     return all(tree_of(r["head_sha"]) == head_tree for r in during)
 
 
@@ -333,8 +336,11 @@ def tree_of(sha):
 def staging_had_head(head, run):
     """Whether staging ran the head's code for the whole full e2e run (e2e_while_staged), from the last staging deploys:
     of the head itself or of its "merge -s ours" staging commit (the head's tree)."""
-    staging_runs = gh(f"repos/{REPO}/actions/workflows/deploy-staging.yaml/runs?branch=staging&per_page=15")["workflow_runs"]
+    staging_runs = gh(f"repos/{REPO}/actions/workflows/deploy-staging.yaml/runs?branch=staging&per_page={STAGING_HISTORY}")["workflow_runs"]
     return e2e_while_staged(run["created_at"], run.get("updated_at") or run["created_at"], staging_runs, tree_of, tree_of(head))
+
+
+STAGING_HISTORY = 15   # staging deploys read for check 2 (the newest ones)
 
 
 def runs_for(sha, name):
@@ -395,7 +401,8 @@ def main(argv=None):
     elif not run:
         check(2, "staging", False, "no finished full e2e run for the head (add the full-e2e label)")
     elif not staging_had_head(head, run):
-        check(2, "staging", False, "the head was not on staging during its full e2e run (stage it, then run the full e2e again)")
+        check(2, "staging", False, "the head was not on staging for its whole full e2e run, or that run is older than the last "
+              f"{STAGING_HISTORY} staging deploys (stage it, then run the full e2e again)")
     else:
         # a failed run passes only with named failures that are all listed: a run that failed without naming its
         # tests (a crash, a collection error) never passes (review of #330)

@@ -201,6 +201,10 @@ def test_e2e_while_staged():
     assert w("2026-11-17T10:30:00Z", "2026-11-17T11:00:00Z", again)
     failed = runs + [{"head_sha": "a2", "conclusion": "failure", "created_at": "2026-11-17T12:00:00Z", "updated_at": "2026-11-17T12:05:00Z"}]
     assert not w("2026-11-17T12:30:00Z", "2026-11-17T13:00:00Z", failed)
+    # B created before A's deploy finished, still running when A's run started: no
+    overlap = [{"head_sha": "a", "conclusion": "success", "created_at": "2026-11-17T10:00:00Z", "updated_at": "2026-11-17T10:05:00Z"},
+               {"head_sha": "b", "conclusion": "success", "created_at": "2026-11-17T10:03:00Z", "updated_at": "2026-11-17T10:20:00Z"}]
+    assert not w("2026-11-17T10:10:00Z", "2026-11-17T10:50:00Z", overlap)
     # no deploy before the run: no
     assert not w("2026-11-17T09:00:00Z", "2026-11-17T09:40:00Z")
 
