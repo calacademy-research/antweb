@@ -1,5 +1,5 @@
 <%-- Daily update page (dailyUpdate.do, DailyUpdateAction): where AntWeb's daily update (05:00 Pacific) is, step by
-     step, with the usual time of each step (curators and admins). Tiles wrapper of util/dailyUpdate-body.jsp. The JSON
+     step, with the usual time of each step (administrators; the action checks). Tiles wrapper of util/dailyUpdate-body.jsp. The JSON
      (dailyUpdate.do?format=json) is written by the action and never reaches this page. Docs: docs/flows/nightly.md.
      Tests: tests/e2e/test_daily_update.py. --%>
 <%@ page errorPage = "/error.jsp" %>
@@ -9,7 +9,7 @@
 
 <bean:define id="project" value="" toScope="session"/>
 
-<%@include file="/curate/curatorCheck.jsp" %>
+<%@include file="/curate/adminCheck.jsp" %>
 
 <%@include file="/common/antweb_admin-defs.jsp" %>
 

@@ -198,7 +198,9 @@ or for Worldants upload
             // DummyTaxon dummyTaxon = new TaxonDb(getConnection()).getDummyTaxon(taxonName, "taxon");
             // Always look to the database. This determines if we insert or update.
 
-            Taxon dummyTaxon = new TaxonDb(getConnection()).getTaxon(taxonName);
+            // whether the name exists and its status: one light query (TaxonDb.brief, 2026-11-19; getTaxon read the
+            // whole row plus four more queries for each record of an upload)
+            TaxonDb.Brief dummyTaxon = TaxonDb.brief(getConnection(), taxonName);
             //A.log("saveTaxon() dummyTaxon:" + dummyTaxon + " source:" + source + " taxonName:" + taxonName);
 
             if (dummyTaxon != null) {
@@ -209,7 +211,7 @@ or for Worldants upload
                     if ("worldants".equals(source)) {
                         String status = (String) item.get("status");
 
-                        if (!Status.VALID.equals(status) && !Status.UNRECOGNIZED.equals(dummyTaxon.getStatus())) {
+                        if (!Status.VALID.equals(status) && !Status.UNRECOGNIZED.equals(dummyTaxon.status)) {
                             // log. Nope. Won't update a non-valid taxon from worldants.
                             String display = taxonName + " " + status;
                             getMessageMgr().addToMessages(MessageMgr.nonValidWorldantsDup, Html.esc(display));

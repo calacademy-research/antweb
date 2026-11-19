@@ -293,9 +293,9 @@ never "nightly" (Brian Fisher, 2026-11-07); class names keep "nightly".
   autocommit connection of its own: recording never touches the run's transaction and never throws into it.
 - Email to antweb@antweb.org, once per step and run: a step failed (not again for a failed set: the Scheduler's own
   email covers it), or a step ran over twice its usual time and at least 5 minutes over (checked every minute).
-- Banner: visitors' red dot says "AntWeb is running its daily update (about N minutes left)."; the Curate page and a
-  link next to Curate in the header show curators "Step N of M: <step>, started HH:MM Pacific, usually X min; next:
-  <step>" linked to the page.
+- Banner: visitors' red dot says "AntWeb is running its daily update (about N minutes left)."; the Curate page and the
+  header next to Curate show curators "Step N of M: <step>, started HH:MM Pacific, usually X min; next: <step>";
+  for administrators it links to the page (since 2026-11-19 the page is for administrators only).
 - `dailyUpdate.do?format=json` (no login, no personal data): `{"runs":[...]}`, the last 2 runs, newest first, each with
   `started`, `ended` (null while running), `state` (running, ok, failed) and `steps` (`name`, `label`, `state`, `started`,
   `ended`, `usual_seconds`, `message`); times ISO 8601 without zone, Pacific. Read by the production morning check.

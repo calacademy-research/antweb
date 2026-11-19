@@ -145,8 +145,13 @@ public final class CurrentValidNameRule {
     public static Lookup uploadLookup(Connection connection) {
         return new Lookup() {
             public TaxonRow getTaxon(String taxonName) throws SQLException {
-                Taxon taxon = TaxonMgr.isUseRefreshing() ? TaxonMgr.getTaxon(taxonName) : new TaxonDb(connection).getTaxon(taxonName);
-                return taxon == null ? null : new TaxonRow(taxon.getStatus(), taxon.getCurrentValidName(), taxon.getRank());
+                if (TaxonMgr.isUseRefreshing()) {
+                    Taxon taxon = TaxonMgr.getTaxon(taxonName);
+                    return taxon == null ? null : new TaxonRow(taxon.getStatus(), taxon.getCurrentValidName(), taxon.getRank());
+                }
+                // the three columns only (2026-11-19): getTaxon read four more rows per record, unused here
+                TaxonDb.Brief b = TaxonDb.brief(connection, taxonName);
+                return b == null ? null : new TaxonRow(b.status, b.currentValidName, b.rank);
             }
             public String getCurrentValidTaxonName(String currentValidName) {
                 return TaxonDb.getCurrentValidTaxonName(connection, currentValidName);

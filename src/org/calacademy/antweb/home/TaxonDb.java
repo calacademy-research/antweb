@@ -69,6 +69,43 @@ public class TaxonDb extends AntwebDb {
               + ", parent_taxon_name, image_count, hol_id, chart_color";
               // country, bioregion,  // These not used. Could be in multiple. See bioregion_taxon and taxon_country. And bioregion_map.
 
+    /**
+     * What an upload asks of a name already in the taxon table: its status, its current valid name and its rank, as
+     * getTaxon gives them (the current valid name only when it differs from the name, ignoring case, else "": fromRow), in one
+     * light query. Null when there is no row, or the name holds a quote (getTaxon refuses those too).
+     * 2026-11-19, daily update speed: the specimen upload called getTaxon twice for each record
+     * (CurrentValidNameRule.uploadLookup and AntwebUpload.saveTaxon); outside dev mode getTaxon also reads the three
+     * default specimens and the introduced map of a species (four more queries), which neither caller uses.
+     * Production 11-19: saving the 267,884 CAS records took 1,139 s of the 1,613 s TaxonWorks load. Test: TaxonBriefDbTest.
+     */
+    public static final class Brief {
+        public final String status;
+        public final String currentValidName;
+        public final String rank;
+        Brief(String status, String currentValidName, String rank) {
+            this.status = status;
+            this.currentValidName = currentValidName;
+            this.rank = rank;
+        }
+    }
+
+    public static Brief brief(Connection connection, String taxonName) throws SQLException {
+        if (taxonName == null || taxonName.contains("'")) return null;
+        try (PreparedStatement stmt = connection.prepareStatement(
+                "select status, current_valid_name, taxarank from taxon where taxon_name = ?")) {
+            stmt.setString(1, taxonName);
+            try (ResultSet rset = stmt.executeQuery()) {
+                if (!rset.next()) return null;
+                String currentValidName = rset.getString(2);
+                // "" when there is none, as a Taxon holds (Taxon.currentValidName starts as ""; fromRow sets it only
+                // when it differs): CurrentValidNameRule.decide then takes the same branch as before
+                return new Brief(rset.getString(1),
+                    currentValidName != null && !taxonName.equalsIgnoreCase(currentValidName) ? currentValidName : "",
+                    rset.getString(3));
+            }
+        }
+    }
+
     /** A taxon from one row of TAXON_COLUMNS (getTaxon, and the species of a genus read at once, speciesOfGenus). */
     static Taxon fromRow(ResultSet rset, String taxonName) throws SQLException {
         String rank = rset.getString("taxarank");
