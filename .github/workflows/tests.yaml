@@ -470,7 +470,7 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.BoxCheckTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (4 tests)" /tmp/out.txt
-            # the parts of an upload's time (the TaxonWorks load's line in compute.log, 2026-11-18)
+            # the parts of the time of an upload (the TaxonWorks load line in compute.log, 2026-11-18)
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/upload/UploadTimesTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.UploadTimesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
