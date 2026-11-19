@@ -163,4 +163,21 @@ public class MuseumOwnerDbTest extends TestCase {
         assertEquals(0, MuseumDb.populateAllSpecimenMuseums(connection, CODES));
         assertEquals(0, MuseumDb.populateAllSpecimenMuseums(connection, Arrays.asList()));
     }
+
+    /** The two numbers of the compute.log line (2026-11-19): a reloaded specimen given its museum, a changed owner. */
+    public void testGivenAndChangedCounted() throws SQLException {
+        load(null);
+        MuseumDb.populateAllSpecimenMuseumCounts(connection, CODES);
+        try (Statement st = connection.createStatement()) {
+            st.executeUpdate("update specimen set museum = null where code = 's1'");          // as reloaded by an upload
+            st.executeUpdate("update specimen set ownedBy = 'UCDC' where code = 's6'");       // owner changed: MCZC to UCDC
+        }
+        int[] counts = MuseumDb.populateAllSpecimenMuseumCounts(connection, CODES);
+        assertEquals(1, counts[0]);
+        assertEquals(1, counts[1]);
+        assertEquals("CASC", museumOf("s1"));
+        assertEquals("UCDC", museumOf("s6"));
+        int[] again = MuseumDb.populateAllSpecimenMuseumCounts(connection, CODES);
+        assertEquals(0, again[0] + again[1]);
+    }
 }

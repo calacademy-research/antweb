@@ -1462,3 +1462,5 @@ The daily box check (`BoxCheck`, since 2026-11-18) lists states whose stored box
 2. Put the correct box (left, bottom, right, top) in **Bounding box fixed** and save: the place list reloads by itself. For several states at once, back up the rows first (`geolocale_boxes_<date>`) and reload the place list after (`util.do?action=reloadAntwebMgr&name=geolocale`).
 3. The next daily update shows "Box check: ok" when no other state is listed.
 
+When the box is right and the flagged specimens are misfiled records (North Dakota 2026-11-19: 25 UTEP specimens near Logan, Utah, and 2 Field Museum specimens in Colorado; Arno, Marshall Islands: 11 specimens of Steve Shattuck's group at one point near Majuro), add the words **box checked** to the state's admin note in the Geolocale Manager, with the date and why. The box check then names the state after "box checked (specimens to correct, no warning)" with its numbers, and the step stays green for it. Remove the words once the records are corrected, so a later wrong box is seen again.
+

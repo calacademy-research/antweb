@@ -24,12 +24,19 @@ import org.calacademy.antweb.geolocale.Geolocale;
  * coordinates: a wrong box flags a large share, a few badly georeferenced specimens do not. The step ends yellow
  * (warning: one email per run, as the count check) and an admin alert is added at most once a week. States with
  * specimens but no box are counted (the upload check cannot flag them). Read-only. Tests: BoxCheckTest.
+ *
+ * A state whose admin note (Geolocale Manager) contains "box checked" is left out of the warning (2026-11-19, Brian
+ * Fisher: production's first run flagged North Dakota and Arno, whose boxes are right; the flagged specimens are
+ * misfiled records of groups that will not upload again soon, and the step would email every morning). Such states are
+ * still named in the line, after "box checked", with their numbers, and the step stays green for them.
  */
 public final class BoxCheck {
 
     private static final Log s_log = LogFactory.getLog(BoxCheck.class);
 
     public static final int MIN_FLAGGED = 10;
+    /** In a state's admin note (any case): the box was looked at and is right; its flagged specimens are data errors. */
+    public static final String CHECKED_MARK = "box checked";
     public static final int PERCENT = 20;
     static final String TITLE = "Box check";
     static final int LISTED = 10;
@@ -41,12 +48,17 @@ public final class BoxCheck {
         public final String country;
         public final String adm1;
         public final boolean hasBox;
+        public final boolean checked;
         public int specimens;
         public int flagged;
         public Tally(String country, String adm1, boolean hasBox) {
+            this(country, adm1, hasBox, false);
+        }
+        public Tally(String country, String adm1, boolean hasBox, boolean checked) {
             this.country = country;
             this.adm1 = adm1;
             this.hasBox = hasBox;
+            this.checked = checked;
         }
     }
 
@@ -54,21 +66,37 @@ public final class BoxCheck {
     public interface Box {
         boolean hasBox();
         boolean isWithin(double lat, double lon);
+        /** The admin note says "box checked" (CHECKED_MARK). */
+        default boolean checked() { return false; }
+    }
+
+    /** True when the admin note holds CHECKED_MARK, in any case. */
+    public static boolean isChecked(String adminNotes) {
+        return adminNotes != null && adminNotes.toLowerCase(java.util.Locale.ROOT).contains(CHECKED_MARK);
     }
 
     /** Adds count specimens at (lat, lon) to the state's tally. box null: not a valid state of AntWeb (not checked). */
     public static void add(Map<String, Tally> tallies, String country, String adm1, Box box, double lat, double lon, int count) {
         if (box == null) return;
-        Tally t = tallies.computeIfAbsent(country + "\t" + adm1, k -> new Tally(country, adm1, box.hasBox()));
+        Tally t = tallies.computeIfAbsent(country + "\t" + adm1, k -> new Tally(country, adm1, box.hasBox(), box.checked()));
         t.specimens += count;
         if (box.hasBox() && !box.isWithin(lat, lon)) t.flagged += count;
     }
 
-    /** The states whose box flags their own specimens, worst first. */
+    /** The states whose box flags their own specimens, worst first; states marked "box checked" are not among them. */
     public static List<Tally> wrongBoxes(Iterable<Tally> tallies, int minFlagged, int percent) {
+        return flaggedStates(tallies, minFlagged, percent, false);
+    }
+
+    /** The states marked "box checked" that the rule would otherwise list, worst first. */
+    public static List<Tally> checkedStates(Iterable<Tally> tallies, int minFlagged, int percent) {
+        return flaggedStates(tallies, minFlagged, percent, true);
+    }
+
+    private static List<Tally> flaggedStates(Iterable<Tally> tallies, int minFlagged, int percent, boolean checked) {
         List<Tally> out = new ArrayList<>();
         for (Tally t : tallies) {
-            if (t.hasBox && t.flagged >= minFlagged && t.flagged * 100L >= (long) percent * t.specimens) out.add(t);
+            if (t.checked == checked && t.hasBox && t.flagged >= minFlagged && t.flagged * 100L >= (long) percent * t.specimens) out.add(t);
         }
         out.sort(Comparator.comparingInt((Tally t) -> -t.flagged).thenComparing(t -> t.country).thenComparing(t -> t.adm1));
         return out;
@@ -82,7 +110,20 @@ public final class BoxCheck {
 
     /** The compute.log line and step message; starts with "Box check: ok" when no box is wrong. */
     public static String line(List<Tally> wrong, int withoutBox) {
-        String tail = withoutBox > 0 ? "; " + withoutBox + " states with specimens have no box (not checked)" : "";
+        return line(wrong, new ArrayList<>(), withoutBox);
+    }
+
+    /** As line(wrong, withoutBox), and the states left out as "box checked" named with their numbers. */
+    public static String line(List<Tally> wrong, List<Tally> checked, int withoutBox) {
+        StringBuilder known = new StringBuilder();
+        for (int i = 0; i < Math.min(LISTED, checked.size()); i++) {
+            Tally t = checked.get(i);
+            known.append(i == 0 ? "" : ", ").append(t.adm1).append(" (").append(t.country).append(") ").append(t.flagged)
+                .append(" of ").append(t.specimens);
+        }
+        if (checked.size() > LISTED) known.append(" and ").append(checked.size() - LISTED).append(" more");
+        String tail = (checked.isEmpty() ? "" : "; box checked (specimens to correct, no warning): " + known)
+            + (withoutBox > 0 ? "; " + withoutBox + " states with specimens have no box (not checked)" : "");
         if (wrong.isEmpty()) return TITLE + ": ok" + tail;
         StringBuilder sb = new StringBuilder(TITLE + ": " + wrong.size() + (wrong.size() == 1 ? " state's" : " states'")
             + " box flags many of its own specimens as out of bounds (the upload report would tell curators to change them): ");
@@ -116,7 +157,7 @@ public final class BoxCheck {
                 }
             }
             List<Tally> wrong = wrongBoxes(tallies.values(), MIN_FLAGGED, PERCENT);
-            String line = line(wrong, withoutBox(tallies.values())) + " (" + (System.currentTimeMillis() - started) / 1000 + " s)";
+            String line = line(wrong, checkedStates(tallies.values(), MIN_FLAGGED, PERCENT), withoutBox(tallies.values())) + " (" + (System.currentTimeMillis() - started) / 1000 + " s)";
             if (!wrong.isEmpty()) {
                 s_log.warn("run() " + line);
                 AdminAlertMgr.addIfFresh(line, TITLE, AdminAlertMgr.WEEK, connection);
@@ -138,6 +179,7 @@ public final class BoxCheck {
         return new Box() {
             public boolean hasBox() { return has; }
             public boolean isWithin(double lat, double lon) { return adm1.isWithinBounds(lat, lon); }
+            public boolean checked() { return isChecked(adm1.getAdminNotes()); }
         };
     }
 }

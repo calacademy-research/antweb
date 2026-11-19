@@ -202,13 +202,17 @@ Three compute.log lines say how long their parts took, so a slow step can be rea
 2026-11-10: a faster daily update; production that day: museums 5 minutes, image counts 8, place image counts 13.6):
 
 - "Museums populated (N museums, specimen.museum S s, museum numbers S s, species rows S s, synonym rows S s, higher
-  taxa S s, counts S s, totals S s; N specimens changed museum)": the parts of `MuseumDb.populate(code)` over all museums. `specimen.museum`:
+  taxa S s, counts S s, totals S s; N new or reloaded specimens given a museum, M specimens changed museum)": the parts of `MuseumDb.populate(code)` over all museums. `specimen.museum`:
   until 2026-11-18, per museum, `update specimen set museum = null where museum = X` and `update specimen set museum = X
   where ownedBy regexp ...` (no index serves the regexp: the specimen table was read once per museum, 175 to 202 s a day
   in November). Since then `MuseumDb.populateAllSpecimenMuseums`, once for all museums before their numbers: the
   same patterns, matched by MySQL on each distinct ownedBy text (a temporary table keyed by the text's md5), the last
-  museum in code order that matches wins, as before; then one UPDATE writes only the specimens whose museum changes
-  (a code with no matching text is emptied, a code no museum has is left). `MuseumOwnerDbTest` compares it byte for byte
+  museum in code order that matches wins, as before; then two UPDATEs write only the specimens whose museum changes
+  (a code with no matching text is emptied, a code no museum has is left): first those with no museum (an upload
+  inserts its rows without one, and every night's TaxonWorks load reloads all CAS specimens, so the first number is
+  about 270,000 on production), then the others (the second number, 0 on most days). Production 2026-11-19:
+  specimen.museum 32 s (about 3 minutes before); a read-only check found 0 of 918,373 specimens different from the
+  old passes. `MuseumOwnerDbTest` compares it byte for byte
   with the old passes. One difference in the museum numbers: a specimen whose ownedBy names two museums used to be
   counted in the first museum's numbers before the second took it; now only in the museum it ends up with.
 - "TaxonWorks load times: unzip and convert S s, delete S s, read the file S s, check S s, save S s, report lines and

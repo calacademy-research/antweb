@@ -297,7 +297,7 @@ public class MuseumDb extends AntwebDb {
       List<String> codes = new ArrayList<>();
       for (Museum museum : MuseumMgr.getMuseums()) codes.add(museum.getCode());
       long t = System.currentTimeMillis();
-      int changed = populateAllSpecimenMuseums(getConnection(), codes);
+      int[] counts = populateAllSpecimenMuseumCounts(getConnection(), codes);
       lap(0, t);
       for (String code : codes) {
         populate(code, false);
@@ -309,10 +309,11 @@ public class MuseumDb extends AntwebDb {
       for (int i = 0; i < POPULATE_PARTS.length; i++) {
         times.append(", ").append(POPULATE_PARTS[i]).append(" ").append(populateMillis[i] / 1000).append(" s");
       }
-      // the specimens whose museum changed: 0 on a day without uploads (staging, where TaxonWorks is skipped, shows the
-      // one pass leaves what the old passes left)
-      LogMgr.appendLog("compute.log", "  Museums populated (" + museums + " museums" + times + "; " + changed
-          + " specimens changed museum)", true);
+      // Two numbers (2026-11-19): the specimens given a museum (uploaded or reloaded since the last run, as every night's
+      // TaxonWorks load: production 11-19 said 269485 changed, all of them reloaded specimens), and those whose museum
+      // changed, 0 on most days. A read-only check that day found 0 of 918,373 specimens different from the old passes.
+      LogMgr.appendLog("compute.log", "  Museums populated (" + museums + " museums" + times + "; " + counts[0]
+          + " new or reloaded specimens given a museum, " + counts[1] + " specimens changed museum)", true);
     }
 
     /** The parts of populate(code), timed over all museums by populate(). */
@@ -542,7 +543,16 @@ public class MuseumDb extends AntwebDb {
      * whose museum changes are written. MuseumOwnerDbTest compares it with the old per-museum passes.
      */
     public static int populateAllSpecimenMuseums(Connection connection, List<String> codes) throws SQLException {
-      if (codes == null || codes.isEmpty()) return 0;
+      int[] counts = populateAllSpecimenMuseumCounts(connection, codes);
+      return counts[0] + counts[1];
+    }
+
+    /**
+     * As populateAllSpecimenMuseums; returns {specimens without a museum that got one (new or reloaded since the last
+     * run), specimens whose museum changed or was emptied}.
+     */
+    public static int[] populateAllSpecimenMuseumCounts(Connection connection, List<String> codes) throws SQLException {
+      if (codes == null || codes.isEmpty()) return new int[] {0, 0};
       String type = "text";
       try (PreparedStatement ps = connection.prepareStatement("select column_type, collation_name from information_schema.columns"
           + " where table_schema = database() and table_name = 'specimen' and column_name = 'ownedBy'");
@@ -565,15 +575,19 @@ public class MuseumDb extends AntwebDb {
       }
       StringBuilder in = new StringBuilder();
       for (String code : codes) in.append(in.length() == 0 ? "" : ", ").append(DBUtil.sqlLiteral(code));
-      int changed;
+      int given, changed;
       try (Statement st = connection.createStatement()) {
+        // first the specimens with no museum (rows inserted by an upload carry none), then the others; a row set by
+        // the first statement equals its museum_owner row and is not touched by the second
+        given = st.executeUpdate("update specimen s join museum_owner o on o.k = unhex(md5(s.ownedBy))"
+            + " set s.museum = o.museum where s.museum is null and o.museum is not null");
         changed = st.executeUpdate("update specimen s left join museum_owner o on o.k = unhex(md5(s.ownedBy))"
             + " set s.museum = o.museum"
-            + " where (o.museum is not null and not (cast(s.museum as binary) <=> cast(o.museum as binary)))"
-            + " or (o.museum is null and s.museum in (" + in + "))");
+            + " where s.museum is not null and ((o.museum is not null and not (cast(s.museum as binary) <=> cast(o.museum as binary)))"
+            + " or (o.museum is null and s.museum in (" + in + ")))");
         st.executeUpdate("drop temporary table if exists museum_owner");
       }
-      return changed;
+      return new int[] {given, changed};
     }
 
     // Populate the museum field of the specimen table if can be determined from the ownedby field.
