@@ -26,7 +26,7 @@ import org.calacademy.antweb.AntwebAction;
  * The "Daily update" page (dailyUpdate.do, 2026-11-07): where AntWeb's daily update (the Scheduler's run at 05:00
  * Pacific, DailyUpdate) is: each step in order with its status (done, running, waiting, skipped, failed), start, end,
  * duration and usual time; a running step shows its elapsed time and estimated end, a step over 1.5 times its usual time
- * is yellow, a failed one red. Curators and admins (util/dailyUpdate.jsp checks too).
+ * is yellow, a failed one red. Administrators only since 2026-11-19 (curators before).
  *
  * dailyUpdate.do?format=json needs no login (no personal data): {"runs":[the last JSON_RUNS runs, newest first]} with
  * each run's started, ended (null while it runs), state (running, ok, failed) and steps (name, label, state, started,

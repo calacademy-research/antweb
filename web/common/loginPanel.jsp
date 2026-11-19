@@ -2,8 +2,9 @@
      (curators link viewLogin.do?id=, other logins editLogin.do?id=, on the secure domain), Curate (not for
      photo_review logins, Anonymous or groups with a negative id) and Logout (logout.do?target=<this page>). Not
      logged in: a red dot with the server message (AntwebMgr.getPublicServerMessage, plain text; during the daily update
-     "AntWeb is running its daily update (about N minutes left).") and Login (login.do?target=). Curators see a link to
-     dailyUpdate.do while the daily update runs (its hover names the step). Ends
+     "AntWeb is running its daily update (about N minutes left).") and Login (login.do?target=). While the daily update
+     runs, curators see "Daily update running" (its hover names the step); administrators get it as a link to
+     dailyUpdate.do (admins only since 2026-11-19). Ends
      with the sanitized text of /data/antweb/web/siteWarning.txt, if that file exists. Tests:
      tests/e2e/test_curator.py, tests/e2e/test_login_needed.py. --%><%@ page import="java.text.*" %>
 <%
