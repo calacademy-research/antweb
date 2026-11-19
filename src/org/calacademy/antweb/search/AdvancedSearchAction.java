@@ -43,10 +43,10 @@ public class AdvancedSearchAction extends AntwebAction {
 		addToSearch(sb, "locality name", searchParameters.getLocalityName(), searchParameters.getLocalityNameSearchType());
 		addToSearch(sb, "adm2", searchParameters.getAdm2(), searchParameters.getAdm2SearchType());
 
-		// a list of codes is matched exactly whatever was chosen (GenericSearch.codeSearchType, 2026-11-17): say so
-		addToSearch(sb, "locality code", searchParameters.getLocalityCode(), codeType("sp.localitycode", searchParameters.getLocalityCodeSearchType(), searchParameters.getLocalityCode()));
-		addToSearch(sb, "collection code", searchParameters.getCollectionCode(), codeType("sp.collectioncode", searchParameters.getCollectionCodeSearchType(), searchParameters.getCollectionCode()));
-		addToSearch(sb, "specimen code", searchParameters.getSpecimenCode(), codeType("sp.code", searchParameters.getSpecimenCodeSearchType(), searchParameters.getSpecimenCode()));
+		// a list of codes is matched exactly whatever was chosen (GenericSearch.codeSearchType, 2026-11-17): the title says so
+		addCodes(sb, "locality code", "sp.localitycode", searchParameters.getLocalityCode(), searchParameters.getLocalityCodeSearchType());
+		addCodes(sb, "collection code", "sp.collectioncode", searchParameters.getCollectionCode(), searchParameters.getCollectionCodeSearchType());
+		addCodes(sb, "specimen code", "sp.code", searchParameters.getSpecimenCode(), searchParameters.getSpecimenCodeSearchType());
 		addToSearch(sb, "collected by", searchParameters.getCollectedBy(), searchParameters.getCollectedBySearchType());
 		addToSearch(sb, "museum code", searchParameters.getMuseumCode(), searchParameters.getMuseumCodeSearchType());		
 		addToSearch(sb, "method", searchParameters.getMethod(), searchParameters.getMethodSearchType());
@@ -83,8 +83,38 @@ public class AdvancedSearchAction extends AntwebAction {
 		return prefix + sb;
 	}
 	
-	private static String codeType(String property, String searchType, String value) {
-		return GenericSearch.codeSearchType(property, searchType, GenericSearch.searchEntries(property, value).size());
+	/** How a search type reads in the title: "Genus contains myr", "Specimen Code is casent0001" (review of #376: the
+	 *  title said "is" for every type, so a Contains search read like an exact one). */
+	static String verb(String searchType) {
+		if (searchType == null) return "is";
+		switch (searchType) {
+			case "contains": return "contains";
+			case "begins": return "begins with";
+			case "ends": return "ends with";
+			case "notEquals": case "notEqual": return "is not";
+			case "greaterThanOrEqual": return "is at least";
+			case "lessThanOrEqual": return "is at most";
+			default: return "is";
+		}
+	}
+
+	/** A code box: one code reads like any field; a list (two or more) is matched exactly, so the title says
+	 *  "Specimen Code is one of 275 codes (CASENT4042552, CASENT4042553, CASENT4042554, ...)" instead of the whole list. */
+	private void addCodes(StringBuffer sb, String field, String property, String value, String searchType) {
+		java.util.List<String> entries = GenericSearch.searchEntries(property, value);
+		if (entries.size() < 2) {
+			addToSearch(sb, field, value, searchType);
+			return;
+		}
+		if (sb.length() > 0) sb.append(", ");
+		sb.append(codeListTitle(field, entries, GenericSearch.isNegative(searchType)));
+	}
+
+	static String codeListTitle(String field, java.util.List<String> entries, boolean negative) {
+		StringBuilder shown = new StringBuilder();
+		for (int i = 0; i < entries.size() && i < 3; i++) shown.append(i > 0 ? ", " : "").append(entries.get(i).toUpperCase());
+		if (entries.size() > 3) shown.append(", ...");
+		return new Formatter().capitalizeEachWord(field) + (negative ? " is none of " : " is one of ") + entries.size() + " codes (" + shown + ")";
 	}
 
 	private void addToSearch(StringBuffer sb, String field, String value, String searchModifier) {
@@ -110,7 +140,7 @@ public class AdvancedSearchAction extends AntwebAction {
 				if (sb.length() > 0) {
 					sb.append(", ");
 				}
-				sb.append(format.capitalizeEachWord(field) + " is " + format.capitalizeEachWord(value));
+				sb.append(format.capitalizeEachWord(field) + " " + verb(searchModifier) + " " + format.capitalizeEachWord(value));
 			}
 		}	
 	}

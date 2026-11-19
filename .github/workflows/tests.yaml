@@ -195,6 +195,10 @@ jobs:
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_image_split.py
 
+      - name: API ants of the Life Stage field (lifeStageAnts, mixedLifeStage; tests/unit/test_api_life_stage.py)
+        run: |
+          docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_life_stage.py
+
       - name: API findings F6, F7, F8, F20, F22, F23 (/images url, valid filters, fixed order, debug lines, geoSpecimens radius, geoSpeciesStats not found) (tests/unit/test_api_findings.py)
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_findings.py
@@ -460,7 +464,12 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/DailyUpdateTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.DailyUpdateTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (10 tests)" /tmp/out.txt
+            grep -q "^OK (11 tests)" /tmp/out.txt
+            # the daily box check (states whose box flags their own specimens, 2026-11-18)
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/BoxCheckTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.BoxCheckTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (4 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of small core and util fixes (specimen XML without DOCTYPE, comparators, common names, folder delete keeps link targets)
@@ -1761,7 +1770,7 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/search/SearchRulesTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.search.SearchRulesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (9 tests)" /tmp/out.txt
+            grep -q "^OK (10 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the genus images of a place (large genera checked in groups of names; TaxonImageNamesTest)

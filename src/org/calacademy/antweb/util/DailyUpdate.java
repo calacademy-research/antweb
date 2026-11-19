@@ -97,6 +97,7 @@ public final class DailyUpdate {
         new Step("placeListTotals", "Place list totals", "the Subfamilies, Genera and Species of each place page"),
         new Step("set5", "Set 5: maps and cache reload", "object maps; every cache reloaded (skipped on staging)"),
         new Step("logSizeCheck", "Log size check", "warns when a log or the disk grows too large"),
+        new Step("boxCheck", "Box check", "states whose box flags their own specimens as out of bounds (BoxCheck)"),
         new Step("statsPage", "Statistics page", "the tables of the statistics page"),
         new Step("apiCounts", "API taxon counts", "the counts the API gives for each name"),
         new Step("cacheReload", "Cache reload", "only where set 5 was skipped (staging)"),
@@ -490,6 +491,11 @@ public final class DailyUpdate {
     /** The running step key failed, but the run goes on (its own try): it ends as failed and an email goes out. */
     public static void noteFailed(String key, String detail) {
         note(key, FAILED, detail);
+    }
+
+    /** The running step key ended with something to look at (BoxCheck): yellow, done, one email per run. */
+    public static void noteWarning(String key, String detail) {
+        note(key, WARNING, detail);
     }
 
     /** The running step key did nothing on purpose (switched off, or skipped): it ends as skipped. */

@@ -208,6 +208,26 @@ def test_e2e_while_staged():
     # no deploy before the run: no
     assert not w("2026-11-17T09:00:00Z", "2026-11-17T09:40:00Z")
 
+tspec = importlib.util.spec_from_file_location("gate_targets", ROOT / "tools/release/gate_targets.py")
+gate_targets = importlib.util.module_from_spec(tspec)
+tspec.loader.exec_module(gate_targets)
+
+
+def test_gate_targets_only_the_pr_concerned():
+    """Review of #375: a PR event or a finished run of a PR's head gates that PR, not every open PR (API limit)."""
+    t = gate_targets.targets
+    open_prs = {374: "aaa", 376: "bbb", 380: "ccc"}
+    assert t("pull_request_target", "376", [], "", open_prs) == [376]
+    assert t("pull_request_target", "999", [], "", open_prs) == []          # closed meanwhile: nothing
+    assert t("workflow_run", "", [{"number": 380, "head": {"sha": "ccc"}}], "ccc", open_prs) == [380]
+    assert t("workflow_run", "", [], "bbb", open_prs) == [376]              # GitHub named no PR: the head decides
+    assert t("workflow_run", "", [], "staged-merge", open_prs) == [374, 376, 380]   # Deploy Staging: every PR
+    assert t("schedule", "", [], "", open_prs) == [374, 376, 380]
+    assert t("workflow_dispatch", "", [], "", open_prs) == [374, 376, 380]
+    assert t("workflow_run", "", [{"number": 1}], "zzz", {}) == []
+    assert gate_targets.read_open(["374 aaa", "", "x y", "376 bbb"]) == {374: "aaa", 376: "bbb"}
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

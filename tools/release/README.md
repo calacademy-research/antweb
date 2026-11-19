@@ -24,11 +24,13 @@ hand for a week; then it becomes a required check on master (a repository settin
 
 ## The gate as a GitHub check (2026-11-17)
 
-`.github/workflows/release-gate.yaml` runs the gate for every open pull request and writes the commit status
+`.github/workflows/release-gate.yaml` runs the gate and writes the commit status
 `release-gate` on its head: green for GATE OPEN, red with the first failing check otherwise; the run's summary has
 each PR's full output. It runs again on a push, label or text change of a PR (not a fork's), a finished Tests,
 End-to-end tests, Deploy Staging or Claude review run (which writes the review comment), every hour at :07 and at
-04:46 Pacific.
+04:46 Pacific. A PR event, or a finished run of a PR's head, gates only that PR; the hourly, 04:46 and manual
+runs, and runs with no PR (Deploy Staging serves a merge of the staged head), gate every open PR
+(`tools/release/gate_targets.py`, 2026-11-18: re-gating every PR on every event could reach the API's hourly limit).
 
 - Check 2 asks that the PR's full e2e run started while staging had the PR's code: the last staging deploy before
   the run was of the head or of its `merge -s ours` staging commit (same files, the head's tree), and no deploy of

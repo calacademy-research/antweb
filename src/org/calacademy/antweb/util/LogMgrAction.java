@@ -366,6 +366,8 @@ public final class LogMgrAction extends AntwebAction {
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=srfExceptions&ext=txt'>SRF Exceptions</a></li>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=tomcatLog'>Tomcat Log</a></li>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=antwebLog'>Antweb Log</a></li>";
+        // INFO lines (timings such as "allAntImagedNames() read N imaged names in M ms") go only to this file (log4j2.xml)
+        message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=antwebInfoLog'>Antweb Info Log</a> (timings and other information lines)</li>";
         message += "</ul>";
 
 

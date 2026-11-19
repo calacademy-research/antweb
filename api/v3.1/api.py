@@ -676,12 +676,122 @@ class Specimen(Base):
             , 'collectedBy': sp.collectedBy
             , 'caste': sp.caste
             , 'subcaste': sp.subcaste
+            , 'lifeStageAnts': life_stage_ants(sp.lifeStageSex)
+            , 'mixedLifeStage': mixed_life_stage(life_stage_ants(sp.lifeStageSex))
             , 'fossil': sp.fossil
             , 'status': sp.status
             , 'imageCount': sp.imageCount
         }
 
         return specDict
+
+
+# The ants named in a specimen's Life Stage field (lifeStageSex), each read as AntWeb reads the first one for the
+# specimen's caste and subcaste (org.calacademy.antweb.Caste: split at a comma, " and ", "&" or "/"; tried as worker,
+# then queen, then male, then other; same words). A pin can hold several ants ("1 alate queen, 1 male"): AntWeb files
+# the specimen under the first, and its photos may show another (Yuhao Zhao's measurement check, 2026-11-16: 117 such
+# pins). /specimens records carry lifeStageAnts and mixedLifeStage so a program can leave such pins out or check them
+# (Brian Fisher, 2026-11-18). Tests: tests/unit/test_api_life_stage.py.
+def _has_letter_token(note, letter):
+    for i, ch in enumerate(note):
+        if ch != letter:
+            continue
+        before = i == 0 or not note[i - 1].isalpha()
+        after = i == len(note) - 1 or not note[i + 1].isalpha()
+        if before and after:
+            return True
+    return False
+
+
+def _names_male(note):
+    return re.search(r'(^|[^a-z])males?([^a-z]|$)', note, re.S) is not None and 'female' not in note
+
+
+def _is_worker(note):
+    if ('worker' in note or _has_letter_token(note, 'w') or re.fullmatch(r'[a-z]w', note)
+            or 'soldier' in note or 'major' in note or 'minor' in note):
+        return True
+    return any(('%dw' % i) in note or ('%ds' % i) in note for i in range(10))
+
+
+def _worker_subcaste(note):
+    if 'major' in note or 'soldier' in note or any(('%ds' % i) in note for i in range(10)):
+        return 'major/soldier'
+    return 'normal'
+
+
+def _is_queen(note):
+    if _names_male(note):
+        return False
+    return 'q' in note or 'late' in note or 'gyne' in note or 'brachypterous' in note or 'dichthadiiform' in note
+
+
+def _queen_subcaste(note):
+    if any(w in note for w in ('ergatoid', 'wingless', 'apterous', 'dichthadiiform')):
+        return 'ergatoid'
+    if any(w in note for w in ('winged', 'microgyne', 'dealate', 'dq', 'alate', 'aq')):
+        return 'alate/dealate'
+    if any(w in note for w in ('brachypterous', 'short-winged', 'non-flying')):
+        return 'brachypterous'
+    return 'alate/dealate'
+
+
+def _is_male(note):
+    if ('male' in note and 'female' not in note) or _has_letter_token(note, 'm'):
+        return True
+    return any(('%dm' % i) in note for i in range(10))
+
+
+def _male_subcaste(note):
+    return 'ergatoid' if ('ergatoid' in note or 'apterous' in note) else 'alate'
+
+
+def _is_other(note):
+    return any(w in note for w in ('intercaste', 'gynandromorph', 'larva', 'pupa', 'brood'))
+
+
+def _other_subcaste(note):
+    if 'intercaste' in note:
+        return 'intercaste'
+    if 'gynandromorph' in note:
+        return 'gynandromorph'
+    if 'larva' in note or 'pupa' in note or 'brood' in note:
+        return 'larva/pupa'
+    return None
+
+
+def ant_of_note(note):
+    """(caste, subcaste) of one ant's note, as Caste.getCasteValues reads it; (None, None) when no caste word."""
+    note = (note or '').lower()
+    if _is_worker(note):
+        return 'worker', _worker_subcaste(note)
+    if _is_queen(note):
+        return 'queen', _queen_subcaste(note)
+    if _is_male(note):
+        return 'male', _male_subcaste(note)
+    if _is_other(note):
+        return 'other', _other_subcaste(note)
+    return None, None
+
+
+def life_stage_ants(life_stage):
+    """Every ant the Life Stage field names, in order: [{'caste': ..., 'subcaste': ...}]; parts with no caste word are
+    left out. The first is the one AntWeb files the specimen under."""
+    if not life_stage:
+        return []
+    ants = []
+    for part in re.split(r',| and |&|/', life_stage, flags=re.I):
+        if not part.strip():
+            continue
+        caste, subcaste = ant_of_note(part)
+        if caste:
+            ants.append({'caste': caste, 'subcaste': subcaste})
+    return ants
+
+
+def mixed_life_stage(ants):
+    """True when the pin holds ants of more than one caste, or of more than one subcaste (major and minor workers)."""
+    return len({(a['caste'], a['subcaste']) for a in ants}) > 1
 
 
 # country=... matches the whole country name, in any case (2026-10-27, finding F24: it matched by "contains", so

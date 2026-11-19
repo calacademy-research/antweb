@@ -311,6 +311,13 @@ public class Scheduler extends AntwebAction {
 					} catch (Exception e) {
 					  s_log.warn("doAction() log size check e:" + e);
 					}
+					// The states whose box flags their own specimens (BoxCheck, 2026-11-18): read-only, a few seconds.
+					try {
+					  DailyUpdate.start("boxCheck");
+					  LogMgr.appendLog("compute.log", "  " + BoxCheck.run(connection), true);
+					} catch (Exception e) {
+					  s_log.warn("doAction() box check e:" + e);
+					}
 					// The statistics page (statsPage.do): its tables are counted once a day, here, after the nightly numbers.
 					try {
 					  DailyUpdate.start("statsPage");
