@@ -138,6 +138,7 @@ public class Genus extends Subfamily implements Serializable {
             // Where the time of a long list goes (2026-11-18: images.do of Camponotus in all of AntWeb takes about 7 s on
             // production, 5,178 images): reading each child, its images, its counts. One WARN line when over 2 s.
             long loopStart = System.nanoTime(), readNanos = 0, imageNanos = 0, setNanos = 0, t0;
+            TaxonDb.GenusSpecies genusSpecies = null;
             long[] imageParts = Taxon.IMAGE_NANOS.get();
             imageParts[0] = 0;
             imageParts[1] = 0;
@@ -146,10 +147,17 @@ public class Genus extends Subfamily implements Serializable {
                 String rank = rset.getString("taxarank");
 
                 t0 = System.nanoTime();
-                if (Rank.SPECIES.equals(rank)) {
-                    child = taxonDb.getSpecies(subfamily, genus, rset.getString("species"));
-                } else {
-                    child = taxonDb.getSubspecies(subfamily, genus, rset.getString("species"), rset.getString("subspecies"));
+                // read at once for the genus (TaxonDb.speciesOfGenus, 2026-11-18); a name it cannot settle as getSpecies
+                // would is asked of getSpecies, which answers or throws as before
+                if (genusSpecies == null) genusSpecies = taxonDb.speciesOfGenus(subfamily, genus);
+                child = Rank.SPECIES.equals(rank) || Rank.SUBSPECIES.equals(rank)
+                    ? genusSpecies.get(rank, rset.getString("species"), Rank.SPECIES.equals(rank) ? null : rset.getString("subspecies")) : null;
+                if (child == null) {
+                    if (Rank.SPECIES.equals(rank)) {
+                        child = taxonDb.getSpecies(subfamily, genus, rset.getString("species"));
+                    } else {
+                        child = taxonDb.getSubspecies(subfamily, genus, rset.getString("species"), rset.getString("subspecies"));
+                    }
                 }
                 readNanos += System.nanoTime() - t0;
 
