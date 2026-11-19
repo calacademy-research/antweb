@@ -127,6 +127,19 @@ def test_page_needs_login():
 
 
 @pytest.mark.skipif(not IS_STAGING, reason="test logins: staging only")
+@needs("uploader")
+def test_curator_is_refused():
+    """Administrators only (Brian Fisher, 2026-11-19): a curator gets the login page, not the steps."""
+    s, _token, _id = login("uploader")
+    r = s.get(BASE_URL + "/dailyUpdate.do", timeout=TIMEOUT)
+    outcome = classify(r)
+    if outcome.category == "not_found":
+        pytest.skip("dailyUpdate.do is not deployed on this server yet")
+    assert outcome.category == "login", outcome
+    assert '<div class="aw-tools" id="daily-update-page">' not in r.text
+
+
+@pytest.mark.skipif(not IS_STAGING, reason="test logins: staging only")
 @needs("admin")
 def test_admin_sees_the_page():
     s, _token, _id = login("admin")

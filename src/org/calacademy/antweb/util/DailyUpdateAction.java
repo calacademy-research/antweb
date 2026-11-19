@@ -51,7 +51,9 @@ public final class DailyUpdateAction extends AntwebAction {
         boolean json = "json".equals(request.getParameter("format"));
         if (!json) {
             ActionForward a = Check.initLogin(request, mapping); if (a != null) return a;
-            ActionForward c = Check.curator(request, mapping); if (c != null) return c;
+            // Administrators only (Brian Fisher, 2026-11-19: it shows failures, timings and data findings that mean
+            // nothing to curators; the Curate page link was admin-only since 11-11). The JSON (no login) stays.
+            ActionForward c = Check.admin(request, mapping); if (c != null) return c;
         }
         List<RunView> runs = new ArrayList<>();
         String problem = null;

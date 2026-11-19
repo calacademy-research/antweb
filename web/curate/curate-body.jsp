@@ -63,7 +63,7 @@
 
 <%
    if (AntwebMgr.hasServerMessage()) { %>
-<div class="aw-notice" id="curate-server-message"><%= AntwebMgr.getServerMessage() %></div>
+<div class="aw-notice" id="curate-server-message"><%= AntwebMgr.getServerMessage(LoginMgr.isAdmin(accessLogin)) %></div>
 <% } %>
 
 <!-- Upload specimen data -->

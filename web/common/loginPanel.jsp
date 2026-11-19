@@ -78,7 +78,7 @@
           <a href="<%= domainApp %>/curate.do">Curate</a>
        <% if (tAccessLogin.isCurator()) {
             // During the daily update: the running step (hover) and a link to the Daily update page (DailyUpdate).
-            String dailyUpdateLink = AntwebMgr.getDailyUpdateLink();
+            String dailyUpdateLink = AntwebMgr.getDailyUpdateLink(tAccessLogin.isAdmin());
             if (dailyUpdateLink != null) { %>&nbsp;|&nbsp;<img src="<%= domainApp %>/image/redDot.png" width="10" alt=""> <%= dailyUpdateLink %><% }
           } %>
      <% } %>

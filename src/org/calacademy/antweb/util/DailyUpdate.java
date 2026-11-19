@@ -713,7 +713,7 @@ public final class DailyUpdate {
             + (differences ? "The report (administrators): " + AntwebProps.getDomainApp() + "/countCheck.do\n"
                 + "A real difference is a number on the site that does not equal its recount and that no change since the daily update explains.\n\n" : "")
             + "Where the daily update is: " + AntwebProps.getDomainApp()
-            + "/dailyUpdate.do (curators and admins). Details: compute.log (Log Manager).";
+            + "/dailyUpdate.do (administrators). Details: compute.log (Log Manager).";
         try {
             // On the writer thread (SES can take seconds), without a database connection (the email must go out when
             // the database is the problem).
