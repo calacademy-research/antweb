@@ -1918,6 +1918,12 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         //A.log("setImages(" + overview + ")");
     }
 
+    /**
+     * This thread's time in setImages (2026-11-18, the Camponotus images page): [0] choosing a specimen without a picked
+     * default (getUnpickedDefault), [1] reading its images. Genus.setChildren reports and resets it.
+     */
+    public static final ThreadLocal<long[]> IMAGE_NANOS = ThreadLocal.withInitial(() -> new long[2]);
+
     public void setImages(Connection connection, Overview overview, String caste) throws SQLException {
 
 // Break here, not doubled.
@@ -1974,7 +1980,9 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         
 		// well, no default Image, so try to find one good specimen for this family
         if (chosenImageCode == null) {
+          long t0 = System.nanoTime();
           chosenImageCode = getUnpickedDefault(connection, overview, caste);
+          IMAGE_NANOS.get()[0] += System.nanoTime() - t0;
           if (taxonDebug() && chosenImageCode != null) s_log.debug("setImages(" + overview + "," + caste + ") unPickedDefault:" + chosenImageCode + " taxonName:" + getTaxonName());
         }
 
@@ -1988,7 +1996,9 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         }
 
         // Found a good one. Load it into images.
+		long t1 = System.nanoTime();
 		ArrayList<SpecimenImage> specImages = new ImageDb(connection).getSpecimenImages(chosenImageCode);
+		IMAGE_NANOS.get()[1] += System.nanoTime() - t1;
 		for (SpecimenImage specImage : specImages) {
 		  myImages.put(specImage.getShotType(), specImage);
 		}

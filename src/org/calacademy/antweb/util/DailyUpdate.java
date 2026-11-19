@@ -101,7 +101,7 @@ public final class DailyUpdate {
         new Step("statsPage", "Statistics page", "the tables of the statistics page"),
         new Step("apiCounts", "API taxon counts", "the counts the API gives for each name"),
         new Step("cacheReload", "Cache reload", "only where set 5 was skipped (staging)"),
-        new Step(COUNT_CHECK, "Count check", "read-only check of the numbers just written (report: Check the counts)"),
+        new Step(COUNT_CHECK, "Check after the update", "read-only check of the numbers just written; the update has finished when it starts (report: Check the counts)"),
         new Step(END, "End", "the daily update has finished")));
 
     private static final Map<String, Integer> INDEX = new HashMap<>();
@@ -227,12 +227,37 @@ public final class DailyUpdate {
         return RUN_FAILED;
     }
 
-    /** Minutes left by the usual times (the running step's rest and the waiting steps), null when none is known. */
+    /**
+     * When the update itself finished: every number written, uploads open (Brian Fisher's decision 2 of the one-hour
+     * plan, daily update stage two, 2026-11-18: the count check only reads, so it is shown as a check after the update
+     * and not counted in the update's time). The start of the check after the update; without one (the nightly restart
+     * is on, or a set failed), the end of the run. null while the update runs.
+     */
+    public static Date updateEnded(List<StepView> steps) {
+        Date end = null;
+        for (StepView v : steps) {
+            if (COUNT_CHECK.equals(v.step.key) && v.started != null && !SKIPPED.equals(v.state)) return v.started;
+            if (END.equals(v.step.key)) end = v.ended;
+        }
+        return end;
+    }
+
+    /** Minutes the update itself took (start to updateEnded), null while it runs. */
+    public static Long updateMinutes(Date runStart, List<StepView> steps) {
+        Date end = updateEnded(steps);
+        if (runStart == null || end == null) return null;
+        return Math.max(0, (end.getTime() - runStart.getTime()) / 60000);
+    }
+
+    /**
+     * Minutes left by the usual times (the running step's rest and the waiting steps), null when none is known. The
+     * update's own minutes: the check after the update is not counted (it only reads).
+     */
     public static Long minutesLeft(List<StepView> steps) {
         long seconds = 0;
         boolean known = false;
         for (StepView v : steps) {
-            if (v.usual == null) continue;
+            if (v.usual == null || COUNT_CHECK.equals(v.step.key)) continue;
             if (RUNNING.equals(v.state)) {
                 known = true;
                 seconds += Math.max(0, v.usual - (v.seconds == null ? 0 : v.seconds));
@@ -299,6 +324,8 @@ public final class DailyUpdate {
         Date end = null;
         for (StepView v : steps) if (END.equals(v.step.key) && v.ended != null) end = v.ended;
         if (end == null || active) run.add("ended", JsonNull.INSTANCE); else run.addProperty("ended", iso(end));
+        // "ended" stays the end of the whole run, check after the update included (keys agreed with the morning check);
+        // the update itself ended when the countCheck step started (updateEnded)
         run.addProperty("state", overallState(steps, active));
         JsonArray arr = new JsonArray();
         for (StepView v : steps) {
@@ -675,8 +702,11 @@ public final class DailyUpdate {
         Step s = step(key);
         String label = s == null ? key : s.label;
         String env = AntwebProps.isStageMode() ? "staging" : "production";
-        boolean differences = "differences".equals(kind);
+        // a warning of another step than the count check (the box check, 2026-11-18) says its own text (review of #377)
+        boolean differences = "differences".equals(kind) && COUNT_CHECK.equals(key);
+        boolean otherWarning = "differences".equals(kind) && !differences;
         String subject = differences ? "AntWeb " + env + ": the count check after the daily update found differences"
+            : otherWarning ? "AntWeb " + env + ": daily update step found something to look at: " + label
             : "AntWeb " + env + ": daily update step " + ("failed".equals(kind) ? "failed" : "running long") + ": " + label;
         String body = "Daily update of " + iso(run.start) + " (Pacific), step " + (index(key) + 1) + " of " + STEPS.size()
             + ", " + label + ": " + what + (what.endsWith(".") ? "" : ".") + "\n\n"

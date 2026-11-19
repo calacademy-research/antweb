@@ -624,6 +624,7 @@ class Specimen(Base):
         geo = {
             'coordinates': coordinates
         }
+        ants = life_stage_ants(sp.lifeStageSex)   # once per record (review of #377)
 
         specDict = {
             'specimenCode': sp.code
@@ -676,8 +677,8 @@ class Specimen(Base):
             , 'collectedBy': sp.collectedBy
             , 'caste': sp.caste
             , 'subcaste': sp.subcaste
-            , 'lifeStageAnts': life_stage_ants(sp.lifeStageSex)
-            , 'mixedLifeStage': mixed_life_stage(life_stage_ants(sp.lifeStageSex))
+            , 'lifeStageAnts': ants
+            , 'mixedLifeStage': mixed_life_stage(ants)
             , 'fossil': sp.fossil
             , 'status': sp.status
             , 'imageCount': sp.imageCount
@@ -774,19 +775,29 @@ def ant_of_note(note):
     return None, None
 
 
-def life_stage_ants(life_stage):
-    """Every ant the Life Stage field names, in order: [{'caste': ..., 'subcaste': ...}]; parts with no caste word are
-    left out. The first is the one AntWeb files the specimen under."""
-    if not life_stage:
-        return []
+def _ants_of_parts(parts):
     ants = []
-    for part in re.split(r',| and |&|/', life_stage, flags=re.I):
+    for part in parts:
         if not part.strip():
             continue
         caste, subcaste = ant_of_note(part)
         if caste:
             ants.append({'caste': caste, 'subcaste': subcaste})
     return ants
+
+
+def life_stage_ants(life_stage):
+    """Every ant the Life Stage field names, in order: [{'caste': ..., 'subcaste': ...}]; parts with no caste word are
+    left out. The first is the one AntWeb files the specimen under: read as AntWeb reads it (Caste.java splits at a
+    comma, "and", "&" and "/"). The others are read with more separators too (";", "+", a space before a number:
+    "3 workers; 1 dealated queen", "workers + queen", "2w 1q"; review of #377), so mixedLifeStage sees those pins."""
+    if not life_stage:
+        return []
+    first = _ants_of_parts(re.split(r',| and |&|/', life_stage, flags=re.I))[:1]
+    if not first:
+        return []
+    more = _ants_of_parts(re.split(r',| and |&|/|;|\+|\s+(?=\d)', life_stage, flags=re.I))
+    return first + more[1:]
 
 
 def mixed_life_stage(ants):

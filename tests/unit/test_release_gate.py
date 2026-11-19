@@ -233,3 +233,13 @@ if __name__ == "__main__":
         if name.startswith("test_") and callable(fn):
             fn()
     print("ok")
+
+
+def test_workflow_keeps_the_status_of_the_later_gating():
+    """Review of #377: runs of different concurrency groups can gate one PR at once; a run that began gating earlier
+    must not overwrite the status written by one that began later (each status says when its run began)."""
+    wf = (ROOT / ".github/workflows/release-gate.yaml").read_text(encoding="utf-8")
+    assert "github.event.workflow_run.pull_requests[0].number" in wf
+    assert 'started=$(date -u +%Y-%m-%dT%H:%M:%SZ)' in wf
+    assert '[[ "$lastchecked" > "$started" ]]' in wf
+    assert '· checked $started"' in wf

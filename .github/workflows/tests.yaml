@@ -464,12 +464,17 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/DailyUpdateTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.DailyUpdateTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (11 tests)" /tmp/out.txt
+            grep -q "^OK (12 tests)" /tmp/out.txt
             # the daily box check (states whose box flags their own specimens, 2026-11-18)
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/BoxCheckTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.BoxCheckTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (4 tests)" /tmp/out.txt
+            # the parts of the time of an upload (the TaxonWorks load line in compute.log, 2026-11-18)
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/upload/UploadTimesTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.UploadTimesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (2 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of small core and util fixes (specimen XML without DOCTYPE, comparators, common names, folder delete keeps link targets)
@@ -874,7 +879,7 @@ jobs:
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
-              grep -q "^OK ($n tests)" /tmp/out.txt || { cat /tmp/out.txt; echo "::error::$cls"; exit 1; }
+              grep -qE "^OK \($n tests?\)" /tmp/out.txt || { cat /tmp/out.txt; echo "::error::$cls"; exit 1; }
             done
           '
 
@@ -1484,6 +1489,8 @@ jobs:
           # project whose list loses a genus without species in set 5's list check is counted again; for the AntCat list
           # and Fossil Ants the species rows of their view Valid are stored too (valid < curated when the list has
           # morphospecies, equal without; never valid_species_count), and the old address value opens Curated.
+          # MuseumOwnerDbTest (2026-11-18): specimen.museum of every specimen in one pass leaves byte for byte what the old
+          # per-museum passes left (codes inside longer codes, two codes in one text, case and accents, a latin1 column).
           # ImagedNamesKeptDbTest (2026-11-17): the list pages' genus rows read the imaged names kept in memory
           # (StatisticsDb.antImagedNamesKept): the same answer as the live rule, without case; a new photo seen after a
           # specimen upload; red-flagged specimens never count.
@@ -1577,12 +1584,15 @@ jobs:
               /t/org/calacademy/antweb/home/GroupSpecimenCountDbTest.java \
               /t/org/calacademy/antweb/util/DataExtractDbTest.java \
               /t/org/calacademy/antweb/home/ListCleanupOrderDbTest.java \
-              /t/org/calacademy/antweb/home/ImagedNamesKeptDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:6 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3 home.GroupSpecimenCountDbTest:8 home.IslandCountryDbTest:7 home.AntcatIslandRowsDbTest:2 home.ListCleanupOrderDbTest:20 util.DataExtractDbTest:21 home.ImagedNamesKeptDbTest:3; do
+              /t/org/calacademy/antweb/home/ImagedNamesKeptDbTest.java \
+              /t/org/calacademy/antweb/home/MuseumOwnerDbTest.java \
+              /t/org/calacademy/antweb/util/PossibleDuplicateCodesDbTest.java \
+              /t/org/calacademy/antweb/home/SpeciesOfGenusDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:13 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:6 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:25 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:18 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:11 util.OnePlaceJobDbTest:3 home.GroupSpecimenCountDbTest:8 home.IslandCountryDbTest:7 home.AntcatIslandRowsDbTest:2 home.ListCleanupOrderDbTest:20 util.DataExtractDbTest:21 home.ImagedNamesKeptDbTest:3 home.MuseumOwnerDbTest:3 util.PossibleDuplicateCodesDbTest:1 home.SpeciesOfGenusDbTest:2; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
-              grep -q "^OK ($n tests)" /tmp/out.txt || { cat /tmp/out.txt; echo "::error::$cls"; exit 1; }
+              grep -qE "^OK \($n tests?\)" /tmp/out.txt || { cat /tmp/out.txt; echo "::error::$cls"; exit 1; }
             done
           '
           docker rm -f mysql
@@ -1662,7 +1672,7 @@ jobs:
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
-              grep -q "^OK ($n tests)" /tmp/out.txt || { cat /tmp/out.txt; echo "::error::$cls"; exit 1; }
+              grep -qE "^OK \($n tests?\)" /tmp/out.txt || { cat /tmp/out.txt; echo "::error::$cls"; exit 1; }
             done
           '
           docker rm -f ugmysql
@@ -1755,7 +1765,7 @@ jobs:
               cls=${t%%:*}; n=${t##*:}
               java -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
-              grep -q "^OK ($n tests)" /tmp/out.txt || { cat /tmp/out.txt; echo "::error::$cls"; exit 1; }
+              grep -qE "^OK \($n tests?\)" /tmp/out.txt || { cat /tmp/out.txt; echo "::error::$cls"; exit 1; }
             done
           '
           docker rm -f mgrmysql

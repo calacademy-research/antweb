@@ -26,9 +26,11 @@ on:
 
 # Runs for the same target wait for each other, none is cancelled: a cancelled run could leave a PR's status from an
 # older head (review of 7c371b0). One group per PR or head, so a run waiting for PR 1 is not replaced by a run for PR 2
-# (GitHub keeps one waiting run per group); runs that gate every PR share the group "all".
+# (GitHub keeps one waiting run per group); runs that gate every PR share the group "all". A finished run of a PR's head
+# joins that PR's group. Runs of different groups can still gate the same PR at once (an hourly run and a PR event):
+# a run writes its status only when no newer status was written since it started gating that PR (review of #377).
 concurrency:
-  group: release-gate-${{ github.event.pull_request.number || github.event.workflow_run.head_sha || 'all' }}
+  group: release-gate-${{ github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_sha || 'all' }}
   cancel-in-progress: false
 
 permissions:
@@ -92,6 +94,7 @@ jobs:
           prs=$(python3 tools/release/gate_targets.py "$EVENT" "${EVENT_PR:-}" "${RUN_PRS:-[]}" "${RUN_SHA:-}" <<< "$open")
           echo "gating: ${prs:-none}"
           for pr in $prs; do
+            started=$(date -u +%Y-%m-%dT%H:%M:%SZ)
             head=$(gh api "repos/$REPO/pulls/$pr" --jq .head.sha)
             python3 tools/release/gate.py "$pr" > /tmp/gate.txt 2>&1
             code=$?
@@ -105,6 +108,14 @@ jobs:
             fi
             # a push while the gate ran: the next run (the push starts one) writes the new head's status
             [ "$(gh api "repos/$REPO/pulls/$pr" --jq .head.sha)" = "$head" ] || { echo "PR #$pr got a new commit: no status"; continue; }
+            # A run that began gating this PR later than this one has already written the head's status: it read newer
+            # checks, so it stays. Each status says when its run began gating ("checked <time>", review of #377).
+            last=$(gh api "repos/$REPO/commits/$head/statuses?per_page=100" --jq '[.[] | select(.context == "release-gate")][0].description // ""')
+            lastchecked=$(printf '%s' "$last" | sed -n 's/.*checked \([0-9TZ:-]*\)$/\1/p')
+            if [ -n "$lastchecked" ] && [[ "$lastchecked" > "$started" ]]; then
+              echo "PR #$pr: a gate run that began at $lastchecked wrote the status: no status"; continue
+            fi
+            desc="$(printf '%s' "$desc" | cut -c1-105) · checked $started"
             gh api -X POST "repos/$REPO/statuses/$head" -f state="$state" -f context=release-gate \
               -f description="$desc" -f target_url="$RUN_URL" >/dev/null
           done

@@ -247,7 +247,9 @@ public final class TaxonWorksNightly {
             String sha, Path shaFile, String builtNote) throws Exception {
         // 3. Unzip and transform, then check the record count.
         int groupId = curator.getGroup().getId();
+        long prepareStart = System.currentTimeMillis();
         Path specimenFile = TaxonWorksUploader.prepareFromArchive(zip, curator.getGroup());
+        long prepareMs = System.currentTimeMillis() - prepareStart;
         long newCount = countRecords(specimenFile);
         java.util.List<String> skipped = TaxonWorksUploader.getLastSkipped();
         Path skippedFile = workDir.resolve("taxonworksSkipped.txt");
@@ -265,16 +267,30 @@ public final class TaxonWorksNightly {
         try {
             connection.setAutoCommit(false);
             AntwebMgr.incrementSpecimenUploadId(connection);
+            long uploadStart = System.currentTimeMillis();
             UploadDetails details = new TaxonWorksUploader(connection).uploadPreparedFile(specimenFile, curator);
             if (details.getForwardPage() != null) {
                 connection.rollback();
                 return "FAILED: " + details.getMessage();
             }
+            UploadTimes times = details.getTimes();
+            // importSpecimens timed its own parts; the rest of the upload call (file checks, the copy of the file)
+            long inner = 0;
+            for (long ms : times.parts().values()) inner += ms;
+            times.add("file checks and copy", System.currentTimeMillis() - uploadStart - inner);
+            times.restart();
             UploadAction.postProcessSpecimenUpload(connection, curator, details);
+            times.lap("group counts and maps");
             UploadAction.specimenPostProcessGlobal(connection);
+            times.lap("global counts");
             details.setUploadSource("Nightly TaxonWorks job (automatic)");
             details.finish(curator, null, connection);
+            times.lap("upload report");
             connection.commit();
+            times.lap("commit");
+            // daily update stage two (2026-11-18): where the load's minutes go, before deciding on batched saves
+            LogMgr.appendLog("compute.log", "  TaxonWorks load times: unzip and convert " + (prepareMs + 500) / 1000 + " s, "
+                + times.line(), true);
             Files.writeString(shaFile, sha);
             return "uploaded " + newCount + " records for group " + groupId + " (was " + currentCount
                 + " specimens) in " + details.getExecTime() + builtNote + skippedNote;

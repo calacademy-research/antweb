@@ -191,8 +191,44 @@ public class DailyUpdateTest extends TestCase {
         assertEquals(DailyUpdate.DONE, box.state);
         assertTrue(box.warning);
         assertTrue(box.message, box.message.startsWith("Box check: 1 state's box"));
+        assertEquals("one email (review of #377)", Arrays.asList("boxCheck:differences"), DailyUpdate.testEmails());
         DailyUpdate.resetForTest();
         DailyUpdate.testMode(false, null);
+    }
+
+    /**
+     * The update has finished when the check after it starts (daily update stage two, 2026-11-18): the run's own time
+     * and the minutes left leave the check out; the JSON keeps its keys.
+     */
+    public void testUpdateEndsWhenTheCheckAfterItStarts() {
+        List<Row> rows = new ArrayList<>();
+        rows.add(new Row("antcatImport", t("05:00:00"), t("05:06:00"), DailyUpdate.OK, null));
+        rows.add(new Row("apiCounts", t("06:10:00"), t("06:13:00"), DailyUpdate.OK, null));
+        rows.add(new Row(DailyUpdate.COUNT_CHECK, t("06:13:00"), t("06:20:00"), DailyUpdate.OK, null));
+        rows.add(new Row(DailyUpdate.END, t("06:20:00"), t("06:20:00"), DailyUpdate.OK, null));
+        List<StepView> done = DailyUpdate.view(rows, new HashMap<>(), false, t("07:00:00").getTime());
+        assertEquals(t("06:13:00"), DailyUpdate.updateEnded(done));
+        assertEquals(Long.valueOf(73), DailyUpdate.updateMinutes(t("05:00:00"), done));
+        JsonObject json = DailyUpdate.runJson(t("05:00:00"), done, false);
+        assertFalse("keys agreed with the morning check", json.has("update_ended"));
+        assertEquals("2026-11-07T06:20:00", json.get("ended").getAsString());
+        assertEquals("Check after the update", DailyUpdate.step(DailyUpdate.COUNT_CHECK).label);
+
+        // no check after the update (nightly restart on): the update ends with the run
+        rows.set(2, new Row(DailyUpdate.COUNT_CHECK, t("06:13:00"), t("06:13:00"), DailyUpdate.SKIPPED, "not run"));
+        rows.set(3, new Row(DailyUpdate.END, t("06:14:00"), t("06:14:00"), DailyUpdate.OK, null));
+        assertEquals(t("06:14:00"), DailyUpdate.updateEnded(DailyUpdate.view(rows, new HashMap<>(), false, 0)));
+
+        // while the update runs: no end; the minutes left leave the check out
+        Map<String, Long> usual = new HashMap<>();
+        usual.put("apiCounts", 120L);
+        usual.put(DailyUpdate.COUNT_CHECK, 420L);
+        List<Row> running = new ArrayList<>();
+        running.add(new Row("antcatImport", t("05:00:00"), t("05:06:00"), DailyUpdate.OK, null));
+        List<StepView> v = DailyUpdate.view(running, usual, true, t("05:07:00").getTime());
+        assertNull(DailyUpdate.updateEnded(v));
+        assertNull(DailyUpdate.updateMinutes(t("05:00:00"), v));
+        assertEquals(Long.valueOf(2), DailyUpdate.minutesLeft(v));
     }
 
     private static String state(String key) {

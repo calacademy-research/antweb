@@ -60,6 +60,155 @@ public class TaxonDb extends AntwebDb {
         return (Subspecies) getTaxon(taxonName);
     }
 
+    /** The columns getTaxon reads (fromRow). */
+    static final String TAXON_COLUMNS = "taxon_name, taxarank, kingdom_name, phylum_name, order_name, class_name"
+              + ", family, subfamily, tribe, genus, subgenus, species, subspecies "
+              + ", status, access_group, source, line_num, insert_method, created, fossil, type, antcat, antcat_id"
+              + ", pending , author_date, author_date_html, authors, year, available "
+              + ", current_valid_name, current_valid_rank, current_valid_parent, original_combination, was_original_combination "
+              + ", parent_taxon_name, image_count, hol_id, chart_color";
+              // country, bioregion,  // These not used. Could be in multiple. See bioregion_taxon and taxon_country. And bioregion_map.
+
+    /** A taxon from one row of TAXON_COLUMNS (getTaxon, and the species of a genus read at once, speciesOfGenus). */
+    static Taxon fromRow(ResultSet rset, String taxonName) throws SQLException {
+        String rank = rset.getString("taxarank");
+        Taxon taxon = Taxon.getTaxonOfRank(rank);
+
+        /* Deprecated.
+        if ("taxon".equals(tableName)) {
+          Taxon taxon = Taxon.getTaxonOfRank(rank);
+        } else {
+          taxon = new Homonym();
+          taxon.setRank(rank);
+        }
+         */
+
+        taxon.setRank(rank);
+
+        //taxon.setTaxonName(rset.getString("taxon_name")); // taxonName is derived from data below.
+        taxon.setKingdomName(rset.getString("kingdom_name"));
+        taxon.setPhylumName(rset.getString("phylum_name"));
+        taxon.setOrderName(rset.getString("order_name"));
+        taxon.setClassName(rset.getString("class_name"));
+        taxon.setFamily(rset.getString("family"));
+        taxon.setSubfamily(rset.getString("subfamily"));
+        taxon.setTribe(rset.getString("tribe"));
+        taxon.setGenus(rset.getString("genus"));
+        taxon.setSubgenus(rset.getString("subgenus"));
+        taxon.setSpecies(rset.getString("species"));
+        taxon.setSubspecies(rset.getString("subspecies"));
+
+        taxon.setStatus(rset.getString("status"));
+        taxon.setGroupId(rset.getInt("access_group"));
+        taxon.setSource(rset.getString("source"));
+        taxon.setLineNum(rset.getInt("line_num"));
+        taxon.setInsertMethod(rset.getString("insert_method"));
+        taxon.setCreated(rset.getTimestamp("created"));
+        taxon.setIsFossil(rset.getInt("fossil") == 1);
+        taxon.setIsType(rset.getInt("type") == 1);
+        taxon.setIsAntCat(rset.getInt("antcat") == 1);
+        taxon.setAntcatId(rset.getInt("antcat_id"));
+        taxon.setIsPending(rset.getInt("pending") == 1);
+        taxon.setAuthorDate(rset.getString("author_date"));
+        taxon.setAuthorDateHtml(rset.getString("author_date_html"));
+        taxon.setAuthors(rset.getString("authors"));
+        taxon.setYear(rset.getString("year"));
+        taxon.setIsAvailable(rset.getInt("available") == 1);
+        String currentValidName = rset.getString("current_valid_name");
+        if (currentValidName != null && !taxonName.equalsIgnoreCase(currentValidName)) {
+            taxon.setCurrentValidName(currentValidName);
+        }
+        taxon.setCurrentValidRank(rset.getString("current_valid_rank"));
+        taxon.setCurrentValidParent(rset.getString("current_valid_parent"));
+        taxon.setIsOriginalCombination(rset.getInt("original_combination") == 1);
+        taxon.setWasOriginalCombination(rset.getString("was_original_combination"));
+        taxon.setParentTaxonName(rset.getString("parent_taxon_name"));
+        taxon.setImageCount(rset.getInt("image_count"));
+        taxon.setHolId(rset.getInt("hol_id"));
+        taxon.setChartColor(rset.getString("chart_color"));
+
+        taxon.setIsExtant(true);
+        return taxon;
+    }
+
+    /**
+     * The species and subspecies of a genus, read at once for a list of them (Genus.setChildren, 2026-11-18: images.do
+     * of Camponotus read each of its 1,600 names with about six queries, 1.9 s of the page on staging). get() gives the
+     * taxon getSpecies or getSubspecies would give: the name of that rank, species and subspecies in the genus that is
+     * not a synonym, else a synonym; with the same default specimens and introduced map (those two skipped in dev
+     * mode, as getTaxon). null where getSpecies would not find exactly one name (none, or two that are not synonyms):
+     * the caller then asks getSpecies, which answers or throws as before. Test: SpeciesOfGenusDbTest.
+     */
+    public static final class GenusSpecies {
+        private final java.util.Map<String, Taxon> byKey = new java.util.HashMap<>();
+        private final java.util.Set<String> ambiguous = new java.util.HashSet<>();
+        static String key(String rank, String species, String subspecies) {
+            String sub = Rank.SUBSPECIES.equals(rank) && subspecies != null ? subspecies : "";
+            return (rank + "\t" + species + "\t" + sub).toLowerCase();
+        }
+        public Taxon get(String rank, String species, String subspecies) {
+            String k = key(rank, species, subspecies);
+            return ambiguous.contains(k) ? null : byKey.get(k);
+        }
+        public int size() { return byKey.size(); }
+    }
+
+    public GenusSpecies speciesOfGenus(String subfamily, String genus) throws SQLException {
+        GenusSpecies out = new GenusSpecies();
+        if (subfamily == null || "null".equals(subfamily) || genus == null || "null".equals(genus)) return out;
+        java.util.Map<String, Taxon> synonyms = new java.util.HashMap<>();
+        java.util.Map<String, Integer> notSynonyms = new java.util.HashMap<>();
+        java.util.Map<String, Taxon> byName = new java.util.HashMap<>();
+        String query = "select " + TAXON_COLUMNS + " from taxon where subfamily = ? and genus = ? and taxarank in ('species', 'subspecies')";
+        try (PreparedStatement ps = getConnection().prepareStatement(query)) {
+            ps.setString(1, subfamily);
+            ps.setString(2, genus);
+            try (ResultSet rset = ps.executeQuery()) {
+                while (rset.next()) {
+                    String name = rset.getString("taxon_name");
+                    String rank = rset.getString("taxarank");
+                    String k = GenusSpecies.key(rank, rset.getString("species"), rset.getString("subspecies"));
+                    Taxon taxon = fromRow(rset, name);
+                    if ("synonym".equals(rset.getString("status"))) {
+                        synonyms.put(k, taxon);   // only synonyms: the last one, as getTaxonName
+                    } else {
+                        notSynonyms.merge(k, 1, Integer::sum);
+                        out.byKey.put(k, taxon);
+                    }
+                    byName.put(name.toLowerCase(), taxon);
+                }
+            }
+        }
+        for (java.util.Map.Entry<String, Integer> e : notSynonyms.entrySet()) if (e.getValue() > 1) out.ambiguous.add(e.getKey());
+        for (java.util.Map.Entry<String, Taxon> e : synonyms.entrySet()) out.byKey.putIfAbsent(e.getKey(), e.getValue());
+        if (AntwebProps.isDevMode() || byName.isEmpty()) return out;   // as getTaxon: no default specimens in dev
+
+        // the default specimens and the introduced map of every name of the genus, as getTaxon reads them one by one
+        String like = (subfamily + genus).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + " %";
+        String props = "select taxon_name, prop, value from taxon_prop where taxon_name like ? and prop in (?, ?, ?, 'introducedMap')"
+            + " order by taxon_name, prop desc";
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        try (PreparedStatement ps = getConnection().prepareStatement(props)) {
+            ps.setString(1, like);
+            ps.setString(2, Caste.getProp(Caste.MALE));
+            ps.setString(3, Caste.getProp(Caste.WORKER));
+            ps.setString(4, Caste.getProp(Caste.QUEEN));
+            try (ResultSet rset = ps.executeQuery()) {
+                while (rset.next()) {
+                    String name = rset.getString("taxon_name").toLowerCase();
+                    String prop = rset.getString("prop");
+                    Taxon taxon = byName.get(name);
+                    if (taxon == null || !seen.add(name + "\t" + prop)) continue;   // the first row, as getDefaultSpecimen
+                    if ("introducedMap".equals(prop)) taxon.setIntroducedMap(rset.getString("value"));
+                    else if (Caste.getProp(Caste.MALE).equals(prop)) taxon.setDefaultSpecimen(Caste.MALE, rset.getString("value"));
+                    else if (Caste.getProp(Caste.WORKER).equals(prop)) taxon.setDefaultSpecimen(Caste.WORKER, rset.getString("value"));
+                    else if (Caste.getProp(Caste.QUEEN).equals(prop)) taxon.setDefaultSpecimen(Caste.QUEEN, rset.getString("value"));
+                }
+            }
+        }
+        return out;
+    }
+
     public Taxon getTaxon(String taxonName) throws SQLException { //, tring tableName, String taxonNameClause
         Taxon taxon = null;
 
@@ -89,14 +238,7 @@ public class TaxonDb extends AntwebDb {
         PreparedStatement stmt = null;
         try {
 
-            theQuery = "select taxon_name, taxarank, kingdom_name, phylum_name, order_name, class_name"
-              + ", family, subfamily, tribe, genus, subgenus, species, subspecies "
-              + ", status, access_group, source, line_num, insert_method, created, fossil, type, antcat, antcat_id"
-              + ", pending , author_date, author_date_html, authors, year, available "
-              + ", current_valid_name, current_valid_rank, current_valid_parent, original_combination, was_original_combination "
-              + ", parent_taxon_name, image_count, hol_id, chart_color"
-              // country, bioregion,  // These not used. Could be in multiple. See bioregion_taxon and taxon_country. And bioregion_map.
-              + " from taxon where taxon_name = ?";
+            theQuery = "select " + TAXON_COLUMNS + " from taxon where taxon_name = ?";
 
             stmt = DBUtil.getPreparedStatement(getConnection(), "getTaxon() taxonName:" + taxonName, theQuery);
 
@@ -113,63 +255,7 @@ public class TaxonDb extends AntwebDb {
 
                 // taxon_name is not actually used. It is derived from the taxonomic info.
 
-                String rank = rset.getString("taxarank");
-                taxon = Taxon.getTaxonOfRank(rank);
-
-                /* Deprecated.
-                if ("taxon".equals(tableName)) {
-                  taxon = Taxon.getTaxonOfRank(rank);
-                } else {
-                  taxon = new Homonym();
-                  taxon.setRank(rank);
-                }
-                 */
-
-                taxon.setRank(rank);
-
-                //taxon.setTaxonName(rset.getString("taxon_name")); // taxonName is derived from data below.
-                taxon.setKingdomName(rset.getString("kingdom_name"));
-                taxon.setPhylumName(rset.getString("phylum_name"));
-                taxon.setOrderName(rset.getString("order_name"));
-                taxon.setClassName(rset.getString("class_name"));
-                taxon.setFamily(rset.getString("family"));
-                taxon.setSubfamily(rset.getString("subfamily"));
-                taxon.setTribe(rset.getString("tribe"));
-                taxon.setGenus(rset.getString("genus"));
-                taxon.setSubgenus(rset.getString("subgenus"));
-                taxon.setSpecies(rset.getString("species"));
-                taxon.setSubspecies(rset.getString("subspecies"));
-
-                taxon.setStatus(rset.getString("status"));
-                taxon.setGroupId(rset.getInt("access_group"));
-                taxon.setSource(rset.getString("source"));
-                taxon.setLineNum(rset.getInt("line_num"));
-                taxon.setInsertMethod(rset.getString("insert_method"));
-                taxon.setCreated(rset.getTimestamp("created"));
-                taxon.setIsFossil(rset.getInt("fossil") == 1);
-                taxon.setIsType(rset.getInt("type") == 1);
-                taxon.setIsAntCat(rset.getInt("antcat") == 1);
-                taxon.setAntcatId(rset.getInt("antcat_id"));
-                taxon.setIsPending(rset.getInt("pending") == 1);
-                taxon.setAuthorDate(rset.getString("author_date"));
-                taxon.setAuthorDateHtml(rset.getString("author_date_html"));
-                taxon.setAuthors(rset.getString("authors"));
-                taxon.setYear(rset.getString("year"));
-                taxon.setIsAvailable(rset.getInt("available") == 1);
-                String currentValidName = rset.getString("current_valid_name");
-                if (currentValidName != null && !taxonName.equalsIgnoreCase(currentValidName)) {
-                    taxon.setCurrentValidName(currentValidName);
-                }
-                taxon.setCurrentValidRank(rset.getString("current_valid_rank"));
-                taxon.setCurrentValidParent(rset.getString("current_valid_parent"));
-                taxon.setIsOriginalCombination(rset.getInt("original_combination") == 1);
-                taxon.setWasOriginalCombination(rset.getString("was_original_combination"));
-                taxon.setParentTaxonName(rset.getString("parent_taxon_name"));
-                taxon.setImageCount(rset.getInt("image_count"));
-                taxon.setHolId(rset.getInt("hol_id"));
-                taxon.setChartColor(rset.getString("chart_color"));
-
-                taxon.setIsExtant(true);
+                taxon = fromRow(rset, taxonName);
                 //country, bioregion?
                 // old_speciesGroup
             }

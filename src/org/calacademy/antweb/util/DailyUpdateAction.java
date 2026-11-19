@@ -128,16 +128,17 @@ public final class DailyUpdateAction extends AntwebAction {
 
     static final String INTRO = "<div class=\"aw-intro\">"
         + "<p>Every day at 05:00 Pacific time AntWeb runs its daily update: it loads AntCat's names and the CAS specimens from "
-        + "TaxonWorks, then recounts every list, place, image and statistic the site shows. It usually takes two to three hours; "
-        + "while it runs some pages may be slow or show yesterday's numbers.</p>"
+        + "TaxonWorks, then recounts every list, place, image and statistic the site shows. It takes a little over an hour; "
+        + "while it runs some pages may be slow or show yesterday's numbers. Its last step, Check after the update, only reads the "
+        + "numbers just written: the update has finished when that check starts, and the update's time does not include it.</p>"
         + "<p>This page shows each step in the order it runs, which one is running, and how long each usually takes "
         + "(the median of the last " + DailyUpdate.USUAL_RUNS + " daily updates; for Place list totals, of the same kind of run: on Sundays "
         + "it counts every place and is compared with the last " + DailyUpdateDb.FULL_COUNT_RUNS + " full counts, on the other days only the places "
         + "whose data changed; with none of that kind yet, its longest recorded run). A step taking more than 1.5 times its usual time "
         + "is yellow, a failed step red; the administrators get an email when a step fails or runs over twice its usual time. "
-        + "The Count check step is also yellow when it found real differences (numbers on the site that do not equal their "
+        + "The Check after the update step is also yellow when it found real differences (numbers on the site that do not equal their "
         + "recount): it says how many, the administrators get an email, and Check the counts lists them. "
-        + "Nothing to do here unless a step is red (then see compute.log in the Log Manager) or the Count check is yellow. "
+        + "Nothing to do here unless a step is red (then see compute.log in the Log Manager) or the Check after the update is yellow. "
         + "All times are Pacific time.</p>"
         + "</div>";
 
@@ -176,7 +177,17 @@ public final class DailyUpdateAction extends AntwebAction {
         for (DailyUpdate.StepView v : r.steps) if (DailyUpdate.END.equals(v.step.key)) end = v.ended;
         String day = DailyUpdate.iso(r.start);
         day = day == null ? "" : day.substring(0, 10);
-        return day + ", started " + DailyUpdate.hhmm(r.start) + (end != null ? ", ended " + DailyUpdate.hhmm(end) : "") + ": "
+        // The update's own time ends when the check after it starts (2026-11-18: the check only reads)
+        Date updateEnd = DailyUpdate.updateEnded(r.steps);
+        Long minutes = DailyUpdate.updateMinutes(r.start, r.steps);
+        String times = ", started " + DailyUpdate.hhmm(r.start);
+        if (updateEnd != null) {
+            times += ", update finished " + DailyUpdate.hhmm(updateEnd) + " (" + DailyUpdate.duration(minutes * 60) + ")";
+            if (end != null && end.after(updateEnd)) times += ", check after it ended " + DailyUpdate.hhmm(end);
+        } else if (end != null) {
+            times += ", ended " + DailyUpdate.hhmm(end);
+        }
+        return day + times + ": "
             + (DailyUpdate.RUN_OK.equals(state) ? "finished" : DailyUpdate.RUN_RUNNING.equals(state) ? "running" : "failed");
     }
 
