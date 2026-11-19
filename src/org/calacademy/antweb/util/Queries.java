@@ -101,6 +101,7 @@ public abstract class Queries {
           , "introducedSpecimen"
           , "morphoProjTaxa"
           , "duplicatedGeolocaleNames"
+          , "possibleDuplicateSpecimenCodes"
           , "nonAnts"
           , "nonIntroducedAntsInMultipleBioregions"
           , "geolocaleTaxonDisputes"
@@ -848,6 +849,27 @@ public abstract class Queries {
           , "select id, name, parent, source, created from geolocale where name like '%?%'"
            ));
 
+        // 2026-11-18 (road map backlog, after Yuhao Zhao's list found ANTWEB1008989 = ANTWEB1008986 and the orphan
+        // photos showed anic32-066597 = anic32-066597-1): codes that may be one specimen entered twice.
+        queries.add(new NamedQuery(
+            "possibleDuplicateSpecimenCodes"
+          , "Specimen codes that may name the same specimen twice: codes that become the same when case, punctuation,"
+            + " a short suffix such as -1 or _2 after a number of five digits or more, and leading zeros are ignored (anic32-066597 and anic32-066597-1,"
+            + " CASENT0012345 and casent12345). One row per such set, with the codes, their upload groups, names,"
+            + " collection codes and image counts, the sets with images first. Two rows of one set in different groups"
+            + " are usually one specimen loaded by two collections; in one group, a typing error. For the curators to"
+            + " decide; nothing is changed."
+          , h("Key", "Codes", "Count", "Groups", "Names", "Collection Codes", "Images")
+          , "select k, group_concat(code order by code separator ', '), count(*),"
+            + " group_concat(distinct access_group order by access_group separator ', '),"
+            + " group_concat(distinct taxon_name order by taxon_name separator ', '),"
+            + " group_concat(distinct collectioncode order by collectioncode separator ', '), sum(image_count)"
+            + " from (select code, access_group, taxon_name, collectioncode, ifnull(image_count, 0) image_count,"
+            + " regexp_replace(regexp_replace(regexp_replace(lower(code), '([0-9]{5,}[a-z]*)[-_ .][0-9]{1,2}$', '$1'), '[^a-z0-9]', ''),"
+            + " '(^|[^0-9])0+([0-9])', '$1$2') k from specimen) s"
+            + " group by k having count(*) > 1 order by sum(image_count) > 0 desc, count(distinct access_group) desc, k"
+        ));
+
         queries.add(new NamedQuery(
             "duplicatedGeolocaleNames"
           , "Place names used by more than one place (for example Georgia, a country and a US state), highest"
@@ -1377,7 +1399,8 @@ public abstract class Queries {
             "badParentTaxonName", "badParentTaxonNameSpecimens", "taxaFromOldSpecimenLists", "homonymWithoutTaxon"});
         QUERY_GROUPS.put(QueryGroup.SPECIMENS, new String[] {
             "notValidTaxaFromSpecimenList", "specimenCountByOwner", "checkSpecimenStatus", "encodedLocalityCodes", "invalidBioregion",
-            "introducedSpecimen", "nonAnts", "castes", "nullCastes", "nullLifeStage", "nonIntroducedAntsInMultipleBioregions"});
+            "introducedSpecimen", "nonAnts", "castes", "nullCastes", "nullLifeStage", "nonIntroducedAntsInMultipleBioregions",
+            "possibleDuplicateSpecimenCodes"});
         QUERY_GROUPS.put(QueryGroup.PLACES, new String[] {
             "invalidValidNamelessCountries", "usedAndUnusedCoords", "badSingleQuotes", "geolocaleNameWithQuestionMarks",
             "duplicatedGeolocaleNames", "lowGeolocaleTaxonCount", "unfinishedBioregions", "nonvalidValidNames",
