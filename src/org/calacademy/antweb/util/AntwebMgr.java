@@ -407,11 +407,13 @@ public class AntwebMgr {
         return getSimpleServerMessage();
     }
 
-    /** For curators and admins during the daily update: the step running and a link to the Daily update page; null otherwise. */
-    public static String getDailyUpdateLink() {
+    /** During the daily update: the step running (hover) and, for administrators, a link to the Daily update page
+     * (admins only since 2026-11-19; curators see the words without the link); null otherwise. */
+    public static String getDailyUpdateLink(boolean admin) {
         if (!dailyUpdateRunning()) return null;
         String hover = DailyUpdate.activeHover();
         String text = hover == null ? "AntWeb is running its daily update" : hover;
+        if (!admin) return "<span title='" + Html.escAttr(text) + "'>Daily update running</span>";
         return "<a href='" + AntwebProps.getDomainApp() + "/dailyUpdate.do' title='" + Html.escAttr(text) + "'>Daily update running</a>";
     }
     public static String getSimpleServerMessage() {
@@ -437,6 +439,11 @@ public class AntwebMgr {
        return "";
     }    
     public static String getServerMessage() {
+       return getServerMessage(false);
+    }
+
+    /** As getServerMessage(); admin: during the daily update the step links to the Daily update page (admins only). */
+    public static String getServerMessage(boolean admin) {
        if (isInitializing) {
 		 return "<h3><font color='red'>The server is initializing...</font></h3>";       
        }    
@@ -447,11 +454,12 @@ public class AntwebMgr {
 		 return "<h3><font color='red'>Upload Currently In <a title='" + Html.escAttr(UploadAction.getIsInUploadProcess()) + "'>Process</a> (some services are down).</font></h3>";
 	   }
 	   if (dailyUpdateRunning()) {
-		 // Curate page (curators and admins): the step, the usual time, what comes next, and the Daily update page.
+		 // Curate page: the step, the usual time, what comes next; for admins a link to the Daily update page.
 		 String hover = DailyUpdate.activeHover();
 		 String text = hover == null ? "Daily update in progress" : hover;
-		 return "<h3><font color='red'>AntWeb is running its daily update (some services are down): <a href='" + AntwebProps.getDomainApp()
-		     + "/dailyUpdate.do' title='" + Html.escAttr(text) + "'>" + Html.esc(text) + "</a>.</font></h3>";
+		 String shown = admin ? "<a href='" + AntwebProps.getDomainApp() + "/dailyUpdate.do' title='" + Html.escAttr(text) + "'>"
+		     + Html.esc(text) + "</a>" : Html.esc(text);
+		 return "<h3><font color='red'>AntWeb is running its daily update (some services are down): " + shown + ".</font></h3>";
 	   }
 	   if (UtilDataAction.isInComputeProcess()) {
 		 return "<h3><font color='red'>Computation Currently In <a title='" + Html.escAttr(UtilDataAction.getIsInComputeProcess()) + "'>Process</a> (some services are down).</font></h3>";

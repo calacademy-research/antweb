@@ -274,7 +274,7 @@ Admins read the web/log files through `logMgr.do`; only the upload report folder
 
 ### The Daily update page (2026-11-07)
 
-`dailyUpdate.do` (curators and admins) shows where a full run is, step by step: the 17 steps of
+`dailyUpdate.do` (administrators only since 2026-11-19; before, curators too) shows where a full run is, step by step: the 17 steps of
 `DailyUpdate.STEPS` (AntCat import, TaxonWorks upload, name update, set 1 clean-up, sets 2 to 4, imaging progress,
 place list totals, set 5, log size check, box check, statistics page, API taxon counts, cache reload, check after the
 update, end), each with its status (done,
