@@ -95,4 +95,37 @@ public class BoxCheckTest extends TestCase {
         assertEquals("s11", w.get(0).adm1);   // worst first
         assertTrue(BoxCheck.line(w, 0).contains("; and 2 more."));
     }
+
+    /** A state marked "box checked" in its admin note: named after "box checked", not a warning (North Dakota, 2026-11-19). */
+    public void testCheckedStateLeftOut() {
+        Map<String, BoxCheck.Tally> t = new LinkedHashMap<>();
+        BoxCheck.Box nd = box(-104.05, 45.935, -96.554, 49.001);
+        BoxCheck.Box checkedNd = new BoxCheck.Box() {
+            public boolean hasBox() { return true; }
+            public boolean isWithin(double lat, double lon) { return nd.isWithin(lat, lon); }
+            public boolean checked() { return BoxCheck.isChecked("2026-11-19: Box Checked: misfiled UTEP records near Logan, Utah"); }
+        };
+        BoxCheck.add(t, "United States", "North Dakota", checkedNd, 47.0, -100.0, 81);
+        BoxCheck.add(t, "United States", "North Dakota", checkedNd, 41.9143, -111.3355, 27);
+        BoxCheck.Box wrong = box(131.9467, 4.3053, 132.3167, 4.6604);
+        BoxCheck.add(t, "Palau", "Sonsorol", wrong, 5.3538, 132.2291, 355);
+        BoxCheck.add(t, "Palau", "Sonsorol", wrong, 4.4, 132.0, 355);
+
+        List<BoxCheck.Tally> w = BoxCheck.wrongBoxes(t.values(), BoxCheck.MIN_FLAGGED, BoxCheck.PERCENT);
+        List<BoxCheck.Tally> c = BoxCheck.checkedStates(t.values(), BoxCheck.MIN_FLAGGED, BoxCheck.PERCENT);
+        assertEquals(1, w.size());
+        assertEquals("Sonsorol", w.get(0).adm1);
+        assertEquals(1, c.size());
+        assertEquals("North Dakota", c.get(0).adm1);
+        String line = BoxCheck.line(w, c, 0);
+        assertTrue(line, line.startsWith("Box check: 1 state's box flags"));
+        assertTrue(line, line.endsWith("; box checked (specimens to correct, no warning): North Dakota (United States) 27 of 108"));
+
+        // only checked states: the line starts "Box check: ok" (no warning)
+        List<BoxCheck.Tally> none = new java.util.ArrayList<>();
+        assertEquals("Box check: ok; box checked (specimens to correct, no warning): North Dakota (United States) 27 of 108",
+            BoxCheck.line(none, c, 0));
+        assertFalse(BoxCheck.isChecked(null));
+        assertFalse(BoxCheck.isChecked("box extended north"));
+    }
 }
