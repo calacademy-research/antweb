@@ -292,8 +292,15 @@ public class MuseumDb extends AntwebDb {
     public void populate() throws SQLException {
       java.util.Arrays.fill(populateMillis, 0);
       int museums = 0;
-      for (Museum museum : MuseumMgr.getMuseums()) {
-        populate(museum.getCode());
+      // specimen.museum of every specimen first, in one pass (2026-11-18, daily update stage two: was one pass of the
+      // whole specimen table per museum, 175 to 202 s a day in November); then each museum's numbers and list.
+      List<String> codes = new ArrayList<>();
+      for (Museum museum : MuseumMgr.getMuseums()) codes.add(museum.getCode());
+      long t = System.currentTimeMillis();
+      populateAllSpecimenMuseums(getConnection(), codes);
+      lap(0, t);
+      for (String code : codes) {
+        populate(code, false);
         ++museums;
       }
       // The time of each part over all museums (2026-11-10, Brian Fisher: a faster daily update; production 11-10:
@@ -321,11 +328,16 @@ public class MuseumDb extends AntwebDb {
     }
 
     public void populate(String code) throws SQLException {
+      populate(code, true);
+    }
+
+    /** specimenMuseum false: populate() has set specimen.museum for every museum already. */
+    private void populate(String code, boolean specimenMuseum) throws SQLException {
 
       long t = System.currentTimeMillis();
       freshStart(code);
       // Set the specimen.museum field to be the museum code. Prepare.
-      populateSpecimenMuseum(code);
+      if (specimenMuseum) populateSpecimenMuseum(code);
       t = lap(0, t);
       
       // Populate Museum table with data from specimen table.
@@ -517,6 +529,48 @@ public class MuseumDb extends AntwebDb {
             else code.append("[").append(ch == '\\' || ch == ']' || ch == '^' ? "\\" + ch : String.valueOf(ch)).append("]");
         }
         return "(^|[^[:alnum:]])" + code + "($|[^[:alnum:]])";
+    }
+
+    /**
+     * specimen.museum of every specimen, as populateSpecimenMuseum(code) run for each code in turn leaves it: the last
+     * code (in the given order) whose ownedByPattern matches the specimen's ownedBy; no match: emptied when it held one
+     * of the codes, else left as it is. The patterns are matched by MySQL as before (same column, same collation), but
+     * once per distinct ownedBy text (a few thousand) instead of on every specimen once per museum; only the specimens
+     * whose museum changes are written. MuseumOwnerDbTest compares it with the old per-museum passes.
+     */
+    public static int populateAllSpecimenMuseums(Connection connection, List<String> codes) throws SQLException {
+      if (codes == null || codes.isEmpty()) return 0;
+      String type = "text";
+      try (PreparedStatement ps = connection.prepareStatement("select column_type, collation_name from information_schema.columns"
+          + " where table_schema = database() and table_name = 'specimen' and column_name = 'ownedBy'");
+           ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) type = rs.getString(1) + (rs.getString(2) != null ? " collate " + rs.getString(2) : "");
+      }
+      try (Statement st = connection.createStatement()) {
+        st.executeUpdate("drop temporary table if exists museum_owner");
+        // k: the md5 of the text's bytes, so texts that differ only in case or accents stay apart, as on the specimens
+        st.executeUpdate("create temporary table museum_owner (k binary(16) primary key, ownedBy " + type + ", museum varchar(64))");
+        st.executeUpdate("insert into museum_owner (k, ownedBy) select unhex(md5(ownedBy)), min(ownedBy) from specimen"
+            + " where ownedBy is not null group by unhex(md5(ownedBy))");
+      }
+      try (PreparedStatement ps = connection.prepareStatement("update museum_owner set museum = ? where ownedBy regexp ?")) {
+        for (String code : codes) {   // in order: a later code that also matches takes the text, as before
+          ps.setString(1, code);
+          ps.setString(2, ownedByPattern(code));
+          ps.executeUpdate();
+        }
+      }
+      StringBuilder in = new StringBuilder();
+      for (String code : codes) in.append(in.length() == 0 ? "" : ", ").append(DBUtil.sqlLiteral(code));
+      int changed;
+      try (Statement st = connection.createStatement()) {
+        changed = st.executeUpdate("update specimen s left join museum_owner o on o.k = unhex(md5(s.ownedBy))"
+            + " set s.museum = o.museum"
+            + " where (o.museum is not null and not (cast(s.museum as binary) <=> cast(o.museum as binary)))"
+            + " or (o.museum is null and s.museum in (" + in + "))");
+        st.executeUpdate("drop temporary table if exists museum_owner");
+      }
+      return changed;
     }
 
     // Populate the museum field of the specimen table if can be determined from the ownedby field.

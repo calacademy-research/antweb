@@ -102,6 +102,10 @@ public class UploadDetails extends OperationDetails {
     // How the upload was made, shown in the report header: null for the upload page,
     // or e.g. "Nightly TaxonWorks job (automatic)" (GitHub #27).
     private String uploadSource;
+
+    /** Seconds per part of the upload (UploadTimes, 2026-11-18); written to compute.log by the nightly TaxonWorks load. */
+    private final UploadTimes times = new UploadTimes();
+    public UploadTimes getTimes() { return times; }
     public void setUploadSource(String uploadSource) { this.uploadSource = uploadSource; }
     public String getUploadSource() { return uploadSource; }
 

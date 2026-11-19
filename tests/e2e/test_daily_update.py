@@ -143,3 +143,8 @@ def test_admin_sees_the_page():
         assert "<th>Usual</th>" in r.text and "Started (Pacific)" in r.text
         states = re.findall(r'<tr data-step="\w+" data-state="(\w+)"', r.text)
         assert states and set(states) <= STEP_STATES, states
+        # Stage two (2026-11-18): the update's own time ends when the check after it starts (it only reads)
+        assert "Check after the update" in r.text
+        state = re.search(r'id="daily-update-state" data-state="(\w+)">([^<]*)', r.text)
+        if state and state.group(1) == "ok" and 'data-step="countCheck" data-state="done"' in r.text:
+            assert ", update finished " in state.group(2), state.group(2)

@@ -100,7 +100,11 @@ public class SpecimenUpload extends SpecimenUploadParse {
             theLine = theLine.toLowerCase();
 
             org.calacademy.antweb.util.BackgroundJobs.step("Removing the group's current specimens (the file replaces them).");
+            UploadTimes times = getUploadDetails().getTimes();
+            times.restart();
             doPreliminaries(accessGroup);
+            times.lap("delete");
+            long parseNanos = 0, saveNanos = 0, loopStart = System.nanoTime();
             org.calacademy.antweb.util.BackgroundJobs.startProgress("Reading and saving specimens", Paths.get(uploadFile.getFileLoc()));
                                 
             // Get the header values
@@ -177,7 +181,9 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
 					if (LineNumMgr.isGoodCarriageReturnLine(LineNumMgr.fileLine(lineNum))) {   // file numbering (header = 1)
 						// Do the work to populate the specimenItem, taxonItem
+						long t0 = System.nanoTime();
 						String errorMessage = parseLine(theLine, lineNum, specimenItem, taxonItem, otherColumns, colList, uploadFileName, curator);
+						parseNanos += System.nanoTime() - t0;
 						if (errorMessage == null) {
 						  ++buildLineTotal;
 						  //if (!ok) A.log("importSpecimens() lineNum:" + lineNum + " theLine:" + theLine);
@@ -188,7 +194,9 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
 						  specimenItem.put("backupFileName", uploadFile.getBackupFileName());
 
+						  long t1 = System.nanoTime();
 						  boolean retVal = processLine(specimenItem, taxonItem, lineNum, uploadFileName, accessGroup);
+						  saveNanos += System.nanoTime() - t1;
 						  if (retVal) {
 							++processLineTotal;
 							processedSome = true;
@@ -209,6 +217,11 @@ public class SpecimenUpload extends SpecimenUploadParse {
 					//Profiler.profile("importSpecimenLoop", startTimeLoop);                     
 		
   	  	        } // end while.
+                // the loop: checking each line (parseLine), saving it (processLine), the rest (reading the file, progress)
+                times.add("read the file", (System.nanoTime() - loopStart - parseNanos - saveNanos) / 1000000);
+                times.add("check", parseNanos / 1000000);
+                times.add("save", saveNanos / 1000000);
+                times.restart();
                 getMessageMgr().setCurrentCode(null);
                 getMessageMgr().setCurrentLine(0);
 
@@ -247,6 +260,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
                     s_log.warn("importSpecimens() DEV MODE SKIPPING");
                 }
 */
+                times.lap("report lines and orphan names");
                 // For debugging purposes. See log file.
                 ProfileCounter.report();
                 ProfileCounter.reset();
@@ -289,8 +303,10 @@ public class SpecimenUpload extends SpecimenUploadParse {
             if (AntwebProps.isDevMode()) { s_log.debug("DEV SKIPPING regenerateAllAntweb"); } else
             new ProjTaxonDb(getConnection()).regenerateAllAntweb();
             //Profiler.profile("regenerateAllAntweb", startTimex);
+            getUploadDetails().getTimes().lap("AntWeb list");
 
             TaxonMgr.populate(getConnection(), true, false);
+            getUploadDetails().getTimes().lap("name cache");
 
             //getSpecimenUploadDb().deleteTaxonOrphans();
             //(new OrphansDb(getConnection())).deleteOrphanViloma();

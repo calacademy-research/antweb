@@ -202,9 +202,20 @@ Three compute.log lines say how long their parts took, so a slow step can be rea
 2026-11-10: a faster daily update; production that day: museums 5 minutes, image counts 8, place image counts 13.6):
 
 - "Museums populated (N museums, specimen.museum S s, museum numbers S s, species rows S s, synonym rows S s, higher
-  taxa S s, counts S s, totals S s)": the parts of `MuseumDb.populate(code)` over all museums. `specimen.museum` is, per
-  museum, `update specimen set museum = null where museum = X` and `update specimen set museum = X where ownedBy regexp
-  ...` (no index serves the regexp: the specimen table is read once per museum).
+  taxa S s, counts S s, totals S s)": the parts of `MuseumDb.populate(code)` over all museums. `specimen.museum`:
+  until 2026-11-18, per museum, `update specimen set museum = null where museum = X` and `update specimen set museum = X
+  where ownedBy regexp ...` (no index serves the regexp: the specimen table was read once per museum, 175 to 202 s a day
+  in November). Since then `MuseumDb.populateAllSpecimenMuseums`, once for all museums before their numbers: the
+  same patterns, matched by MySQL on each distinct ownedBy text (a temporary table keyed by the text's md5), the last
+  museum in code order that matches wins, as before; then one UPDATE writes only the specimens whose museum changes
+  (a code with no matching text is emptied, a code no museum has is left). `MuseumOwnerDbTest` compares it byte for byte
+  with the old passes. One difference in the museum numbers: a specimen whose ownedBy names two museums used to be
+  counted in the first museum's numbers before the second took it; now only in the museum it ends up with.
+- "TaxonWorks load times: unzip and convert S s, delete S s, read the file S s, check S s, save S s, report lines and
+  orphan names S s, AntWeb list S s, name cache S s, file checks and copy S s, group counts and maps S s, global counts
+  S s, upload report S s, commit S s" (since 2026-11-18, `UploadTimes`; TaxonWorksNightly): where the CAS load's
+  minutes go ("check" is `parseLine` of each record, "save" its `processLine`), before deciding on saving records in
+  batches.
 - "Image Count Crawl completed (specimens S s, taxa S s, roll-up S s, geolocale lists S s, project lists S s, bioregion
   lists S s, museum lists S s)": `ImageCountDb.imageCountCrawls`. The list parts run one query per place and one UPDATE
   per list row with images.
@@ -259,9 +270,10 @@ Admins read the web/log files through `logMgr.do`; only the upload report folder
 
 ### The Daily update page (2026-11-07)
 
-`dailyUpdate.do` (curators and admins) shows where a full run is, step by step: the 15 steps of
-`DailyUpdate.STEPS` (AntCat import, TaxonWorks upload, name update, set 1 clean-up, sets 2 to 4, place list totals,
-set 5, log size check, statistics page, API taxon counts, cache reload, count check, end), each with its status (done,
+`dailyUpdate.do` (curators and admins) shows where a full run is, step by step: the 17 steps of
+`DailyUpdate.STEPS` (AntCat import, TaxonWorks upload, name update, set 1 clean-up, sets 2 to 4, imaging progress,
+place list totals, set 5, log size check, box check, statistics page, API taxon counts, cache reload, check after the
+update, end), each with its status (done,
 running, waiting, skipped, failed), start, end, duration and usual time (median of the last 7 completed runs). A step
 over 1.5 times its usual time (and at least a minute over) is yellow, a failed one red. Pages say "daily update",
 never "nightly" (Brian Fisher, 2026-11-07); class names keep "nightly".
@@ -270,7 +282,10 @@ never "nightly" (Brian Fisher, 2026-11-07); class names keep "nightly".
   `DailyUpdate.start(step)` where each step begins (set 1's TaxonWorks upload, name update and clean-up in
   `UtilDataAction`), `skip(step, why)`, `noteFailed` / `noteResult` (from the step's own compute.log line),
   `failRun` when a set fails, `schedulerFinished` in its finally block. The run ends when its count check job ends
-  (`CountCheckJob.startAfterNightly`; at most 90 minutes). Rows go to `daily_update_step` on a thread of its own and an
+  (`CountCheckJob.startAfterNightly`; at most 90 minutes). Since 2026-11-18 (Brian Fisher, decision 2 of the one-hour
+  plan) that step is labelled "Check after the update": it only reads, so the page gives the update's own time up to
+  the moment it starts ("started 05:00, update finished 06:13 (73 min), check after it ended 06:20"; `updateEnded`),
+  and the minutes left leave it out. The JSON keeps its keys: `ended` is still the end of the whole run. Rows go to `daily_update_step` on a thread of its own and an
   autocommit connection of its own: recording never touches the run's transaction and never throws into it.
 - Email to antweb@antweb.org, once per step and run: a step failed (not again for a failed set: the Scheduler's own
   email covers it), or a step ran over twice its usual time and at least 5 minutes over (checked every minute).
