@@ -69,12 +69,18 @@ def test_every_ant_of_the_pin_and_mixed():
     assert not api.mixed_life_stage(api.life_stage_ants("2 workers, 1 worker"))
     assert api.life_stage_ants(None) == [] and api.life_stage_ants("") == [] and api.life_stage_ants("none") == []
     assert [a["caste"] for a in api.life_stage_ants("w & q / m")] == ["worker", "queen", "male"]
+    # more separators for the ants after the first (review of #377); the first stays as AntWeb reads it
+    assert api.mixed_life_stage(api.life_stage_ants("3 workers; 1 dealated queen"))
+    assert api.life_stage_ants("3 workers; 1 dealated queen")[0] == {"caste": "worker", "subcaste": "normal"}
+    assert api.mixed_life_stage(api.life_stage_ants("workers + queen"))
+    assert api.mixed_life_stage(api.life_stage_ants("2w 1q"))
+    assert not api.mixed_life_stage(api.life_stage_ants("2 workers 3 workers"))
 
 
 def test_specimen_records_carry_the_fields():
     src = open(api.__file__, encoding="utf-8").read()
-    assert "'lifeStageAnts': life_stage_ants(sp.lifeStageSex)" in src
-    assert "'mixedLifeStage': mixed_life_stage(" in src
+    assert "ants = life_stage_ants(sp.lifeStageSex)" in src
+    assert "'lifeStageAnts': ants" in src and "'mixedLifeStage': mixed_life_stage(ants)" in src
 
 
 if __name__ == "__main__":

@@ -191,6 +191,7 @@ public class DailyUpdateTest extends TestCase {
         assertEquals(DailyUpdate.DONE, box.state);
         assertTrue(box.warning);
         assertTrue(box.message, box.message.startsWith("Box check: 1 state's box"));
+        assertEquals("one email (review of #377)", Arrays.asList("boxCheck:differences"), DailyUpdate.testEmails());
         DailyUpdate.resetForTest();
         DailyUpdate.testMode(false, null);
     }

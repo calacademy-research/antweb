@@ -702,8 +702,11 @@ public final class DailyUpdate {
         Step s = step(key);
         String label = s == null ? key : s.label;
         String env = AntwebProps.isStageMode() ? "staging" : "production";
-        boolean differences = "differences".equals(kind);
+        // a warning of another step than the count check (the box check, 2026-11-18) says its own text (review of #377)
+        boolean differences = "differences".equals(kind) && COUNT_CHECK.equals(key);
+        boolean otherWarning = "differences".equals(kind) && !differences;
         String subject = differences ? "AntWeb " + env + ": the count check after the daily update found differences"
+            : otherWarning ? "AntWeb " + env + ": daily update step found something to look at: " + label
             : "AntWeb " + env + ": daily update step " + ("failed".equals(kind) ? "failed" : "running long") + ": " + label;
         String body = "Daily update of " + iso(run.start) + " (Pacific), step " + (index(key) + 1) + " of " + STEPS.size()
             + ", " + label + ": " + what + (what.endsWith(".") ? "" : ".") + "\n\n"
