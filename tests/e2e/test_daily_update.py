@@ -39,7 +39,7 @@ def _step_keys():
 def test_source_steps_marked_in_order():
     """Each step is marked (start or skip) where the run reaches it, in the order of DailyUpdate.STEPS."""
     keys = _step_keys()
-    assert len(keys) == 16 and keys[0] == "antcatImport" and keys[-1] == "end", keys
+    assert len(keys) == 17 and keys[0] == "antcatImport" and keys[-1] == "end", keys
     sched = _code(SRC / "Scheduler.java")
     util = _code(SRC / "UtilDataAction.java")
     set1 = util[util.index('if ("set1".equals(action))'):util.index('if ("set2".equals(action))')]
@@ -106,7 +106,7 @@ def test_json_without_login_has_the_agreed_keys():
         assert run["state"] in RUN_STATES, run["state"]
         if run["state"] == "running":
             assert run["ended"] is None
-        assert len(run["steps"]) == len(_step_keys())   # 16 since 2026-11-08 (imagingProgress)
+        assert len(run["steps"]) == len(_step_keys())   # 17 since 2026-11-18 (boxCheck)
         assert run["steps"][0]["name"] == "antcatImport" and run["steps"][-1]["name"] == "end"
         for step in run["steps"]:
             assert STEP_KEYS <= set(step), step

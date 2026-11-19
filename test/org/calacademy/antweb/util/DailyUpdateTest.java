@@ -58,7 +58,7 @@ public class DailyUpdateTest extends TestCase {
         List<String> keys = new ArrayList<>();
         for (DailyUpdate.Step s : DailyUpdate.STEPS) keys.add(s.key);
         assertEquals(Arrays.asList("antcatImport", "taxonWorks", "nameUpdate", "set1Finish", "set2", "set3", "set4",
-            "imagingProgress", "placeListTotals", "set5", "logSizeCheck", "statsPage", "apiCounts", "cacheReload", "countCheck", "end"), keys);
+            "imagingProgress", "placeListTotals", "set5", "logSizeCheck", "boxCheck", "statsPage", "apiCounts", "cacheReload", "countCheck", "end"), keys);
         Set<String> labels = new HashSet<>();
         for (int i = 0; i < DailyUpdate.STEPS.size(); i++) {
             DailyUpdate.Step s = DailyUpdate.STEPS.get(i);
@@ -115,7 +115,7 @@ public class DailyUpdateTest extends TestCase {
         assertEquals(DailyUpdate.RUN_RUNNING, DailyUpdate.overallState(v, true));
         // set 3 is over its usual time (0 left), set 4 24 min, place list totals 60 min, the rest unknown
         assertEquals(Long.valueOf(84), DailyUpdate.minutesLeft(v));
-        assertEquals("Step 6 of 16: Set 3: projects, museums, bioregions, groups, started 05:53 Pacific, usually 9 min;"
+        assertEquals("Step 6 of 17: Set 3: projects, museums, bioregions, groups, started 05:53 Pacific, usually 9 min;"
             + " next: Set 4: images and Not curated", DailyUpdate.hover(v));
         assertEquals("AntWeb is running its daily update (about 84 minutes left).", DailyUpdate.publicLine(84L));
         assertEquals("AntWeb is running its daily update (almost done).", DailyUpdate.publicLine(1L));
@@ -177,6 +177,24 @@ public class DailyUpdateTest extends TestCase {
         assertNull(DailyUpdate.iso(null));
     }
 
+    /** The box check (BoxCheck, 2026-11-18) ends yellow when a state's box flags its own specimens. */
+    public void testBoxCheckWarning() {
+        DailyUpdate.resetForTest();
+        DailyUpdate.testMode(true, new HashMap<>());
+        DailyUpdate.beginRun();
+        DailyUpdate.start("boxCheck");
+        DailyUpdate.noteWarning("boxCheck", "Box check: 1 state's box flags many of its own specimens");
+        DailyUpdate.start("statsPage");
+        StepView box = null;
+        for (StepView v : DailyUpdate.activeView()) if (v.step.key.equals("boxCheck")) box = v;
+        assertNotNull(box);
+        assertEquals(DailyUpdate.DONE, box.state);
+        assertTrue(box.warning);
+        assertTrue(box.message, box.message.startsWith("Box check: 1 state's box"));
+        DailyUpdate.resetForTest();
+        DailyUpdate.testMode(false, null);
+    }
+
     private static String state(String key) {
         for (StepView v : DailyUpdate.activeView()) if (v.step.key.equals(key)) return v.state;
         return null;
@@ -203,7 +221,7 @@ public class DailyUpdateTest extends TestCase {
         DailyUpdate.start("antcatImport");
         assertEquals(DailyUpdate.RUNNING, state("antcatImport"));
         assertEquals(DailyUpdate.WAITING, state("taxonWorks"));
-        assertTrue(DailyUpdate.activeHover().startsWith("Step 1 of 16: AntCat import, started "));
+        assertTrue(DailyUpdate.activeHover().startsWith("Step 1 of 17: AntCat import, started "));
         assertTrue(DailyUpdate.activeHover().endsWith("; next: TaxonWorks upload"));
         assertTrue(DailyUpdate.activePublicLine().startsWith("AntWeb is running its daily update"));
         DailyUpdate.noteFailed("antcatImport", "the AntCat import did not succeed");

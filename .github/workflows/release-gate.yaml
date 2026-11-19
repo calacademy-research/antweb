@@ -6,7 +6,9 @@ name: Release gate
 # anything the checks read changes: a push or label or text change on a PR of this repository (not a fork's), a
 # finished Tests, End-to-end, Deploy Staging or Claude review run (that run writes the review comment; no comment
 # trigger, since any GitHub user can comment: review of bf87d37), every hour and at 04:46 Pacific (checks 6 and 8 change with the time of day: a status stays as written until the next run,
-# so Claude still runs the gate by hand at merge time). Every open PR is evaluated each time (there are few).
+# so Claude still runs the gate by hand at merge time). A PR event or a finished run of a PR's head gates only that PR
+# (review of #375: re-gating every PR on every event could reach the API's hourly request limit); a run with no PR
+# (Deploy Staging, which serves a merge of the staged head), the hourly runs and a manual run gate every open PR.
 # Read-only except for the statuses it writes.
 # pull_request_target, not pull_request: the workflow file and the gate's code always come from master, so a PR cannot
 # change what writes its own status (review of ae01dd6). No PR code runs here, and the known-failures list is master's
@@ -22,10 +24,11 @@ on:
     - cron: "46 11,12 * * *"   # 04:46 Pacific in summer and in winter: the daily update window opens at 04:45
   workflow_dispatch:
 
-# Runs wait for each other, none is cancelled: a cancelled run could leave a PR's status from an older head (review of
-# 7c371b0). GitHub keeps one waiting run; it gates every PR anyway.
+# Runs for the same target wait for each other, none is cancelled: a cancelled run could leave a PR's status from an
+# older head (review of 7c371b0). One group per PR or head, so a run waiting for PR 1 is not replaced by a run for PR 2
+# (GitHub keeps one waiting run per group); runs that gate every PR share the group "all".
 concurrency:
-  group: release-gate
+  group: release-gate-${{ github.event.pull_request.number || github.event.workflow_run.head_sha || 'all' }}
   cancel-in-progress: false
 
 permissions:
@@ -74,14 +77,21 @@ jobs:
           rm -f ~/.ssh/id_rsa
           echo "ANTWEB_DAILY_UPDATE_URL=http://127.0.0.1:18081/dailyUpdate.do?format=json" >> "$GITHUB_ENV"
 
-      - name: Gate every open pull request
+      - name: Gate the pull request concerned (or every open one)
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EVENT: ${{ github.event_name }}
+          EVENT_PR: ${{ github.event.pull_request.number }}
+          RUN_PRS: ${{ toJSON(github.event.workflow_run.pull_requests) }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set +e -uo pipefail   # a closed gate exits 1: go on with the next PR
-          for pr in $(gh api "repos/$REPO/pulls?state=open&base=master&per_page=100" --jq '.[].number'); do
+          open=$(gh api "repos/$REPO/pulls?state=open&base=master&per_page=100" --jq '.[] | "\(.number) \(.head.sha)"')
+          prs=$(python3 tools/release/gate_targets.py "$EVENT" "${EVENT_PR:-}" "${RUN_PRS:-[]}" "${RUN_SHA:-}" <<< "$open")
+          echo "gating: ${prs:-none}"
+          for pr in $prs; do
             head=$(gh api "repos/$REPO/pulls/$pr" --jq .head.sha)
             python3 tools/release/gate.py "$pr" > /tmp/gate.txt 2>&1
             code=$?

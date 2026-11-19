@@ -53,3 +53,12 @@ def test_admin_page_opens(admin, path, words):
 def test_anonymous_visitor_is_asked_to_log_in(path):
     outcome = get(new_session(), path)
     assert outcome.category == "login", (path, outcome)
+
+
+@needs("admin")
+def test_log_manager_links_the_info_log(admin):
+    """INFO lines, such as the imaged-names read time of the list pages, go only to antwebInfo.log (log4j2.xml);
+    the Log Manager links it (2026-11-18: the line was looked for in the Antweb Log, which keeps WARN and above)."""
+    r = admin.get(BASE_URL + "/logMgr.do?action=list", timeout=max(TIMEOUT, 60))
+    assert r.status_code == 200
+    assert "action=antwebInfoLog" in r.text and "Antweb Info Log" in r.text

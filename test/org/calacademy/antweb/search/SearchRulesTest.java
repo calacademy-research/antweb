@@ -101,4 +101,29 @@ public class SearchRulesTest extends TestCase {
         assertNull(FieldGuideResultsAction.searchCaste("male", new org.calacademy.antweb.Collection()));
         assertNull(FieldGuideResultsAction.searchCaste(null, new Object()));
     }
+
+    private static String title(String genus, String genusType, String codes, String codeType) {
+        org.calacademy.antweb.search.SearchParameters p = new org.calacademy.antweb.search.SearchParameters();
+        p.setGenus(genus);
+        p.setGenusSearchType(genusType);
+        p.setSpecimenCode(codes);
+        p.setSpecimenCodeSearchType(codeType);
+        return new org.calacademy.antweb.search.AdvancedSearchAction().getSearchTitle(p);
+    }
+
+    /** Review of #376: the results title says how each box was searched, and a pasted list of codes is shown as
+     *  "is one of N codes" (it is matched exactly), not the whole list. */
+    public void testTitleSaysHowEachBoxWasSearched() {
+        String t = title("myr", "contains", null, null);
+        assertTrue(t, t.contains(" contains "));
+        assertTrue(title("pheidole", "equals", null, null), title("pheidole", "equals", null, null).contains(" is "));
+        assertTrue(title("phei", "begins", null, null).contains(" begins with "));
+        assertTrue(title("phei", "notEquals", null, null).contains(" is not "));
+        String one = title(null, null, "casent0001", "contains");
+        assertTrue(one, one.contains("Specimen Code contains "));
+        String list = title(null, null, "CASENT4042552 CASENT4042553\nCASENT4042554\tCASENT4042555", "contains");
+        assertEquals("Specimen Code is one of 4 codes (CASENT4042552, CASENT4042553, CASENT4042554, ...)", list);
+        String none = title(null, null, "casent1,casent2", "notEquals");
+        assertEquals("Specimen Code is none of 2 codes (CASENT1, CASENT2)", none);
+    }
 }
