@@ -135,15 +135,23 @@ public class Genus extends Subfamily implements Serializable {
             long setupTime = 0;
             int i = 0;
             TaxonDb taxonDb = new TaxonDb(connection);
+            // Where the time of a long list goes (2026-11-18: images.do of Camponotus in all of AntWeb takes about 7 s on
+            // production, 5,178 images): reading each child, its images, its counts. One WARN line when over 2 s.
+            long loopStart = System.nanoTime(), readNanos = 0, imageNanos = 0, setNanos = 0, t0;
+            long[] imageParts = Taxon.IMAGE_NANOS.get();
+            imageParts[0] = 0;
+            imageParts[1] = 0;
             while (rset.next()) {
                 ++i;
                 String rank = rset.getString("taxarank");
 
+                t0 = System.nanoTime();
                 if (Rank.SPECIES.equals(rank)) {
                     child = taxonDb.getSpecies(subfamily, genus, rset.getString("species"));
                 } else {
                     child = taxonDb.getSubspecies(subfamily, genus, rset.getString("species"), rset.getString("subspecies"));
                 }
+                readNanos += System.nanoTime() - t0;
 
                 // setupTime += (((new GregorianCalendar()).getTimeInMillis()) - now);
                 //  s_log.info("setChildren setup time:" + setupTime);
@@ -166,7 +174,9 @@ public class Genus extends Subfamily implements Serializable {
                     if (i > Taxon.getMaxSafeChildrenCount()) {
                         // Do something?  or now, allow.
                     }
+                    t0 = System.nanoTime();
                     child.setImages(connection, overview, caste);
+                    imageNanos += System.nanoTime() - t0;
                 }
 
 /*
@@ -180,7 +190,9 @@ We get both... that can't be right.
                 if (getTaxonName().contains("acanthobius"))
                     s_log.debug("setChildren() getChildImages:" + getChildImages + " images:" + child.getHasImagesCount() + " imagess:" + child.getImages());
 
+                t0 = System.nanoTime();
                 child.initTaxonSet(connection, overview);
+                setNanos += System.nanoTime() - t0;
 
                 child.generateBrowserParams(overview);
 
@@ -189,6 +201,13 @@ We get both... that can't be right.
             }
             //s_log.info("mt" + mapTime + ", it: " + imageTime + ", bt: " + browserTime + " , st" + setupTime);
             setChildrenCount(theseChildren.size());
+            long loopMs = (System.nanoTime() - loopStart) / 1000000;
+            if (loopMs > 2000) {
+                s_log.warn("setChildren() " + getTaxonName() + " in " + overview + ": " + theseChildren.size() + " children in "
+                    + loopMs + " ms (reading the names " + readNanos / 1000000 + " ms, images " + imageNanos / 1000000
+                    + " ms of which choosing a specimen " + imageParts[0] / 1000000 + " ms and reading its images "
+                    + imageParts[1] / 1000000 + " ms, counts " + setNanos / 1000000 + " ms; caste " + caste + ")");
+            }
             //s_log.info("setChildren() total time:" + (((new GregorianCalendar()).getTimeInMillis()) - now));
             now = new GregorianCalendar().getTimeInMillis();
         } catch (SQLException e) {
