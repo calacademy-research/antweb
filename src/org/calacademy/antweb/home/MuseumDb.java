@@ -297,7 +297,7 @@ public class MuseumDb extends AntwebDb {
       List<String> codes = new ArrayList<>();
       for (Museum museum : MuseumMgr.getMuseums()) codes.add(museum.getCode());
       long t = System.currentTimeMillis();
-      populateAllSpecimenMuseums(getConnection(), codes);
+      int changed = populateAllSpecimenMuseums(getConnection(), codes);
       lap(0, t);
       for (String code : codes) {
         populate(code, false);
@@ -309,7 +309,10 @@ public class MuseumDb extends AntwebDb {
       for (int i = 0; i < POPULATE_PARTS.length; i++) {
         times.append(", ").append(POPULATE_PARTS[i]).append(" ").append(populateMillis[i] / 1000).append(" s");
       }
-      LogMgr.appendLog("compute.log", "  Museums populated (" + museums + " museums" + times + ")", true);
+      // the specimens whose museum changed: 0 on a day without uploads (staging, where TaxonWorks is skipped, shows the
+      // one pass leaves what the old passes left)
+      LogMgr.appendLog("compute.log", "  Museums populated (" + museums + " museums" + times + "; " + changed
+          + " specimens changed museum)", true);
     }
 
     /** The parts of populate(code), timed over all museums by populate(). */

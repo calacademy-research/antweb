@@ -202,7 +202,7 @@ Three compute.log lines say how long their parts took, so a slow step can be rea
 2026-11-10: a faster daily update; production that day: museums 5 minutes, image counts 8, place image counts 13.6):
 
 - "Museums populated (N museums, specimen.museum S s, museum numbers S s, species rows S s, synonym rows S s, higher
-  taxa S s, counts S s, totals S s)": the parts of `MuseumDb.populate(code)` over all museums. `specimen.museum`:
+  taxa S s, counts S s, totals S s; N specimens changed museum)": the parts of `MuseumDb.populate(code)` over all museums. `specimen.museum`:
   until 2026-11-18, per museum, `update specimen set museum = null where museum = X` and `update specimen set museum = X
   where ownedBy regexp ...` (no index serves the regexp: the specimen table was read once per museum, 175 to 202 s a day
   in November). Since then `MuseumDb.populateAllSpecimenMuseums`, once for all museums before their numbers: the
