@@ -276,7 +276,7 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
             hits[st.id], how[st.id] = set(), "not"
             continue
         if exonyms.get(st.name) in by_code:     # the subdivision this state is, by AntWeb's name ISO does not carry
-            hits[st.id], how[st.id] = {exonyms[st.name]}, "exact"
+            hits[st.id], how[st.id] = {exonyms[st.name]}, "table"
             continue
         name, olds = [st.name], list(st.old_names)
         tiers = [(own, name), (trans, name), (own, olds), (trans, olds), (shapes, name), (shapes, olds)]
@@ -299,7 +299,9 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
         else:
             h = looser.get(loose(st.name), set()) if loose(st.name) else set()
             hits[st.id], how[st.id] = h, "loose"
-    kinds = collections.Counter(by_code[next(iter(h))].type for h in hits.values() if len(h) == 1)
+    # the country's main kind from its states' own matches; a table entry does not count (it would decide the kind of
+    # other states written like two kinds: review of #399)
+    kinds = collections.Counter(by_code[next(iter(h))].type for i, h in hits.items() if len(h) == 1 and how[i] != "table")
     main = kinds.most_common(1)[0][0] if kinds else None
     chosen, reported = {}, []
     for st in states:
@@ -371,7 +373,10 @@ def plan(valid, olds, iso, countries, skip=frozenset()):
             reported += [(country, n, c, OUTDATED[a2]) for i, n, c in valid[country] if (country + "|" + n) not in skip]
             continue
         english = a2 in ENGLISH
-        decisions, rep = match_country(rows, subs, english, EXONYMS.get(country), {n: why for (c, n), why in NOT_ISO.items() if c == country})
+        # the tables by the country's ISO code, so another spelling of the country finds them too (review of #399)
+        exonyms = {n: code for c, names in EXONYMS.items() if countries.get(key(c)) == a2 for n, code in names.items()}
+        not_iso = {n: why for (c, n), why in NOT_ISO.items() if countries.get(key(c)) == a2}
+        decisions, rep = match_country(rows, subs, english, exonyms, not_iso)
         for action, st, sub, kept in decisions:
             # target: the name the state, its old names and its specimens end up under
             iso_name = display(sub.name)

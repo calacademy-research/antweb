@@ -354,9 +354,28 @@ def test_exonyms_and_states_that_are_not_iso():
     assert got[("rename", "Lower Saxony")] == "Niedersachsen" and got[("merge", "Canton Grisons")] == "Graubünden", got
     assert got[("rename", "Basque Country")] == "País Vasco", got
     # Quezon City is a city of Metro Manila, not Quezon province: never merged into it
-    out, rep, noc = iso.plan({"Philippines": [(7, "Quezon", 857), (8, "Quezon City", 12)]}, {}, subs, iso.read_countries())
+    out, rep, noc = iso.plan({"Philippines": [(7, "Quezon", 857), (8, "Quezon City", 900)]}, {}, subs, iso.read_countries())
     assert not [x for x in out if x["action"] == "merge"] and ("Philippines", "Quezon City") in {(r[0], r[1]) for r in rep}, (out, rep)
     assert [r for r in rep if r[1] == "Quezon City"][0][3].startswith("not an ISO 3166-2 subdivision: a city of Metro Manila")
+
+
+def test_a_table_entry_decides_over_iso_names_and_finds_its_country_by_any_name():
+    # ISO's data has "Kiev" as a name of the city UA-30; AntWeb's Kiev is the oblast (the table), Kiev City the city
+    d, rep = iso.match_country([st(1, "Kiev", 7), st(2, "Kiev City", 3)], UA, english=True, exonyms={"Kiev": "UA-32", "Kiev City": "UA-30"})
+    assert {(s.name, sub.code) for a, s, sub, k in d} == {("Kiev", "UA-32"), ("Kiev City", "UA-30")}, d
+    # the table is found by the country's ISO code: Laos written as ISO writes it
+    out, rep, noc = iso.plan({"Lao People's Democratic Republic": [(1, "Savannahkhét", 2)]}, {}, iso.read_iso(), iso.read_countries())
+    assert [(x["action"], x["code"]) for x in out] == [("alias", "LA-SV")], (out, rep)
+    # a table entry does not decide the country's main kind: a state written like a region and its prefecture keeps
+    # the kind the country's own matches give (here prefectures)
+    gn = [S("GN-K", "GN", "Administrative region", "", "Kankán", []), S("GN-KA", "GN", "Prefecture", "GN-K", "Kankan", []),
+          S("GN-KO", "GN", "Prefecture", "GN-K", "Kouroussa", []), S("GN-SI", "GN", "Prefecture", "GN-K", "Siguiri", []),
+          S("GN-N", "GN", "Administrative region", "", "Nzérékoré", []), S("GN-B", "GN", "Administrative region", "", "Boké", []),
+          S("GN-M", "GN", "Administrative region", "", "Mamou", [])]
+    states = [st(1, "Nzerekore", 3), st(2, "Boke", 2), st(3, "Mamou", 1), st(4, "Kouroussa", 1), st(5, "Siguiri", 1), st(6, "Kankan", 5)]
+    d, rep = iso.match_country(states, gn, exonyms={"Nzerekore": "GN-N", "Boke": "GN-B", "Mamou": "GN-M"})
+    # three table regions against two matched prefectures: counted, the regions would win and Kankan become Kankán
+    assert "Kankan" not in {s.name for a, s, sub, k in d}, d
 
 
 def test_the_iso_file_reads():
