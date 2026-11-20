@@ -142,6 +142,18 @@ public class DuplicateStateTest extends TestCase {
         List<Adm1> children = List.of(bocas, chiriqui);
         assertTrue(GeolocaleMgr.ownChildren("Panamá", children).isEmpty());
         assertEquals(2, GeolocaleMgr.ownChildren("Panama", children).size());
+        // in the tree: the old name Panamá keeps no state of Panama; Panama (valid) keeps them all
+        org.calacademy.antweb.geolocale.Country panama = new org.calacademy.antweb.geolocale.Country();
+        panama.setName("Panama"); panama.setIsValid(true); panama.setChildren(new ArrayList<>(List.of(bocas, chiriqui)));
+        org.calacademy.antweb.geolocale.Country old = new org.calacademy.antweb.geolocale.Country();
+        old.setName("Panamá"); old.setIsValid(false); old.setChildren(new ArrayList<>(List.of(bocas, chiriqui)));
+        org.calacademy.antweb.geolocale.Subregion central = new org.calacademy.antweb.geolocale.Subregion();
+        central.setChildren(new ArrayList<>(List.of(panama, old)));
+        org.calacademy.antweb.geolocale.Region americas = new org.calacademy.antweb.geolocale.Region();
+        americas.setChildren(new ArrayList<>(List.of(central)));
+        assertEquals(2, GeolocaleMgr.pruneOldNameCountries(List.of(americas)));
+        assertEquals(2, panama.getChildren().size());
+        assertTrue(old.getChildren().isEmpty());
         // two rows of one state written alike are still a pair
         twice.add(adm1(6003, "Bocas Del Toro", "Panama", true));
         assertEquals(List.of("Panama: Bocas Del Toro / Bocas del Toro"), GeolocaleMgr.duplicateValidStates(twice));

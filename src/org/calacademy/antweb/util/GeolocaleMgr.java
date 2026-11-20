@@ -103,7 +103,35 @@ public class GeolocaleMgr extends Manager {
 
         GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
         // deep crawl through subregion, countries and adm1.  Use for Georegion menu.
-        s_regions = geolocaleDb.getRegions(true);
+        ArrayList<Region> regions = geolocaleDb.getRegions(true);
+        int dropped = pruneOldNameCountries(regions);
+        if (dropped > 0) s_log.warn("populateDeep() " + dropped + " states left out under old names of countries (not their own)");
+        s_regions = regions;
+    }
+
+    /**
+     * 2026-11-20: the database compares a child's parent with a country's name without accents, so the old name Panamá
+     * (id 8818, not valid, under Central America) was given every state of Panama (id 91) and the states were loaded
+     * twice (the daily box check listed each beside itself). A country that is not valid keeps only the states whose
+     * parent is its own name exactly; valid countries are left as they are (a state whose parent is written with other
+     * accents or capitals stays found). Returns how many states were left out.
+     */
+    public static int pruneOldNameCountries(List<? extends Geolocale> regions) {
+        int dropped = 0;
+        if (regions == null) return 0;
+        for (Geolocale region : regions) {
+            if (region == null || region.getChildren() == null) continue;
+            for (Geolocale subregion : region.getChildren()) {
+                if (subregion == null || subregion.getChildren() == null) continue;
+                for (Geolocale country : subregion.getChildren()) {
+                    if (country == null || country.getIsValid() || country.getChildren() == null) continue;
+                    ArrayList<Geolocale> own = ownChildren(country.getName(), country.getChildren());
+                    dropped += country.getChildren().size() - own.size();
+                    country.setChildren(own);
+                }
+            }
+        }
+        return dropped;
     }
 
     private static void populateShallow(Connection connection, boolean forceReload) {
