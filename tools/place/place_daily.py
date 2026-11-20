@@ -195,12 +195,20 @@ def rollback_statements(run_date):
     """Puts back adm1 and adm1_verbatim of the specimens the apply run of run_date wrote (from its backup table), only
     where the specimen still has the state that run wrote: a later upload or edit is kept (review of #384)."""
     bak = backup_table(run_date)
+    # one statement: a specimen put back and its place_update row marked not applied together; a kept row stays applied
     return ["SET SESSION innodb_lock_wait_timeout = 600", "START TRANSACTION",
             "UPDATE specimen s JOIN " + bak + " b ON b.code = s.code JOIN place_update p ON p.code = s.code AND p.run_date = " + quote(run_date)
-            + " AND p.mode = 'apply' AND p.applied = 1 AND p.field = 'adm1' SET s.adm1 = b.adm1, s.adm1_verbatim = b.adm1_verbatim"
+            + " AND p.mode = 'apply' AND p.applied = 1 AND p.field = 'adm1' SET s.adm1 = b.adm1, s.adm1_verbatim = b.adm1_verbatim, p.applied = 0"
             " WHERE BINARY s.adm1 = BINARY p.proposed",
-            "UPDATE place_update SET applied = 0 WHERE run_date = " + quote(run_date) + " AND mode = 'apply'",
             "COMMIT"]
+
+
+def rollback_counts(run_date):
+    """SQL for (rows of the run still applied, specimens a rollback would put back) before a rollback."""
+    bak = backup_table(run_date)
+    return ("select count(*) from place_update where run_date = " + quote(run_date) + " and mode = 'apply' and applied = 1 and field = 'adm1'",
+            "select count(*) from specimen s join " + bak + " b on b.code = s.code join place_update p on p.code = s.code and p.run_date = "
+            + quote(run_date) + " and p.mode = 'apply' and p.applied = 1 and p.field = 'adm1' where binary s.adm1 = binary p.proposed")
 
 
 def read_state(project, container, codes):
@@ -261,8 +269,9 @@ def log(line):
         subprocess.run(["logger", "-t", "place-daily", line], check=False)
 
 
-def main(argv=None, corrections=None, reader=None):
-    """reader (the tests): a function (project, container, codes) -> (valid states, current values, applied today)."""
+def main(argv=None, corrections=None, reader=None, counter=None):
+    """reader (the tests): a function (project, container, codes) -> (valid states, current values, applied today).
+    counter (the tests): a function (SQL) -> the count it selects, for the rollback's counts."""
     a = argparse.ArgumentParser(description="The daily place step: proposals from coordinates into place_update; in apply mode the safe ones written.")
     a.add_argument("--mode", choices=["report", "apply"], default="report")
     a.add_argument("--rollback", metavar="DATE", default=None, help="put back what the apply run of DATE (YYYY-MM-DD) wrote")
@@ -277,11 +286,21 @@ def main(argv=None, corrections=None, reader=None):
         if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", args.rollback):   # YYYY-MM-DD only (fromisoformat takes 20261123 and week forms too)
             raise ValueError("--rollback takes a date YYYY-MM-DD: " + args.rollback)
         datetime.date.fromisoformat(args.rollback)   # and a real date
-        if args.dry_run:
+        if args.dry_run and counter is None:
             log("place-daily rollback " + args.rollback + " (dry run): " + "; ".join(rollback_statements(args.rollback)))
             return 0
+        count = counter or (lambda q: int(cc.run_sql(project, q, args.container)[0][0]))
+        applied, back = (count(q) for q in rollback_counts(args.rollback))
+        if not applied:   # review of #388: say so instead of a rollback that puts nothing back
+            raise SystemExit("rollback " + args.rollback + ": no applied rows of that day in place_update (rolled back already, or older than "
+                             + str(KEEP_DAYS) + " days); nothing put back")
+        kept = applied - back
+        if args.dry_run:
+            log("place-daily rollback " + args.rollback + " (dry run): would put back " + cc.n(back) + " specimens; " + cc.n(kept) + " changed since, kept")
+            return 0
         write_sql(project, args.container, rollback_statements(args.rollback))
-        log("place-daily rollback " + args.rollback + ": the states of that day's apply run put back from " + backup_table(args.rollback))
+        log("place-daily rollback " + args.rollback + ": " + cc.n(back) + " specimens put back from " + backup_table(args.rollback) + "; "
+            + cc.n(kept) + " changed since (an upload or edit), kept")
         return 0
     run_date = datetime.date.today().isoformat()
     started = time.time()

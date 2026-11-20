@@ -143,8 +143,9 @@ def test_the_apply_sql_backs_up_first_and_writes_only_unchanged_states():
     back = pd.rollback_statements("2026-11-23")
     # only where the specimen still has the state that run wrote (a later upload is kept)
     assert ("UPDATE specimen s JOIN place_apply_bak_20261123 b ON b.code = s.code JOIN place_update p ON p.code = s.code AND p.run_date = '2026-11-23'"
-            " AND p.mode = 'apply' AND p.applied = 1 AND p.field = 'adm1' SET s.adm1 = b.adm1, s.adm1_verbatim = b.adm1_verbatim"
+            " AND p.mode = 'apply' AND p.applied = 1 AND p.field = 'adm1' SET s.adm1 = b.adm1, s.adm1_verbatim = b.adm1_verbatim, p.applied = 0"
             " WHERE BINARY s.adm1 = BINARY p.proposed") in back, back
+    assert not any(x.startswith("UPDATE place_update") for x in back)     # a row kept by the rollback stays applied (review of #388)
     assert back[-1] == "COMMIT"
 
 
@@ -283,3 +284,29 @@ if __name__ == "__main__":
             fn()
             n += 1
     print(n, "tests passed")
+
+
+def test_rollback_counts_and_refuses_when_nothing_is_applied():
+    import io
+    import contextlib
+    calls = []
+    was = pd.write_sql
+    pd.write_sql = lambda *a: calls.append(a[2])
+    try:
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            pd.main(["--rollback", "2026-11-23", "--project", "/x"], counter=lambda q: 5 if "from place_update where" in q else 3)
+        assert len(calls) == 1 and "3 specimens put back" in out.getvalue() and "2 changed since" in out.getvalue(), out.getvalue()
+        calls.clear()
+        with contextlib.redirect_stdout(io.StringIO()):
+            pd.main(["--rollback", "2026-11-23", "--project", "/x", "--dry-run"], counter=lambda q: 5 if "from place_update where" in q else 3)
+        assert not calls
+        try:   # rolled back already, or the rows aged out: refused, nothing written
+            pd.main(["--rollback", "2026-11-23", "--project", "/x"], counter=lambda q: 0)
+        except SystemExit as e:
+            assert "no applied rows" in str(e), e
+        else:
+            raise AssertionError("a rollback with nothing applied must be refused")
+        assert not calls
+    finally:
+        pd.write_sql = was
