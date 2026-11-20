@@ -11,8 +11,10 @@ files are on disk (not on the servers):
   python3 build_iso3166_2.py --geoboundaries DIR > iso3166_2.tsv      DIR holds <ISO3>-ADM1.geojson files
   python3 build_iso3166_2.py --countries > iso3166_countries.tsv     the countries (alpha-2, names) for matching
 
-Columns: code, country (ISO alpha-2), type, parent code, the ISO name, other names ( | between them). A first line
-starting with # says which pycountry version and geoBoundaries commit it came from."""
+Columns: code, country (ISO alpha-2), type, parent code, the ISO name, its translations, the boundary file's shape
+names ( | between names). Translations are ISO's own (iso-codes); the shape names carry the boundary file's ISO code,
+which is wrong on some shapes (Mexico, Niger), so iso_states.py counts them last. A first line starting with # says
+which pycountry version and geoBoundaries commit it came from."""
 import argparse, gettext, glob, json, os, re, unicodedata
 
 LANGS = ["en", "fr", "de", "es", "pt", "it", "nl", "pl", "cs", "sv", "da", "nb", "fi", "tr", "id", "ms", "vi", "ro", "hu",
@@ -51,15 +53,19 @@ def main():
         except (OSError, ValueError, KeyError):
             pass
     import importlib.metadata
-    print("# ISO 3166-2 from pycountry %s (iso-codes); other names: its translations in Latin script and geoBoundaries ADM1 "
-          "shape names (commit %s)" % (importlib.metadata.version("pycountry"), args.commit))
+    print("# ISO 3166-2 from pycountry %s (iso-codes); translations in Latin script (column 6) and geoBoundaries ADM1 "
+          "shape names (column 7) (commit %s)" % (importlib.metadata.version("pycountry"), args.commit))
+
+    def clean(names):
+        return sorted(o for o in names if o and o != s.name and latin(o) and "\t" not in o and "|" not in o)
     for s in sorted(pycountry.subdivisions, key=lambda s: s.code):
-        others = set(t.gettext(s.name) for t in trans) | shapes.get(s.code.upper(), set())
-        others |= {x.strip() for x in re.findall(r"\(([^()]*)\)", s.name)}        # "Calabarzon (Region IV-A)"
-        others.add(re.sub(r"\s*\([^()]*\)", "", s.name).strip())
-        others |= {x.strip() for x in re.findall(r"\[(.*?)\]", s.name)}
-        others = sorted(o for o in others if o and o != s.name and latin(o) and "\t" not in o and "|" not in o)
-        print("\t".join([s.code, s.country_code, s.type, s.parent_code or "", s.name, " | ".join(others)]))
+        tr = set(t.gettext(s.name) for t in trans)
+        tr |= {x.strip() for x in re.findall(r"\(([^()]*)\)", s.name)}        # "Calabarzon (Region IV-A)"
+        tr.add(re.sub(r"\s*\([^()]*\)", "", s.name).strip())
+        tr |= {x.strip() for x in re.findall(r"\[(.*?)\]", s.name)}
+        tr = clean(tr)
+        sh = [x for x in clean(shapes.get(s.code.upper(), set())) if x not in tr]
+        print("\t".join([s.code, s.country_code, s.type, s.parent_code or "", s.name, " | ".join(tr), " | ".join(sh)]))
 
 
 if __name__ == "__main__":

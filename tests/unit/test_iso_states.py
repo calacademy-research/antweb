@@ -218,6 +218,10 @@ def test_the_mapping_file_follows_the_renames():
     assert "convert,Malawi,Central,Northern,Southern Region" in lines
     assert "United States,ADM1,District of Columbia,\"Washington, D.C.\"" not in lines         # now by name: dropped
     assert "name,Norway,ADM1,Oslo,Oslo,untouched" in lines and [n for n, l in check] == [6]
+    with open(path, "a", encoding="utf-8") as f:
+        f.write("stray\n")
+    text, changed, check = iso.mapping_update(d, path)
+    assert check[-1][1] == "stray"
     # a plain line marked new keeps its new mark and is never dropped
     assert "Croatia,ADM1,Zagreb County,Splitsko-dalmatinska županija,new" in lines, lines
 
@@ -252,6 +256,18 @@ def test_page_text_moves_with_a_rename_and_blocks_a_conflict():
     # the merged state's text joins the kept one, unless both have text
     sql, left, done = iso.statements(d[1:], {}, "20261120", texts={"Bratislavsky": 1, "Bratislavský kraj": 1}, allnames={"Bratislavsky": 1})
     assert not done and "both have page text" in left[0], left
+    # the state's own old-name row written otherwise is not another place: the text moves; a real other place: a note
+    moved, notes = [], []
+    sql, left, done = iso.statements(d[:1], {("Slovakia", "Bratislavá"): [(9, 0, "Bratislava")]}, "20261120", texts={"Bratislava": 1},
+                                     allnames={iso.normal("Bratislava"): 2}, text_moves=moved, notes=notes)
+    assert moved and not notes, (moved, notes)
+    moved, notes = [], []
+    sql, left, done = iso.statements(d[:1], {}, "20261120", texts={"Bratislava": 1}, allnames={iso.normal("Bratislava"): 2}, text_moves=moved, notes=notes)
+    assert not moved and "stays under Bratislava" in notes[0] and done, notes
+    # two aliases to one ISO name in one country: the second is left out
+    al = [dict(dec("alias", 1, "A", "Same", 1, "A"), target="A"), dict(dec("alias", 2, "B", "Same", 2, "B"), target="B")]
+    sql, left, done = iso.statements(al, {}, "20261120")
+    assert len(done) == 1 and left
     # page text and a new name another place already has (page text is keyed by name alone): left out
     sql, left, done = iso.statements(d[:1], {}, "20261120", texts={"Bratislava": 1}, allnames={iso.normal("Bratislava"): 1, iso.normal("Bratislavský kraj"): 1})
     assert not done and "another place is already named" in left[0], left
@@ -265,8 +281,41 @@ def test_page_text_moves_with_a_rename_and_blocks_a_conflict():
     assert not done and "longer than" in left[0]
 
 
+def test_a_convert_line_keeps_each_name_once():
+    import tempfile
+    path = os.path.join(tempfile.mkdtemp(), "map.csv")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("convert,Philippines,ARMM,Autonomous Region in Muslim Mindanao,Bicol\n")
+    d = [dec("merge", 1, "ARMM", "Autonomous Region in Muslim Mindanao", 2, "Autonomous Region in Muslim Mindanao", "Philippines", "PH-14")]
+    text, changed, check = iso.mapping_update(d, path)
+    assert text.split("\n")[0] == "convert,Philippines,Autonomous Region in Muslim Mindanao,Bicol", text
+
+
+def test_the_name_comes_before_old_names():
+    # AntWeb has Cordoba as an old name of Andalusia: Andalusia is the community by its English name, not the province
+    es = iso.read_iso()["ES"]
+    d, rep = iso.match_country([st(1, "Andalusia", 247, olds=("Cordoba",)), st(2, "Catalonia", 302), st(3, "Madrid", 41), st(4, "Murcia", 22)], es)
+    got = {s.name: sub.code for a, s, sub, k in d}
+    assert got["Andalusia"] == "ES-AN", got
+    # but an old name written as ISO's own name counts before the boundary file's shape names (review of #396): a state
+    # "Distrito Federal" with the old name Ciudad de México is Mexico City, not México state (whose shape carries DF)
+    mx = iso.read_iso()["MX"]
+    d, rep = iso.match_country([st(1, "Distrito Federal", 5, olds=("Ciudad de México",)), st(2, "México", 40)], mx)
+    assert ("Distrito Federal", "MX-CMX") in {(s.name, sub.code) for a, s, sub, k in d} and not [x for x in d if x[0] == "merge"], d
+
+
+def test_capitals_only_and_apostrophes():
+    za = [S("ZA-NL", "ZA", "Province", "", "Kwazulu-Natal", [])]
+    d, rep = iso.match_country([st(1, "KwaZulu-Natal", 6734)], za)
+    assert not d and not rep, (d, rep)
+    assert iso.display("Grande’Anse") == "Grande'Anse" and iso.display("Provence-Alpes-Côte-d’Azur") == "Provence-Alpes-Côte-d'Azur"
+
+
 def test_the_iso_file_reads():
     subs = iso.read_iso()
+    # translations and the boundary file's shape names are separate columns
+    mex = [x for x in subs["MX"] if x.code == "MX-MEX"][0]
+    assert "Mexico" in mex.others and "Distrito Federal" in mex.shapes and "Distrito Federal" not in mex.others
     assert len(subs["IT"]) > 100 and any(s.name == "Sicilia" for s in subs["IT"])
     c = iso.read_countries()
     assert c[iso.key("Russia")] == "RU" and c[iso.key("United States")] == "US" and c[iso.key("Türkiye")] == "TR"
