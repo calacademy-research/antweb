@@ -6,7 +6,9 @@ Each valid state (adm1) is matched to an ISO 3166-2 subdivision of its country: 
 (rows that are not valid and lead to it), against the ISO name, its translations and the geoBoundaries shape names of
 that subdivision, written alike (capitals, accents, blanks and punctuation aside, as GeolocaleMgr.adm1SpellingKey).
 When none is written alike, a name with the generic words left out ("Kherson" for "Khersonska oblast") is tried, and
-used only when it finds exactly one subdivision and no other state finds it too.
+used to rename one state when it finds exactly one subdivision and no other state finds it too, and to merge only when
+the state leaves out a generic word of the ISO name (Banskobystrický, Banskobystrický kraj), never when it adds one
+("Kiev Oblast" is not the city Kiev).
 
   rename    one valid state matches the subdivision and is not written as ISO writes it: it takes the ISO name; the
             name it had becomes an old name of it (a row not valid, valid name the ISO name), so an upload that writes
@@ -14,17 +16,26 @@ used only when it finds exactly one subdivision and no other state finds it too.
             id, so its lists, counts, box and bioregion stay.
   merge     two or more valid states match the same subdivision by their written names (Aglona and Aglonas;
             Banskobystrický and Banskobystrický kraj): the one written as ISO, else the one with most specimens, is
-            kept and takes the ISO name; the others become old names of it and their specimens move to it.
+            kept and takes the ISO name; the others become old names of it and their specimens move to it. The rows
+            merged keep their id and their lists (geolocale_taxon is keyed by id); not valid, they are not shown, and
+            the nightly counts the kept state again from its specimens. Places finer than a state (adm2) are not
+            loaded by AntWeb (GeolocaleDb), so no row is left pointing at an old state name.
   report    the rest is listed and not changed: states no subdivision matches (Madagascar's regions: ISO still has
             the six provinces; French overseas arrondissements), a state that matches two subdivisions of different
             kinds equally, and a looser match that is not alone.
+
+The plan also lists, not changed: lines of adm1_shape_map.csv that name a state renamed or merged (update them in the
+same change, or the place report loses their shape), and curator species lists of states to be merged (such a merge
+is left out by --apply: move the list by hand first, or skip the state).
 
 Where a subdivision has two kinds (Spain: communities and provinces; Bangladesh: divisions and districts), a state
 written like both takes the kind most of its country's states match.
 
   python3 iso_states.py                       plan only: the summary, and the plan in <folder>/plan.tsv
-  python3 iso_states.py --apply               backup tables iso_states_bak_<date> (places) and iso_states_spec_<date>
-                                              (specimens), then the changes
+  python3 iso_states.py --apply               applies the plan reviewed today: it refuses when <folder>/plan.tsv is
+                                              missing or the plan differs from it now (an upload in between); backup
+                                              tables iso_states_bak_<date> (places) and iso_states_spec_<date>
+                                              (specimens), then the changes; what was done in <folder>/applied.tsv
   python3 iso_states.py --skip FILE           lines "country|state" left alone (a state looked at by hand)
   python3 iso_states.py --project /root/antweb-next      staging (default: the project on this server)
 
@@ -36,6 +47,7 @@ Rollback (same server, the date of the run):
 then reload the places (util.do?action=reloadAntwebMgr&name=geolocale, administrator)."""
 import argparse
 import collections
+import csv
 import datetime
 import os
 import re
@@ -134,6 +146,16 @@ def read_countries(path=COUNTRY_FILE):
 State = collections.namedtuple("State", "id name specimens old_names")
 
 
+def sub_names(sub):
+    return [sub.name, display(sub.name)] + re.findall(r"\[(.*?)\]", sub.name) + sub.others
+
+
+def shorter(name, sub):
+    """The state's name is one of the subdivision's names with generic words left out, none added."""
+    words = set(key(name).split())
+    return any(loose(n) == loose(name) and words <= set(key(n).split()) for n in sub_names(sub))
+
+
 def match_country(states, subs):
     """states: the valid states of one country (State); subs: its ISO subdivisions. Returns (decisions, reported):
     decisions [(action, state, sub, kept_state)] with action 'rename' or 'merge' (state becomes an old name of
@@ -141,7 +163,7 @@ def match_country(states, subs):
     exact = collections.defaultdict(set)
     looser = collections.defaultdict(set)
     for s in subs:
-        for n in [s.name, display(s.name)] + re.findall(r"\[(.*?)\]", s.name) + s.others:
+        for n in sub_names(s):
             if key(n):
                 exact[key(n)].add(s.code)
             if loose(n):
@@ -182,13 +204,14 @@ def match_country(states, subs):
         iso = display(sub.name)
         if len(group) == 1:
             st = group[0]
-            if how[st.id] == "loose" and any(chosen.get(o.id) == code for o in states if o.id != st.id):
-                reported.append((st, "loose match shared"))
+            if how[st.id] == "loose" and any(code in hits[o.id] for o in states if o.id != st.id):
+                reported.append((st, "loose match %s (%s) that another state finds too: looked at by hand" % (code, iso)))
             elif st.name != iso:
                 decisions.append(("rename", st, sub, st))
             continue
-        # a looser match joins only states that differ by generic words alone (Banskobystrický, Banskobystrický kraj)
-        if any(how[st.id] == "loose" for st in group) and len({loose(st.name) for st in group}) > 1:
+        # a looser match joins a merge (which moves specimens) only when the state leaves out a generic word of the ISO
+        # name ("Banskobystrický" for "Banskobystrický kraj"), never when it adds one: "Kiev Oblast" is not the city Kiev
+        if any(how[st.id] == "loose" and not shorter(st.name, sub) for st in group):
             for st in group:
                 reported.append((st, "with %s matches %s (%s): looked at by hand" % (", ".join(o.name for o in group if o is not st), code, iso)))
             continue
@@ -248,10 +271,13 @@ def q(value):
     return "convert(unhex('%s') using utf8mb4)" % (value or "").encode("utf-8").hex()
 
 
-def statements(decisions, names, tag):
-    """The SQL of the change, and the list of what could not be done (left out). Renames first, then merges."""
-    sql, left = [], []
-    renamed = {}
+def statements(decisions, names, tag, no_merge=None):
+    """The SQL of the change, the list of what could not be done (left out), and the decisions done. Renames first,
+    then merges; a merge into a state whose rename was left out is left out too (no valid state would carry the ISO
+    name), and so is one in no_merge (ids: a curator species list on the state merged)."""
+    sql, left, done = [], [], []
+    renamed, blocked = {}, set()
+    no_merge = no_merge or {}
     for d in decisions:
         if d["action"] != "rename":
             continue
@@ -259,12 +285,20 @@ def statements(decisions, names, tag):
         other = [x for x in names.get((c, iso), []) if x[0] != vid]
         if any(x[1] == 1 for x in other) and not any(m["action"] == "merge" and m["country"] == c and m["name"] == iso for m in decisions):
             left.append("%s: %s, ISO name %s is another valid state" % (c, old, iso))
+            blocked.add(vid)
             continue
         note = "iso_states %s: named %s, ISO 3166-2 %s; was %s." % (tag, iso, d["code"], old)
-        swap = [x for x in other if x[1] != 1 and x[2] in (old, "")]
+        swap = [x for x in other if x[1] != 1 and x[2] in (old, "")]        # at most one: the name is unique in a country
         if any(x[1] != 1 and x[2] not in (old, "") for x in other):
             left.append("%s: %s, a row named %s is an old name of another state" % (c, old, iso))
+            blocked.add(vid)
             continue
+        if any(m["action"] == "merge" and m["kept_id"] == vid and m["id"] in no_merge for m in decisions):
+            left.append("%s: %s, a state to be merged into it has a curator species list (%s)"
+                        % (c, old, ", ".join(m["name"] for m in decisions if m["action"] == "merge" and m["kept_id"] == vid and m["id"] in no_merge)))
+            blocked.add(vid)
+            continue
+        done.append(d)
         if any(x[1] == 1 for x in other):        # a valid state of the ISO name merged into this one below: move it aside
             for x in other:
                 sql.append("update geolocale set name = %s where id = %d" % (q("~iso~%d" % x[0]), x[0]))
@@ -284,6 +318,13 @@ def statements(decisions, names, tag):
         if d["action"] != "merge":
             continue
         c, old, iso = d["country"], d["name"], d["iso"]
+        if d["kept_id"] in blocked:
+            left.append("%s: %s, not merged into %s: that state's rename was left out" % (c, old, d["kept_name"]))
+            continue
+        if d["id"] in no_merge:
+            left.append("%s: %s, not merged into %s: it has a curator species list of %d taxa" % (c, old, iso, no_merge[d["id"]]))
+            continue
+        done.append(d)
         note = "iso_states %s: the same state as %s (ISO 3166-2 %s, id %d); made an old name of it, its specimens moved there." % (tag, iso, d["code"], d["kept_id"])
         name_now = renamed.get(d["id"])
         if name_now:        # it had the ISO name and was moved aside above: it keeps no name of its own, so it takes the kept state's old name
@@ -294,10 +335,54 @@ def statements(decisions, names, tag):
                        % (q(iso), q(note), d["id"]))
         sql.append("update geolocale set valid_name = %s where georank = 'adm1' and parent = %s and binary valid_name = binary %s" % (q(iso), q(c), q(old)))
         sql.append("update specimen set adm1 = %s where country = %s and binary adm1 = binary %s" % (q(iso), q(c), q(old)))
-    return sql, left
+    return sql, left, done
 
 
-def write_plan(path, decisions, reported, nocountry):
+def curator_lists(db, decisions):
+    """{id: taxa} of the states to be merged that have a curator species list (geolocale_taxon, source curator)."""
+    ids = sorted({d["id"] for d in decisions if d["action"] == "merge"})
+    if not ids:
+        return {}
+    return {int(r[0]): int(r[1]) for r in pf.run_sql(db, "select geolocale_id, count(*) from geolocale_taxon where source = 'curator' and geolocale_id in (%s) group by 1"
+                                                       % ",".join(map(str, ids)))}
+
+
+def mapping_lines(decisions, path=None):
+    """Lines of adm1_shape_map.csv that name a state renamed or merged in its country: [(line number, line)]."""
+    path = path or os.path.join(HERE, "adm1_shape_map.csv")
+    names = collections.defaultdict(set)
+    for d in decisions:
+        names[d["country"]].add(d["name"])
+    out = []
+    if not os.path.exists(path):
+        return out
+    with open(path, encoding="utf-8") as f:
+        for i, line in enumerate(f, 1):
+            if line.lstrip().startswith("#") or not line.strip():
+                continue
+            cells = [c.strip() for c in next(csv.reader([line]))]
+            if any(c in names for c in cells) and any(x in names[c] for c in cells if c in names for x in cells):
+                out.append((i, line.rstrip("\n")))
+    return out
+
+
+def decision_lines(decisions):
+    return ["\t".join([d["action"], d["country"], d["name"], d["iso"], d["code"], d["kept_name"]]) for d in decisions]
+
+
+def reviewed_lines(path):
+    """The decisions of a plan.tsv written earlier, in decision_lines' form."""
+    out = []
+    with open(path, encoding="utf-8") as f:
+        next(f, None)
+        for line in f:
+            p = line.rstrip("\n").split("\t")
+            if p[0] in ("rename", "merge") and len(p) >= 8:
+                out.append("\t".join([p[0], p[1], p[2], p[4], p[5], p[7]]))
+    return out
+
+
+def write_plan(path, decisions, reported, nocountry, curator=None, lines=()):
     with open(path, "w", encoding="utf-8") as f:
         f.write("action\tcountry\tstate\tspecimens\tiso_name\tcode\ttype\tkept\n")
         for d in decisions:
@@ -306,6 +391,11 @@ def write_plan(path, decisions, reported, nocountry):
             f.write("\t".join(["report", c, n, str(k), "", "", why, ""]) + "\n")
         for c, k in nocountry:
             f.write("\t".join(["no ISO subdivisions", c, "", str(k), "", "", "", ""]) + "\n")
+        for d in decisions:
+            if d["id"] in (curator or {}):
+                f.write("\t".join(["curator list", d["country"], d["name"], str(curator[d["id"]]), d["iso"], d["code"], "taxa on its curator species list", d["kept_name"]]) + "\n")
+        for n, line in lines:
+            f.write("\t".join(["mapping line", "", "", "", "", "", "adm1_shape_map.csv line %d: %s" % (n, line.replace("\t", " ")), ""]) + "\n")
 
 
 def main(argv=None):
@@ -328,13 +418,26 @@ def main(argv=None):
             skip = {l.strip() for l in f if l.strip() and not l.startswith("#")}
     valid, olds, names = read_db(db)
     decisions, reported, nocountry = plan(valid, olds, read_iso(), read_countries(), skip)
-    write_plan(os.path.join(folder, "plan.tsv"), decisions, reported, nocountry)
+    curator, lines = curator_lists(db, decisions), mapping_lines(decisions)
+    plan_file = os.path.join(folder, "plan.tsv")
+    if args.apply:
+        if not os.path.exists(plan_file):
+            raise SystemExit("No plan in %s: run without --apply first and review it. Nothing was changed." % plan_file)
+        if reviewed_lines(plan_file) != decision_lines(decisions):
+            raise SystemExit("The plan differs from the one reviewed in %s (the data changed since): run without --apply again and "
+                             "review it. Nothing was changed." % plan_file)
+    else:
+        write_plan(plan_file, decisions, reported, nocountry, curator, lines)
     ren = [d for d in decisions if d["action"] == "rename"]
     mer = [d for d in decisions if d["action"] == "merge"]
     print("iso_states %s, %s: %d valid states in %d countries" % (tag, db.project, sum(len(v) for v in valid.values()), len(valid)))
     print("  rename %d states (%d specimens), merge %d into another (%d specimens); %d reported, not changed; %d countries with no ISO subdivisions"
           % (len(ren), sum(d["specimens"] for d in ren), len(mer), sum(d["specimens"] for d in mer), len(reported), len(nocountry)))
-    print("  plan: " + os.path.join(folder, "plan.tsv"))
+    print("  plan: " + plan_file)
+    if curator:
+        print("  %d states to be merged have a curator species list: --apply leaves those merges out (plan.tsv, 'curator list')" % len(curator))
+    if lines:
+        print("  %d lines of adm1_shape_map.csv name a state renamed or merged: update them in the same change (plan.tsv, 'mapping line')" % len(lines))
     for d in (mer + ren)[:args.show]:
         print("  %-6s %-22s %-34s -> %-34s %-8s %5d" % (d["action"], d["country"][:22], d["name"][:34], d["iso"][:34], d["code"], d["specimens"]))
     if not args.apply:
@@ -343,9 +446,14 @@ def main(argv=None):
     bak, spec = "iso_states_bak_" + tag, "iso_states_spec_" + tag
     if pf.run_sql(db, "show tables like '%s'" % bak) or pf.run_sql(db, "show tables like '%s'" % spec):
         raise SystemExit("The backup table %s exists already: not applied twice today. Nothing was changed." % bak)
-    sql, left = statements(decisions, names, tag)
+    sql, left, decisions = statements(decisions, names, tag, curator)
     if left:
         print("Left out:\n  " + "\n  ".join(left))
+    if not decisions:
+        print("Nothing to apply.")
+        return 0
+    with open(os.path.join(folder, "applied.tsv"), "w", encoding="utf-8") as f:
+        f.write("\n".join(decision_lines(decisions)) + "\n")
     touched = sorted({d["id"] for d in decisions} | {x[0] for d in decisions for x in names.get((d["country"], d["iso"]), [])})
     pointing = " or ".join("(parent = %s and binary valid_name = binary %s)" % (q(d["country"]), q(d["name"])) for d in decisions) or "false"
     moving = " or ".join("(country = %s and binary adm1 = binary %s)" % (q(d["country"]), q(d["name"])) for d in decisions) or "false"

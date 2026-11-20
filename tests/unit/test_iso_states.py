@@ -59,13 +59,73 @@ def test_not_matched_is_reported():
 def test_statements_swap_and_insert():
     dec = [{"country": "Croatia", "action": "rename", "id": 5, "name": "Zagreb, Grad", "specimens": 2, "code": "HR-21", "type": "City",
             "iso": "Grad Zagreb", "kept_id": 5, "kept_name": "Zagreb, Grad"}]
-    sql, left = iso.statements(dec, {("Croatia", "Grad Zagreb"): [(9, 0, "Zagreb, Grad")]}, "20261120")
+    sql, left, done = iso.statements(dec, {("Croatia", "Grad Zagreb"): [(9, 0, "Zagreb, Grad")]}, "20261120")
     assert not left and sql[0].startswith("update geolocale set name = convert(unhex('") and "where id = 9" in sql[0]
     assert any("is_valid = 0" in x and "where id = 9" in x for x in sql) and not any(x.startswith("insert") for x in sql)
-    sql, left = iso.statements(dec, {}, "20261120")
+    sql, left, done = iso.statements(dec, {}, "20261120")
     assert any(x.startswith("insert into geolocale") for x in sql)
-    sql, left = iso.statements(dec, {("Croatia", "Grad Zagreb"): [(9, 1, "")]}, "20261120")
+    sql, left, done = iso.statements(dec, {("Croatia", "Grad Zagreb"): [(9, 1, "")]}, "20261120")
     assert left and not sql
+
+
+def dec(action, i, name, iso_name, kept_id, kept_name, country="Slovakia", code="SK-BL"):
+    return {"country": country, "action": action, "id": i, "name": name, "specimens": 1, "code": code, "type": "Region",
+            "iso": iso_name, "kept_id": kept_id, "kept_name": kept_name}
+
+
+def test_merge_statements():
+    d = [dec("rename", 1, "Bratislava", "Bratislavský kraj", 1, "Bratislava"), dec("merge", 2, "Bratislavsky", "Bratislavský kraj", 1, "Bratislava")]
+    sql, left, done = iso.statements(d, {}, "20261120")
+    assert not left and done == d
+    merge = [x for x in sql if "where id = 2" in x]
+    assert merge and "is_valid = 0" in merge[0] and "unhex('%s')" % "Bratislavský kraj".encode().hex() in merge[0]
+    assert sum(x.startswith("update specimen") for x in sql) == 2
+
+
+def test_a_left_out_rename_stops_its_merges():
+    # the ISO name is an old name of a third state: the rename is left out, and so is the merge into it
+    d = [dec("rename", 1, "Bratislava", "Bratislavský kraj", 1, "Bratislava"), dec("merge", 2, "Bratislavsky", "Bratislavský kraj", 1, "Bratislava")]
+    sql, left, done = iso.statements(d, {("Slovakia", "Bratislavský kraj"): [(7, 0, "Trnava")]}, "20261120")
+    assert not sql and not done and len(left) == 2 and "not merged" in left[1]
+
+
+def test_a_curator_list_stops_the_merge():
+    d = [dec("merge", 2, "Bratislavsky", "Bratislava", 1, "Bratislava")]
+    sql, left, done = iso.statements(d, {}, "20261120", {2: 14})
+    assert not sql and not done and "curator species list of 14" in left[0]
+
+
+def test_a_loose_match_never_merges():
+    # "Kiev Oblast" loosened is "Kiev": it finds the city, but a loose match does not join the city's merge
+    subs = [S("UA-30", "UA", "City", "", "Kyiv", ["Kiev"]), S("UA-32", "UA", "Region", "", "Kyivska oblast", [])]
+    d, rep = iso.match_country([st(1, "Kiev", 50), st(2, "Kiev Oblast", 30)], subs)
+    assert not [x for x in d if x[0] == "merge"], d
+    assert {r[0].name for r in rep} == {"Kiev", "Kiev Oblast"}
+
+
+def test_a_shared_loose_match_is_reported():
+    # both loosen to "kherson"; "Kherson Province" adds a generic word ISO's names do not have: looked at by hand
+    subs = [S("UA-65", "UA", "Region", "", "Khersonska oblast", ["Kherson Oblast"])]
+    d, rep = iso.match_country([st(1, "Kherson"), st(2, "Kherson Province")], subs)
+    assert not d and {r[0].name for r in rep} == {"Kherson", "Kherson Province"}, (d, rep)
+
+
+def test_the_reviewed_plan_reads_back(tmp_path=None):
+    import tempfile
+    d = [dec("rename", 1, "Bratislava", "Bratislavský kraj", 1, "Bratislava"), dec("merge", 2, "Bratislavsky", "Bratislavský kraj", 1, "Bratislava")]
+    path = os.path.join(tempfile.mkdtemp(), "plan.tsv")
+    iso.write_plan(path, d, [("Slovakia", "X", 3, "no ISO")], [("Atlantis", 2)], {2: 4}, [(10, "name,Slovakia,ADM1,Bratislava,Bratislava")])
+    assert iso.reviewed_lines(path) == iso.decision_lines(d)
+    assert iso.reviewed_lines(path) != iso.decision_lines(d[:1])
+
+
+def test_mapping_lines():
+    import tempfile
+    path = os.path.join(tempfile.mkdtemp(), "map.csv")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("# kind,...\nname,Slovakia,ADM1,Bratislavsky kraj,Bratislava\nname,Austria,ADM1,Wien,Bratislava\n")
+    got = iso.mapping_lines([dec("rename", 1, "Bratislava", "Bratislavský kraj", 1, "Bratislava")], path)
+    assert [n for n, line in got] == [2], got
 
 
 def test_the_iso_file_reads():
