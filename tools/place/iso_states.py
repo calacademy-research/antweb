@@ -21,6 +21,9 @@ written exactly).
             merged keep their id and their lists (geolocale_taxon is keyed by id); not valid, they are not shown, and
             the nightly counts the kept state again from its specimens. Places finer than a state (adm2) are not
             loaded by AntWeb (GeolocaleDb), so no row is left pointing at an old state name.
+  alias     a country written in another script (ENGLISH: Egypt, Russia, Thailand ...): the state keeps the English
+            name AntWeb uses; the ISO name (Al Qāhirah) is added as an old name of it. Of two states of such a country
+            that are one (Cairo and Al Qāhirah), the English one is kept and the ISO-written one merged into it.
   report    the rest is listed and not changed: states no subdivision matches (Madagascar's regions: ISO still has
             the six provinces; French overseas arrondissements), a state that matches two subdivisions of different
             kinds equally, and a looser match that is not alone.
@@ -76,6 +79,14 @@ departamento district distrikt county governorate muhafazah oblast oblasti oblas
 respublika republic prefecture voivodeship division municipality municipio municipiul zupanija novads novada kraj
 wilaya changwat parish canton kanton land ostan vilayeti ili okrug avtonomnyy avtonomnaya avtonomna autonomous city
 grad gorod shahri rajons apskritis savivaldybe of de del la le the y and et und das""".split())
+
+
+# Countries written in another script: ISO 3166-2 names their states by a transliteration (Egypt: Al Qāhirah for
+# Cairo). Brian Fisher 2026-11-20: match every state to its ISO code, but keep the English name AntWeb uses for these
+# countries; the ISO form becomes an old name of it (alias), so an upload in either form is filed under the state.
+# Latin-script countries take ISO's name (Saaremaa, Ādažu novads, Şamaxı).
+ENGLISH = set("""AE AF AM BG BH BY CN CY EG ER GE GR IL IQ IR JO JP KG KH KP KR KW KZ LA LB LK LY MK MM MN OM PS QA RS RU SA
+SD SY TH TJ TW UA YE""".split())
 
 
 def normal(name):
@@ -157,10 +168,12 @@ def shorter(name, sub):
     return any(loose(n) == loose(name) and words <= set(key(n).split()) for n in sub_names(sub))
 
 
-def match_country(states, subs):
+def match_country(states, subs, english=False):
     """states: the valid states of one country (State); subs: its ISO subdivisions. Returns (decisions, reported):
-    decisions [(action, state, sub, kept_state)] with action 'rename' or 'merge' (state becomes an old name of
-    kept_state, which takes sub's ISO name); reported [(state, reason)]."""
+    decisions [(action, state, sub, kept_state)] with action 'rename', 'merge' (state becomes an old name of
+    kept_state, which takes sub's ISO name) or 'alias' (english: the state keeps its name, sub's ISO name is added as
+    an old name of it); reported [(state, reason)]. english: a country written in another script (ENGLISH): no
+    rename; of states that are one, the one not written as ISO (the English name) is kept."""
     exact = collections.defaultdict(set)
     looser = collections.defaultdict(set)
     for s in subs:
@@ -209,6 +222,9 @@ def match_country(states, subs):
                 reported.append((st, "loose match %s (%s) that another state finds too: looked at by hand" % (code, iso)))
             elif how[st.id] == "loose" and not shorter(st.name, sub):
                 reported.append((st, "loose match %s (%s) adds a generic word: looked at by hand" % (code, iso)))
+            elif st.name != iso and english:
+                if key(iso) not in {key(n) for n in st.old_names}:
+                    decisions.append(("alias", st, sub, st))
             elif st.name != iso:
                 decisions.append(("rename", st, sub, st))
             continue
@@ -218,9 +234,12 @@ def match_country(states, subs):
             for st in group:
                 reported.append((st, "with %s matches %s (%s): looked at by hand" % (", ".join(o.name for o in group if o is not st), code, iso)))
             continue
-        kept = next((st for st in group if st.name == iso), None) or max(group, key=lambda st: (st.specimens, -st.id))
-        if kept.name != iso:
-            decisions.append(("rename", kept, sub, kept))
+        if english:
+            kept = max([st for st in group if key(st.name) != key(iso)] or group, key=lambda st: (st.specimens, -st.id))
+        else:
+            kept = next((st for st in group if st.name == iso), None) or max(group, key=lambda st: (st.specimens, -st.id))
+            if kept.name != iso:
+                decisions.append(("rename", kept, sub, kept))
         for st in group:
             if st is not kept:
                 decisions.append(("merge", st, sub, kept))
@@ -239,10 +258,13 @@ def plan(valid, olds, iso, countries, skip=frozenset()):
             if rows:
                 nocountry.append((country, len(rows)))
             continue
-        decisions, rep = match_country(rows, subs)
+        english = a2 in ENGLISH
+        decisions, rep = match_country(rows, subs, english)
         for action, st, sub, kept in decisions:
+            # target: the name the state, its old names and its specimens end up under
+            target = kept.name if english else display(sub.name)
             out.append({"country": country, "action": action, "id": st.id, "name": st.name, "specimens": st.specimens, "code": sub.code,
-                        "type": sub.type, "iso": display(sub.name), "kept_id": kept.id, "kept_name": kept.name})
+                        "type": sub.type, "iso": display(sub.name), "kept_id": kept.id, "kept_name": kept.name, "target": target})
         reported += [(country, st.name, st.specimens, why) for st, why in rep]
     return out, reported, nocountry
 
@@ -313,9 +335,19 @@ def statements(decisions, names, tag, no_merge=None):
                        % (q(old), q(c), q(iso), q("iso_states %s: added, old name of %s (ISO 3166-2 %s), id %d." % (tag, iso, d["code"], vid))))
         sql.append("update geolocale set valid_name = %s where georank = 'adm1' and parent = %s and binary valid_name = binary %s" % (q(iso), q(c), q(old)))
     for d in decisions:
+        if d["action"] != "alias":
+            continue
+        c, name, iso = d["country"], d["name"], d["iso"]
+        if names.get((c, iso)):
+            left.append("%s: %s, a row named %s exists already (ISO name not added)" % (c, name, iso))
+            continue
+        done.append(d)
+        sql.append("insert into geolocale (name, georank, parent, source, is_valid, valid_name, admin_notes) values (%s, 'adm1', %s, 'antweb', 0, %s, %s)"
+                   % (q(iso), q(c), q(name), q("iso_states %s: added, ISO 3166-2 name (%s) of %s, id %d." % (tag, d["code"], name, d["id"]))))
+    for d in decisions:
         if d["action"] != "merge":
             continue
-        c, old, iso = d["country"], d["name"], d["iso"]
+        c, old, iso = d["country"], d["name"], d["target"]
         if d["kept_id"] in blocked:
             left.append("%s: %s, not merged into %s: that state's rename was left out" % (c, old, d["kept_name"]))
             continue
@@ -369,6 +401,11 @@ def decision_lines(decisions):
     return ["\t".join([d["action"], d["country"], d["name"], d["iso"], d["code"], d["kept_name"]]) for d in decisions]
 
 
+def moves(decisions):
+    """The decisions that move specimens (renames and merges; an alias moves none)."""
+    return [d for d in decisions if d["action"] in ("rename", "merge")]
+
+
 def reviewed_lines(path):
     """The decisions of a plan.tsv written earlier, in decision_lines' form."""
     out = []
@@ -376,7 +413,7 @@ def reviewed_lines(path):
         next(f, None)
         for line in f:
             p = line.rstrip("\n").split("\t")
-            if p[0] in ("rename", "merge") and len(p) >= 8:
+            if p[0] in ("rename", "merge", "alias") and len(p) >= 8:
                 out.append("\t".join([p[0], p[1], p[2], p[4], p[5], p[7]]))
     return out
 
@@ -417,7 +454,7 @@ def main(argv=None):
             skip = {l.strip() for l in f if l.strip() and not l.startswith("#")}
     valid, olds, names = read_db(db)
     decisions, reported, nocountry = plan(valid, olds, read_iso(), read_countries(), skip)
-    curator, lines = curator_lists(db, decisions), mapping_lines(decisions)
+    curator, lines = curator_lists(db, decisions), mapping_lines(moves(decisions))
     plan_file = os.path.join(folder, "plan.tsv")
     if args.apply:
         if not os.path.exists(plan_file):
@@ -429,16 +466,19 @@ def main(argv=None):
         write_plan(plan_file, decisions, reported, nocountry, curator, lines)
     ren = [d for d in decisions if d["action"] == "rename"]
     mer = [d for d in decisions if d["action"] == "merge"]
+    ali = [d for d in decisions if d["action"] == "alias"]
     print("iso_states %s, %s: %d valid states in %d countries" % (tag, db.project, sum(len(v) for v in valid.values()), len(valid)))
-    print("  rename %d states (%d specimens), merge %d into another (%d specimens); %d reported, not changed; %d countries with no ISO subdivisions"
-          % (len(ren), sum(d["specimens"] for d in ren), len(mer), sum(d["specimens"] for d in mer), len(reported), len(nocountry)))
+    print("  rename %d states (%d specimens), merge %d into another (%d specimens), add the ISO name as an old name of %d (English names kept);"
+          " %d reported, not changed; %d countries with no ISO subdivisions"
+          % (len(ren), sum(d["specimens"] for d in ren), len(mer), sum(d["specimens"] for d in mer), len(ali), len(reported), len(nocountry)))
     print("  plan: " + plan_file)
     if curator:
         print("  %d states to be merged have a curator species list: --apply leaves those merges out (plan.tsv, 'curator list')" % len(curator))
     if lines:
         print("  %d lines of adm1_shape_map.csv name a state renamed or merged: update them in the same change (plan.tsv, 'mapping line')" % len(lines))
-    for d in (mer + ren)[:args.show]:
-        print("  %-6s %-22s %-34s -> %-34s %-8s %5d" % (d["action"], d["country"][:22], d["name"][:34], d["iso"][:34], d["code"], d["specimens"]))
+    for d in (mer + ren + ali)[:args.show]:
+        print("  %-6s %-22s %-34s -> %-34s %-8s %5d" % (d["action"], d["country"][:22], d["name"][:34], (d["target"] if d["action"] == "merge" else d["iso"])[:34],
+                                                         d["code"], d["specimens"]))
     if not args.apply:
         print("Plan only. Add --apply to make the change.")
         return 0
@@ -461,9 +501,10 @@ def main(argv=None):
     with open(os.path.join(folder, "applied.tsv"), "w", encoding="utf-8") as f:
         f.write("\n".join(decision_lines(decisions)) + "\n")
     touched = sorted({d["id"] for d in decisions} | {x[0] for d in decisions for x in names.get((d["country"], d["iso"]), [])})
-    pointing = " or ".join("(parent = %s and binary valid_name = binary %s)" % (q(d["country"]), q(d["name"])) for d in decisions) or "false"
-    moving = " or ".join("(country = %s and binary adm1 = binary %s)" % (q(d["country"]), q(d["name"])) for d in decisions) or "false"
-    new_adm1 = "case " + " ".join("when country = %s and binary adm1 = binary %s then %s" % (q(d["country"]), q(d["name"]), q(d["iso"])) for d in decisions) + " end"
+    pointing = " or ".join("(parent = %s and binary valid_name = binary %s)" % (q(d["country"]), q(d["name"])) for d in moves(decisions)) or "false"
+    moving = " or ".join("(country = %s and binary adm1 = binary %s)" % (q(d["country"]), q(d["name"])) for d in moves(decisions)) or "false"
+    new_adm1 = ("case " + " ".join("when country = %s and binary adm1 = binary %s then %s" % (q(d["country"]), q(d["name"]), q(d["target"]))
+                                   for d in moves(decisions)) + " end") if moves(decisions) else "adm1"
     wait = "set session innodb_lock_wait_timeout = 600; set session transaction isolation level read committed;\n"
     # the backup tables are made empty first (CREATE TABLE commits), then filled in the transaction of the change, so
     # the backup is exactly what the change reads; the specimens move from the backup by code (the primary key)

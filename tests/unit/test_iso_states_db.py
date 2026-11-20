@@ -9,6 +9,7 @@ real iso3166_2.tsv and Slovakia's states:
   2. --apply refuses without a reviewed plan, then applies it: Bratislava is renamed Bratislavský kraj (its old name
      added, the old name Pressburg pointed at it), Bratislavsky kraj made an old name of it, the four specimens under
      the ISO name; Kosice renamed Košický kraj with the old-name row swapped; Trnava and Trnavsky kraj left alone;
+  2b. Egypt (another script) keeps its English names: Al Qāhirah merged into Cairo, Al Jīzah added as an old name of Giza;
   3. the rollback in the module's header puts every place row and specimen back as it was;
   4. an apply whose transaction fails changes nothing and drops its empty backup tables; the rerun then works;
   5. a geolocale.name that is not binary is refused before anything is made.
@@ -45,9 +46,14 @@ PLACES = [  # id, name, parent, is_valid, valid_name
     (6, "Trnavsky kraj", "Slovakia", 1, None),
     (7, "Pressburg", "Slovakia", 0, "Bratislava"),
     (8, "Nitriansky kraj", "Slovakia", 1, None),
+    (9, "Cairo", "Egypt", 1, None),
+    (10, "Al Qāhirah", "Egypt", 1, None),
+    (11, "Giza", "Egypt", 1, None),
 ]
 SPECIMENS = [("a1", "Bratislava"), ("a2", "Bratislava"), ("a3", "Bratislava"), ("b1", "Bratislavsky kraj"), ("k1", "Kosice"),
-             ("t1", "Trnava"), ("t2", "Trnavsky kraj"), ("n1", "Nitriansky kraj"), ("o1", "Pressburg")]
+             ("t1", "Trnava"), ("t2", "Trnavsky kraj"), ("n1", "Nitriansky kraj"), ("o1", "Pressburg"),
+             ("e1", "Cairo"), ("e2", "Cairo"), ("e3", "Al Qāhirah"), ("g1", "Giza")]
+COUNTRY = {"e1": "Egypt", "e2": "Egypt", "e3": "Egypt", "g1": "Egypt"}
 
 
 def mysql(statement, database=DB):
@@ -74,7 +80,7 @@ def fresh():
              create table geolocale_taxon (geolocale_id int, taxon_name varchar(128), source varchar(30)) default charset=utf8mb4;""")
     mysql("insert into geolocale (id, name, georank, parent, source, is_valid, valid_name) values "
           + ",".join("(%d, %s, 'adm1', %s, 'antweb', %d, %s)" % (i, lit(n), lit(p), v, lit(vn)) for i, n, p, v, vn in PLACES)
-          + "; insert into specimen values " + ",".join("(%s, 'Slovakia', %s)" % (lit(c), lit(a)) for c, a in SPECIMENS)
+          + "; insert into specimen values " + ",".join("(%s, %s, %s)" % (lit(c), lit(COUNTRY.get(c, "Slovakia")), lit(a)) for c, a in SPECIMENS)
           + "; insert into geolocale_taxon values (6, 'Formicinaecamponotus herculeanus', 'curator')")
 
 
@@ -121,6 +127,10 @@ def check_plan_apply_rollback(project):
     spec = dict(mysql("select code, adm1 from specimen"))
     assert [spec[c] for c in ("a1", "a2", "a3", "b1")] == ["Bratislavský kraj"] * 4 and spec["k1"] == "Košický kraj", spec
     assert spec["t2"] == "Trnavsky kraj" and spec["o1"] == "Pressburg", spec
+    # Egypt keeps its English names: Al Qāhirah merged into Cairo, Al Jīzah added as an old name of Giza
+    assert places["Cairo"][1:3] == ["1", ""] and places["Al Qāhirah"][1:3] == ["0", "Cairo"], places
+    assert places["Giza"][1:3] == ["1", ""] and places["Al Jīzah"][1:3] == ["0", "Giza"], places
+    assert spec["e3"] == "Cairo" and spec["g1"] == "Giza", spec
     assert "specimens under a former name 0 (expect 0)" in out, out
     mysql(rollback_sql())
     assert snapshot() == before, (snapshot(), before)

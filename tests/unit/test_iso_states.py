@@ -58,7 +58,7 @@ def test_not_matched_is_reported():
 
 def test_statements_swap_and_insert():
     dec = [{"country": "Croatia", "action": "rename", "id": 5, "name": "Zagreb, Grad", "specimens": 2, "code": "HR-21", "type": "City",
-            "iso": "Grad Zagreb", "kept_id": 5, "kept_name": "Zagreb, Grad"}]
+            "iso": "Grad Zagreb", "kept_id": 5, "kept_name": "Zagreb, Grad", "target": "Grad Zagreb"}]
     sql, left, done = iso.statements(dec, {("Croatia", "Grad Zagreb"): [(9, 0, "Zagreb, Grad")]}, "20261120")
     assert not left and sql[0].startswith("update geolocale set name = convert(unhex('") and "where id = 9" in sql[0]
     assert any("is_valid = 0" in x and "where id = 9" in x for x in sql) and not any(x.startswith("insert") for x in sql)
@@ -70,7 +70,7 @@ def test_statements_swap_and_insert():
 
 def dec(action, i, name, iso_name, kept_id, kept_name, country="Slovakia", code="SK-BL"):
     return {"country": country, "action": action, "id": i, "name": name, "specimens": 1, "code": code, "type": "Region",
-            "iso": iso_name, "kept_id": kept_id, "kept_name": kept_name}
+            "iso": iso_name, "kept_id": kept_id, "kept_name": kept_name, "target": iso_name}
 
 
 def test_merge_statements():
@@ -135,6 +135,27 @@ def test_mapping_lines():
         f.write("# kind,...\nname,Slovakia,ADM1,Bratislavsky kraj,Bratislava\nname,Austria,ADM1,Wien,Bratislava\n")
     got = iso.mapping_lines([dec("rename", 1, "Bratislava", "Bratislavský kraj", 1, "Bratislava")], path)
     assert [n for n, line in got] == [2], got
+
+
+def test_a_country_in_another_script_keeps_its_english_names():
+    # Brian Fisher 2026-11-20: ISO code, English names. Cairo and Al Qāhirah are one: Cairo is kept, Al Qāhirah merged
+    # into it; Giza keeps its name and Al Jīzah is added as an old name; Suez already has its ISO name as an old name
+    eg = [S("EG-C", "EG", "Governorate", "", "Al Qāhirah", ["Cairo"]), S("EG-GZ", "EG", "Governorate", "", "Al Jīzah", ["Giza"]),
+          S("EG-SUZ", "EG", "Governorate", "", "As Suways", ["Suez"])]
+    d, rep = iso.match_country([st(1, "Cairo", 17), st(2, "Al Qāhirah", 40), st(3, "Giza", 2), st(4, "Suez", 4, olds=("As Suways",))], eg, english=True)
+    got = sorted((a, s.name, k.name) for a, s, sub, k in d)
+    assert got == [("alias", "Giza", "Giza"), ("merge", "Al Qāhirah", "Cairo")], got
+    assert not rep
+    out, reported, nocountry = iso.plan({"Egypt": [(1, "Cairo", 17), (2, "Al Qāhirah", 40)]}, {}, {"EG": eg}, {iso.key("Egypt"): "EG"})
+    assert [(x["action"], x["name"], x["target"]) for x in out] == [("merge", "Al Qāhirah", "Cairo")], out
+    sql, left, done = iso.statements(out, {}, "20261120")
+    assert "unhex('%s')" % "Cairo".encode().hex() in sql[0] and "where id = 2" in sql[0], sql
+    d = [dict(dec("alias", 3, "Giza", "Al Jīzah", 3, "Giza", "Egypt", "EG-GZ"), target="Giza")]
+    sql, left, done = iso.statements(d, {}, "20261120")
+    assert len(sql) == 1 and sql[0].startswith("insert into geolocale") and "added, ISO 3166-2 name" in bytes.fromhex(sql[0].split("unhex('")[-1].split("'")[0]).decode()
+    assert not iso.moves(d)
+    sql, left, done = iso.statements(d, {("Egypt", "Al Jīzah"): [(9, 0, "Gizeh")]}, "20261120")
+    assert not sql and left
 
 
 def test_the_iso_file_reads():
