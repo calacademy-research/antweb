@@ -124,4 +124,20 @@ public class DuplicateStateTest extends TestCase {
         assertNull(EditGeolocaleAction.duplicateState(form("Murang'A", "Kenya", false), merged, null));
         assertNull(EditGeolocaleAction.duplicateState(form("Tharaka-Nithi", "Kenya", true), twin, null));      // a box fixed
     }
+
+    // 2026-11-20: Panama's states were in the loaded list twice (its country reached twice); one row met twice is not a pair
+    public void testOneRowTwiceIsNotAPair() {
+        Adm1 bocas = adm1(6001, "Bocas del Toro", "Panama", true);
+        Adm1 chiriqui = adm1(6002, "Chiriquí", "Panama", true);
+        Adm1 again = adm1(6001, "Bocas del Toro", "Panama", true);           // the same row, a second object
+        List<Geolocale> twice = new ArrayList<>(List.of(bocas, chiriqui, bocas, again, chiriqui));
+        assertTrue(GeolocaleMgr.duplicateValidStates(twice).isEmpty());
+        List<Adm1> once = GeolocaleMgr.onePerId(new ArrayList<>(List.of(bocas, chiriqui, again, chiriqui)));
+        assertEquals(2, once.size());
+        assertSame(bocas, once.get(0));
+        assertSame(chiriqui, once.get(1));
+        // two rows of one state written alike are still a pair
+        twice.add(adm1(6003, "Bocas Del Toro", "Panama", true));
+        assertEquals(List.of("Panama: Bocas Del Toro / Bocas del Toro"), GeolocaleMgr.duplicateValidStates(twice));
+    }
 }

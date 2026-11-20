@@ -139,10 +139,12 @@ public class GeolocaleMgr extends Manager {
         geolocales.addAll(geolocaleDb.getGeolocales("country", "none", false));
         //A.log("populateShallow() 2 c:" + countInstances("Albania", geolocales));
 
-        ArrayList<Adm1> newAdm1List = geolocales.stream()
+        // Each state once (2026-11-20): a country reached twice (two country rows of one name, or one under two
+        // parents) brought its states in twice, and the daily box check listed every state of Panama as a duplicate.
+        ArrayList<Adm1> newAdm1List = onePerId(geolocales.stream()
                 .filter(Geolocale::isAdm1)
                 .map(adm1 -> (Adm1) adm1)
-                .collect(Collectors.toCollection(ArrayList::new));
+                .collect(Collectors.toList()));
 
         MultiKeyMap<String, Adm1> newAdm1CountryMap = new MultiKeyMap<>();
         newAdm1List.forEach(adm1 -> newAdm1CountryMap.put(adm1.getName(), adm1.getCountry(), adm1));
@@ -928,9 +930,11 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
      */
     public static List<String> duplicateValidStates(Collection<? extends Geolocale> validAdm1s) {
         Map<String, List<String>> byKey = new TreeMap<>();
+        Set<Integer> seen = new HashSet<>();      // one row met twice is not a pair (2026-11-20)
         if (validAdm1s != null) {
             for (Geolocale g : validAdm1s) {
                 if (g == null || !g.isValid() || g.getParent() == null || g.getName() == null) continue;
+                if (g.getId() > 0 && !seen.add(g.getId())) continue;
                 String key = adm1SpellingKey(g.getName());
                 if (key.isEmpty()) continue;
                 byKey.computeIfAbsent(g.getParent() + "\u0001" + key, k -> new ArrayList<>()).add(g.getName());
@@ -942,6 +946,18 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
             List<String> names = new ArrayList<>(e.getValue());
             Collections.sort(names);
             out.add(e.getKey().substring(0, e.getKey().indexOf('\u0001')) + ": " + String.join(" / ", names));
+        }
+        return out;
+    }
+
+    /** The states in their order, each id once (the first kept); a state with no id is kept as it is. Unit-tested. */
+    public static ArrayList<Adm1> onePerId(List<Adm1> adm1s) {
+        ArrayList<Adm1> out = new ArrayList<>(adm1s.size());
+        Set<Integer> seen = new HashSet<>();
+        for (Adm1 a : adm1s) {
+            if (a == null) continue;
+            if (a.getId() > 0 && !seen.add(a.getId())) continue;
+            out.add(a);
         }
         return out;
     }
