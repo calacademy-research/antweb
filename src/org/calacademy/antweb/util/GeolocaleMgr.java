@@ -437,6 +437,7 @@ public class GeolocaleMgr extends Manager {
     }
 
     public static @NotNull ArrayList<Geolocale> getValidAdm1s() {
+        if (adm1List == null) return new ArrayList<>();          // the places are not loaded yet (start-up, a failed reload)
         return adm1List.stream().filter(Adm1::isValid).collect(Collectors.toCollection(ArrayList::new));
     }
 

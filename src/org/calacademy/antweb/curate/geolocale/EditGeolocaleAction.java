@@ -150,6 +150,7 @@ public final class EditGeolocaleAction extends AntwebAction {
 			  }
 			} else { // if not create
 	   	      s_log.debug("execute() form:" + editGeolocaleForm);
+			  String duplicate;
 
 			  String coordsError = checkCoords(editGeolocaleForm, tempGeolocale);
 			  if (coordsError != null) {
@@ -158,9 +159,9 @@ public final class EditGeolocaleAction extends AntwebAction {
 			    message = "Nothing was saved. " + Html.esc(coordsError);
 			    request.setAttribute("centroidInput", request.getParameter("centroidFixed"));
 			    request.setAttribute("boundingBoxInput", request.getParameter("boundingBoxFixed"));
-			  } else if (duplicateState(editGeolocaleForm, tempGeolocale) != null) {
+			  } else if ((duplicate = duplicateState(editGeolocaleForm, tempGeolocale)) != null) {
 			    isSaved = false;
-			    message = "Nothing was saved. " + duplicateState(editGeolocaleForm, tempGeolocale);
+			    message = "Nothing was saved. " + duplicate;
 			  } else {
 			    message = geolocaleDb.updateGeolocale(editGeolocaleForm);
 			    // A rename onto a name that already has page text is refused (GeolocaleDb.updateGeolocale).
@@ -263,14 +264,24 @@ public final class EditGeolocaleAction extends AntwebAction {
      * A state (adm1) saved as valid while its country already has a valid state written alike (other capitals,
      * accents, blanks or punctuation: GeolocaleMgr.adm1SpellingKey) is refused, with what to do instead (2026-11-19:
      * 269 such duplicates from the 2021 Geonames and Geonet loads were merged that day; nothing stopped them before).
+     * Only a save that makes the state valid, or gives a valid state another name or another country, is checked: a
+     * pair that exists already does not stop an administrator from fixing a box or a note of either state (review of
+     * PR #383). The country checked is the one the form sends, when it sends one. A state created here is never valid
+     * (GeolocaleDb.createGeolocale), so making it valid is a save like any other.
      * Returns the message (HTML escaped), or null when the save may go ahead.
      */
-    static String duplicateState(EditGeolocaleForm form, Geolocale current) {
+    public static String duplicateState(EditGeolocaleForm form, Geolocale current) {
+        return duplicateState(form, current, GeolocaleMgr.getValidAdm1s());
+    }
+
+    public static String duplicateState(EditGeolocaleForm form, Geolocale current, java.util.Collection<? extends Geolocale> validAdm1s) {
         if (current == null || !"adm1".equals(current.getGeorank()) || !form.isValid()) return null;
         String name = form.getName() != null && !form.getName().trim().isEmpty() ? form.getName().trim() : current.getName();
-        Geolocale other = GeolocaleMgr.validStateWrittenAlike(GeolocaleMgr.getValidAdm1s(), current.getParent(), name, current.getId());
+        String parent = form.getParent() != null && !form.getParent().trim().isEmpty() ? form.getParent().trim() : current.getParent();
+        if (current.isValid() && name.equals(current.getName()) && parent != null && parent.equals(current.getParent())) return null;
+        Geolocale other = GeolocaleMgr.validStateWrittenAlike(validAdm1s, parent, name, current.getId());
         if (other == null) return null;
-        return Html.esc(current.getParent()) + " already has the valid state " + Html.esc(other.getName()) + " (id " + other.getId()
+        return Html.esc(parent) + " already has the valid state " + Html.esc(other.getName()) + " (id " + other.getId()
             + "), written like " + Html.esc(name) + ". Two valid states of one place split its specimens and lists. Keep one:"
             + " untick Valid here and set Valid name to " + Html.esc(other.getName()) + ", so that " + Html.esc(name)
             + " becomes an old name of it (uploads that write it are filed under " + Html.esc(other.getName()) + ").";
