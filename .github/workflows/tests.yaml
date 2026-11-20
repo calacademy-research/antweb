@@ -805,9 +805,11 @@ jobs:
         # Adm1SpellingTest (2026-11-19): the upload stores the valid state for a valid state, an old name of one (Nimba
         # County -> Nimba, the 269 duplicates merged that day) or either written with other capitals, accents, blanks or
         # punctuation (grand-est -> Grand Est); a key two valid states share, another word or another country's state:
-        # no change; the report section counts as corrected. IslandParseLineTest runs it through parseLine.
+        # no change; the section of old names counts as corrected; a spelling only (grand-est) goes to its own section
+        # "uploaded in AntWeb's spelling", not counted as corrected (#390). IslandParseLineTest runs it through parseLine.
         # DuplicateStateTest (2026-11-19): the Geolocale Manager refuses a second valid state written alike in one country,
-        # and the daily box check lists such pairs (another word, another country or a different place: not a pair).
+        # and the daily box check lists such pairs (another word, another country or a different place: not a pair);
+        # a save with no name in the form keeps the stored name, trimmed; one row met twice is not a pair.
         # PlaceBioregionTest (2026-11-10): the bioregion an upload stores comes from the valid state (the state itself or
         # the valid state an old name points to) when it has one, else from the country when it has one, else none; an old
         # state name that points nowhere gives nothing; an old country name takes the valid country's bioregion, whoever
@@ -1030,6 +1032,10 @@ jobs:
           GBIF_VIEW_TEST_CONTAINER=pfmysql GBIF_VIEW_TEST_PASSWORD=ci-root python3 tests/unit/test_gbif_image_view.py | tee /tmp/gbif_view.txt
           grep -q "^5 tests passed (texts)" /tmp/gbif_view.txt
           grep -q "^2 database tests passed (MySQL 8.4" /tmp/gbif_view.txt
+          # The daily place step's apply and rollback (review of #389, 2026-11-20): the rollback's multi-table UPDATE
+          # puts back only what still has the state the run wrote, marks only those rows not applied, and counts both.
+          PLACE_DAILY_TEST_CONTAINER=pfmysql PLACE_DAILY_TEST_PASSWORD=ci-root python3 tests/unit/test_place_daily_db.py | tee /tmp/place_daily_db.txt
+          grep -q "^1 test passed (MySQL 8.4" /tmp/place_daily_db.txt
           docker rm -f pfmysql
 
       - name: Coordinates against the stored country, report only (tests/unit/test_coordinate_country.py)

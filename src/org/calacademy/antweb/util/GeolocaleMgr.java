@@ -470,7 +470,7 @@ public class GeolocaleMgr extends Manager {
     }
 
     /** The valid states, or null while the state list is not loaded (start-up): for the Geolocale Manager's duplicate
-     *  check, which then waits (review of #387). getValidAdm1s() itself is unchanged. */
+     *  check, which then waits (review of #387, the pull request that added it). getValidAdm1s() itself is unchanged. */
     public static @Nullable ArrayList<Geolocale> getValidAdm1sOrNull() {
         return adm1List == null ? null : getValidAdm1s();
     }
@@ -962,10 +962,11 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
     public static List<String> duplicateValidStates(Collection<? extends Geolocale> validAdm1s) {
         Map<String, List<String>> byKey = new TreeMap<>();
         Set<Integer> seen = new HashSet<>();      // one row met twice is not a pair (2026-11-20)
+        Set<Geolocale> same = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
         if (validAdm1s != null) {
             for (Geolocale g : validAdm1s) {
                 if (g == null || !g.isValid() || g.getParent() == null || g.getName() == null) continue;
-                if (g.getId() > 0 && !seen.add(g.getId())) continue;
+                if (g.getId() > 0 ? !seen.add(g.getId()) : !same.add(g)) continue;     // no id: the same object met twice
                 String key = adm1SpellingKey(g.getName());
                 if (key.isEmpty()) continue;
                 byKey.computeIfAbsent(g.getParent() + "\u0001" + key, k -> new ArrayList<>()).add(g.getName());
