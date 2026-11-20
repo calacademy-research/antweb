@@ -23,6 +23,8 @@ def test_display():
     assert iso.display("Catalunya [Cataluña]") == "Catalunya"
     assert iso.display("Armagh City, Banbridge and Craigavon") == "Armagh City, Banbridge and Craigavon"
     assert iso.display("Bristol, City of") == "Bristol, City of"
+    # an inverted form that ends in a bracket is turned round before notes in brackets are dropped (review of #395)
+    assert iso.display("Găgăuzia, Unitatea teritorială autonomă (UTAG)") == "Unitatea teritorială autonomă (UTAG) Găgăuzia"
 
 
 def test_rename_and_merge():
@@ -178,6 +180,12 @@ def test_notes_in_brackets_and_slashes():
     assert [(a, s.name) for a, s, sub, k in d] == [("alias", "Taita Taveta")], d
 
 
+def test_a_skipped_state_of_an_outdated_country_is_left_out():
+    out, reported, nocountry = iso.plan({"Madagascar": [(1, "Diana", 9), (2, "Sava", 4)]}, {}, iso.read_iso(), iso.read_countries(),
+                                        skip={"Madagascar|Sava"})
+    assert [r[1] for r in reported] == ["Diana"] and not out
+
+
 def test_outdated_countries_are_reported():
     subs = iso.read_iso()
     out, reported, nocountry = iso.plan({"Central African Republic": [(1, "Sangha-Mbaéré", 2566)], "India": [(2, "Karnataka", 147)]}, {},
@@ -196,6 +204,7 @@ def test_the_mapping_file_follows_the_renames():
                 "convert,Malawi,Central,Northern,Southern\n"
                 'United States,ADM1,District of Columbia,"Washington, D.C."\n'
                 "within,Sweden,Gotland,X\n"
+                "Croatia,ADM1,Zagreb County,Splitsko-Dalmatinska,new\n"
                 "name,Norway,ADM1,Oslo,Oslo,untouched\n")
     d = [dict(dec("rename", 1, "Gotland", "Gotlands län", 1, "Gotland", "Sweden", "SE-I")),
          dict(dec("rename", 2, "Splitsko-Dalmatinska", "Splitsko-dalmatinska županija", 2, "Splitsko-Dalmatinska", "Croatia", "HR-17")),
@@ -209,13 +218,22 @@ def test_the_mapping_file_follows_the_renames():
     assert "convert,Malawi,Central,Northern,Southern Region" in lines
     assert "United States,ADM1,District of Columbia,\"Washington, D.C.\"" not in lines         # now by name: dropped
     assert "name,Norway,ADM1,Oslo,Oslo,untouched" in lines and [n for n, l in check] == [6]
+    # a plain line marked new keeps its new mark and is never dropped
+    assert "Croatia,ADM1,Zagreb County,Splitsko-dalmatinska županija,new" in lines, lines
 
 
 def test_page_text_moves_with_a_rename_and_blocks_a_conflict():
     d = [dec("rename", 1, "Bratislava", "Bratislavský kraj", 1, "Bratislava"), dec("merge", 2, "Bratislavsky", "Bratislavský kraj", 1, "Bratislava")]
     moved = []
     sql, left, done = iso.statements(d, {}, "20261120", texts={"Bratislava": 2}, allnames={"Bratislava": 1}, text_moves=moved)
-    assert moved == [("object_edit", "Bratislava", "Bratislavský kraj")] and sum("object_edit" in x for x in sql) == 1, sql
+    assert moved == [("object_edit", "Bratislava", "Bratislavský kraj")] and sum(x.startswith("update object_edit") for x in sql) == 1, sql
+    # each moved row is recorded for the rollback just before its move
+    i = [k for k, x in enumerate(sql) if x.startswith("update object_edit")][0]
+    assert sql[i - 1].startswith("insert into {text} select 'object_edit', object_key"), sql[i - 1]
+    # another place with the name written with other accents shares the text: it stays (Córdoba, Cordoba)
+    moved = []
+    sql, left, done = iso.statements(d, {}, "20261120", texts={"Bratislava": 2}, allnames={iso.normal("Bratislava"): 2}, text_moves=moved)
+    assert not moved
     # the keys as stored move (a history row written "bratislava"); a name with history only is a conflict too
     moved = []
     sql, left, done = iso.statements(d, {}, "20261120", texts={"object_edit": {"Bratislava": 1}, "object_hist": {"bratislava": 3}},

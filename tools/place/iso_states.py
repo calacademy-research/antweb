@@ -38,8 +38,9 @@ written like both takes the kind most of its country's states match.
   python3 iso_states.py                       plan only: the summary, and the plan in <folder>/plan.tsv
   python3 iso_states.py --apply               applies the plan reviewed today: it refuses when <folder>/plan.tsv is
                                               missing or the plan differs from it now (an upload in between); backup
-                                              tables iso_states_bak_<date> (places) and iso_states_spec_<date>
-                                              (specimens), then the changes; what was done in <folder>/applied.tsv
+                                              tables iso_states_bak_<date> (places), iso_states_spec_<date>
+                                              (specimens) and iso_states_text_<date> (page text moved),
+                                              then the changes; what was done in <folder>/applied.tsv
   python3 iso_states.py --skip FILE           lines "country|state" left alone (a state looked at by hand)
   python3 iso_states.py --project /root/antweb-next      staging (default: the project on this server)
 
@@ -138,14 +139,13 @@ def display(iso_name):
     ("Zagreb, Grad", "Adygeya, Respublika") the right way round. Lists ("Armagh City, Banbridge and Craigavon") and
     "Bristol, City of" (ISO's own form for the city) stay as ISO writes them."""
     n = re.sub(r"\s*\[.*?\]\s*$", "", iso_name).strip()
-    # a note in brackets is not part of the name: "Western Visayas (Region VI)", "Maritime (Région)",
-    # "Guelmim-Oued Noun (EH-partial)", "National Capital District (Port Moresby)"
-    n = re.sub(r"\s*\([^()]*\)\s*$", "", n).strip()
-    m = INVERT.match(n)
+    m = INVERT.match(n)                  # first: one inverted form ends in a bracket, "..., Unitatea teritorială autonomă (UTAG)"
     if m:
         n = m.group(2) + " " + m.group(1)
         n = n[0].upper() + n[1:]
-    return n
+    # a note in brackets is not part of the name: "Western Visayas (Region VI)", "Maritime (Région)",
+    # "Guelmim-Oued Noun (EH-partial)", "National Capital District (Port Moresby)"
+    return re.sub(r"\s*\([^()]*\)\s*$", "", n).strip()
 
 
 Sub = collections.namedtuple("Sub", "code country type parent name others")
@@ -339,9 +339,9 @@ def read_texts(db):
         texts[t] = collections.Counter()
         for r in pf.run_sql(db, "select " + pf.hx("object_key") + ", count(*) from %s group by binary object_key" % t):
             texts[t][pf.unhex(r[0])] += int(r[1])
-    allnames = collections.Counter()
+    allnames = collections.Counter()          # by normal(name): page text keys ignore accents and capitals
     for r in pf.run_sql(db, "select " + pf.hx("name") + ", count(*) from geolocale group by binary name"):
-        allnames[pf.unhex(r[0])] += int(r[1])
+        allnames[normal(pf.unhex(r[0]))] += int(r[1])
     return texts, allnames
 
 
@@ -374,14 +374,20 @@ def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, 
                 stored[normal(k)].add((t, k))
     has_text = set(stored)
 
+    def shared(name):
+        """How many places have this name for page text (accents and capitals aside)."""
+        return max(allnames.get(normal(name), 0), allnames.get(name, 0))
+
     def move_text(old, new):
         """Page text of old to new (when old has text and no other place has that name): SQL, recorded for the rollback."""
         if normal(old) == normal(new):        # one key to object_edit already
             return []
-        if normal(old) in has_text and allnames.get(old, 0) <= 1:
+        if normal(old) in has_text and shared(old) <= 1:
             out = []
             for t, k in sorted(stored.pop(normal(old))):
                 text_moves.append((t, k, new))
+                # the row recorded for the rollback, then moved (in this order, so a key moved twice is recorded as it is then)
+                out.append("insert into {text} select '%s', object_key, %s, title, created from %s where binary object_key = binary %s" % (t, q(new), t, q(k)))
                 out.append("update %s set object_key = %s, created = created where binary object_key = binary %s" % (t, q(new), q(k)))
             stored[normal(new)] |= {(t, new) for t, k, n in text_moves if n == new}
             has_text.discard(normal(old))
@@ -443,7 +449,7 @@ def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, 
         if d["id"] in no_merge:
             left.append("%s: %s, not merged into %s: it has a curator species list of %d taxa" % (c, old, iso, no_merge[d["id"]]))
             continue
-        if normal(old) != normal(iso) and normal(old) in has_text and allnames.get(old, 0) <= 1 and normal(iso) in has_text:
+        if normal(old) != normal(iso) and normal(old) in has_text and shared(old) <= 1 and normal(iso) in has_text:
             left.append("%s: %s, not merged into %s: both have page text" % (c, old, iso))
             continue
         done.append(d)
@@ -664,10 +670,8 @@ def main(argv=None):
     # the backup tables are made empty first (CREATE TABLE commits), then filled in the transaction of the change, so
     # the backup is exactly what the change reads; the specimens move from the backup by code (the primary key)
     # both built from the tables' own columns (same character sets and collations, so the joins by code use the key)
-    # each page text row moved is recorded (its table, key as stored, new key, title, date), so the rollback puts back
-    # each row's own key, also when two spellings of one name moved together
-    rows = ";\n".join("insert into %s select '%s', object_key, %s, title, created from %s where binary object_key = binary %s"
-                       % ("{text}", t, q(n), t, q(o)) for t, o, n in text_moves)
+    # each page text row moved is recorded (its table, key as stored, new key, title, date) just before its move, so the
+    # rollback puts back each row's own key, also when two spellings of one name moved together
     # the specimens already under a new name before the apply are listed too (new_adm1 = adm1: the change and the
     # rollback's first line leave them alone; its second line knows them as not uploaded after the apply)
     already = " or ".join("(country = %s and binary adm1 = binary %s)" % (q(d["country"]), q(d["target"])) for d in moves(decisions)) or "false"
@@ -682,8 +686,7 @@ def main(argv=None):
                    % (bak, ",".join(map(str, touched)) or "0", pointing)
                    + "insert into %s select code, country, adm1, %s from specimen where %s;\n" % (spec, new_adm1, moving)
                    + "insert ignore into %s select code, country, adm1, adm1 from specimen where %s;\n" % (spec, already)
-                   + (rows.replace("{text}", text) + ";\n" if rows else "")
-                   + ";\n".join(sql + [moved_specimens(spec)]) + ";\ncommit;")
+                   + ";\n".join([x.replace("{text}", text) for x in sql] + [moved_specimens(spec)]) + ";\ncommit;")
     except pf.SqlFailed:
         # nothing was changed (one transaction); the empty backup tables go, so the run can be made again today
         made = [t for t in (bak, spec, text) if pf.run_sql(db, "select count(*) from information_schema.tables where table_schema = database()"
