@@ -32,10 +32,11 @@ def main():
     a.add_argument("--countries", action="store_true")
     a.add_argument("--commit", default="8ce2700661a28ee944350e2b329bbabb58d2ff83")
     args = a.parse_args()
+    import importlib.metadata
     if args.countries:
-        print("# ISO 3166-1 countries from pycountry: alpha-2, name, official name, common name")
+        print("# ISO 3166-1 countries from pycountry %s: alpha-2, alpha-3, name, official name, common name" % importlib.metadata.version("pycountry"))
         for c in sorted(pycountry.countries, key=lambda c: c.alpha_2):
-            print("\t".join([c.alpha_2, c.name, getattr(c, "official_name", "") or "", getattr(c, "common_name", "") or ""]))
+            print("\t".join([c.alpha_2, c.alpha_3, c.name, getattr(c, "official_name", "") or "", getattr(c, "common_name", "") or ""]))
         return
     trans = []
     for lang in LANGS:
@@ -52,7 +53,6 @@ def main():
                     shapes.setdefault(p["shapeISO"].strip().upper(), set()).add(p["shapeName"].strip())
         except (OSError, ValueError, KeyError):
             pass
-    import importlib.metadata
     print("# ISO 3166-2 from pycountry %s (iso-codes); translations in Latin script (column 6) and geoBoundaries ADM1 "
           "shape names (column 7) (commit %s)" % (importlib.metadata.version("pycountry"), args.commit))
 
