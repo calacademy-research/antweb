@@ -107,6 +107,7 @@ public class IslandParseLineTest extends TestCase {
         set(GeolocaleMgr.class, "countryNameMap", countries);
         set(GeolocaleMgr.class, "countrySpellingMap", GeolocaleMgr.countriesBySpelling(countries.values()));
         set(GeolocaleMgr.class, "adm1CountryMap", adm1s);
+        set(GeolocaleMgr.class, "adm1SpellingMap", GeolocaleMgr.adm1sBySpelling(adm1Rows, adm1s));
         set(GeolocaleMgr.class, "islands", islands);
     }
 
@@ -123,11 +124,14 @@ public class IslandParseLineTest extends TestCase {
         country(12, "Reunion", "Africa", "Eastern Africa", "Reunion", false, true, null, "Malagasy", null);
         country(8865, "Rodrigues", "Africa", "Eastern Africa", null, false, true, null, "Malagasy", null);
         country(98, "Mexico", "Americas", "Central America", null, false, true, null, "Neotropical", null);
+        country(160, "Liberia", "Africa", "Western Africa", null, false, true, null, "Afrotropical", null);
         adm1(620, "Galapagos", "Ecuador", false, "Galapagos Islands", "Neotropical");
         adm1(2394, "Galápagos", "Ecuador", false, "Galapagos Islands", "Neotropical");
         adm1(1017, "Oahu", "United States", false, "Hawaii", "Nearctic");
         adm1(691, "Rodrigues", "Mauritius", false, "Rodrigues", "Malagasy");      // after the tool gave it its valid name
         adm1(446, "California", "United States", true, null, "Nearctic");
+        adm1(5562, "Nimba", "Liberia", true, null, "Afrotropical");                // merged 2026-11-19: Nimba County leads to Nimba
+        adm1(3042, "Nimba County", "Liberia", false, "Nimba", "Afrotropical");
         placesInMemory();
 
         Subfamily myrmicinae = new Subfamily();
@@ -322,6 +326,24 @@ public class IslandParseLineTest extends TestCase {
         assertNull(parse("Ecuador", "Galapagos", "-0.74", "-90.3").get("flag"));
         assertEquals("red", parse("Ecuador", "Galapagos", "-1.677", "-79.645").get("flag"));
         assertNull(parse("Ecuador", "", "-1.677", "-79.645").get("flag"));
+    }
+
+    /**
+     * 2026-11-19: an old state name, or a valid state or old name written with other capitals, accents, blanks or
+     * punctuation, is stored as the valid state (Nimba County -> Nimba), and the report lists it under "State stored
+     * under AntWeb's name". Before, the valid state was found but the uploaded name stored.
+     */
+    public void testAnOldStateNameIsStoredAsTheValidState() throws Exception {
+        String nimba = "Liberia | - | Nimba | Africa | Western Africa | Afrotropical";
+        assertEquals(nimba, place(parse("Liberia", "Nimba")));
+        assertEquals(nimba, place(parse("Liberia", "Nimba County")));
+        assertEquals(nimba, place(parse("Liberia", "NIMBA COUNTY")));
+        assertEquals(nimba, place(parse("Liberia", "nimba")));
+        String report = report();
+        assertTrue(report, report.contains("State stored under AntWeb's name") && report.contains("Liberia: Nimba County -&gt; Nimba")
+            && report.contains("Liberia: NIMBA COUNTY -&gt; Nimba"));
+        assertFalse(report, report.contains("Liberia: Nimba -&gt;"));
+        assertFalse(report, report.contains("adm1Name=Nimba"));
     }
 
     /** The caches are put back: another test in the same run sees what it would have seen. */

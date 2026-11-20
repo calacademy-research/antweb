@@ -678,9 +678,17 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             //A.log("parseLine() thisAdm1:" + adm1 + " country:" + country + " islandCountry:" + islandCountry);
 
             if (adm1 != null && country != null && ownCountry == null) {
-				Geolocale validAdm1 = GeolocaleMgr.getValidAdm1(adm1, country);  // May change, for instance MA to Massachussetts
-				if (validAdm1 != null) {                  
-				  adm1 = validAdm1.getName(); // This will be used for bioregion validation
+				// 2026-11-19 (Brian Fisher: a merged duplicate state is a synonym, so anyone's use of it is translated): the
+				// valid state is stored, not only used for the checks below. An old name (Nimba County -> Nimba) or another
+				// spelling of a valid state or old name (grand-est -> Grand Est) is stored as the valid state and listed in the
+				// upload report; until now the uploaded name stayed on the specimen and kept it off the state's page.
+				Geolocale validAdm1 = GeolocaleMgr.getAdm1ToStore(adm1, country);
+				if (validAdm1 != null) {
+				  if (!validAdm1.getName().equals(adm1)) {
+				    getMessageMgr().addToMessages(MessageMgr.adm1NameCorrected, countrySpellingLine(country + ": " + adm1, validAdm1.getName()));
+				    specimenItem.put("adm1", validAdm1.getName());
+				  }
+				  adm1 = validAdm1.getName(); // also used for bioregion validation
 				}
 
 				boolean isValidAdm1 = GeolocaleMgr.isValid(adm1, country);

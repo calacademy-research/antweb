@@ -59,6 +59,11 @@ public class GeolocaleMgr extends Manager {
      */
     private static volatile MultiKeyMap<String, Adm1> adm1CountryMap = new MultiKeyMap<>();
 
+    /** For the specimen upload (adm1ToStore): country + adm1SpellingKey of a state name -> the valid state it is a
+     *  spelling of (its own name, or an old name that leads to it). A key that leads to two valid states is left out.
+     *  Built together with adm1CountryMap (2026-11-19). */
+    private static volatile Map<String, Adm1> adm1SpellingMap = new HashMap<>();
+
     public static boolean isInitialized() {
         return s_regions != null;
     }
@@ -153,6 +158,7 @@ public class GeolocaleMgr extends Manager {
         islands = newIslands;
         adm1List = newAdm1List;
         adm1CountryMap = newAdm1CountryMap;
+        adm1SpellingMap = adm1sBySpelling(newAdm1List, newAdm1CountryMap);
         countrySpellingMap = countriesBySpelling(newCountryNameMap.values());
         countryNameMap = newCountryNameMap;
         s_geolocales = geolocales;
@@ -832,6 +838,67 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
             return valid_adm1;
         }
         return null;
+    }
+
+    /**
+     * The name of a state (adm1) without what does not tell two states apart (2026-11-19): normalName (capitals,
+     * accents, blanks), with hyphens, slashes and underscores read as a blank and apostrophes, quotes, periods, commas
+     * and brackets left out. "Grand-Est", "grand est" and "GRAND EST." are one key; so are "Murang'A" and "Muranga",
+     * "Taita/Taveta" and "Taita Taveta". "St. Elizabeth" is not "Saint Elizabeth" (another word): that takes an old
+     * name in the Geolocale Manager. Never null.
+     */
+    public static String adm1SpellingKey(String name) {
+        if (name == null) return "";
+        String s = name.replaceAll("[-\u2010-\u2015/_]", " ").replaceAll("['\u2018\u2019\u02bb\u02bc\u02bf\u02be`\u00b4.,()\\[\\]\"]", "");
+        return normalName(s);
+    }
+
+    /**
+     * country, a separator and adm1SpellingKey -> the valid state, for every valid state (by its own name) and every old
+     * name that leads to a valid state of the same country (valid_name). A key that leads to two different valid
+     * states is left out and logged: the upload does not choose between them (2026-11-19, after the duplicate valid
+     * states of the 2021 Geonames and Geonet loads were merged).
+     */
+    public static Map<String, Adm1> adm1sBySpelling(Collection<Adm1> adm1Rows, MultiKeyMap<String, Adm1> adm1s) {
+        Map<String, Adm1> bySpelling = new HashMap<>();
+        Set<String> shared = new HashSet<>();
+        if (adm1Rows == null) return bySpelling;
+        for (Adm1 row : adm1Rows) {
+            if (row == null || row.getName() == null || row.getCountry() == null) continue;
+            Adm1 target = validAdm1(adm1s, row.getName(), row.getCountry());
+            if (target == null) continue;
+            String key = row.getCountry() + "\u0000" + adm1SpellingKey(row.getName());
+            if (key.endsWith("\u0000")) continue;
+            Adm1 other = bySpelling.putIfAbsent(key, target);
+            if (other != null && other != target && !other.getName().equals(target.getName())) {
+                shared.add(key);
+                s_log.warn("adm1sBySpelling() two valid states of " + row.getCountry() + " are written alike: " + other.getName()
+                    + ", " + target.getName() + " (" + row.getName() + "). Neither is used to correct an uploaded spelling.");
+            }
+        }
+        bySpelling.keySet().removeAll(shared);
+        return bySpelling;
+    }
+
+    /**
+     * The state name the specimen upload stores for an uploaded state (2026-11-19, Brian Fisher: a merged duplicate is
+     * a synonym, so that anyone's use of it is translated): the valid state when the name is a valid state, an old name
+     * of one (valid_name: "Nimba County" -> Nimba), or written like one of those with other capitals, accents, blanks
+     * or punctuation ("grand-est" -> Grand Est); null when none (the upload then keeps the name and reports it as not
+     * valid). Until 2026-11-19 the upload found the valid state but stored the uploaded name, so an old name stayed on
+     * the specimen and kept it off the state's page.
+     */
+    public static @Nullable Adm1 adm1ToStore(MultiKeyMap<String, Adm1> adm1s, Map<String, Adm1> bySpelling, String adm1, String country) {
+        if (adm1 == null || country == null) return null;
+        Adm1 valid = validAdm1(adm1s, adm1, country);
+        if (valid != null) return valid;
+        if (bySpelling == null) return null;
+        return bySpelling.get(country + "\u0000" + adm1SpellingKey(adm1));
+    }
+
+    /** adm1ToStore on the loaded places (the specimen upload, SpecimenUploadParse.parseLine). Null before they are loaded. */
+    public static @Nullable Adm1 getAdm1ToStore(String adm1, String country) {
+        return adm1ToStore(adm1CountryMap, adm1SpellingMap, adm1, country);
     }
 
     public static String getRegionsDisplay() {
