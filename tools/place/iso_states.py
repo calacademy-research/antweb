@@ -224,7 +224,10 @@ def match_country(states, subs, english=False):
         # an other name joins an ISO-name hit only when the state is that subdivision's ISO name with generic words left
         # out (Madrid: the province by name, Comunidad de Madrid by its English name; the kind decides below)
         words = set(key(st.name).split())
-        h = (h | {c for c in other - h if any(words <= set(key(n).split()) for n in iso_names(by_code[c]))}) if h else other
+        if not words:                            # a name of punctuation only: no rule to apply
+            h = h or other
+        else:
+            h = (h | {c for c in other - h if any(words <= set(key(n).split()) for n in iso_names(by_code[c]))}) if h else other
         if h:
             hits[st.id], how[st.id] = h, "exact"
         else:
@@ -353,7 +356,7 @@ def q(value):
     return "convert(unhex('%s') using utf8mb4)" % (value or "").encode("utf-8").hex()
 
 
-def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, text_moves=None):
+def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, text_moves=None, notes=None):
     """The SQL of the change to the place rows, the list of what could not be done (left out), and the decisions
     done. Renames first, then merges; a merge into a state whose rename was left out is left out too (no valid state
     would carry the ISO name), and so is one in no_merge (ids: a curator species list on the state merged). The
@@ -375,15 +378,30 @@ def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, 
                 stored[normal(k)].add((t, k))
     has_text = set(stored)
 
+    notes = notes if notes is not None else []
+    # this state's own old names (rows not valid that lead to it) are not other places (review of #395)
+    own = collections.defaultdict(collections.Counter)            # (country, valid name) -> Counter(normal(old name))
+    for (c, n), rows in names.items():
+        for i, v, vn in rows:
+            if v != 1 and vn:
+                own[(c, vn)][normal(n)] += 1
+
     def shared(name):
         """How many places have this name for page text (accents and capitals aside)."""
         return max(allnames.get(normal(name), 0), allnames.get(name, 0))
 
-    def move_text(old, new):
+    def others(name, country):
+        """Places other than the state itself and its own old names that have this name (accents and capitals aside)."""
+        return shared(name) - 1 - own[(country, name)][normal(name)]
+
+    def move_text(old, new, country):
         """Page text of old to new (when old has text and no other place has that name): SQL, recorded for the rollback."""
         if normal(old) == normal(new):        # one key to object_edit already
             return []
-        if normal(old) in has_text and shared(old) <= 1:
+        if normal(old) in has_text and others(old, country) > 0:
+            notes.append("%s: %s, its page text stays under %s: another place has that name too" % (country, old, old))
+            return []
+        if normal(old) in has_text:
             out = []
             for t, k in sorted(stored.pop(normal(old))):
                 text_moves.append((t, k, new))
@@ -437,14 +455,15 @@ def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, 
             sql.append("insert into geolocale (name, georank, parent, source, is_valid, valid_name, admin_notes) values (%s, 'adm1', %s, 'antweb', 0, %s, %s)"
                        % (q(old), q(c), q(iso), q("iso_states %s: added, old name of %s (ISO 3166-2 %s), id %d." % (tag, iso, d["code"], vid))))
         sql.append("update geolocale set valid_name = %s where georank = 'adm1' and parent = %s and binary valid_name = binary %s" % (q(iso), q(c), q(old)))
-        sql += move_text(old, iso)
+        sql += move_text(old, iso, c)
     for d in decisions:
         if d["action"] != "alias":
             continue
         c, name, iso = d["country"], d["name"], d["iso"]
-        if names.get((c, iso)):
+        if names.get((c, iso)) or (c, iso) in targets:
             left.append("%s: %s, a row named %s exists already (ISO name not added)" % (c, name, iso))
             continue
+        targets.add((c, iso))
         done.append(d)
         sql.append("insert into geolocale (name, georank, parent, source, is_valid, valid_name, admin_notes) values (%s, 'adm1', %s, 'antweb', 0, %s, %s)"
                    % (q(iso), q(c), q(name), q("iso_states %s: added, ISO 3166-2 name (%s) of %s, id %d." % (tag, d["code"], name, d["id"]))))
@@ -458,11 +477,11 @@ def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, 
         if d["id"] in no_merge:
             left.append("%s: %s, not merged into %s: it has a curator species list of %d taxa" % (c, old, iso, no_merge[d["id"]]))
             continue
-        if normal(old) != normal(iso) and normal(old) in has_text and shared(old) <= 1 and normal(iso) in has_text:
+        if normal(old) != normal(iso) and normal(old) in has_text and others(old, c) <= 0 and normal(iso) in has_text:
             left.append("%s: %s, not merged into %s: both have page text" % (c, old, iso))
             continue
         done.append(d)
-        sql += move_text(old, iso)
+        sql += move_text(old, iso, c)
         note = "iso_states %s: the same state as %s (ISO 3166-2 %s, id %d); made an old name of it, its specimens moved there." % (tag, iso, d["code"], d["kept_id"])
         sql.append("update geolocale set is_valid = 0, valid_name = %s, admin_notes = concat(ifnull(concat(admin_notes, '\\n'), ''), %s) where id = %d"
                    % (q(iso), q(note), d["id"]))
@@ -516,13 +535,17 @@ def mapping_update(decisions, path=None):
     if not os.path.exists(path):
         return "", changed, check
     with open(path, encoding="utf-8", newline="") as f:
-        lines = f.read().split("\n")
+        lines = f.read().replace("\r\n", "\n").split("\n")
     for i, line in enumerate(lines, 1):
         if not line.strip() or line.lstrip().startswith("#"):
             out.append(line)
             continue
         cells = [c.strip() for c in next(csv.reader([line]))]
         kind = cells[0].lower()
+        if len(cells) < 2:                       # a stray word: left as it is, for a look
+            check.append((i, line))
+            out.append(line)
+            continue
         country = cells[1] if kind in ("name", "convert", "within", "split", "level", "source") else cells[0]
         if not any((country, c) in new for c in cells):
             out.append(line)
@@ -573,9 +596,11 @@ def reviewed_lines(path):
     return out
 
 
-def write_plan(path, decisions, reported, nocountry, curator=None, lines=(), left=()):
+def write_plan(path, decisions, reported, nocountry, curator=None, lines=(), left=(), notes=()):
     with open(path, "w", encoding="utf-8") as f:
         f.write("action\tcountry\tstate\tspecimens\tiso_name\tcode\ttype\tkept\n")
+        for why in notes:
+            f.write("\t".join(["note", "", "", "", "", "", why.replace("\t", " "), ""]) + "\n")
         for why in left:
             f.write("\t".join(["left out", "", "", "", "", "", why.replace("\t", " "), ""]) + "\n")
         for d in decisions:
@@ -615,7 +640,8 @@ def main(argv=None):
     curator = curator_lists(db, decisions)
     texts, allnames = read_texts(db)
     text_moves = []
-    sql, left, done = statements(decisions, names, tag, curator, texts, allnames, text_moves)
+    notes = []
+    sql, left, done = statements(decisions, names, tag, curator, texts, allnames, text_moves, notes)
     lines = mapping_lines(moves(done))         # the mapping follows what the apply does, not the plan (review of #395)
     plan_file = os.path.join(folder, "plan.tsv")
     if args.apply:
@@ -625,7 +651,7 @@ def main(argv=None):
             raise SystemExit("The plan differs from the one reviewed in %s (the data changed since): run without --apply again and "
                              "review it. Nothing was changed." % plan_file)
     else:
-        write_plan(plan_file, decisions, reported, nocountry, curator, lines, left)
+        write_plan(plan_file, decisions, reported, nocountry, curator, lines, left, notes)
     ren = [d for d in decisions if d["action"] == "rename"]
     mer = [d for d in decisions if d["action"] == "merge"]
     ali = [d for d in decisions if d["action"] == "alias"]
@@ -640,6 +666,8 @@ def main(argv=None):
         print("  %d lines of adm1_shape_map.csv name a state renamed or merged: update them in the same change (plan.tsv, 'mapping line')" % len(lines))
     if left:
         print("  %d decisions the apply leaves out (%d page texts would move with the rest):\n    %s" % (len(left), len(text_moves), "\n    ".join(left)))
+    if notes:
+        print("  %d notes (done, but look):\n    %s" % (len(notes), "\n    ".join(notes)))
     for d in (mer + ren + ali)[:args.show]:
         print("  %-6s %-22s %-34s -> %-34s %-8s %5d" % (d["action"], d["country"][:22], d["name"][:34], (d["target"] if d["action"] == "merge" else d["iso"])[:34],
                                                          d["code"], d["specimens"]))
@@ -700,7 +728,8 @@ def main(argv=None):
                    + "insert into %s select id, name, parent, is_valid, valid_name, admin_notes from geolocale where georank = 'adm1' and (id in (%s) or %s);\n"
                    % (bak, ",".join(map(str, touched)) or "0", pointing)
                    + "insert into %s select code, country, adm1, %s from specimen where %s;\n" % (spec, new_adm1, moving)
-                   + "insert ignore into %s select code, country, adm1, adm1 from specimen where %s;\n" % (spec, already)
+                   + "insert into %s select code, country, adm1, adm1 from specimen s where (%s) and not exists (select 1 from %s x where x.code = s.code);\n"
+                   % (spec, already, spec)
                    + ";\n".join([x.replace("{text}", text) for x in sql] + [moved_specimens(spec)]) + ";\ncommit;")
     except pf.SqlFailed:
         # nothing was changed (one transaction); the empty backup tables go, so the run can be made again today

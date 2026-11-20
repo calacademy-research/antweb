@@ -218,6 +218,10 @@ def test_the_mapping_file_follows_the_renames():
     assert "convert,Malawi,Central,Northern,Southern Region" in lines
     assert "United States,ADM1,District of Columbia,\"Washington, D.C.\"" not in lines         # now by name: dropped
     assert "name,Norway,ADM1,Oslo,Oslo,untouched" in lines and [n for n, l in check] == [6]
+    with open(path, "a", encoding="utf-8") as f:
+        f.write("stray\n")
+    text, changed, check = iso.mapping_update(d, path)
+    assert check[-1][1] == "stray"
     # a plain line marked new keeps its new mark and is never dropped
     assert "Croatia,ADM1,Zagreb County,Splitsko-dalmatinska županija,new" in lines, lines
 
@@ -252,6 +256,18 @@ def test_page_text_moves_with_a_rename_and_blocks_a_conflict():
     # the merged state's text joins the kept one, unless both have text
     sql, left, done = iso.statements(d[1:], {}, "20261120", texts={"Bratislavsky": 1, "Bratislavský kraj": 1}, allnames={"Bratislavsky": 1})
     assert not done and "both have page text" in left[0], left
+    # the state's own old-name row written otherwise is not another place: the text moves; a real other place: a note
+    moved, notes = [], []
+    sql, left, done = iso.statements(d[:1], {("Slovakia", "Bratislavá"): [(9, 0, "Bratislava")]}, "20261120", texts={"Bratislava": 1},
+                                     allnames={iso.normal("Bratislava"): 2}, text_moves=moved, notes=notes)
+    assert moved and not notes, (moved, notes)
+    moved, notes = [], []
+    sql, left, done = iso.statements(d[:1], {}, "20261120", texts={"Bratislava": 1}, allnames={iso.normal("Bratislava"): 2}, text_moves=moved, notes=notes)
+    assert not moved and "stays under Bratislava" in notes[0] and done, notes
+    # two aliases to one ISO name in one country: the second is left out
+    al = [dict(dec("alias", 1, "A", "Same", 1, "A"), target="A"), dict(dec("alias", 2, "B", "Same", 2, "B"), target="B")]
+    sql, left, done = iso.statements(al, {}, "20261120")
+    assert len(done) == 1 and left
     # page text and a new name another place already has (page text is keyed by name alone): left out
     sql, left, done = iso.statements(d[:1], {}, "20261120", texts={"Bratislava": 1}, allnames={iso.normal("Bratislava"): 1, iso.normal("Bratislavský kraj"): 1})
     assert not done and "another place is already named" in left[0], left
