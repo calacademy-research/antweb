@@ -271,21 +271,22 @@ public final class EditGeolocaleAction extends AntwebAction {
      * Returns the message (HTML escaped), or null when the save may go ahead.
      */
     public static String duplicateState(EditGeolocaleForm form, Geolocale current) {
-        // Before the places are loaded (the minutes after a restart) the check cannot be made: the save waits.
-        if (current != null && "adm1".equals(current.getGeorank()) && form.isValid() && !GeolocaleMgr.isInitialized())
-            return PLACES_LOADING;
-        return duplicateState(form, current, GeolocaleMgr.getValidAdm1s());
+        return duplicateState(form, current, GeolocaleMgr.getValidAdm1sOrNull());
     }
 
     public static final String PLACES_LOADING = "AntWeb is still loading its places (after a restart), so the check for a"
         + " valid state written alike cannot be made yet. Try again in a few minutes.";
 
+    /** validAdm1s: the valid states, or null when the places are not loaded yet (the minutes after a restart): then a
+     *  save that needs the check waits (PLACES_LOADING); a save that does not need it goes ahead. */
     public static String duplicateState(EditGeolocaleForm form, Geolocale current, java.util.Collection<? extends Geolocale> validAdm1s) {
         if (current == null || !"adm1".equals(current.getGeorank()) || !form.isValid()) return null;
         String name = form.getName() != null && !form.getName().trim().isEmpty() ? form.getName().trim() : current.getName();
         String parent = form.getParent() != null && !form.getParent().trim().isEmpty() ? form.getParent().trim() : current.getParent();
         String stored = current.getName() == null ? "" : current.getName().trim();
-        if (current.isValid() && name.equals(stored) && parent != null && parent.equals(current.getParent())) return null;
+        String storedParent = current.getParent() == null ? null : current.getParent().trim();
+        if (current.isValid() && name.equals(stored) && parent != null && parent.equals(storedParent)) return null;
+        if (validAdm1s == null) return PLACES_LOADING;
         Geolocale other = GeolocaleMgr.validStateWrittenAlike(validAdm1s, parent, name, current.getId());
         if (other == null) return null;
         return Html.esc(parent) + " already has the valid state " + Html.esc(other.getName()) + " (id " + other.getId()

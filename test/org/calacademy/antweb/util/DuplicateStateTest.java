@@ -119,10 +119,9 @@ public class DuplicateStateTest extends TestCase {
         // a stored name with a blank at the end, saved unchanged: not a rename
         Adm1 blank = adm1(2860, "Taita Taveta ", "Kenya", true);
         assertNull(EditGeolocaleAction.duplicateState(form("Taita Taveta ", "Kenya", true), blank, places));
-        // before the places are loaded (no GeolocaleMgr here) a valid state's save waits; a save as not valid does not
-        if (!GeolocaleMgr.isInitialized()) {
-            assertEquals(EditGeolocaleAction.PLACES_LOADING, EditGeolocaleAction.duplicateState(form("Murang'A", "Kenya", true), merged));
-            assertNull(EditGeolocaleAction.duplicateState(form("Murang'A", "Kenya", false), merged));
-        }
+        // before the places are loaded (no list): a save that needs the check waits; one that does not goes ahead
+        assertEquals(EditGeolocaleAction.PLACES_LOADING, EditGeolocaleAction.duplicateState(form("Murang'A", "Kenya", true), merged, null));
+        assertNull(EditGeolocaleAction.duplicateState(form("Murang'A", "Kenya", false), merged, null));
+        assertNull(EditGeolocaleAction.duplicateState(form("Tharaka-Nithi", "Kenya", true), twin, null));      // a box fixed
     }
 }
