@@ -10,7 +10,8 @@ real iso3166_2.tsv and Slovakia's states:
      added, the old name Pressburg pointed at it), Bratislavsky kraj made an old name of it, the four specimens under
      the ISO name; Kosice renamed Košický kraj with the old-name row swapped; Trnava and Trnavsky kraj left alone;
   3. the rollback in the module's header puts every place row and specimen back as it was;
-  4. an apply whose transaction fails changes nothing and drops its empty backup tables; the rerun then works.
+  4. an apply whose transaction fails changes nothing and drops its empty backup tables; the rerun then works;
+  5. a geolocale.name that is not binary is refused before anything is made.
 
 Needs a MySQL (8.4 in CI) reachable as `docker exec <container> mysql`:
   ISO_STATES_TEST_CONTAINER   the container (CI: pfmysql); without it the test is skipped
@@ -21,7 +22,6 @@ import contextlib
 import datetime
 import io
 import os
-import re
 import subprocess
 import sys
 import tempfile
@@ -64,11 +64,13 @@ def lit(v):
 
 def fresh():
     mysql("drop database if exists %s; create database %s default character set utf8mb4" % (DB, DB), None)
+    # as production: geolocale in utf8 with utf8_bin (db/upgrade/6.10/2016-09-12.sql), specimen in another collation
     mysql("""create table geolocale (id int not null auto_increment primary key,
-               name varchar(128) character set utf8mb4 collate utf8mb4_bin, georank varchar(30), parent varchar(128) character set utf8mb4 collate utf8mb4_bin,
-               source varchar(30), is_valid tinyint, valid_name varchar(128), admin_notes text,
-               unique key name_parent_georank (name, parent(50), georank)) default charset=utf8mb4;
-             create table specimen (code varchar(128) not null primary key, country varchar(128), adm1 varchar(128)) default charset=utf8mb4;
+               name varchar(250), georank varchar(30), parent varchar(128), source varchar(30), is_valid tinyint,
+               valid_name varchar(250), admin_notes text,
+               unique key name_parent_georank (name, parent(50), georank)) default charset=utf8mb3 collate utf8mb3_bin;
+             create table specimen (code varchar(128) not null primary key, country varchar(128), adm1 varchar(128))
+               default charset=utf8mb3 collate utf8mb3_general_ci;
              create table geolocale_taxon (geolocale_id int, taxon_name varchar(128), source varchar(30)) default charset=utf8mb4;""")
     mysql("insert into geolocale (id, name, georank, parent, source, is_valid, valid_name) values "
           + ",".join("(%d, %s, 'adm1', %s, 'antweb', %d, %s)" % (i, lit(n), lit(p), v, lit(vn)) for i, n, p, v, vn in PLACES)
@@ -93,7 +95,7 @@ def rollback_sql():
     return "\n".join(l.strip().replace("<date>", TAG) for l in lines if l.strip())
 
 
-def test_plan_apply_rollback(project):
+def check_plan_apply_rollback(project):
     fresh()
     before = snapshot()
     folder = tempfile.mkdtemp()
@@ -125,7 +127,7 @@ def test_plan_apply_rollback(project):
     mysql("drop table iso_states_bak_%s; drop table iso_states_spec_%s" % (TAG, TAG))
 
 
-def test_a_failed_apply_leaves_the_day_open(project):
+def check_a_failed_apply_leaves_the_day_open(project):
     fresh()
     before = snapshot()
     folder = tempfile.mkdtemp()
@@ -141,9 +143,23 @@ def test_a_failed_apply_leaves_the_day_open(project):
     finally:
         iso.moved_specimens = was
     assert snapshot() == before
-    assert not mysql("show tables like 'iso_states_%'")
+    assert not mysql("select table_name from information_schema.tables where table_schema = database() and table_name like 'iso\\_states\\_%'")
     code, out = run(project, folder, "--apply")
     assert code == 0 and dict(mysql("select code, adm1 from specimen"))["a1"] == "Bratislavský kraj"
+
+
+def check_a_collation_that_ignores_accents_is_refused(project):
+    fresh()
+    mysql("alter table geolocale modify name varchar(250) character set utf8mb3 collate utf8mb3_general_ci")
+    folder = tempfile.mkdtemp()
+    run(project, folder)
+    try:
+        run(project, folder, "--apply")
+    except SystemExit as e:
+        assert "not a binary one" in str(e), e
+    else:
+        raise AssertionError("a geolocale.name that ignores accents must be refused")
+    assert not mysql("select table_name from information_schema.tables where table_schema = database() and table_name like 'iso\\_states\\_%'")
 
 
 if __name__ == "__main__":
@@ -154,7 +170,8 @@ if __name__ == "__main__":
         os.makedirs(os.path.join(d, "etc"))
         with open(os.path.join(d, "etc", "db.properties"), "w", encoding="utf-8") as f:
             f.write("user=%s\npassword=%s\n" % (USER, PASSWORD))
-        test_plan_apply_rollback(d)
-        test_a_failed_apply_leaves_the_day_open(d)
+        check_plan_apply_rollback(d)
+        check_a_failed_apply_leaves_the_day_open(d)
+        check_a_collation_that_ignores_accents_is_refused(d)
     mysql("drop database %s" % DB, None)
-    print("2 tests passed (MySQL %s)" % mysql("select version()", None)[0][0])
+    print("3 tests passed (MySQL %s)" % mysql("select version()", None)[0][0])

@@ -443,8 +443,15 @@ def main(argv=None):
         print("Plan only. Add --apply to make the change.")
         return 0
     bak, spec = "iso_states_bak_" + tag, "iso_states_spec_" + tag
-    if pf.run_sql(db, "show tables like '%s'" % bak) or pf.run_sql(db, "show tables like '%s'" % spec):
+    if int(pf.run_sql(db, "select count(*) from information_schema.tables where table_schema = database() and table_name in ('%s', '%s')" % (bak, spec))[0][0]):
         raise SystemExit("The backup table %s exists already: not applied twice today. Nothing was changed." % bak)
+    # the renames rely on geolocale.name comparing exactly (utf8_bin since 2016, db/upgrade/6.10): under a collation
+    # that ignores accents, Bratislavsky kraj and Bratislavský kraj would be one name to the unique key
+    coll = pf.run_sql(db, "select collation_name from information_schema.columns where table_schema = database() and table_name = 'geolocale'"
+                          " and column_name = 'name'")
+    if not coll or not coll[0][0].endswith("_bin"):
+        raise SystemExit("geolocale.name has the collation %s, not a binary one: this tool cannot rename safely. Nothing was changed."
+                         % (coll[0][0] if coll else "(unknown)"))
     sql, left, decisions = statements(decisions, names, tag, curator)
     if left:
         print("Left out:\n  " + "\n  ".join(left))
@@ -460,9 +467,10 @@ def main(argv=None):
     wait = "set session innodb_lock_wait_timeout = 600; set session transaction isolation level read committed;\n"
     # the backup tables are made empty first (CREATE TABLE commits), then filled in the transaction of the change, so
     # the backup is exactly what the change reads; the specimens move from the backup by code (the primary key)
+    # both built from the tables' own columns (same character sets and collations, so the joins by code use the key)
     pf.run_sql(db, "create table %s as select id, name, parent, is_valid, valid_name, admin_notes from geolocale where false;"
-                   "create table %s (code varchar(128) not null primary key, country varchar(128), adm1 varchar(128), new_adm1 varchar(128))"
-                   " default charset=utf8mb4" % (bak, spec))
+                   "create table %s as select code, country, adm1, adm1 as new_adm1 from specimen where false;"
+                   "alter table %s add primary key (code)" % (bak, spec, spec))
     try:
         pf.run_sql(db, wait + "start transaction;\n"
                    + "insert into %s select id, name, parent, is_valid, valid_name, admin_notes from geolocale where georank = 'adm1' and (id in (%s) or %s);\n"
@@ -474,6 +482,9 @@ def main(argv=None):
         if int(pf.run_sql(db, "select (select count(*) from %s) + (select count(*) from %s)" % (bak, spec))[0][0]) == 0:
             pf.run_sql(db, "drop table %s; drop table %s" % (bak, spec))
             print("The change failed and was not made; the empty backup tables were dropped.")
+        else:
+            print("The backup tables %s and %s are filled: the change may have been committed after all (a lost connection)."
+                  " Check with the after line's queries before anything else; the rollback in this file's header undoes it." % (bak, spec))
         raise
     print("backup: %s place rows in %s, %s specimens in %s" % (pf.run_sql(db, "select count(*) from " + bak)[0][0], bak,
                                                                pf.run_sql(db, "select count(*) from " + spec)[0][0], spec))
