@@ -58,7 +58,8 @@ then reload the places (util.do?action=reloadAntwebMgr&name=geolocale, administr
 specimens uploaded after the apply under a renamed state's new name: those not in the backup, which also lists every
 specimen already under a new name before the apply (left as they were). The fourth and fifth move the page text back
 (a text written under an old name after the apply makes them fail: the transaction then changes nothing; move that
-text aside first).
+text aside first). A text edited after the apply (its date changes) stays under the new name, and two rows of one name
+written in two ways in the same second may swap spellings: check the state's page after a rollback.
 
 Page text: an overview page's text and its history (object_edit, object_hist) are keyed by the place's name, so a
 rename moves them as editGeolocale.do does (PageTextKeys), and a merge moves the merged state's text to the state it
@@ -337,10 +338,10 @@ def read_texts(db):
     texts = {}
     for t in ("object_edit", "object_hist"):
         texts[t] = collections.Counter()
-        for r in pf.run_sql(db, "select " + pf.hx("object_key") + ", count(*) from %s group by binary object_key" % t):
+        for r in pf.run_sql(db, "select " + pf.hx("object_key") + ", count(*) from %s group by 1" % t):
             texts[t][pf.unhex(r[0])] += int(r[1])
     allnames = collections.Counter()          # by normal(name): page text keys ignore accents and capitals
-    for r in pf.run_sql(db, "select " + pf.hx("name") + ", count(*) from geolocale group by binary name"):
+    for r in pf.run_sql(db, "select " + pf.hx("name") + ", count(*) from geolocale group by 1"):
         allnames[normal(pf.unhex(r[0]))] += int(r[1])
     return texts, allnames
 
@@ -358,7 +359,7 @@ def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, 
     would carry the ISO name), and so is one in no_merge (ids: a curator species list on the state merged). The
     specimens are moved by main, from the backup table (moved_specimens)."""
     sql, left, done = [], [], []
-    blocked = set()
+    blocked, targets = set(), set()
     no_merge = no_merge or {}
     texts, allnames = texts or {}, allnames or {}
     if texts and not isinstance(next(iter(texts.values())), dict):      # a plain {key: rows}: object_edit only
@@ -412,11 +413,19 @@ def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, 
             why = "the ISO name is longer than a specimen's state can be (%d characters)" % SPECIMEN_ADM1
         elif normal(iso) in has_text and normal(iso) != normal(old):
             why = "the ISO name %s already has page text (or a name written like it)" % iso
+        elif normal(old) in has_text and shared(iso) > len(swap) + sum(1 for m in decisions if m["action"] == "merge" and m["kept_id"] == vid
+                                                                          and normal(m["name"]) == normal(iso)):
+            # this state's own old-name row of that name, and states of that spelling merged into it, aside
+            # page text is keyed by name alone: under a name another place has, it would show on that place's page too
+            why = "it has page text, and another place is already named %s" % iso
+        elif (c, iso) in targets:
+            why = "another state of %s is renamed %s too" % (c, iso)
         if why:
             left.append("%s: %s, %s" % (c, old, why))
             blocked.add(vid)
             continue
         done.append(d)
+        targets.add((c, iso))
         note = "iso_states %s: named %s, ISO 3166-2 %s; was %s." % (tag, iso, d["code"], old)
         if swap:
             sql.append("update geolocale set name = %s where id = %d" % (q("~iso~%d" % swap[0][0]), swap[0][0]))
@@ -559,12 +568,16 @@ def reviewed_lines(path):
             p = line.rstrip("\n").split("\t")
             if p[0] in ("rename", "merge", "alias") and len(p) >= 8:
                 out.append("\t".join([p[0], p[1], p[2], p[4], p[5], p[7]]))
+            elif p[0] == "left out" and len(p) >= 7:
+                out.append("left out\t" + p[6])
     return out
 
 
-def write_plan(path, decisions, reported, nocountry, curator=None, lines=()):
+def write_plan(path, decisions, reported, nocountry, curator=None, lines=(), left=()):
     with open(path, "w", encoding="utf-8") as f:
         f.write("action\tcountry\tstate\tspecimens\tiso_name\tcode\ttype\tkept\n")
+        for why in left:
+            f.write("\t".join(["left out", "", "", "", "", "", why.replace("\t", " "), ""]) + "\n")
         for d in decisions:
             f.write("\t".join([d["action"], d["country"], d["name"], str(d["specimens"]), d["iso"], d["code"], d["type"], d["kept_name"]]) + "\n")
         for c, n, k, why in reported:
@@ -608,11 +621,11 @@ def main(argv=None):
     if args.apply:
         if not os.path.exists(plan_file):
             raise SystemExit("No plan in %s: run without --apply first and review it. Nothing was changed." % plan_file)
-        if reviewed_lines(plan_file) != decision_lines(decisions):
+        if sorted(reviewed_lines(plan_file)) != sorted(decision_lines(decisions) + ["left out\t" + w.replace("\t", " ") for w in left]):
             raise SystemExit("The plan differs from the one reviewed in %s (the data changed since): run without --apply again and "
                              "review it. Nothing was changed." % plan_file)
     else:
-        write_plan(plan_file, decisions, reported, nocountry, curator, lines)
+        write_plan(plan_file, decisions, reported, nocountry, curator, lines, left)
     ren = [d for d in decisions if d["action"] == "rename"]
     mer = [d for d in decisions if d["action"] == "merge"]
     ali = [d for d in decisions if d["action"] == "alias"]
@@ -630,7 +643,9 @@ def main(argv=None):
     for d in (mer + ren + ali)[:args.show]:
         print("  %-6s %-22s %-34s -> %-34s %-8s %5d" % (d["action"], d["country"][:22], d["name"][:34], (d["target"] if d["action"] == "merge" else d["iso"])[:34],
                                                          d["code"], d["specimens"]))
-    if args.mapping:
+    if args.mapping and not os.path.exists(os.path.join(HERE, "adm1_shape_map.csv")):
+        print("adm1_shape_map.csv not found next to this tool: no mapping change written")
+    elif args.mapping:
         text, changed, check = mapping_update(done)
         with open(os.path.join(folder, "adm1_shape_map.csv"), "w", encoding="utf-8") as f:
             f.write(text)
@@ -674,7 +689,7 @@ def main(argv=None):
     # rollback puts back each row's own key, also when two spellings of one name moved together
     # the specimens already under a new name before the apply are listed too (new_adm1 = adm1: the change and the
     # rollback's first line leave them alone; its second line knows them as not uploaded after the apply)
-    already = " or ".join("(country = %s and binary adm1 = binary %s)" % (q(d["country"]), q(d["target"])) for d in moves(decisions)) or "false"
+    already = " or ".join("(country = %s and binary adm1 = binary %s)" % (q(d["country"]), q(d["target"])) for d in decisions if d["action"] == "rename") or "false"
     try:
         pf.run_sql(db, "create table %s as select id, name, parent, is_valid, valid_name, admin_notes from geolocale where false;"
                        "create table %s as select code, country, adm1, adm1 as new_adm1 from specimen where false;"

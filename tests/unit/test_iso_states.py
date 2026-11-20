@@ -252,6 +252,13 @@ def test_page_text_moves_with_a_rename_and_blocks_a_conflict():
     # the merged state's text joins the kept one, unless both have text
     sql, left, done = iso.statements(d[1:], {}, "20261120", texts={"Bratislavsky": 1, "Bratislavský kraj": 1}, allnames={"Bratislavsky": 1})
     assert not done and "both have page text" in left[0], left
+    # page text and a new name another place already has (page text is keyed by name alone): left out
+    sql, left, done = iso.statements(d[:1], {}, "20261120", texts={"Bratislava": 1}, allnames={iso.normal("Bratislava"): 1, iso.normal("Bratislavský kraj"): 1})
+    assert not done and "another place is already named" in left[0], left
+    # two states of one country renamed to one name: the second is left out
+    two = [dec("rename", 1, "A", "Same", 1, "A"), dec("rename", 2, "B", "Same", 2, "B")]
+    sql, left, done = iso.statements(two, {}, "20261120")
+    assert [x["name"] for x in done] == ["A"] and "renamed Same too" in left[0], left
     # a name longer than a specimen's state can be is left out
     long = "X" * 129
     sql, left, done = iso.statements([dec("rename", 3, "Y", long, 3, "Y")], {}, "20261120")
