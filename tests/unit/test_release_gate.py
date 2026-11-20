@@ -1,4 +1,5 @@
 """The release gate's checks (tools/release/gate.py) and the known-failures list (tests/e2e/known-failures.toml)."""
+import os
 import datetime as dt
 import importlib.util
 from pathlib import Path
@@ -147,7 +148,10 @@ def test_no_site_code():
                               "tests/unit/test_prod_smoke_logic.py", "tools/release/gate.py", "README.md"])
     assert gate.no_site_code([".github/workflows/release-gate.yaml"])
     # the place tools run only by hand need no staging run; the daily place report (host cron, writes) and the site do
-    assert gate.no_site_code(["tools/place/iso_states.py", "tools/place/iso3166_2.tsv", "tests/unit/test_iso_states.py"])
+    for f in ("iso_states.py", "build_iso3166_2.py", "iso3166_2.tsv", "iso3166_countries.tsv", "country_rename.py", "island_countries.py", "place_fix.py"):
+        assert gate.no_site_code(["tools/place/" + f, "tests/unit/test_iso_states.py"]), f
+    assert sorted(gate.HAND_RUN_PLACE_TOOLS) == sorted(["iso_states.py", "build_iso3166_2.py", "iso3166_2.tsv", "iso3166_countries.tsv",
+                                                        "country_rename.py", "island_countries.py", "place_fix.py"])
     for f in ("tools/place/place_daily.py", "tools/place/place_corrections.py", "tools/place/coordinate_country.py",
               "tools/place/adm1_shape_map.csv", "tools/place/antweb-place-daily.cron", "tools/place/sub/iso_states.py",
               "src/org/calacademy/antweb/util/GeolocaleMgr.java"):
@@ -159,6 +163,32 @@ def test_no_site_code():
               "api/v3.1/api.py", "docker/antweb/Dockerfile", ".github/workflows/tests.yaml", "db/upgrade/x.sql"):
         assert not gate.no_site_code(["docs/runbook.md", f]), f
     assert not gate.no_site_code([])
+
+
+def test_the_daily_place_report_uses_no_hand_run_tool():
+    # review of #393: the exemption is by file name, so the scripts the host's cron runs every day (and the site) must
+    # not import or read a tool exempted as hand-run; a mention in a comment or docstring is allowed
+    import re
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
+    place = os.path.join(root, "tools", "place")
+    cron = open(os.path.join(place, "antweb-place-daily.cron"), encoding="utf-8").read()
+    daily = set(re.findall(r"tools/place/(\w+\.py)", cron))
+    assert "place_daily.py" in daily, daily
+    todo, seen = sorted(daily), set()
+    while todo:
+        f = todo.pop()
+        if f in seen:
+            continue
+        seen.add(f)
+        text = open(os.path.join(place, f), encoding="utf-8").read()
+        code = re.sub(r'(?s)""".*?"""', "", text)
+        code = "\n".join(line.split("#")[0] for line in code.splitlines())
+        for name in gate.HAND_RUN_PLACE_TOOLS:
+            stem = name.rsplit(".", 1)[0]
+            assert not re.search(r"\b(import\s+%s|from\s+%s\s+import)\b" % (stem, stem), code) and name not in code, (f, name)
+        todo += [m + ".py" for m in re.findall(r"^\s*(?:import|from)\s+(\w+)", code, re.M) if os.path.exists(os.path.join(place, m + ".py"))]
+        todo += [m for m in re.findall(r'"(\w+\.py)"', code) if os.path.exists(os.path.join(place, m))]
+    assert {"place_daily.py", "coordinate_country.py", "place_corrections.py"} <= seen, seen
 
 
 def test_staged_by_tree():
