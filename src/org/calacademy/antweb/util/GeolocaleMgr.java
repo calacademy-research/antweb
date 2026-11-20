@@ -142,15 +142,12 @@ public class GeolocaleMgr extends Manager {
         // Each state once (2026-11-20): a country reached twice (Panama, id 91, and its old name Panamá, id 8818, both
         // under Central America) brought its states in twice, and the daily box check listed every state of Panama as a
         // duplicate. The places list and the state list both keep each state once; the count dropped is logged.
-        int before = geolocales.size();
-        Set<Integer> adm1Ids = new HashSet<>();
-        geolocales.removeIf(g -> g != null && g.isAdm1() && g.getId() > 0 && !adm1Ids.add(g.getId()));
-        if (geolocales.size() < before) s_log.warn("populateShallow() " + (before - geolocales.size())
-            + " states reached twice (a country reached twice); each kept once");
-        ArrayList<Adm1> newAdm1List = onePerId(geolocales.stream()
+        int twice = onePlacePerId(geolocales);
+        if (twice > 0) s_log.warn("populateShallow() " + twice + " states reached twice (a country reached twice); each kept once");
+        ArrayList<Adm1> newAdm1List = geolocales.stream()
                 .filter(Geolocale::isAdm1)
                 .map(adm1 -> (Adm1) adm1)
-                .collect(Collectors.toList()));
+                .collect(Collectors.toCollection(ArrayList::new));
 
         MultiKeyMap<String, Adm1> newAdm1CountryMap = new MultiKeyMap<>();
         newAdm1List.forEach(adm1 -> newAdm1CountryMap.put(adm1.getName(), adm1.getCountry(), adm1));
@@ -956,16 +953,24 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         return out;
     }
 
-    /** The states in their order, each id once (the first kept); a state with no id is kept as it is. Unit-tested. */
-    public static ArrayList<Adm1> onePerId(List<Adm1> adm1s) {
-        ArrayList<Adm1> out = new ArrayList<>(adm1s.size());
-        Set<Integer> seen = new HashSet<>();
-        for (Adm1 a : adm1s) {
-            if (a == null) continue;
-            if (a.getId() > 0 && !seen.add(a.getId())) continue;
-            out.add(a);
+    /** Removes from the list every state (adm1) met a second time (same id), the first kept; returns how many were
+     *  removed. Other places are left alone. Unit-tested. */
+    public static int onePlacePerId(List<Geolocale> places) {
+        int before = places.size();
+        Set<Integer> ids = new HashSet<>();
+        places.removeIf(g -> g != null && g.isAdm1() && g.getId() > 0 && !ids.add(g.getId()));
+        return before - places.size();
+    }
+
+    /** The children whose parent is the given name exactly (2026-11-20): the database compares names without accents,
+     *  so an old name of a country (Panamá) was given the states of the country (Panama). Unit-tested. */
+    public static <T extends Geolocale> ArrayList<T> ownChildren(String name, List<T> children) {
+        ArrayList<T> own = new ArrayList<>();
+        if (children == null) return own;
+        for (T child : children) {
+            if (child != null && (name == null || child.getParent() == null || name.equals(child.getParent()))) own.add(child);
         }
-        return out;
+        return own;
     }
 
     /** adm1ToStore on the loaded places (the specimen upload, SpecimenUploadParse.parseLine). Null before they are loaded. */

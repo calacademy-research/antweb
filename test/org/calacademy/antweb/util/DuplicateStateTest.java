@@ -132,10 +132,16 @@ public class DuplicateStateTest extends TestCase {
         Adm1 again = adm1(6001, "Bocas del Toro", "Panama", true);           // the same row, a second object
         List<Geolocale> twice = new ArrayList<>(List.of(bocas, chiriqui, bocas, again, chiriqui));
         assertTrue(GeolocaleMgr.duplicateValidStates(twice).isEmpty());
-        List<Adm1> once = GeolocaleMgr.onePerId(new ArrayList<>(List.of(bocas, chiriqui, again, chiriqui)));
-        assertEquals(2, once.size());
-        assertSame(bocas, once.get(0));
-        assertSame(chiriqui, once.get(1));
+        // the places list keeps each state once (the first); other places are left alone
+        List<Geolocale> places = new ArrayList<>(List.of(bocas, chiriqui, again, chiriqui));
+        assertEquals(2, GeolocaleMgr.onePlacePerId(places));
+        assertEquals(2, places.size());
+        assertSame(bocas, places.get(0));
+        assertSame(chiriqui, places.get(1));
+        // the children of Panamá (an old name of Panama) are not Panama's states: the parent must be the name exactly
+        List<Adm1> children = List.of(bocas, chiriqui);
+        assertTrue(GeolocaleMgr.ownChildren("Panamá", children).isEmpty());
+        assertEquals(2, GeolocaleMgr.ownChildren("Panama", children).size());
         // two rows of one state written alike are still a pair
         twice.add(adm1(6003, "Bocas Del Toro", "Panama", true));
         assertEquals(List.of("Panama: Bocas Del Toro / Bocas del Toro"), GeolocaleMgr.duplicateValidStates(twice));

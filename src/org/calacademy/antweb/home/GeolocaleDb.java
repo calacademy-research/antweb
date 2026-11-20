@@ -362,7 +362,10 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 			if ("subregion".equals(geolocale.getGeorank())) childRank = "country";
 			if ("country".equals(geolocale.getGeorank())) childRank = "adm1";
 			if (childRank != null) { // && geolocale.getIsValid()) {
-			  geolocale.setChildren(getGeolocales(childRank, geolocale.getName(), true));
+			  // 2026-11-20: only the places whose parent is this name exactly. The query compares names without accents,
+			  // so the old name Panamá (id 8818, not valid) was given every state of Panama (id 91), and the states
+			  // were loaded twice (the daily box check listed each beside itself).
+			  geolocale.setChildren(GeolocaleMgr.ownChildren(geolocale.getName(), getGeolocales(childRank, geolocale.getName(), true)));
 			  //if ("adm1".equals(childRank) && "Venezuela".equals(geolocale.getName())) A.log("GeolocaleDb.popGeolocale() name:" + geolocale.getName() + " size:" + geolocale.getChildren().size());
 			}
 		  }
