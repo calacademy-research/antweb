@@ -157,8 +157,12 @@ public final class BoxCheck {
                 }
             }
             List<Tally> wrong = wrongBoxes(tallies.values(), MIN_FLAGGED, PERCENT);
-            String line = line(wrong, checkedStates(tallies.values(), MIN_FLAGGED, PERCENT), withoutBox(tallies.values())) + " (" + (System.currentTimeMillis() - started) / 1000 + " s)";
-            if (!wrong.isEmpty()) {
+            String line = line(wrong, checkedStates(tallies.values(), MIN_FLAGGED, PERCENT), withoutBox(tallies.values()));
+            // 2026-11-19: valid states of one country written alike (the duplicates of the 2021 Geonames and Geonet
+            // loads, merged that day) are reported here too, so a new one is caught the next morning.
+            List<String> twins = GeolocaleMgr.duplicateValidStates(GeolocaleMgr.getValidAdm1s());
+            line += duplicatesLine(twins) + " (" + (System.currentTimeMillis() - started) / 1000 + " s)";
+            if (!wrong.isEmpty() || !twins.isEmpty()) {
                 s_log.warn("run() " + line);
                 AdminAlertMgr.addIfFresh(line, TITLE, AdminAlertMgr.WEEK, connection);
                 DailyUpdate.noteWarning("boxCheck", line);
@@ -169,6 +173,16 @@ public final class BoxCheck {
             DailyUpdate.noteFailed("boxCheck", String.valueOf(e));
             return TITLE + " FAILED e:" + e;
         }
+    }
+
+    /** The part of the line for valid states written alike ("" when there are none). Unit-tested. */
+    public static String duplicatesLine(List<String> twins) {
+        if (twins == null || twins.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder("; DUPLICATE STATES: " + twins.size() + (twins.size() == 1 ? " pair" : " pairs")
+            + " of valid states written alike (make one an old name of the other in the Geolocale Manager): ");
+        for (int i = 0; i < Math.min(LISTED, twins.size()); i++) sb.append(i == 0 ? "" : "; ").append(twins.get(i));
+        if (twins.size() > LISTED) sb.append("; and ").append(twins.size() - LISTED).append(" more");
+        return sb.toString();
     }
 
     /** null for a name that is not a valid state (the upload check does not check it either). */
