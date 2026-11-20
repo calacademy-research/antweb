@@ -281,10 +281,12 @@ public final class EditGeolocaleAction extends AntwebAction {
      *  save that needs the check waits (PLACES_LOADING); a save that does not need it goes ahead. */
     public static String duplicateState(EditGeolocaleForm form, Geolocale current, java.util.Collection<? extends Geolocale> validAdm1s) {
         if (current == null || !"adm1".equals(current.getGeorank()) || !form.isValid()) return null;
-        String name = form.getName() != null && !form.getName().trim().isEmpty() ? form.getName().trim() : current.getName();
-        String parent = form.getParent() != null && !form.getParent().trim().isEmpty() ? form.getParent().trim() : current.getParent();
         String stored = current.getName() == null ? "" : current.getName().trim();
         String storedParent = current.getParent() == null ? null : current.getParent().trim();
+        // a field the form leaves out keeps the stored value, trimmed like the comparison (review of #387: a box-only
+        // save of "Taita Taveta " was taken for a rename)
+        String name = form.getName() != null && !form.getName().trim().isEmpty() ? form.getName().trim() : stored;
+        String parent = form.getParent() != null && !form.getParent().trim().isEmpty() ? form.getParent().trim() : storedParent;
         if (current.isValid() && name.equals(stored) && parent != null && parent.equals(storedParent)) return null;
         if (validAdm1s == null) return PLACES_LOADING;
         Geolocale other = GeolocaleMgr.validStateWrittenAlike(validAdm1s, parent, name, current.getId());
