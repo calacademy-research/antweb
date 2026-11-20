@@ -151,7 +151,7 @@ def display(iso_name):
     return re.sub("[\u2018\u2019\u02bb\u02bc]", "'", n)
 
 
-Sub = collections.namedtuple("Sub", "code country type parent name others")
+Sub = collections.namedtuple("Sub", "code country type parent name others shapes", defaults=((),))
 
 
 def read_iso(path=ISO_FILE):
@@ -160,8 +160,9 @@ def read_iso(path=ISO_FILE):
         for line in f:
             if line.startswith("#") or not line.strip():
                 continue
-            code, country, kind, parent, name, others = (line.rstrip("\n").split("\t") + [""] * 6)[:6]
-            subs[country].append(Sub(code, country, kind, parent, name, [o for o in others.split(" | ") if o]))
+            code, country, kind, parent, name, others, shapes = (line.rstrip("\n").split("\t") + [""] * 7)[:7]
+            subs[country].append(Sub(code, country, kind, parent, name, [o for o in others.split(" | ") if o],
+                                     [o for o in shapes.split(" | ") if o]))
     return subs
 
 
@@ -189,7 +190,7 @@ def iso_names(sub):
 
 
 def sub_names(sub):
-    return iso_names(sub) + sub.others
+    return iso_names(sub) + list(sub.others) + list(sub.shapes)
 
 
 def shorter(name, sub):
@@ -205,34 +206,39 @@ def match_country(states, subs, english=False):
     an old name of it); reported [(state, reason)]. english: a country written in another script (ENGLISH): no
     rename; of states that are one, the one not written as ISO (the English name) is kept."""
     by_code = {s.code: s for s in subs}
-    own = collections.defaultdict(set)          # ISO's own names first: the other names (translations, the boundary
-    exact = collections.defaultdict(set)        # file's shape names) are matched only when no ISO name is. The
-    looser = collections.defaultdict(set)       # boundary file has codes on the wrong shapes (its Distrito Federal
-    for s in subs:                              # carries México state's code, its Niamey Tillabéri's)
-        for n in iso_names(s):
-            if key(n):
-                own[key(n)].add(s.code)
+    # Names in tiers, best first: ISO's own names, ISO's translations, then the boundary file's shape names, whose ISO
+    # codes are wrong on some shapes (its Distrito Federal carries México state's code, its Niamey Tillabéri's). The
+    # state's own name is tried before its old names in each of the first two tiers: an old name can be a finer unit
+    # filed under the state (AntWeb has Cordoba as an old name of Andalusia; Andalusia is the community by its English
+    # name, not Córdoba).
+    own, trans, shapes = (collections.defaultdict(set) for _ in range(3))
+    looser = collections.defaultdict(set)
+    for s in subs:
+        for index, names in ((own, iso_names(s)), (trans, s.others), (shapes, s.shapes)):
+            for n in names:
+                if key(n):
+                    index[key(n)].add(s.code)
         for n in sub_names(s):
-            if key(n):
-                exact[key(n)].add(s.code)
             if loose(n):
                 looser[loose(n)].add(s.code)
     hits, how = {}, {}
     for st in states:
-        # the state's own name first, its old names only when its name matches nothing: an old name can be a finer unit
-        # filed under the state (AntWeb has Cordoba as an old name of Andalusia; it must not make Andalusia Córdoba)
-        h, other = set(own.get(key(st.name), set())), set(exact.get(key(st.name), set()))
-        if not h and not other:
-            for n in st.old_names:
-                h |= own.get(key(n), set())
-                other |= exact.get(key(n), set())
-        # an other name joins an ISO-name hit only when the state is that subdivision's ISO name with generic words left
-        # out (Madrid: the province by name, Comunidad de Madrid by its English name; the kind decides below)
+        name, olds = [st.name], list(st.old_names)
+        tiers = [(own, name), (trans, name), (own, olds), (trans, olds), (shapes, name), (shapes, olds)]
+        h, tier = set(), None
+        for i, (index, names) in enumerate(tiers):
+            for n in names:
+                h |= index.get(key(n), set())
+            if h:
+                tier = i
+                break
+        # a translation or shape name joins the state's own ISO-name hit only when the state is that subdivision's ISO
+        # name with generic words left out (Madrid: the province by name, Comunidad de Madrid by its English name; the
+        # kind decides below)
         words = set(key(st.name).split())
-        if not words:                            # a name of punctuation only: no rule to apply
-            h = h or other
-        else:
-            h = (h | {c for c in other - h if any(words <= set(key(n).split()) for n in iso_names(by_code[c]))}) if h else other
+        if tier == 0 and words:
+            other = trans.get(key(st.name), set()) | shapes.get(key(st.name), set())
+            h |= {c for c in other - h if any(words <= set(key(n).split()) for n in iso_names(by_code[c]))}
         if h:
             hits[st.id], how[st.id] = h, "exact"
         else:
@@ -393,7 +399,7 @@ def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, 
     for (c, n), rows in names.items():
         for i, v, vn in rows:
             if v != 1 and vn:
-                own[(c, vn)][normal(n)] += 1
+                own[(c, normal(vn))][normal(n)] += 1
 
     def shared(name):
         """How many places have this name for page text (accents and capitals aside)."""
@@ -401,7 +407,7 @@ def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, 
 
     def others(name, country):
         """Places other than the state itself and its own old names that have this name (accents and capitals aside)."""
-        return shared(name) - 1 - own[(country, name)][normal(name)]
+        return shared(name) - 1 - own[(country, normal(name))][normal(name)]
 
     def move_text(old, new, country):
         """Page text of old to new (when old has text and no other place has that name): SQL, recorded for the rollback."""
@@ -469,8 +475,11 @@ def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, 
         if d["action"] != "alias":
             continue
         c, name, iso = d["country"], d["name"], d["iso"]
-        if names.get((c, iso)) or (c, iso) in targets:
+        if names.get((c, iso)):
             left.append("%s: %s, a row named %s exists already (ISO name not added)" % (c, name, iso))
+            continue
+        if (c, iso) in targets:
+            left.append("%s: %s, another state of %s takes the name %s in this run (ISO name not added)" % (c, name, c, iso))
             continue
         targets.add((c, iso))
         done.append(d)

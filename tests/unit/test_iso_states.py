@@ -216,7 +216,6 @@ def test_the_mapping_file_follows_the_renames():
     assert "name,Sweden,ADM1,Gotlands län,Gotland,the same name" not in lines
     assert "name,Croatia,ADM1,Split-Dalmatia,Splitsko-dalmatinska županija,Croatian name" in lines, lines
     assert "convert,Malawi,Central,Northern,Southern Region" in lines
-    # a convert line keeps each name once (ARMM renamed to the name the line already has)
     assert "United States,ADM1,District of Columbia,\"Washington, D.C.\"" not in lines         # now by name: dropped
     assert "name,Norway,ADM1,Oslo,Oslo,untouched" in lines and [n for n, l in check] == [6]
     with open(path, "a", encoding="utf-8") as f:
@@ -298,6 +297,11 @@ def test_the_name_comes_before_old_names():
     d, rep = iso.match_country([st(1, "Andalusia", 247, olds=("Cordoba",)), st(2, "Catalonia", 302), st(3, "Madrid", 41), st(4, "Murcia", 22)], es)
     got = {s.name: sub.code for a, s, sub, k in d}
     assert got["Andalusia"] == "ES-AN", got
+    # but an old name written as ISO's own name counts before the boundary file's shape names (review of #396): a state
+    # "Distrito Federal" with the old name Ciudad de México is Mexico City, not México state (whose shape carries DF)
+    mx = iso.read_iso()["MX"]
+    d, rep = iso.match_country([st(1, "Distrito Federal", 5, olds=("Ciudad de México",)), st(2, "México", 40)], mx)
+    assert ("Distrito Federal", "MX-CMX") in {(s.name, sub.code) for a, s, sub, k in d} and not [x for x in d if x[0] == "merge"], d
 
 
 def test_capitals_only_and_apostrophes():
@@ -309,6 +313,9 @@ def test_capitals_only_and_apostrophes():
 
 def test_the_iso_file_reads():
     subs = iso.read_iso()
+    # translations and the boundary file's shape names are separate columns
+    mex = [x for x in subs["MX"] if x.code == "MX-MEX"][0]
+    assert "Mexico" in mex.others and "Distrito Federal" in mex.shapes and "Distrito Federal" not in mex.others
     assert len(subs["IT"]) > 100 and any(s.name == "Sicilia" for s in subs["IT"])
     c = iso.read_countries()
     assert c[iso.key("Russia")] == "RU" and c[iso.key("United States")] == "US" and c[iso.key("Türkiye")] == "TR"
