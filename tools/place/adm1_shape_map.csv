@@ -120,12 +120,12 @@ within,Madagascar,Anosy,Toliara
 within,Madagascar,Atsimo-Andrefana,Toliara
 within,Madagascar,Menabe,Toliara
 # Seychelles (Brian Fisher, 2026-11-10). The shape La Digue is AntWeb's state Inner Islands. The shape Other
-# Islands is the state Outer Islands, which AntWeb does not have yet. The two shapes have these names at the
+# Islands is the state Outer Islands (added to AntWeb since; valid on 2026-11-19). The two shapes have these names at the
 # second and the third level of the file (read 2026-11-10); the row of the level the tool uses counts.
 Seychelles,ADM2,La Digue,Inner Islands
 Seychelles,ADM3,La Digue,Inner Islands
-Seychelles,ADM2,Other Islands,Outer Islands,new
-Seychelles,ADM3,Other Islands,Outer Islands,new
+Seychelles,ADM2,Other Islands,Outer Islands
+Seychelles,ADM3,Other Islands,Outer Islands
 # Mexico. The file gives four states their long official names, and the capital its name before 2016.
 Mexico,ADM1,Coahuila de Zaragoza,Coahuila
 Mexico,ADM1,Michoacan de Ocampo,Michoacán
@@ -426,7 +426,7 @@ name,Philippines,ADM2,Mountain Province,Mountain,the same province
 # was divided in 2003 (now Rundu Rural in Kavango East and Ncuncuni in Kavango West): no line, so a point in it
 # gets no proposal.
 name,Namibia,ADM1,Caprivi,Zambezi,renamed Zambezi in 2013
-split,Namibia,Kavango,ADM2,Kahenge,Kavango West,2013: Kavango divided into Kavango East and Kavango West; Kahenge divided into Tondoro, Musese and Mankumpi
+split,Namibia,Kavango,ADM2,Kahenge,Kavango West,"2013: Kavango divided into Kavango East and Kavango West; Kahenge divided into Tondoro, Musese and Mankumpi"
 split,Namibia,Kavango,ADM2,Kapako,Kavango West,2013
 split,Namibia,Kavango,ADM2,Mpungu,Kavango West,2013
 split,Namibia,Kavango,ADM2,Mashare,Kavango East,2013
@@ -484,7 +484,6 @@ name,Poland,ADM1,Podlaskie Voivodeship,Podlaskie,the same voivodeship
 name,Portugal,ADM1,Região Autónoma dos Açores,Azores,the same autonomous region
 name,Portugal,ADM1,Região Autónoma da Madeira,Madeira,the same autonomous region
 name,Malaysia,ADM1,Malacca,Melaka,Malay name
-name,Trinidad and Tobago,ADM1,Rio Claro-Mayaro,Mayaro-Rio Claro,the same region
 name,Uganda,ADM3,Rubirzi,Rubirizi,spelling of the same district
 name,Uganda,ADM3,Ssembabule,Sembabule,spelling of the same district
 #
