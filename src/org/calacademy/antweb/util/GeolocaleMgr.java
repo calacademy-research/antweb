@@ -436,6 +436,12 @@ public class GeolocaleMgr extends Manager {
         return validCountries;
     }
 
+    /** The valid states, or null while the state list is not loaded (start-up): for the Geolocale Manager's duplicate
+     *  check, which then waits (review of #387). getValidAdm1s() itself is unchanged. */
+    public static @Nullable ArrayList<Geolocale> getValidAdm1sOrNull() {
+        return adm1List == null ? null : getValidAdm1s();
+    }
+
     public static @NotNull ArrayList<Geolocale> getValidAdm1s() {
         return adm1List.stream().filter(Adm1::isValid).collect(Collectors.toCollection(ArrayList::new));
     }
