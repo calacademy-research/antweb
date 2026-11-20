@@ -390,3 +390,241 @@ name,Macedonia,ADM2,Studenichani,Studeničani,"the same name: the file writes ts
 name,Macedonia,ADM2,Chair,Čair,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
 name,Macedonia,ADM2,Chucher - Sandevo,Čučer-Sandevo,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
 name,Macedonia,ADM2,Shuto Orizari,Šuto Orizari,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
+#
+# 2026-11-19: the countries whose shapes and AntWeb's states did not match after the merges of duplicate states
+# that day. AntWeb's valid states read on www.antweb.org (the country pages) and the shape names read in the
+# geoBoundaries files at GB_COMMIT, both on 2026-11-19. Every line below was checked by the two lists.
+#
+# Old coarser units that are AntWeb states beside the finer ones (Brian Fisher, 2026-11-19: specimens filed under
+# an old split unit are fixed by their coordinates). A specimen with coordinates gets the state of the shape it
+# lies in; one without keeps its stored unit. No "within" lines: these units are not used for a check.
+#   Kenya: the eight provinces gave way to the 47 counties (Constitution of 2010, counties in place 2013).
+#   Dominican Republic: the ten development regions (Decreto 710-04) are groups of provinces.
+#   Morocco: the 16 regions of 1997 gave way to the 12 of 2015 (Décret 2-15-40); the 2015 regions are the shapes.
+#   Fiji: the four divisions are groups of provinces; the provinces are AntWeb's states (geoBoundaries ADM2).
+#   Malawi: the three regions are groups of districts; the districts are AntWeb's states (geoBoundaries ADM2).
+#   Uganda: the four regions and the kingdom of Buganda are groups of districts (geoBoundaries ADM3).
+#   Philippines: the regions are groups of provinces (geoBoundaries ADM2); Negros Island Region made in 2024.
+#   The National Capital Region is kept: it is AntWeb's state for Metro Manila, drawn as four districts.
+convert,Kenya,Central,Coast,Eastern,North-Eastern,Nyanza,Rift Valley
+convert,Dominican Republic,Cibao Nordeste,Cibao Noroeste,Cibao Norte,Cibao Sur,El Valle,Enriquillo,Higuamo,Ozama,Valdesia,Yuma
+convert,Morocco,Chaouia-Ouardigha,Doukkala-Abda,Fes-Boulemane,Gharb-Chrarda-Beni Hssen,Grand Casablanca,Guelmim-Es Semara,Marrakech-Tensift-Al Haouz,Meknes-Tafilalet,Oued Ed-Dahab-Lagouira,Rabat-Sale-Zemmour-Zaer,Souss-Massa-Draa,Tadla-Azilal,Taza-Al Hoceima-Taounate
+convert,Fiji,Central,Eastern,Northern,Western
+convert,Malawi,Central,Northern,Southern
+convert,Uganda,Buganda,Central,Eastern,Northern,Western
+convert,Philippines,ARMM,Autonomous Region in Muslim Mindanao,Bicol,Cagayan Valley,Calabarzon,Caraga,Central Luzon,Central Visayas,Cordillera,Davao,Eastern Visayas,Ilocos,Mimaropa,Negros Island,Northern Mindanao,Soccsksargen,Western Visayas,Zamboanga Peninsula
+Philippines,ADM2,"NCR, City of Manila, First District",National Capital
+Philippines,ADM2,"NCR, Second District",National Capital
+Philippines,ADM2,"NCR, Third District",National Capital
+Philippines,ADM2,"NCR, Fourth District",National Capital
+name,Philippines,ADM2,Mountain Province,Mountain,the same province
+#
+# Namibia: Caprivi was renamed Zambezi in 2013, and Kavango was divided into Kavango East and Kavango West (Fourth
+# Delimitation Commission, 2013). geoBoundaries still has the old regions; its constituencies (ADM2) are older
+# than 2013 too. Source: https://en.wikipedia.org/wiki/List_of_constituencies_of_Namibia and the pages of the
+# constituencies Rundu Rural and Kahenge, read 2026-11-19. The file's Rundu Rural is the constituency before it
+# was divided in 2003 (now Rundu Rural in Kavango East and Ncuncuni in Kavango West): no line, so a point in it
+# gets no proposal.
+name,Namibia,ADM1,Caprivi,Zambezi,renamed Zambezi in 2013
+split,Namibia,Kavango,ADM2,Kahenge,Kavango West,2013: Kavango divided into Kavango East and Kavango West; Kahenge divided into Tondoro, Musese and Mankumpi
+split,Namibia,Kavango,ADM2,Kapako,Kavango West,2013
+split,Namibia,Kavango,ADM2,Mpungu,Kavango West,2013
+split,Namibia,Kavango,ADM2,Mashare,Kavango East,2013
+split,Namibia,Kavango,ADM2,Mukwe,Kavango East,2013
+split,Namibia,Kavango,ADM2,Ndiyona,Kavango East,2013
+split,Namibia,Kavango,ADM2,Rundu Urban,Kavango East,2013
+#
+# Other names of the same state (English or a short form in the file, the national language or another
+# spelling in AntWeb).
+name,Chile,ADM1,Región de Aysén del Gral.Ibañez del Campo,Aysén,the same region
+name,Panama,ADM1,Comarca Guna Yala,Kuna Yala,the same comarca (Guna is the current spelling)
+name,Panama,ADM1,Comarca Emberá-Wounaan,Emberá-Wounaan,the same comarca
+name,Croatia,ADM1,Bjelovar-Bilogora,Bjelovarsko-Bilogorska,Croatian name
+name,Croatia,ADM1,Brod-Posavina,Brodsko-Posavska,Croatian name
+name,Croatia,ADM1,City of Zagreb,Grad Zagreb,Croatian name
+name,Croatia,ADM1,Dubrovnik-Neretva,Dubrovačko-Neretvanska,Croatian name
+name,Croatia,ADM1,Istria,Istarska,Croatian name
+name,Croatia,ADM1,Karlovac,Karlovačka,Croatian name
+name,Croatia,ADM1,Koprivnica-Križevci,Koprivničko-Križevačka,Croatian name
+name,Croatia,ADM1,Krapina-Zagorje,Krapinsko-Zagorska,Croatian name
+name,Croatia,ADM1,Lika-Senj,Ličko-Senjska,Croatian name
+name,Croatia,ADM1,Međimurje,Međimurska,Croatian name
+name,Croatia,ADM1,Osijek-Baranja,Osječko-Baranjska,Croatian name
+name,Croatia,ADM1,Požega-Slavonia,Požeško-Slavonska,Croatian name
+name,Croatia,ADM1,Sisak-Moslavina,Sisačko-Moslavačka,Croatian name
+name,Croatia,ADM1,Varaždin,Varaždinska,Croatian name
+name,Croatia,ADM1,Virovitica-Podravina,Virovitičko-Podravska,Croatian name
+name,Croatia,ADM1,Vukovar-Syrmia,Vukovarsko-Srijemska,Croatian name
+name,Croatia,ADM1,Zagreb County,Zagrebačka,Croatian name
+name,Uzbekistan,ADM1,Andijan Region,Andijon,Uzbek spelling
+name,Uzbekistan,ADM1,Fergana Region,Farg'ona,Uzbek spelling
+name,Uzbekistan,ADM1,Namangan Region,Namangan,the same region
+name,Uzbekistan,ADM1,Navoiy Region,Navoiy,the same region
+name,Uzbekistan,ADM1,Qashqadaryo Region,Qashqadaryo,the same region
+name,Uzbekistan,ADM1,Republic of Karakalpakstan,Qoraqalpog'iston,Uzbek spelling
+name,Uzbekistan,ADM1,Samarqand Region,Samarqand,the same region
+name,Uzbekistan,ADM1,Sirdaryo Region,Sirdaryo,the same region
+name,Uzbekistan,ADM1,Surxondaryo Region,Surxondaryo,the same region
+name,Uzbekistan,ADM1,Tashkent Region,Toshkent,Uzbek spelling: the region
+name,Uzbekistan,ADM1,Tashkent,Toshkent Shahri,Uzbek spelling: the city
+name,Uzbekistan,ADM1,Xorazm Region,Xorazm,the same region
+name,Dominican Republic,ADM1,Bahoruco,Baoruco,spelling of the same province
+name,Dominican Republic,ADM1,El Seybo,El Seibo,spelling of the same province
+name,Dominican Republic,ADM1,Hermanas,Hermanas Mirabal,the same province (Salcedo until 2007)
+name,Dominican Republic,ADM1,Distrito Nacional,Nacional,the same district
+name,Dominican Republic,ADM1,La Estrelleta,Elías Piña,the same province (La Estrelleta until 1972)
+name,Morocco,ADM1,Rabat-Salé-Kenitra,Rabat-Salé-Kénitra,spelling of the same region
+name,Thailand,ADM1,Buri Ram Province,Buriram,spelling of the same province
+name,Thailand,ADM1,Lopburi Province,Lop Buri,spelling of the same province
+name,Thailand,ADM1,Saraburi Province,Sara Buri,spelling of the same province
+name,Thailand,ADM1,Si Sa Ket Province,Sisaket,spelling of the same province
+name,Poland,ADM1,Kuyavian-Pomeranian Voivodeship,Kujawsko-Pomorskie,Polish name
+name,Poland,ADM1,Lubusz Voivodeship,Lubuskie,Polish name
+name,Poland,ADM1,Podlaskie Voivodeship,Podlaskie,the same voivodeship
+name,Portugal,ADM1,Região Autónoma dos Açores,Azores,the same autonomous region
+name,Portugal,ADM1,Região Autónoma da Madeira,Madeira,the same autonomous region
+name,Malaysia,ADM1,Malacca,Melaka,Malay name
+name,Trinidad and Tobago,ADM1,Rio Claro-Mayaro,Mayaro-Rio Claro,the same region
+name,Uganda,ADM3,Rubirzi,Rubirizi,spelling of the same district
+name,Uganda,ADM3,Ssembabule,Sembabule,spelling of the same district
+#
+# Seychelles: the districts of the file's ADM1 have their names cut to ten letters. Grand Anse (on Praslin) and
+# Grand'Anse (on Mahé) have no line: the tool reads the two names as one, so the specimens decide them.
+name,Seychelles,ADM1,Anse Aux P,Anse aux Pins,the name cut short in the file
+name,Seychelles,ADM1,Anse Boile,Anse Boileau,the name cut short in the file
+name,Seychelles,ADM1,Anse Etoil,Anse Etoile,the name cut short in the file
+name,Seychelles,ADM1,Anse Royal,Anse Royale,the name cut short in the file
+name,Seychelles,ADM1,Baie Lazar,Baie Lazare,the name cut short in the file
+name,Seychelles,ADM1,Baie Saint,Baie Sainte Anne,the name cut short in the file
+name,Seychelles,ADM1,Beau Vallo,Beau Vallon,the name cut short in the file
+name,Seychelles,ADM1,La Digue a,Inner Islands,the name cut short in the file (La Digue and Inner Islands)
+name,Seychelles,ADM1,La Rivière,English River,the same district (La Rivière Anglaise)
+name,Seychelles,ADM1,Les Mamell,Les Mamelles,the name cut short in the file
+name,Seychelles,ADM1,Mont Buxto,Mont Buxton,the name cut short in the file
+name,Seychelles,ADM1,Mont Fleur,Mont Fleuri,the name cut short in the file
+name,Seychelles,ADM1,Outer Isla,Outer Islands,the name cut short in the file
+name,Seychelles,ADM1,Pointe La,Pointe Larue,the name cut short in the file
+name,Seychelles,ADM1,Roche Caïm,Roche Caiman,the name cut short in the file
+name,Seychelles,ADM1,Saint Loui,Saint Louis,the name cut short in the file
+#
+# Argentina and Trinidad and Tobago: geoBoundaries has no shape for Entre Ríos (612 specimens) or for Arima; Natural
+# Earth has every province and region of the two (read 2026-11-19), so it is their source.
+source,Argentina,naturalearth
+source,Trinidad and Tobago,naturalearth
+name,Argentina,NE,Ciudad de Buenos Aires,Ciudad Autónoma de Buenos Aires,the same city
+name,Trinidad and Tobago,NE,Rio Claro-Mayaro,Mayaro-Rio Claro,the same region
+Trinidad and Tobago,NE,Eastern Tobago,Tobago
+Trinidad and Tobago,NE,Western Tobago,Tobago
+#
+# 2026-11-19, the countries at another level (Brian Fisher: no biological question here; follow the current units,
+# and update them about once a year). AntWeb's valid states read on the country pages, shapes in geoBoundaries and
+# Natural Earth, all on 2026-11-19.
+#   United Kingdom: England, Scotland, Wales and Northern Ireland were valid states beside the local authorities;
+#   they are converted by coordinates, and the local authorities (geoBoundaries ADM2) are the states.
+convert,United Kingdom,England,Northern Ireland,Scotland,Wales
+#   Ireland: the four provinces were valid beside the counties; converted by coordinates. Natural Earth draws the
+#   counties (geoBoundaries ADM2 is the local electoral areas); it still has North and South Tipperary (one county
+#   since 2014).
+source,Ireland,naturalearth
+convert,Ireland,Connaught,Leinster,Munster,Ulster
+name,Ireland,NE,Laoighis,Laois,Irish spelling of the same county
+Ireland,NE,North Tipperary,Tipperary
+Ireland,NE,South Tipperary,Tipperary
+#   Norway: the counties since 1 January 2024. Eleven are the counties before 2020 again; four are mergers of two:
+#   Innlandet (Hedmark, Oppland), Agder (Aust-Agder, Vest-Agder), Vestland (Hordaland, Sogn og Fjordane), Trøndelag
+#   (Nord-Trøndelag, Sør-Trøndelag; since 2018). geoBoundaries has the counties of 2020-2023 (Viken ...); Natural
+#   Earth has the 19 before 2020, each wholly in one county of today.
+source,Norway,naturalearth
+Norway,NE,Hedmark,Innlandet
+Norway,NE,Oppland,Innlandet
+Norway,NE,Aust-Agder,Agder
+Norway,NE,Vest-Agder,Agder
+Norway,NE,Hordaland,Vestland
+Norway,NE,Sogn og Fjordane,Vestland
+Norway,NE,Nord-Trøndelag,Trøndelag
+Norway,NE,Sør-Trøndelag,Trøndelag
+#   Nepal: the seven provinces of the Constitution of 2015 replaced the 14 zones. The zones that lie wholly in one
+#   province become old names of it in AntWeb; the five split between two provinces (Sagarmatha, Janakpur, Narayani,
+#   Rapti, Bheri) are converted by coordinates. geoBoundaries still numbers two provinces (named Koshi and Madhesh
+#   in 2023).
+convert,Nepal,Sagarmāthā,Janakpur,Nārāyanī,Rāptī,Bherī
+name,Nepal,ADM1,Province 1,Koshi,named Koshi in 2023
+name,Nepal,ADM1,Province 2,Madhesh,named Madhesh in 2022
+name,Nepal,ADM1,Sudurpaschim,Sudurpashchim,spelling of the same province
+#   Iceland: the eight regions under their Icelandic names (the English names are old names in AntWeb).
+name,Iceland,ADM1,Capital Region,Höfuðborgarsvæði,English name of the region
+name,Iceland,ADM1,Eastern Region,Austurland,English name of the region
+name,Iceland,ADM1,Northeastern Region,Norðurland Eystra,English name of the region
+name,Iceland,ADM1,Northwestern Region,Norðurland Vestra,English name of the region
+name,Iceland,ADM1,Southern Peninsula,Suðurnes,English name of the region
+name,Iceland,ADM1,Southern Region,Suðurland,English name of the region
+name,Iceland,ADM1,Western Region,Vesturland,English name of the region
+name,Iceland,ADM1,Westfjords,Vestfirðir,English name of the region
+#   Oman: the eleven governorates of 2011. geoBoundaries has the regions before 2011; Natural Earth has the eleven.
+source,Oman,naturalearth
+name,Oman,NE,Ad Dakhliyah,Ad Dākhilīyah,spelling of the same governorate
+name,Oman,NE,Al Batnah North,Al Batinah North,spelling of the same governorate
+name,Oman,NE,Al Batnah South,Al Batinah South,spelling of the same governorate
+name,Oman,NE,Al Buraymi,Al Buraimi,spelling of the same governorate
+name,Oman,NE,Al Dhahira,Az̧ Z̧āhirah,spelling of the same governorate
+name,Oman,NE,Muscat,Masqaţ,spelling of the same governorate
+#   Slovenia: the municipalities are the states (geoBoundaries ADM2). The file spoils the letters č, š and ž
+#   (Brežice is Bretice, Škofja Loka is Mkofja Loka); each line below was paired by the rest of the name.
+name,Slovenia,ADM2,Koper / Capodistria,Koper,Slovene and Italian name
+name,Slovenia,ADM2,Piran / Pirano,Piran,Slovene and Italian name
+name,Slovenia,ADM2,Izola / Isola,Izola,Slovene and Italian name
+name,Slovenia,ADM2,Ankaran / Ancarano,Ankaran,Slovene and Italian name
+name,Slovenia,ADM2,Ajdovtcina,Ajdovščina,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Bretice,Brežice,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Centjernej,Šentjernej,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Cetale,Žetale,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Ckocjan,Škocjan,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Crencovci,Črenšovci,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Crna na Koroakem,Črna na Koroškem,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Domcale,Domžale,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Gelezniki,Železniki,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Goriunica,Gorišnica,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Hodoj,Hodos,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Ikofljica,Škofljica,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Jurkinci,Juršinci,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Kalovci,Šalovci,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Krcko,Krško,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Kritevci,Križevci,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Labko,Laško,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Lentjur,Sentjur,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Lmarje pri Jelcah,Šmarje pri Jelšah,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Ltore,Štore,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Majrperk,Majšperk,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Mengel,Mengeš,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Miklavl na Dravskem polju,Miklavž na Dravskem Polju,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Mkofja Loka,Škofja Loka,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Nempeter-Vrtojba,Šempeter-Vrtojba,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Ormo,Ormož,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Pentilj,Šentilj,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Ravne na Korokkem,Ravne na Koroškem,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Razkrirje,Razkrižje,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Rmartno pri Litiji,Šmartno pri Litiji,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Rogaoovci,Rogašovci,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Rogatka Slatina,Rogaška Slatina,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Rube,Ruše,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Senana,Sežana,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Siri,Žiri,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Smarjepke Toplice,Šmarješke Toplice,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Sodracica,Sodražica,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Sredikce ob Dravi,Središče ob Dravi,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Star-e,Starše,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Straca,Straža,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Suremberk,Žužemberk,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Sveti Andrac v Slov. goricah,Sveti Andraž v Slovenskih Goricah,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Sveti Jurij ob lcavnici,Sveti Jurij ob Ščavnici,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Sveti Tomaa,Sveti Tomaž,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Tigina,Tišina,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Tirovnica,Žirovnica,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Trsic,Tržič,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Turnicce,Turnišče,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Valec,Žalec,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Velike La,Velike Lašče,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Vencur,Šenčur,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Vertej,Veržej,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Vmartno ob Paki,Šmartno ob Paki,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Voatanj,Šoštanj,the letters č/š/ž spoilt in the file
