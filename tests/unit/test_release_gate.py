@@ -146,6 +146,9 @@ def test_no_site_code():
     assert gate.no_site_code(["tests/smoke/prod_smoke.py", ".github/workflows/prod-speed.yaml", "docs/runbook.md",
                               "tests/unit/test_prod_smoke_logic.py", "tools/release/gate.py", "README.md"])
     assert gate.no_site_code([".github/workflows/release-gate.yaml"])
+    # the place tools run by hand or by the host's place report, not by the site
+    assert gate.no_site_code(["tools/place/iso_states.py", "tools/place/adm1_shape_map.csv", "tests/unit/test_iso_states.py"])
+    assert not gate.no_site_code(["tools/place/iso_states.py", "src/org/calacademy/antweb/util/GeolocaleMgr.java"])
     # markdown at the top level only: one inside the site needs staging
     assert not gate.no_site_code(["web/help/howto.md"]) and not gate.no_site_code(["docker/antweb/NOTES.md"])
     # anything of the site, the e2e tests (they run against staging) or the other workflows needs staging

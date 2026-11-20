@@ -80,10 +80,11 @@ NIGHTLY_PATHS = [
 
 
 # Files that are not part of the site: a PR that changes only these needs no staging run (check 2). Production smoke
-# and speed checks, unit tests, docs and the release tools run on GitHub or by hand, never on the site. tests/e2e is
-# not here: e2e tests run against staging.
+# and speed checks, unit tests, docs and the release tools run on GitHub or by hand, never on the site. The place
+# tools (tools/place: run by hand or by the host's place report cron, tested by tests/unit) are not part of the site
+# either and no e2e test runs them. tests/e2e is not here: e2e tests run against staging.
 NO_SITE_PATHS = [
-    "docs/*", "release-notes/*", "tools/release/*", "tests/unit/*", "tests/smoke/*",
+    "docs/*", "release-notes/*", "tools/release/*", "tools/place/*", "tests/unit/*", "tests/smoke/*",
     ".github/workflows/prod-*.yaml", ".github/workflows/release-gate.yaml",
 ]
 
