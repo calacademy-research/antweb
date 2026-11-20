@@ -252,7 +252,7 @@ def test_level_is_chosen_by_how_the_names_fit():
 
 def test_mapping_file_of_the_repository():
     rows = pc.read_map(pc.MAP_FILE)
-    assert all(len(r) == 4 and r[1] in pc.LEVELS for r in rows) and ("country", "level", "shape", "antweb_state") not in rows and len(rows) == 18
+    assert all(len(r) == 4 and r[1] in pc.LEVELS for r in rows) and ("country", "level", "shape", "antweb_state") not in rows and len(rows) == 22
     with open(pc.MAP_FILE, "rb") as f:
         assert b"\r" not in f.read()
     assert ("Mexico", "ADM1", "Coahuila de Zaragoza", "Coahuila") in rows and ("United States", "ADM1", "District of Columbia", "Washington, D.C.") in rows
@@ -263,7 +263,19 @@ def test_mapping_file_of_the_repository():
     # Madagascar's shapes are OCHA's (24 regions, the three new ones shapes of their own: rows marked new until AntWeb has them)
     assert rules.sources == {"Madagascar": "ocha"} and {r for r in rules.new if r[0] == "Madagascar"} == {
         ("Madagascar", "ADM1", "Vatovavy", "Vatovavy"), ("Madagascar", "ADM1", "Fitovinany", "Fitovinany"), ("Madagascar", "ADM1", "Ambatosoa", "Ambatosoa")}
-    assert rules.convert == {"Madagascar": ["Antananarivo", "Antsiranana", "Fianarantsoa", "Mahajanga", "Toamasina", "Toliara"]}
+    assert rules.convert["Madagascar"] == ["Antananarivo", "Antsiranana", "Fianarantsoa", "Mahajanga", "Toamasina", "Toliara"]
+    # 2026-11-19: old coarser units converted by coordinates in seven more countries; within lines only for Madagascar
+    assert sorted(rules.convert) == ["Dominican Republic", "Fiji", "Kenya", "Madagascar", "Malawi", "Morocco", "Philippines", "Uganda"]
+    assert rules.convert["Kenya"] == ["Central", "Coast", "Eastern", "North-Eastern", "Nyanza", "Rift Valley"] and len(rules.convert["Dominican Republic"]) == 10
+    assert len(rules.convert["Morocco"]) == 13 and "National Capital" not in rules.convert["Philippines"] and sorted(rules.within) == ["Madagascar"]
+    assert [r[3] for r in rows if r[0] == "Philippines"] == ["National Capital"] * 4
+    # Namibia: Kavango told apart by its old constituencies; the file's Rundu Rural (before 2003) has no line
+    kavango = {s[3]: s[4] for s in rules.splits if s[0] == "Namibia"}
+    assert kavango == {"Kahenge": "Kavango West", "Kapako": "Kavango West", "Mpungu": "Kavango West", "Mashare": "Kavango East", "Mukwe": "Kavango East",
+                       "Ndiyona": "Kavango East", "Rundu Urban": "Kavango East"}
+    # every county of Croatia's file has its Croatian name; no shape has two name lines at one level
+    assert len({n[2] for n in rules.names if n[0] == "Croatia"}) == 21
+    assert len({n[:3] for n in rules.names}) == len(rules.names)
     within = rules.within["Madagascar"]
     # AntWeb's 22 regions (production, 2026-11-10) and the 22 shape names of the file geoBoundaries-MDG-ADM1 (read 2026-11-10)
     antweb = ["Alaotra Mangoro", "Amoron'i Mania", "Analamanga", "Analanjirofo", "Androy", "Anosy", "Atsimo-Andrefana", "Atsimo-Atsinanana", "Atsinanana", "Betsiboka",
@@ -299,8 +311,8 @@ def test_mapping_file_of_the_repository():
     assert [r for r in rows if r[0] == "Seychelles"] == [("Seychelles", "ADM2", "La Digue", "Inner Islands"), ("Seychelles", "ADM3", "La Digue", "Inner Islands"),
                                                         ("Seychelles", "ADM2", "Other Islands", "Outer Islands"), ("Seychelles", "ADM3", "Other Islands", "Outer Islands")]
     assert {r for r in rules.new if r[0] == "Seychelles"} == {("Seychelles", "ADM2", "Other Islands", "Outer Islands"), ("Seychelles", "ADM3", "Other Islands", "Outer Islands")}
-    # the name lines: 148 pairs the lead checked by the names, 99 that are plain from the names; no shape twice; none is a hard row as well
-    assert len(rules.names) == 247 and len({(c, l, pc.plain(x)) for c, l, x, _ in rules.names}) == 247 and all(l in pc.LEVELS and x and a for _, l, x, a in rules.names)
+    # the name lines: 148 pairs the lead checked by the names, 99 that are plain from the names, 69 of 2026-11-19 checked by both lists; no shape twice; none is a hard row as well
+    assert len(rules.names) == 316 and len({(c, l, pc.plain(x)) for c, l, x, _ in rules.names}) == 316 and all(l in pc.LEVELS and x and a for _, l, x, a in rules.names)
     assert ("United Arab Emirates", "ADM1", "Ras al-Khaimah", "Ra's al Khaymah") in rules.names and ("Czech Republic", "ADM1", "Jiho\u010desk\u00fd kraj", "Jiho\u010desk\u00fd") in rules.names
     assert ("Democratic Republic of Congo", "ADM1", "Lower Uele", "Bas-U\u00e9l\u00e9") in rules.names and ("Macedonia", "ADM2", "Shtip", "\u0160tip") in rules.names
     assert not {(c, l, pc.plain(x)) for c, l, x, _ in rules.names} & {(c, l, pc.plain(x)) for c, l, x, _ in rows}
