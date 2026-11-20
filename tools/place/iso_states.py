@@ -53,6 +53,7 @@ import argparse
 import collections
 import csv
 import datetime
+import io
 import os
 import re
 import sys
@@ -86,7 +87,11 @@ grad gorod shahri rajons apskritis savivaldybe of de del la le the y and et und 
 # countries; the ISO form becomes an old name of it (alias), so an upload in either form is filed under the state.
 # Latin-script countries take ISO's name (Saaremaa, Ādažu novads, Şamaxı).
 ENGLISH = set("""AE AF AM BG BH BY CN CY EG ER GE GR IL IQ IR JO JP KG KH KP KR KW KZ LA LB LK LY MK MM MN OM PS QA RS RU SA
-SD SY TH TJ TW UA YE""".split())
+SD SY TH TJ TW UA YE IN""".split())
+
+# Countries whose ISO 3166-2 subdivisions are older than the ones in use: their states are reported, not changed.
+OUTDATED = {"CF": "ISO 3166-2 has the prefectures before the 2020 reform (Gribingui for Nana-Grébizi)",
+            "MG": "ISO 3166-2 has the six provinces; Madagascar has had regions since 2004"}
 
 
 def normal(name):
@@ -119,6 +124,9 @@ def display(iso_name):
     ("Zagreb, Grad", "Adygeya, Respublika") the right way round. Lists ("Armagh City, Banbridge and Craigavon") and
     "Bristol, City of" (ISO's own form for the city) stay as ISO writes them."""
     n = re.sub(r"\s*\[.*?\]\s*$", "", iso_name).strip()
+    # a note in brackets is not part of the name: "Western Visayas (Region VI)", "Maritime (Région)",
+    # "Guelmim-Oued Noun (EH-partial)", "National Capital District (Port Moresby)"
+    n = re.sub(r"\s*\([^()]*\)\s*$", "", n).strip()
     m = INVERT.match(n)
     if m:
         n = m.group(2) + " " + m.group(1)
@@ -158,8 +166,13 @@ def read_countries(path=COUNTRY_FILE):
 State = collections.namedtuple("State", "id name specimens old_names")
 
 
+def iso_names(sub):
+    """ISO's own names of the subdivision (its name, AntWeb's form of it, the alternative in brackets)."""
+    return [sub.name, display(sub.name)] + re.findall(r"\[(.*?)\]", sub.name)
+
+
 def sub_names(sub):
-    return [sub.name, display(sub.name)] + re.findall(r"\[(.*?)\]", sub.name) + sub.others
+    return iso_names(sub) + sub.others
 
 
 def shorter(name, sub):
@@ -174,20 +187,29 @@ def match_country(states, subs, english=False):
     kept_state, which takes sub's ISO name) or 'alias' (english: the state keeps its name, sub's ISO name is added as
     an old name of it); reported [(state, reason)]. english: a country written in another script (ENGLISH): no
     rename; of states that are one, the one not written as ISO (the English name) is kept."""
-    exact = collections.defaultdict(set)
-    looser = collections.defaultdict(set)
-    for s in subs:
+    by_code = {s.code: s for s in subs}
+    own = collections.defaultdict(set)          # ISO's own names first: the other names (translations, the boundary
+    exact = collections.defaultdict(set)        # file's shape names) are matched only when no ISO name is. The
+    looser = collections.defaultdict(set)       # boundary file has codes on the wrong shapes (its Distrito Federal
+    for s in subs:                              # carries México state's code, its Niamey Tillabéri's)
+        for n in iso_names(s):
+            if key(n):
+                own[key(n)].add(s.code)
         for n in sub_names(s):
             if key(n):
                 exact[key(n)].add(s.code)
             if loose(n):
                 looser[loose(n)].add(s.code)
-    by_code = {s.code: s for s in subs}
     hits, how = {}, {}
     for st in states:
-        h = set()
+        h, other = set(), set()
         for n in [st.name] + list(st.old_names):
-            h |= exact.get(key(n), set())
+            h |= own.get(key(n), set())
+            other |= exact.get(key(n), set())
+        # an other name joins an ISO-name hit only when the state is that subdivision's ISO name with generic words left
+        # out (Madrid: the province by name, Comunidad de Madrid by its English name; the kind decides below)
+        words = set(key(st.name).split())
+        h = (h | {c for c in other - h if any(words <= set(key(n).split()) for n in iso_names(by_code[c]))}) if h else other
         if h:
             hits[st.id], how[st.id] = h, "exact"
         else:
@@ -222,7 +244,7 @@ def match_country(states, subs, english=False):
                 reported.append((st, "loose match %s (%s) that another state finds too: looked at by hand" % (code, iso)))
             elif how[st.id] == "loose" and not shorter(st.name, sub):
                 reported.append((st, "loose match %s (%s) adds a generic word: looked at by hand" % (code, iso)))
-            elif st.name != iso and english:
+            elif st.name != iso and (english or "/" in iso):      # a slash in a name (Taita/Taveta, //Karas) is kept out of URLs
                 if key(iso) not in {key(n) for n in st.old_names}:
                     decisions.append(("alias", st, sub, st))
             elif st.name != iso:
@@ -234,8 +256,8 @@ def match_country(states, subs, english=False):
             for st in group:
                 reported.append((st, "with %s matches %s (%s): looked at by hand" % (", ".join(o.name for o in group if o is not st), code, iso)))
             continue
-        if english:
-            kept = max([st for st in group if key(st.name) != key(iso)] or group, key=lambda st: (st.specimens, -st.id))
+        if english or "/" in iso:
+            kept = max([st for st in group if key(st.name) != key(iso) and "/" not in st.name] or group, key=lambda st: (st.specimens, -st.id))
         else:
             kept = next((st for st in group if st.name == iso), None) or max(group, key=lambda st: (st.specimens, -st.id))
             if kept.name != iso:
@@ -258,11 +280,14 @@ def plan(valid, olds, iso, countries, skip=frozenset()):
             if rows:
                 nocountry.append((country, len(rows)))
             continue
+        if a2 in OUTDATED:
+            reported += [(country, n, c, OUTDATED[a2]) for i, n, c in valid[country] if (country + "|" + n) not in skip]
+            continue
         english = a2 in ENGLISH
         decisions, rep = match_country(rows, subs, english)
         for action, st, sub, kept in decisions:
             # target: the name the state, its old names and its specimens end up under
-            target = kept.name if english else display(sub.name)
+            target = kept.name if english or "/" in display(sub.name) else display(sub.name)
             out.append({"country": country, "action": action, "id": st.id, "name": st.name, "specimens": st.specimens, "code": sub.code,
                         "type": sub.type, "iso": display(sub.name), "kept_id": kept.id, "kept_name": kept.name, "target": target})
         reported += [(country, st.name, st.specimens, why) for st, why in rep]
@@ -397,6 +422,49 @@ def mapping_lines(decisions, path=None):
     return out
 
 
+def mapping_update(decisions, path=None):
+    """adm1_shape_map.csv with the states renamed or merged by the decisions under their new names: (text, changed
+    lines [(line number, old, new or None when dropped)], lines to check by hand). A name line, or a plain line, whose
+    shape name is now written like the state's new name is dropped (the place report finds it by name). Other kinds of
+    line (within, split, level, source) are only listed."""
+    path = path or os.path.join(HERE, "adm1_shape_map.csv")
+    new = {(d["country"], d["name"]): d["target"] for d in moves(decisions)}
+    out, changed, check = [], [], []
+    with open(path, encoding="utf-8", newline="") as f:
+        lines = f.read().split("\n")
+    for i, line in enumerate(lines, 1):
+        if not line.strip() or line.lstrip().startswith("#"):
+            out.append(line)
+            continue
+        cells = next(csv.reader([line]))
+        kind = cells[0].strip().lower()
+        country = cells[1] if kind in ("name", "convert", "within", "split", "level", "source") else cells[0]
+        if not any((country, c) in new for c in cells):
+            out.append(line)
+            continue
+        cells2, drop = list(cells), False
+        if kind == "name" and len(cells) >= 5 and (country, cells[4]) in new:
+            cells2[4] = new[(country, cells[4])]
+            drop = key(cells2[4]) == key(cells[3])
+        elif kind == "convert":
+            cells2 = cells[:2] + [new.get((country, c), c) for c in cells[2:]]
+        elif kind not in ("name", "convert", "within", "split", "level", "source") and len(cells) >= 4 and (country, cells[3]) in new:
+            cells2[3] = new[(country, cells[3])]
+            drop = key(cells2[3]) == key(cells[2]) and not (len(cells) > 4 and cells[4].lower() == "new")
+        else:
+            check.append((i, line))
+            out.append(line)
+            continue
+        if drop:
+            changed.append((i, line, None))
+            continue
+        buf = io.StringIO()
+        csv.writer(buf, lineterminator="").writerow(cells2)
+        out.append(buf.getvalue())
+        changed.append((i, line, buf.getvalue()))
+    return "\n".join(out), changed, check
+
+
 def decision_lines(decisions):
     return ["\t".join([d["action"], d["country"], d["name"], d["iso"], d["code"], d["kept_name"]]) for d in decisions]
 
@@ -443,6 +511,7 @@ def main(argv=None):
     a.add_argument("--skip", default=None)
     a.add_argument("--folder", default=None)
     a.add_argument("--show", type=int, default=40, help="plan lines printed (all are in plan.tsv)")
+    a.add_argument("--mapping", action="store_true", help="print the change to adm1_shape_map.csv the plan needs (and write it to <folder>)")
     args = a.parse_args(argv)
     db = pf.Db(args.project or pf.default_project(), args.container, args.database)
     tag = datetime.date.today().strftime("%Y%m%d")
@@ -479,6 +548,17 @@ def main(argv=None):
     for d in (mer + ren + ali)[:args.show]:
         print("  %-6s %-22s %-34s -> %-34s %-8s %5d" % (d["action"], d["country"][:22], d["name"][:34], (d["target"] if d["action"] == "merge" else d["iso"])[:34],
                                                          d["code"], d["specimens"]))
+    if args.mapping:
+        text, changed, check = mapping_update(decisions)
+        with open(os.path.join(folder, "adm1_shape_map.csv"), "w", encoding="utf-8") as f:
+            f.write(text)
+        print("adm1_shape_map.csv: %d lines changed, %d dropped (now found by name), %d to check by hand; the new file: %s"
+              % (sum(1 for c in changed if c[2]), sum(1 for c in changed if c[2] is None), len(check), os.path.join(folder, "adm1_shape_map.csv")))
+        for n, old, new_line in changed:
+            print("  %d - %s" % (n, old))
+            print("  %d + %s" % (n, new_line if new_line is not None else "(dropped)"))
+        for n, line in check:
+            print("  %d ? %s" % (n, line))
     if not args.apply:
         print("Plan only. Add --apply to make the change.")
         return 0

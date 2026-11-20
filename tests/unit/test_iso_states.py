@@ -158,6 +158,59 @@ def test_a_country_in_another_script_keeps_its_english_names():
     assert not sql and left
 
 
+def test_iso_names_come_before_other_names():
+    # the boundary file puts México state's code on its Distrito Federal shape and Tillabéri's on Niamey: a state written
+    # like an ISO name goes to that subdivision, not to one whose other names happen to include it
+    mx = iso.read_iso()["MX"]
+    d, rep = iso.match_country([st(1, "Ciudad de México", 3), st(2, "México", 40)], mx)
+    assert not [x for x in d if x[0] == "merge"], d
+    ne = iso.read_iso()["NE"]
+    d, rep = iso.match_country([st(1, "Niamey", 3), st(2, "Tillabéri", 5)], ne)
+    assert not d, d
+
+
+def test_notes_in_brackets_and_slashes():
+    assert iso.display("Western Visayas (Region VI)") == "Western Visayas"
+    assert iso.display("Guelmim-Oued Noun (EH-partial)") == "Guelmim-Oued Noun"
+    assert iso.display("Maritime (Région)") == "Maritime"
+    ke = [S("KE-39", "KE", "County", "", "Taita/Taveta", [])]
+    d, rep = iso.match_country([st(1, "Taita Taveta", 15)], ke)
+    assert [(a, s.name) for a, s, sub, k in d] == [("alias", "Taita Taveta")], d
+
+
+def test_outdated_countries_are_reported():
+    subs = iso.read_iso()
+    out, reported, nocountry = iso.plan({"Central African Republic": [(1, "Sangha-Mbaéré", 2566)], "India": [(2, "Karnataka", 147)]}, {},
+                                        subs, iso.read_countries())
+    assert reported[0][:2] == ("Central African Republic", "Sangha-Mbaéré") and "2020" in reported[0][3], reported
+    assert [(x["action"], x["name"], x["iso"]) for x in out] == [("alias", "Karnataka", "Karnātaka")], out
+
+
+def test_the_mapping_file_follows_the_renames():
+    import tempfile
+    path = os.path.join(tempfile.mkdtemp(), "map.csv")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("# kinds\n"
+                "name,Sweden,ADM1,Gotlands län,Gotland,the same name\n"                     # now found by name: dropped
+                "name,Croatia,ADM1,Split-Dalmatia,Splitsko-Dalmatinska,Croatian name\n"     # renamed in place
+                "convert,Malawi,Central,Northern,Southern\n"
+                'United States,ADM1,District of Columbia,"Washington, D.C."\n'
+                "within,Sweden,Gotland,X\n"
+                "name,Norway,ADM1,Oslo,Oslo,untouched\n")
+    d = [dict(dec("rename", 1, "Gotland", "Gotlands län", 1, "Gotland", "Sweden", "SE-I")),
+         dict(dec("rename", 2, "Splitsko-Dalmatinska", "Splitsko-dalmatinska županija", 2, "Splitsko-Dalmatinska", "Croatia", "HR-17")),
+         dict(dec("rename", 3, "Southern", "Southern Region", 3, "Southern", "Malawi", "MW-S")),
+         dict(dec("rename", 4, "Washington, D.C.", "District of Columbia", 4, "Washington, D.C.", "United States", "US-DC")),
+         dict(dec("alias", 5, "Oslo", "Oslo kommune", 5, "Oslo", "Norway", "NO-03"), target="Oslo")]
+    text, changed, check = iso.mapping_update(d, path)
+    lines = text.split("\n")
+    assert "name,Sweden,ADM1,Gotlands län,Gotland,the same name" not in lines
+    assert "name,Croatia,ADM1,Split-Dalmatia,Splitsko-dalmatinska županija,Croatian name" in lines, lines
+    assert "convert,Malawi,Central,Northern,Southern Region" in lines
+    assert "United States,ADM1,District of Columbia,\"Washington, D.C.\"" not in lines         # now by name: dropped
+    assert "name,Norway,ADM1,Oslo,Oslo,untouched" in lines and [n for n, l in check] == [6]
+
+
 def test_the_iso_file_reads():
     subs = iso.read_iso()
     assert len(subs["IT"]) > 100 and any(s.name == "Sicilia" for s in subs["IT"])
