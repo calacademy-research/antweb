@@ -42,6 +42,8 @@ written like both takes the kind most of its country's states match.
                                               (specimens) and iso_states_text_<date> (page text moved),
                                               then the changes; what was done in <folder>/applied.tsv
   python3 iso_states.py --skip FILE           lines "country|state" left alone (a state looked at by hand)
+  python3 iso_states.py --tag 20261120b       a second run the same day (its own folder and backup tables; the rollback
+                                              with <date> = the tag)
   python3 iso_states.py --project /root/antweb-next      staging (default: the project on this server)
 
 Rollback (same server, the date of the run; one transaction; the rows added go first, so the old names are free again):
@@ -108,6 +110,52 @@ SD SY TH TJ TW UA YE IN""".split())
 # Countries whose ISO 3166-2 subdivisions are older than the ones in use: their states are reported, not changed.
 OUTDATED = {"CF": "ISO 3166-2 has the prefectures before the 2020 reform (Gribingui for Nana-Grébizi)",
             "MG": "ISO 3166-2 has the six provinces; Madagascar has had regions since 2004"}
+
+# AntWeb's names that ISO's data does not carry (English names it lacks, older spellings), with the subdivision they
+# are; and where two ISO subdivisions have one name (a region and its prefecture, a city and its county), the one
+# AntWeb's state is (Brian Fisher 2026-11-20, from the plan's report: the states with specimens ISO did not match).
+# Checked against iso3166_2.tsv by tests/unit/test_iso_states.py.
+EXONYMS = {
+    "Spain": {"Canary Islands": "ES-CN", "Castille-La Mancha": "ES-CM", "Castile-Leon": "ES-CL", "Balearic Islands": "ES-IB",
+              "Basque Country": "ES-PV", "Navarre": "ES-NC"},
+    "Germany": {"Lower Saxony": "DE-NI", "Saxony": "DE-SN", "North Rhine-Westphalia": "DE-NW", "Saxony-Anhalt": "DE-ST", "Thuringia": "DE-TH"},
+    "Switzerland": {"Canton Grisons": "CH-GR"},
+    "Belgium": {"Brussels Capital": "BE-BRU"},
+    "Portugal": {"Azores": "PT-20"},
+    "Ireland": {"Cork City": "IE-CO"},
+    "Bosnia and Herzegovina": {"Federation of Bosnia and Herzegovina": "BA-BIH"},
+    "Malta": {"Imġarr": "MT-31"},
+    "Bulgaria": {"Sofia": "BG-23", "Sofia-Capital": "BG-22"},
+    "Ukraine": {"Kiev": "UA-32", "Kiev City": "UA-30"},
+    "Russia": {"Irkut": "RU-IRK", "Ivanov": "RU-IVA", "Ul'yanov": "RU-ULY", "Sakha (Yakutiya)": "RU-SA"},
+    "Kazakhstan": {"East Kazakhstan": "KZ-63", "South Kazakhstan": "KZ-61"},
+    "Uzbekistan": {"Toshkent": "UZ-TO", "Toshkent Shahri": "UZ-TK"},
+    "China": {"Beijing": "CN-BJ", "Xinjiang": "CN-XJ", "Shaanxi": "CN-SN"},
+    "North Korea": {"Pyongyang": "KP-01", "P'yŏngan-bukto": "KP-03", "Hwanghae-bukto": "KP-06"},
+    "Taiwan": {"Chiayi": "TW-CYQ", "Chiayi City": "TW-CYI", "Hsinchu": "TW-HSQ", "Hsinchu City": "TW-HSZ"},
+    "Laos": {"Vientiane": "LA-VI", "Viangchan (prefecture)": "LA-VT", "Savannahkhét": "LA-SV"},
+    "Thailand": {"Sara Buri": "TH-19"},
+    "Bangladesh": {"Dhaka": "BD-C", "Chittagong": "BD-B", "Khulna": "BD-D"},
+    "Maldives": {"Maale": "MV-MLE"},
+    "Brunei": {"Brunei and Muara": "BN-BM"},
+    "Philippines": {"Occidental Mindoro": "PH-MDC"},
+    "Eritrea": {"Debubawī K'eyih Bahrī": "ER-DK"},
+    "Nigeria": {"Federal Capital Territory": "NG-FC"},
+    "Guinea": {"Nzerekore": "GN-N", "Kindia": "GN-D", "Kankan": "GN-K", "Boke": "GN-B", "Mamou": "GN-M"},
+    "Gambia": {"West Coast": "GM-W"},
+    "Tanzania": {"Zanzibar Central/South": "TZ-11"},
+    "Panama": {"Panamá": "PA-8"},
+    "Dominican Republic": {"Nacional": "DO-01"},
+    "Venezuela": {"Vargas": "VE-X"},
+    "Chile": {"Magallanes y de la Antártica Chilena": "CL-MA"},
+    "Grenada": {"Carriacou and Petite Martinique": "GD-10"},
+    "New Zealand": {"Chatham Islands": "NZ-CIT"},
+}
+
+# AntWeb's states that are not the ISO subdivision their name resembles: left alone, reported with the reason.
+NOT_ISO = {
+    ("Philippines", "Quezon City"): "a city of Metro Manila, not Quezon province",
+}
 
 
 def normal(name):
@@ -199,7 +247,7 @@ def shorter(name, sub):
     return any(loose(n) == loose(name) and words <= set(key(n).split()) for n in sub_names(sub))
 
 
-def match_country(states, subs, english=False):
+def match_country(states, subs, english=False, exonyms=None, not_iso=None):
     """states: the valid states of one country (State); subs: its ISO subdivisions. Returns (decisions, reported):
     decisions [(action, state, sub, kept_state)] with action 'rename', 'merge' (state becomes an old name of
     kept_state, which takes sub's ISO name) or 'alias' (english: the state keeps its name, sub's ISO name is added as
@@ -222,7 +270,14 @@ def match_country(states, subs, english=False):
             if loose(n):
                 looser[loose(n)].add(s.code)
     hits, how = {}, {}
+    exonyms, not_iso = exonyms or {}, not_iso or {}
     for st in states:
+        if st.name in not_iso:                 # not the subdivision its name resembles: no hit
+            hits[st.id], how[st.id] = set(), "not"
+            continue
+        if exonyms.get(st.name) in by_code:     # the subdivision this state is, by AntWeb's name ISO does not carry
+            hits[st.id], how[st.id] = {exonyms[st.name]}, "table"
+            continue
         name, olds = [st.name], list(st.old_names)
         tiers = [(own, name), (trans, name), (own, olds), (trans, olds), (shapes, name), (shapes, olds)]
         h, tier = set(), None
@@ -244,7 +299,9 @@ def match_country(states, subs, english=False):
         else:
             h = looser.get(loose(st.name), set()) if loose(st.name) else set()
             hits[st.id], how[st.id] = h, "loose"
-    kinds = collections.Counter(by_code[next(iter(h))].type for h in hits.values() if len(h) == 1)
+    # the country's main kind from its states' own matches; a table entry does not count (it would decide the kind of
+    # other states written like two kinds: review of #399)
+    kinds = collections.Counter(by_code[next(iter(h))].type for i, h in hits.items() if len(h) == 1 and how[i] != "table")
     main = kinds.most_common(1)[0][0] if kinds else None
     chosen, reported = {}, []
     for st in states:
@@ -256,7 +313,7 @@ def match_country(states, subs, english=False):
         if len(h) == 1:
             chosen[st.id] = next(iter(h))
         elif not h:
-            reported.append((st, "no ISO 3166-2 subdivision written alike"))
+            reported.append((st, ("not an ISO 3166-2 subdivision: " + not_iso[st.name]) if st.name in not_iso else "no ISO 3166-2 subdivision written alike"))
         else:
             reported.append((st, "written like " + ", ".join(sorted(h))))
     by_sub = collections.defaultdict(list)
@@ -316,7 +373,10 @@ def plan(valid, olds, iso, countries, skip=frozenset()):
             reported += [(country, n, c, OUTDATED[a2]) for i, n, c in valid[country] if (country + "|" + n) not in skip]
             continue
         english = a2 in ENGLISH
-        decisions, rep = match_country(rows, subs, english)
+        # the tables by the country's ISO code, so another spelling of the country finds them too (review of #399)
+        exonyms = {n: code for c, names in EXONYMS.items() if countries.get(key(c)) == a2 for n, code in names.items()}
+        not_iso = {n: why for (c, n), why in NOT_ISO.items() if countries.get(key(c)) == a2}
+        decisions, rep = match_country(rows, subs, english, exonyms, not_iso)
         for action, st, sub, kept in decisions:
             # target: the name the state, its old names and its specimens end up under
             iso_name = display(sub.name)
@@ -647,11 +707,15 @@ def main(argv=None):
     a.add_argument("--apply", action="store_true")
     a.add_argument("--skip", default=None)
     a.add_argument("--folder", default=None)
+    a.add_argument("--tag", default=None, help="the run's name in its folder and backup tables (default: the date, YYYYMMDD); "
+                                                "a second run the same day takes the date and a letter, as 20261120b")
     a.add_argument("--show", type=int, default=40, help="plan lines printed (all are in plan.tsv)")
     a.add_argument("--mapping", action="store_true", help="print the change to adm1_shape_map.csv the plan needs (and write it to <folder>)")
     args = a.parse_args(argv)
     db = pf.Db(args.project or pf.default_project(), args.container, args.database)
-    tag = datetime.date.today().strftime("%Y%m%d")
+    tag = args.tag or datetime.date.today().strftime("%Y%m%d")
+    if not re.fullmatch(r"\d{8}[a-z]?", tag):           # it names tables: a date and at most one letter
+        raise SystemExit("--tag takes the date and at most one letter (20261120 or 20261120b): " + tag)
     folder = args.folder or os.path.join("/root/antweb-place-fix/iso", tag)
     os.makedirs(folder, exist_ok=True)
     skip = set()
