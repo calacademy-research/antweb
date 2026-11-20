@@ -23,6 +23,8 @@ def test_display():
     assert iso.display("Catalunya [Cataluña]") == "Catalunya"
     assert iso.display("Armagh City, Banbridge and Craigavon") == "Armagh City, Banbridge and Craigavon"
     assert iso.display("Bristol, City of") == "Bristol, City of"
+    # an inverted form that ends in a bracket is turned round before notes in brackets are dropped (review of #395)
+    assert iso.display("Găgăuzia, Unitatea teritorială autonomă (UTAG)") == "Unitatea teritorială autonomă (UTAG) Găgăuzia"
 
 
 def test_rename_and_merge():
@@ -156,6 +158,111 @@ def test_a_country_in_another_script_keeps_its_english_names():
     assert not iso.moves(d)
     sql, left, done = iso.statements(d, {("Egypt", "Al Jīzah"): [(9, 0, "Gizeh")]}, "20261120")
     assert not sql and left
+
+
+def test_iso_names_come_before_other_names():
+    # the boundary file puts México state's code on its Distrito Federal shape and Tillabéri's on Niamey: a state written
+    # like an ISO name goes to that subdivision, not to one whose other names happen to include it
+    mx = iso.read_iso()["MX"]
+    d, rep = iso.match_country([st(1, "Ciudad de México", 3), st(2, "México", 40)], mx)
+    assert not [x for x in d if x[0] == "merge"], d
+    ne = iso.read_iso()["NE"]
+    d, rep = iso.match_country([st(1, "Niamey", 3), st(2, "Tillabéri", 5)], ne)
+    assert not d, d
+
+
+def test_notes_in_brackets_and_slashes():
+    assert iso.display("Western Visayas (Region VI)") == "Western Visayas"
+    assert iso.display("Guelmim-Oued Noun (EH-partial)") == "Guelmim-Oued Noun"
+    assert iso.display("Maritime (Région)") == "Maritime"
+    ke = [S("KE-39", "KE", "County", "", "Taita/Taveta", [])]
+    d, rep = iso.match_country([st(1, "Taita Taveta", 15)], ke)
+    assert [(a, s.name) for a, s, sub, k in d] == [("alias", "Taita Taveta")], d
+
+
+def test_a_skipped_state_of_an_outdated_country_is_left_out():
+    out, reported, nocountry = iso.plan({"Madagascar": [(1, "Diana", 9), (2, "Sava", 4)]}, {}, iso.read_iso(), iso.read_countries(),
+                                        skip={"Madagascar|Sava"})
+    assert [r[1] for r in reported] == ["Diana"] and not out
+
+
+def test_outdated_countries_are_reported():
+    subs = iso.read_iso()
+    out, reported, nocountry = iso.plan({"Central African Republic": [(1, "Sangha-Mbaéré", 2566)], "India": [(2, "Karnataka", 147)]}, {},
+                                        subs, iso.read_countries())
+    assert reported[0][:2] == ("Central African Republic", "Sangha-Mbaéré") and "2020" in reported[0][3], reported
+    assert [(x["action"], x["name"], x["iso"]) for x in out] == [("alias", "Karnataka", "Karnātaka")], out
+
+
+def test_the_mapping_file_follows_the_renames():
+    import tempfile
+    path = os.path.join(tempfile.mkdtemp(), "map.csv")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("# kinds\n"
+                "name,Sweden,ADM1,Gotlands län,Gotland,the same name\n"                     # now found by name: dropped
+                "name,Croatia,ADM1,Split-Dalmatia,Splitsko-Dalmatinska,Croatian name\n"     # renamed in place
+                "convert,Malawi,Central,Northern,Southern\n"
+                'United States,ADM1,District of Columbia,"Washington, D.C."\n'
+                "within,Sweden,Gotland,X\n"
+                "Croatia,ADM1,Zagreb County,Splitsko-Dalmatinska,new\n"
+                "name,Norway,ADM1,Oslo,Oslo,untouched\n")
+    d = [dict(dec("rename", 1, "Gotland", "Gotlands län", 1, "Gotland", "Sweden", "SE-I")),
+         dict(dec("rename", 2, "Splitsko-Dalmatinska", "Splitsko-dalmatinska županija", 2, "Splitsko-Dalmatinska", "Croatia", "HR-17")),
+         dict(dec("rename", 3, "Southern", "Southern Region", 3, "Southern", "Malawi", "MW-S")),
+         dict(dec("rename", 4, "Washington, D.C.", "District of Columbia", 4, "Washington, D.C.", "United States", "US-DC")),
+         dict(dec("alias", 5, "Oslo", "Oslo kommune", 5, "Oslo", "Norway", "NO-03"), target="Oslo")]
+    text, changed, check = iso.mapping_update(d, path)
+    lines = text.split("\n")
+    assert "name,Sweden,ADM1,Gotlands län,Gotland,the same name" not in lines
+    assert "name,Croatia,ADM1,Split-Dalmatia,Splitsko-dalmatinska županija,Croatian name" in lines, lines
+    assert "convert,Malawi,Central,Northern,Southern Region" in lines
+    assert "United States,ADM1,District of Columbia,\"Washington, D.C.\"" not in lines         # now by name: dropped
+    assert "name,Norway,ADM1,Oslo,Oslo,untouched" in lines and [n for n, l in check] == [6]
+    # a plain line marked new keeps its new mark and is never dropped
+    assert "Croatia,ADM1,Zagreb County,Splitsko-dalmatinska županija,new" in lines, lines
+
+
+def test_page_text_moves_with_a_rename_and_blocks_a_conflict():
+    d = [dec("rename", 1, "Bratislava", "Bratislavský kraj", 1, "Bratislava"), dec("merge", 2, "Bratislavsky", "Bratislavský kraj", 1, "Bratislava")]
+    moved = []
+    sql, left, done = iso.statements(d, {}, "20261120", texts={"Bratislava": 2}, allnames={"Bratislava": 1}, text_moves=moved)
+    assert moved == [("object_edit", "Bratislava", "Bratislavský kraj")] and sum(x.startswith("update object_edit") for x in sql) == 1, sql
+    # each moved row is recorded for the rollback just before its move
+    i = [k for k, x in enumerate(sql) if x.startswith("update object_edit")][0]
+    assert sql[i - 1].startswith("insert into {text} select 'object_edit', object_key"), sql[i - 1]
+    # another place with the name written with other accents shares the text: it stays (Córdoba, Cordoba)
+    moved = []
+    sql, left, done = iso.statements(d, {}, "20261120", texts={"Bratislava": 2}, allnames={iso.normal("Bratislava"): 2}, text_moves=moved)
+    assert not moved
+    # the keys as stored move (a history row written "bratislava"); a name with history only is a conflict too
+    moved = []
+    sql, left, done = iso.statements(d, {}, "20261120", texts={"object_edit": {"Bratislava": 1}, "object_hist": {"bratislava": 3}},
+                                     allnames={"Bratislava": 1}, text_moves=moved)
+    assert moved == [("object_edit", "Bratislava", "Bratislavský kraj"), ("object_hist", "bratislava", "Bratislavský kraj")], moved
+    assert any("binary object_key = binary convert(unhex('%s')" % "bratislava".encode().hex() in x for x in sql)
+    sql, left, done = iso.statements(d, {}, "20261120", texts={"object_edit": {}, "object_hist": {"Bratislavský kraj": 2}}, allnames={})
+    assert not done and "already has page text" in left[0], left
+    # text under a name another place also has stays where it is
+    moved = []
+    sql, left, done = iso.statements(d, {}, "20261120", texts={"Bratislava": 2}, allnames={"Bratislava": 2}, text_moves=moved)
+    assert not moved and done == d
+    # the ISO name already has text, written with other accents (object_edit's key ignores them): left out with its merge
+    sql, left, done = iso.statements(d, {}, "20261120", texts={"Bratislavsky kraj": 1}, allnames={})
+    assert not done and "already has page text" in left[0] and "not merged" in left[1], left
+    # the merged state's text joins the kept one, unless both have text
+    sql, left, done = iso.statements(d[1:], {}, "20261120", texts={"Bratislavsky": 1, "Bratislavský kraj": 1}, allnames={"Bratislavsky": 1})
+    assert not done and "both have page text" in left[0], left
+    # page text and a new name another place already has (page text is keyed by name alone): left out
+    sql, left, done = iso.statements(d[:1], {}, "20261120", texts={"Bratislava": 1}, allnames={iso.normal("Bratislava"): 1, iso.normal("Bratislavský kraj"): 1})
+    assert not done and "another place is already named" in left[0], left
+    # two states of one country renamed to one name: the second is left out
+    two = [dec("rename", 1, "A", "Same", 1, "A"), dec("rename", 2, "B", "Same", 2, "B")]
+    sql, left, done = iso.statements(two, {}, "20261120")
+    assert [x["name"] for x in done] == ["A"] and "renamed Same too" in left[0], left
+    # a name longer than a specimen's state can be is left out
+    long = "X" * 129
+    sql, left, done = iso.statements([dec("rename", 3, "Y", long, 3, "Y")], {}, "20261120")
+    assert not done and "longer than" in left[0]
 
 
 def test_the_iso_file_reads():
