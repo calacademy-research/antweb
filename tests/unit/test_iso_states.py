@@ -311,6 +311,18 @@ def test_capitals_only_and_apostrophes():
     assert iso.display("Grande’Anse") == "Grande'Anse" and iso.display("Provence-Alpes-Côte-d’Azur") == "Provence-Alpes-Côte-d'Azur"
 
 
+def test_country_codes_fill_only_what_is_missing():
+    rows = [(1, "Russia", "", ""), (2, "Madagascar", "MG", "MDG"), (3, "Iran", "IR", ""), (4, "Hawaii", "", ""), (5, "Kosovo", "", ""),
+            (6, "Ruritania", "RR", "RRR"), (7, "Vatican City", None, None), (8, "Mexico", "MX", "MEX")]
+    fills, differ, missing = iso.country_codes(rows)
+    assert sorted((n, a, b) for i, n, a, b in fills) == [("Iran", "IR", "IRN"), ("Kosovo", "XK", "XKX"), ("Russia", "RU", "RUS"),
+                                                        ("Vatican City", "VA", "VAT")], fills
+    assert missing == ["Hawaii"] and not differ, (missing, differ)
+    fills, differ, missing = iso.country_codes([(1, "Mexico", "ME", "MEX")])
+    assert differ == [("Mexico", "ME/MEX", "MX/MEX")] and not fills           # a stored code that differs is listed, not changed
+    assert iso.alpha3()["RU"] == "RUS" and iso.read_countries()[iso.key("Réunion")] == "RE"
+
+
 def test_the_iso_file_reads():
     subs = iso.read_iso()
     # translations and the boundary file's shape names are separate columns
