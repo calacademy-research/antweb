@@ -1030,6 +1030,10 @@ jobs:
           GBIF_VIEW_TEST_CONTAINER=pfmysql GBIF_VIEW_TEST_PASSWORD=ci-root python3 tests/unit/test_gbif_image_view.py | tee /tmp/gbif_view.txt
           grep -q "^5 tests passed (texts)" /tmp/gbif_view.txt
           grep -q "^2 database tests passed (MySQL 8.4" /tmp/gbif_view.txt
+          # The daily place step's apply and rollback (review of #389, 2026-11-20): the rollback's multi-table UPDATE
+          # puts back only what still has the state the run wrote, marks only those rows not applied, and counts both.
+          PLACE_DAILY_TEST_CONTAINER=pfmysql PLACE_DAILY_TEST_PASSWORD=ci-root python3 tests/unit/test_place_daily_db.py | tee /tmp/place_daily_db.txt
+          grep -q "^1 test passed (MySQL 8.4" /tmp/place_daily_db.txt
           docker rm -f pfmysql
 
       - name: Coordinates against the stored country, report only (tests/unit/test_coordinate_country.py)

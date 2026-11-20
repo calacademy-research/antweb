@@ -145,6 +145,14 @@ def test_the_apply_sql_backs_up_first_and_writes_only_unchanged_states():
     assert ("UPDATE specimen s JOIN place_apply_bak_20261123 b ON b.code = s.code JOIN place_update p ON p.code = s.code AND p.run_date = '2026-11-23'"
             " AND p.mode = 'apply' AND p.applied = 1 AND p.field = 'adm1' SET s.adm1 = b.adm1, s.adm1_verbatim = b.adm1_verbatim, p.applied = 0"
             " WHERE BINARY s.adm1 = BINARY p.proposed") in back, back
+    # counted before (locked) and after the UPDATE in the same transaction (review of #389)
+    i = [k for k, x in enumerate(back) if x.startswith("UPDATE")][0]
+    assert back[i - 1].startswith("SELECT 'before', COUNT(*)") and back[i - 1].endswith("FOR UPDATE") and back[i + 1].startswith("SELECT 'after'")
+    # the count before a rollback has the same join and condition as its UPDATE (review of #389)
+    join, where = pd.put_back_join("2026-11-23")
+    assert pd.rollback_counts("2026-11-23")[1] == "SELECT COUNT(*) FROM " + join + " WHERE " + where
+    assert back[i] == "UPDATE " + join + " SET s.adm1 = b.adm1, s.adm1_verbatim = b.adm1_verbatim, p.applied = 0 WHERE " + where
+    assert pd.rollback_result([["before", "5"], ["after", "2"]]) == (3, 2)
     assert not any(x.startswith("UPDATE place_update") for x in back)     # a row kept by the rollback stays applied (review of #388)
     assert back[-1] == "COMMIT"
 
@@ -282,19 +290,20 @@ def test_rollback_counts_and_refuses_when_nothing_is_applied():
     import contextlib
     calls = []
     was = pd.write_sql
-    pd.write_sql = lambda *a: calls.append(a[2])
+    # the database answers the counts of the rollback itself: 5 applied before the UPDATE, 1 after (an upload came between)
+    pd.write_sql = lambda *a: calls.append(a[2]) or [["before", "5"], ["after", "1"]]
     try:
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
-            pd.main(["--rollback", "2026-11-23", "--project", "/x"], counter=lambda q: 5 if "from place_update where" in q else 3)
-        assert len(calls) == 1 and "3 specimens put back" in out.getvalue() and "2 changed since" in out.getvalue(), out.getvalue()
+            pd.main(["--rollback", "2026-11-23", "--project", "/x"], counter=lambda q: 5 if "FROM place_update WHERE" in q else 3)
+        assert len(calls) == 1 and "4 specimens put back" in out.getvalue() and "1 changed since" in out.getvalue(), out.getvalue()
         calls.clear()
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
-            pd.main(["--rollback", "2026-11-23", "--project", "/x", "--dry-run"], counter=lambda q: 5 if "from place_update where" in q else 3)
+            pd.main(["--rollback", "2026-11-23", "--project", "/x", "--dry-run"], counter=lambda q: 5 if "FROM place_update WHERE" in q else 3)
         assert not calls and "would put back 3 specimens; 2 changed since, kept" in out.getvalue(), out.getvalue()
         try:   # every row left changed since (or rolled back already but some kept): refused
-            pd.main(["--rollback", "2026-11-23", "--project", "/x"], counter=lambda q: 2 if "from place_update where" in q else 0)
+            pd.main(["--rollback", "2026-11-23", "--project", "/x"], counter=lambda q: 2 if "FROM place_update WHERE" in q else (1 if "information_schema" in q else 0))
         except SystemExit as e:
             assert "nothing to put back" in str(e), e
         else:
@@ -307,8 +316,16 @@ def test_rollback_counts_and_refuses_when_nothing_is_applied():
         else:
             raise AssertionError("a rollback with nothing applied must be refused")
         assert not calls
+        try:   # the backup table was dropped: said plainly, nothing written
+            pd.main(["--rollback", "2026-11-23", "--project", "/x"], counter=lambda q: 0 if "information_schema" in q else 5)
+        except SystemExit as e:
+            assert "backup table place_apply_bak_20261123 is missing" in str(e), e
+        else:
+            raise AssertionError("a rollback without its backup table must be refused")
+        assert not calls
     finally:
         pd.write_sql = was
+
 
 if __name__ == "__main__":
     n = 0
