@@ -132,15 +132,19 @@ def test_the_apply_sql_backs_up_first_and_writes_only_unchanged_states():
     with tempfile.TemporaryDirectory() as d:
         rows = pd.rows_of(corrections_file(d, APPLY[:2]), "2026-11-23", "report")
     sql = pd.apply_statements(rows, "2026-11-23")
-    assert sql[1] == "START TRANSACTION" and sql[-1] == "COMMIT"
-    assert sql[2].startswith("CREATE TABLE place_apply_bak_20261123 ")    # no IF NOT EXISTS: a second run the same day fails, writes nothing
+    # the backup table before the transaction (CREATE TABLE commits); no IF NOT EXISTS: a second run the same day fails, writes nothing
+    assert sql[1].startswith("CREATE TABLE place_apply_bak_20261123 ") and sql[2] == "START TRANSACTION" and sql[-1] == "COMMIT"
+    sql = sql[:1] + sql[2:3] + sql[1:2] + sql[3:]      # the rest as before
     assert sql[3].startswith("INSERT INTO place_apply_bak_20261123 (code, adm1, adm1_verbatim) SELECT") and "'ok1','ok2'" in sql[3]
     assert sql[4] == ("UPDATE specimen SET adm1_verbatim = IFNULL(adm1_verbatim, adm1), adm1 = 'Menabe' WHERE code = 'ok1'"
                       " AND BINARY IFNULL(adm1, '') = BINARY 'Toliara'"), sql[4]
     assert sql[5].endswith("WHERE code = 'ok2' AND BINARY IFNULL(adm1, '') = BINARY ''"), sql[5]
     assert sql[6].startswith("INSERT INTO place_update (") and ",applied) VALUES " in sql[6] and "'apply'" in sql[6] and sql[6].count(",1)") == 2
     back = pd.rollback_statements("2026-11-23")
-    assert "UPDATE specimen s JOIN place_apply_bak_20261123 b ON b.code = s.code SET s.adm1 = b.adm1, s.adm1_verbatim = b.adm1_verbatim" in back
+    # only where the specimen still has the state that run wrote (a later upload is kept)
+    assert ("UPDATE specimen s JOIN place_apply_bak_20261123 b ON b.code = s.code JOIN place_update p ON p.code = s.code AND p.run_date = '2026-11-23'"
+            " AND p.mode = 'apply' AND p.applied = 1 AND p.field = 'adm1' SET s.adm1 = b.adm1, s.adm1_verbatim = b.adm1_verbatim"
+            " WHERE BINARY s.adm1 = BINARY p.proposed") in back, back
     assert back[-1] == "COMMIT"
 
 
@@ -153,16 +157,18 @@ def test_apply_mode_dry_run_and_guards():
         calls = []
         was, skip = pd.write_sql, pd.SKIP_FILE
         pd.write_sql = lambda *a: calls.append(a[2])
-        pd.SKIP_FILE = os.path.join(d, "none.txt")
+        pd.SKIP_FILE = os.path.join(d, "skip.txt")
+        with open(pd.SKIP_FILE, "w", encoding="utf-8") as f:
+            f.write("# no country left out\n")
         try:
             out = io.StringIO()
             with contextlib.redirect_stdout(out):
                 pd.main(args + ["--dry-run"], corrections=path, reader=lambda *a: (VALID, NOW, 0))
-            assert not calls and "would apply 3 states" in out.getvalue(), out.getvalue()   # uk too: the skip file is not read here
+            assert not calls and "would apply 3 states" in out.getvalue(), out.getvalue()   # uk too: this skip file names none
             out = io.StringIO()
             with contextlib.redirect_stdout(out):
                 pd.main(args, corrections=path, reader=lambda *a: (VALID, NOW, 0))
-            assert len(calls) == 2 and calls[0][0] == "START TRANSACTION" and calls[1][2].startswith("CREATE TABLE place_apply_bak_"), calls
+            assert len(calls) == 2 and calls[0][0] == "START TRANSACTION" and calls[1][1].startswith("CREATE TABLE place_apply_bak_"), calls
             assert "applied 3 states" in out.getvalue() and "left out: " in out.getvalue(), out.getvalue()
             calls.clear()
             out = io.StringIO()
@@ -182,6 +188,17 @@ def test_apply_mode_dry_run_and_guards():
             finally:
                 pd.MAX_APPLY = limit
             assert len(calls) == 1, calls          # the report rows only
+            # a skip file that cannot be read stops the apply (review of #384)
+            calls.clear()
+            os.remove(pd.SKIP_FILE)
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    pd.main(args, corrections=path, reader=lambda *a: (VALID, NOW, 0))
+            except SystemExit as e:
+                assert "skip file" in str(e), e
+            else:
+                raise AssertionError("a missing skip file must stop the apply")
+            assert len(calls) == 1, calls          # the report rows only
         finally:
             pd.write_sql, pd.SKIP_FILE = was, skip
 
@@ -199,6 +216,13 @@ def test_rollback_takes_only_a_date():
         pass
     else:
         raise AssertionError("a rollback date that is not a date must be refused")
+    for other in ("20261123", "2026-W47-1"):        # dates fromisoformat takes, but not the backup table's form
+        try:
+            pd.main(["--rollback", other, "--dry-run"])
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(other + " must be refused")
 
 
 def test_dry_run_writes_nothing_and_says_so():

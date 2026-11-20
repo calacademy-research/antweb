@@ -1308,8 +1308,12 @@ python3 /root/antweb-next/tools/place/place_daily.py --mode apply --dry-run
 ```
 
 Switch on (production): `sed -i 's#place_daily.py >/dev/null#place_daily.py --mode apply >/dev/null#' /etc/cron.d/antweb-place-daily && grep -v '^#' /etc/cron.d/antweb-place-daily`.
-Back to report mode: the same with the two sides swapped. Put back one day's apply run:
-`python3 /root/antweb/tools/place/place_daily.py --rollback 2026-11-24` (the date of the run). The next daily update
+Back to report mode: the same with the two sides swapped. Put back one day's apply run: first back to report mode
+(else the next morning writes the same states again), then
+`python3 /root/antweb/tools/place/place_daily.py --rollback 2026-11-24` (the date of the run). It puts back only the
+specimens that still have the state that run wrote; a later upload or edit stays. A skip file that cannot be read
+stops the apply ("apply refused"). An upload deletes and re-inserts its specimens, so `adm1_verbatim` is empty again
+after it. The next daily update
 recounts the places. Remove it: also `DROP TABLE place_update` (reports only) and
 `ALTER TABLE specimen DROP COLUMN adm1_verbatim` (empty until the apply mode).
 
