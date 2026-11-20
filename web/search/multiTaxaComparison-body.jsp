@@ -1,7 +1,8 @@
 <%-- Body of the image comparison (compareResults.do): the session's taxaToCompare (CompareResultsAction), each
      specimen or species with its images in a row and a checkbox; the form (POST to compareResults.do with a view:
      Head, Profile, Dorsal, Ventral or Label) shows one view of the selected rows (multiTaxaOneView.jsp). Read-only.
-     Tests: tests/e2e/test_numbers_search.py::test_comparison_counts_the_chosen_specimens. --%><%@ page language="java" %>
+     Tests: tests/e2e/test_numbers_search.py::test_comparison_counts_the_chosen_specimens,
+     test_comparison_lists_a_specimen_without_images_of_the_views. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.calacademy.antweb.search.*" %>
@@ -96,7 +97,7 @@ int fourth = 4;
 
     // A chosen specimen is always listed (it is counted in "N specimens to compare"), even when it has no image of
     // the views compared (a label image only); a species is listed when it has images.
-    boolean isSpecimen = entry.getKey().getRank().equals("specimen");
+    boolean isSpecimen = "specimen".equals(taxon.getRank());
     if (isSpecimen || (taxon.getHasImages() && taxon.getImages() != null)) {
 
       //A.log("2 taxon:" + taxon + " images:" + taxon.getImages()); 
