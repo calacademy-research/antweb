@@ -139,8 +139,14 @@ public class GeolocaleMgr extends Manager {
         geolocales.addAll(geolocaleDb.getGeolocales("country", "none", false));
         //A.log("populateShallow() 2 c:" + countInstances("Albania", geolocales));
 
-        // Each state once (2026-11-20): a country reached twice (two country rows of one name, or one under two
-        // parents) brought its states in twice, and the daily box check listed every state of Panama as a duplicate.
+        // Each state once (2026-11-20): a country reached twice (Panama, id 91, and its old name Panamá, id 8818, both
+        // under Central America) brought its states in twice, and the daily box check listed every state of Panama as a
+        // duplicate. The places list and the state list both keep each state once; the count dropped is logged.
+        int before = geolocales.size();
+        Set<Integer> adm1Ids = new HashSet<>();
+        geolocales.removeIf(g -> g != null && g.isAdm1() && g.getId() > 0 && !adm1Ids.add(g.getId()));
+        if (geolocales.size() < before) s_log.warn("populateShallow() " + (before - geolocales.size())
+            + " states reached twice (a country reached twice); each kept once");
         ArrayList<Adm1> newAdm1List = onePerId(geolocales.stream()
                 .filter(Geolocale::isAdm1)
                 .map(adm1 -> (Adm1) adm1)
