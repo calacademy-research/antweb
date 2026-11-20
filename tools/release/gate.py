@@ -11,7 +11,8 @@ tools/release/README.md):
  2. staging   The FULL end-to-end run of the PR head finished while staging had the head's code (the last staging
               deploy before the run was of the head, or of the "merge -s ours" staging commit with the head's files:
               staging_had_head); a failed test is allowed only if check 3 lists it. A PR that changes only files outside the site (NO_SITE_PATHS:
-              docs, unit tests, production smoke and speed checks, release tools) needs no staging run.
+              docs, unit tests, production smoke and speed checks, release tools, the place tools run only by hand)
+              needs no staging run.
  3. known     Every failure of that run is in tests/e2e/known-failures.toml, and no entry there has expired.
  4. nightly   A PR that changes nightly code (NIGHTLY_PATHS) has run through a staging nightly: --nightly-checked,
               or a PR comment line "nightly-checked: <head sha>", says Claude read the morning compute.log for this
@@ -80,10 +81,16 @@ NIGHTLY_PATHS = [
 
 
 # Files that are not part of the site: a PR that changes only these needs no staging run (check 2). Production smoke
-# and speed checks, unit tests, docs and the release tools run on GitHub or by hand, never on the site. tests/e2e is
-# not here: e2e tests run against staging.
+# and speed checks, unit tests, docs and the release tools run on GitHub or by hand, never on the site. So do the place
+# tools that are only ever run by hand (tested by tests/unit; review of #393): not the place report the host's cron runs
+# every day (place_daily.py, place_corrections.py, coordinate_country.py, adm1_shape_map.csv, its skip file and the
+# cron line), which writes to the database, so it keeps the staging run. tests/e2e is not here: e2e tests run against
+# staging.
+HAND_RUN_PLACE_TOOLS = ["iso_states.py", "build_iso3166_2.py", "iso3166_2.tsv", "iso3166_countries.tsv", "country_rename.py",
+                        "island_countries.py", "place_fix.py"]
 NO_SITE_PATHS = [
     "docs/*", "release-notes/*", "tools/release/*", "tests/unit/*", "tests/smoke/*",
+    *("tools/place/" + f for f in HAND_RUN_PLACE_TOOLS),
     ".github/workflows/prod-*.yaml", ".github/workflows/release-gate.yaml",
 ]
 
