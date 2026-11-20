@@ -254,10 +254,15 @@ def test_a_level_line_decides_the_level():
     # 2026-11-20: "level,Reunion,ADM3": only ADM3 is looked at, though ADM4 fits the names better
     work = setup()
     work.shapes.levels["Reunion"] = "ADM3"
+    work.shapes.tables.pop("Reunion", None)
+    work.shapes._chosen.pop("Reunion", None)
     work.shapes.choose("Reunion", "REU")
     t = work.shapes.tables["Reunion"]
     assert [pc.level_text(x) for x in t["tried"]] == ["ADM3 0/2 AntWeb states, 0/2 shapes"], t["tried"]
-    assert pc.read_rules is not None and pc.Rules(levels={"Uganda": "ADM3"}).levels == {"Uganda": "ADM3"}
+    assert pc.Rules(levels={"Uganda": "ADM3"}).levels == {"Uganda": "ADM3"}
+    del work.shapes.levels["Reunion"]
+    work.shapes.tables.pop("Reunion", None)
+    work.shapes._chosen.pop("Reunion", None)
 
 
 def test_mapping_file_of_the_repository():
