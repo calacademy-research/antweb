@@ -1311,8 +1311,13 @@ Switch on (production): `sed -i 's#place_daily.py >/dev/null#place_daily.py --mo
 Back to report mode: the same with the two sides swapped. Put back one day's apply run: first back to report mode
 (else the next morning writes the same states again), then
 `python3 /root/antweb/tools/place/place_daily.py --rollback 2026-11-24` (the date of the run). It puts back only the
-specimens that still have the state that run wrote; a later upload or edit stays. A skip file that cannot be read
-stops the apply ("apply refused"). An upload deletes and re-inserts its specimens, so `adm1_verbatim` is empty again
+specimens that still have the state that run wrote; a later upload or edit stays; the journal line says how many were
+put back and how many kept (counted just before it runs); `--dry-run` shows the same counts. Roll back the newest apply
+run first. A rollback that would put nothing back (rolled back already, every specimen changed since, or older than 60
+days) is refused. A skip file that cannot be read stops the apply and its dry run
+("apply refused"). A failed apply run leaves its backup table `place_apply_bak_<yyyymmdd>` (made before the
+transaction) and a rerun the same day stops at it: check `select count(*) from place_update where run_date = '<date>'
+and mode = 'apply' and applied = 1` is 0, then `DROP TABLE place_apply_bak_<yyyymmdd>` and rerun. An upload deletes and re-inserts its specimens, so `adm1_verbatim` is empty again
 after it. The next daily update
 recounts the places. Remove it: also `DROP TABLE place_update` (reports only) and
 `ALTER TABLE specimen DROP COLUMN adm1_verbatim` (empty until the apply mode).
