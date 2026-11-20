@@ -6,6 +6,8 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import org.calacademy.antweb.curate.geolocale.EditGeolocaleAction;
+import org.calacademy.antweb.curate.geolocale.EditGeolocaleForm;
 import org.calacademy.antweb.geolocale.Adm1;
 import org.calacademy.antweb.geolocale.Geolocale;
 import org.calacademy.antweb.util.BoxCheck;
@@ -80,5 +82,46 @@ public class DuplicateStateTest extends TestCase {
         assertTrue(line, line.contains("13 pairs") && line.endsWith("; and 3 more"));
         assertEquals("; DUPLICATE STATES: 1 pair of valid states written alike (make one an old name of the other in the Geolocale Manager): X: a / A",
             BoxCheck.duplicatesLine(Arrays.asList("X: a / A")));
+    }
+
+    private static EditGeolocaleForm form(String name, String parent, boolean valid) {
+        EditGeolocaleForm f = new EditGeolocaleForm();
+        f.setName(name);
+        f.setParent(parent);
+        f.setIsValid(valid);
+        return f;
+    }
+
+    // review of PR #383: only a save that makes a state valid, or renames or moves a valid one, is checked
+    public void testTheManagerRefusesOnlyANewDuplicate() {
+        List<Geolocale> places = places();
+        Adm1 merged = adm1(2849, "Murang'A", "Kenya", false);
+        // making the merged row valid again: refused, and the message names the valid state
+        String m = EditGeolocaleAction.duplicateState(form("Murang'A", "Kenya", true), merged, places);
+        assertTrue(m, m != null && m.contains("Murang&#39;a (id 5595)"));
+        // saved as not valid: no check
+        assertNull(EditGeolocaleAction.duplicateState(form("Murang'A", "Kenya", false), merged, places));
+        // a pair that exists already: a valid state's box or note can still be saved
+        places.add(adm1(2859, "Tharaka - Nithi", "Kenya", true));
+        Adm1 twin = adm1(7598, "Tharaka-Nithi", "Kenya", true);
+        places.add(twin);
+        assertNull(EditGeolocaleAction.duplicateState(form("Tharaka-Nithi", "Kenya", true), twin, places));
+        assertNull(EditGeolocaleAction.duplicateState(form(null, null, true), twin, places));
+        // renaming a valid state onto another one written alike: refused
+        Adm1 nairobi = (Adm1) places.get(2);
+        assertNotNull(EditGeolocaleAction.duplicateState(form("Taita-Taveta", "Kenya", true), nairobi, places));
+        // moving a valid state to a country that has one written alike: checked against the new country
+        Adm1 grandEst = adm1(2504, "Grand Est", "Germany", true);
+        assertNotNull(EditGeolocaleAction.duplicateState(form("Grand Est", "France", true), grandEst, places));
+        assertNull(EditGeolocaleAction.duplicateState(form("Grand Est", "Germany", true), grandEst, places));
+        // a country or region, or no row: no check
+        assertNull(EditGeolocaleAction.duplicateState(form("Kenya", null, true), null, places));
+        // a stored name with a blank at the end, saved unchanged: not a rename
+        Adm1 blank = adm1(2860, "Taita Taveta ", "Kenya", true);
+        assertNull(EditGeolocaleAction.duplicateState(form("Taita Taveta ", "Kenya", true), blank, places));
+        // before the places are loaded (no list): a save that needs the check waits; one that does not goes ahead
+        assertEquals(EditGeolocaleAction.PLACES_LOADING, EditGeolocaleAction.duplicateState(form("Murang'A", "Kenya", true), merged, null));
+        assertNull(EditGeolocaleAction.duplicateState(form("Murang'A", "Kenya", false), merged, null));
+        assertNull(EditGeolocaleAction.duplicateState(form("Tharaka-Nithi", "Kenya", true), twin, null));      // a box fixed
     }
 }
