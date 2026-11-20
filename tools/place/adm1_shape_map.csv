@@ -46,9 +46,11 @@
 #    valid state is that state. Where AntWeb has two valid spellings of the state the line names, the one the
 #    line writes is proposed.
 #    Nobody approved these lines one by one. 148 are the pairs of the production run of 2026-11-10 that the
-#    lead checked by the names; the others are plain from the names (the same name with the word kraj or
-#    län, Dutch for the Belgian provinces, ts/ch/sh/zh for c/č/š/ž in Macedonia ...). Where AntWeb has two
-#    valid states for one place (Mongolia, Qatar, Syria, Kuwait) the line names the form the lead's pairs use.
+#    lead checked by the names; the others are plain from the names (the same name with the word kraj, Dutch
+#    for the Belgian provinces, ts/ch/sh/zh for c/č/š/ž in Macedonia ...). Where AntWeb had two valid states for
+#    one place (Mongolia, Qatar, Syria, Kuwait) the line named the form the lead's pairs use; since 2026-11-20
+#    (states under their ISO 3166-2 names, tools/place/iso_states.py) the line names the state that was kept:
+#    ISO's name, or for a country written in another script its English name (Syria: Latakia).
 # 7. level,country,level
 #    The country's states are this level of its source (ADM1, ADM2 ... or NE); no other level is looked at. For a
 #    country whose finer units have the names of its states (2026-11-20: Uganda's counties, geoBoundaries ADM2,
@@ -138,7 +140,6 @@ Mexico,ADM1,Distrito Federal,Ciudad de México
 Mexico,ADM1,Distrito Federal,Distrito Federal
 Mexico,ADM1,Mexico,México
 Mexico,ADM1,Mexico,Estado de México
-# United States. AntWeb's name for the District of Columbia (GeolocaleMgr.getGeolocaleFromProjectName).
 # Nicaragua. geoBoundaries writes "Jinotega (Departamento)". A name with the unit word is a looser name, which the
 # specimens may contradict, and here they do: 4,117 specimens filed under Jinotega lie in the Caribbean region
 # next to it (production 2026-11-10; they are listed in to_decide.csv). The shape is the department all the same,
@@ -224,7 +225,7 @@ name,Czech Republic,ADM1,Olomoucký kraj,Olomoucký,spelling or language of the 
 name,Greece,ADM2,Anatolikis Makedonias kai Thr*,Anatolikí Makedonía kai Thráki,spelling or language of the same name
 name,Greece,ADM2,Thessalias,Thessalía,spelling or language of the same name
 name,Haiti,ADM1,Département de la Grande-Anse,Grande'Anse,spelling or language of the same name
-name,Kenya,ADM1,Tharaka,Tharaka-Nithi,the same place; AntWeb also has Tharaka-Nithi as a valid state
+name,Kenya,ADM1,Tharaka,Tharaka-Nithi,the same place
 name,Mongolia,ADM1,Khentii,Hentiy,spelling or language of the same name
 name,Nigeria,ADM1,Abuja Federal Capital Territory,Federal Capital Territory,AntWeb also has FCT as a valid state
 name,Papua New Guinea,ADM1,Northern (Oro) Province,Northern,spelling or language of the same name
@@ -282,7 +283,7 @@ name,Russia,ADM1,Kostroma Oblast,Kostrom,spelling or language of the same name (
 name,Russia,ADM1,Sakha Republic,Sakha (Yakutiya),spelling or language of the same name (by AntWeb's old name Sakha)
 name,Russia,ADM1,Ulyanovsk Oblast,Ul'yanov,spelling or language of the same name (by AntWeb's old name Ulyanovsk)
 name,Serbia,ADM2,Belgrade,Beograd,spelling or language of the same name
-name,Switzerland,ADM1,St. Gallen,Sankt Gallen,the same place; AntWeb also has Sankt Gallen as a valid state
+name,Switzerland,ADM1,St. Gallen,Sankt Gallen,the same place
 name,Tajikistan,ADM1,Gorno-Badakhshan Autonomous Region,Gorno-Badakhshan,spelling or language of the same name
 name,Ukraine,ADM1,Autonomous Republic of Crimea,Crimea,spelling or language of the same name
 name,Uzbekistan,ADM1,Jizzakh Region,Jizzax,spelling or language of the same name
