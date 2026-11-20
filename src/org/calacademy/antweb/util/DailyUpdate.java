@@ -97,7 +97,7 @@ public final class DailyUpdate {
         new Step("placeListTotals", "Place list totals", "the Subfamilies, Genera and Species of each place page"),
         new Step("set5", "Set 5: maps and cache reload", "object maps; every cache reloaded (skipped on staging)"),
         new Step("logSizeCheck", "Log size check", "warns when a log or the disk grows too large"),
-        new Step("boxCheck", "Box check", "states whose box flags their own specimens as out of bounds (BoxCheck)"),
+        new Step("boxCheck", "Box check", "states whose box flags their own specimens as out of bounds, and valid states written alike (BoxCheck)"),
         new Step("statsPage", "Statistics page", "the tables of the statistics page"),
         new Step("apiCounts", "API taxon counts", "the counts the API gives for each name"),
         new Step("cacheReload", "Cache reload", "only where set 5 was skipped (staging)"),
