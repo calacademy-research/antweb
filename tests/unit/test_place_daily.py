@@ -103,13 +103,102 @@ def test_quote_escapes():
     assert pd.quote("x\0y") == "'xy'"
 
 
-def test_apply_mode_is_refused():
+APPLY = [
+    {"specimen_code": "ok1", "field": "adm1", "current_value": "Toliara", "proposed_value": "Menabe", "country": "Madagascar", "upload_group": "CAS"},
+    {"specimen_code": "ok2", "field": "adm1", "current_value": "", "proposed_value": "Sava", "country": "Madagascar", "upload_group": "CAS"},
+    {"specimen_code": "near", "field": "adm1", "current_value": "", "proposed_value": "Sava", "country": "Madagascar",
+     "other_state_flag": "within the stated error of Analanjirofo"},
+    {"specimen_code": "ctry", "field": "country", "current_value": "", "proposed_value": "Kenya", "country": "Kenya"},
+    {"specimen_code": "uk", "field": "adm1", "current_value": "", "proposed_value": "England", "country": "United Kingdom"},
+    {"specimen_code": "bad", "field": "adm1", "current_value": "", "proposed_value": "Atlantis", "country": "Madagascar"},
+    {"specimen_code": "gone", "field": "adm1", "current_value": "", "proposed_value": "Sava", "country": "Madagascar"},
+    {"specimen_code": "moved", "field": "adm1", "current_value": "", "proposed_value": "Sava", "country": "Madagascar"},
+    {"specimen_code": "edit", "field": "adm1", "current_value": "Toliara", "proposed_value": "Menabe", "country": "Madagascar"},
+]
+VALID = {("Madagascar", "Menabe"), ("Madagascar", "Sava"), ("United Kingdom", "England")}
+NOW = {"ok1": ("Madagascar", "Toliara"), "ok2": ("Madagascar", ""), "near": ("Madagascar", ""), "ctry": ("", ""),
+       "uk": ("United Kingdom", ""), "bad": ("Madagascar", ""), "moved": ("Comoros", ""), "edit": ("Madagascar", "Atsimo-Andrefana")}
+
+
+def test_only_safe_states_are_applied():
+    with tempfile.TemporaryDirectory() as d:
+        rows = pd.rows_of(corrections_file(d, APPLY), "2026-11-23", "report")
+    todo, why = pd.eligible(rows, VALID, NOW, {"United Kingdom"})
+    assert [r["code"] for r in todo] == ["ok1", "ok2"], todo
+    assert why == {"flag": 1, "country": 1, "skip": 1, "invalid": 1, "gone": 1, "moved": 1, "changed": 1}, why
+
+
+def test_the_apply_sql_backs_up_first_and_writes_only_unchanged_states():
+    with tempfile.TemporaryDirectory() as d:
+        rows = pd.rows_of(corrections_file(d, APPLY[:2]), "2026-11-23", "report")
+    sql = pd.apply_statements(rows, "2026-11-23")
+    assert sql[1] == "START TRANSACTION" and sql[-1] == "COMMIT"
+    assert sql[2].startswith("CREATE TABLE place_apply_bak_20261123 ")    # no IF NOT EXISTS: a second run the same day fails, writes nothing
+    assert sql[3].startswith("INSERT INTO place_apply_bak_20261123 (code, adm1, adm1_verbatim) SELECT") and "'ok1','ok2'" in sql[3]
+    assert sql[4] == ("UPDATE specimen SET adm1_verbatim = IFNULL(adm1_verbatim, adm1), adm1 = 'Menabe' WHERE code = 'ok1'"
+                      " AND BINARY IFNULL(adm1, '') = BINARY 'Toliara'"), sql[4]
+    assert sql[5].endswith("WHERE code = 'ok2' AND BINARY IFNULL(adm1, '') = BINARY ''"), sql[5]
+    assert sql[6].startswith("INSERT INTO place_update (") and ",applied) VALUES " in sql[6] and "'apply'" in sql[6] and sql[6].count(",1)") == 2
+    back = pd.rollback_statements("2026-11-23")
+    assert "UPDATE specimen s JOIN place_apply_bak_20261123 b ON b.code = s.code SET s.adm1 = b.adm1, s.adm1_verbatim = b.adm1_verbatim" in back
+    assert back[-1] == "COMMIT"
+
+
+def test_apply_mode_dry_run_and_guards():
+    import io
+    import contextlib
+    with tempfile.TemporaryDirectory() as d:
+        path = corrections_file(d, APPLY)
+        args = ["--mode", "apply", "--project", d, "--out-root", os.path.join(d, "out"), "--lock", os.path.join(d, "lock")]
+        calls = []
+        was, skip = pd.write_sql, pd.SKIP_FILE
+        pd.write_sql = lambda *a: calls.append(a[2])
+        pd.SKIP_FILE = os.path.join(d, "none.txt")
+        try:
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                pd.main(args + ["--dry-run"], corrections=path, reader=lambda *a: (VALID, NOW, 0))
+            assert not calls and "would apply 3 states" in out.getvalue(), out.getvalue()   # uk too: the skip file is not read here
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                pd.main(args, corrections=path, reader=lambda *a: (VALID, NOW, 0))
+            assert len(calls) == 2 and calls[0][0] == "START TRANSACTION" and calls[1][2].startswith("CREATE TABLE place_apply_bak_"), calls
+            assert "applied 3 states" in out.getvalue() and "left out: " in out.getvalue(), out.getvalue()
+            calls.clear()
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                pd.main(args, corrections=path, reader=lambda *a: (VALID, NOW, 3))   # already applied today
+            assert len(calls) == 1 and "today's apply run already wrote 3" in out.getvalue(), out.getvalue()
+            calls.clear()
+            limit = pd.MAX_APPLY
+            pd.MAX_APPLY = 2
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    pd.main(args, corrections=path, reader=lambda *a: (VALID, NOW, 0))
+            except SystemExit as e:
+                assert "over the limit" in str(e)
+            else:
+                raise AssertionError("over the limit must stop the apply")
+            finally:
+                pd.MAX_APPLY = limit
+            assert len(calls) == 1, calls          # the report rows only
+        finally:
+            pd.write_sql, pd.SKIP_FILE = was, skip
+
+
+def test_the_skip_file_names_countries():
+    skip = pd.skipped_countries()
+    assert {"United Kingdom", "Slovenia", "Uganda", "Guadeloupe"} <= skip and "Madagascar" not in skip, skip
+    assert all("#" not in c and c == c.strip() for c in skip)
+
+
+def test_rollback_takes_only_a_date():
     try:
-        pd.main(["--mode", "apply"])
-    except SystemExit as e:
-        assert "not built yet" in str(e), e
+        pd.main(["--rollback", "2026-11-23; drop table specimen", "--dry-run"])
+    except ValueError:
+        pass
     else:
-        raise AssertionError("apply must be refused")
+        raise AssertionError("a rollback date that is not a date must be refused")
 
 
 def test_dry_run_writes_nothing_and_says_so():

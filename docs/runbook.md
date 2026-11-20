@@ -1292,7 +1292,25 @@ F=/root/antweb/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^passwor
 ```
 
 Every run writes one line to `journalctl -t place-daily`, "place-daily report: ..." or "place-daily FAILED: ...".
-Stop it: `rm /etc/cron.d/antweb-place-daily`. Remove it: also `DROP TABLE place_update` (reports only) and
+Stop it: `rm /etc/cron.d/antweb-place-daily`.
+
+**Step 2, apply mode (built 2026-11-19; switched on only with Brian's yes, after the week of reports).** `--mode apply`
+loads the report rows as before, then writes the safe state proposals to `specimen.adm1` (the uploaded value goes to
+`adm1_verbatim`): states only (never a country), no other state within the stated error, the country not in
+`tools/place/place_daily_skip.txt` (shapes at another level: the United Kingdom, Slovenia, Uganda, ...), the proposed
+name a valid state, the specimen unchanged since the report. At most 5,000 a run (more: nothing applied, the run says
+"apply REFUSED"); once a day. Backup table `place_apply_bak_<yyyymmdd>`; the written rows are in `place_update` (mode
+apply). The journal line ends "applied N states (backup ...); left out: <reasons and counts>". Try it first:
+
+```
+# ssh root@165.232.136.170, then on production after a good staging day (ssh root@165.232.137.86, /root/antweb)
+python3 /root/antweb-next/tools/place/place_daily.py --mode apply --dry-run
+```
+
+Switch on (production): `sed -i 's#place_daily.py >/dev/null#place_daily.py --mode apply >/dev/null#' /etc/cron.d/antweb-place-daily && grep -v '^#' /etc/cron.d/antweb-place-daily`.
+Back to report mode: the same with the two sides swapped. Put back one day's apply run:
+`python3 /root/antweb/tools/place/place_daily.py --rollback 2026-11-24` (the date of the run). The next daily update
+recounts the places. Remove it: also `DROP TABLE place_update` (reports only) and
 `ALTER TABLE specimen DROP COLUMN adm1_verbatim` (empty until the apply mode).
 
 ## One-off image exports
