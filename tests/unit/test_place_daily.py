@@ -153,6 +153,7 @@ def test_the_apply_sql_backs_up_first_and_writes_only_unchanged_states():
     assert pd.rollback_counts("2026-11-23")[1] == "SELECT COUNT(*) FROM " + join + " WHERE " + where
     assert back[i] == "UPDATE " + join + " SET s.adm1 = b.adm1, s.adm1_verbatim = b.adm1_verbatim, p.applied = 0 WHERE " + where
     assert pd.rollback_result([["before", "5"], ["after", "2"]]) == (3, 2)
+    assert pd.rollback_result([]) is None and pd.rollback_result(None) is None
     assert not any(x.startswith("UPDATE place_update") for x in back)     # a row kept by the rollback stays applied (review of #388)
     assert back[-1] == "COMMIT"
 
@@ -296,12 +297,12 @@ def test_rollback_counts_and_refuses_when_nothing_is_applied():
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
             pd.main(["--rollback", "2026-11-23", "--project", "/x"], counter=lambda q: 5 if "FROM place_update WHERE" in q else 3)
-        assert len(calls) == 1 and "4 specimens put back" in out.getvalue() and "1 changed since" in out.getvalue(), out.getvalue()
+        assert len(calls) == 1 and "4 specimens put back" in out.getvalue() and "1 not put back" in out.getvalue(), out.getvalue()
         calls.clear()
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
             pd.main(["--rollback", "2026-11-23", "--project", "/x", "--dry-run"], counter=lambda q: 5 if "FROM place_update WHERE" in q else 3)
-        assert not calls and "would put back 3 specimens; 2 changed since, kept" in out.getvalue(), out.getvalue()
+        assert not calls and "would put back 3 specimens; 2 not put back" in out.getvalue(), out.getvalue()
         try:   # every row left changed since (or rolled back already but some kept): refused
             pd.main(["--rollback", "2026-11-23", "--project", "/x"], counter=lambda q: 2 if "FROM place_update WHERE" in q else (1 if "information_schema" in q else 0))
         except SystemExit as e:
@@ -316,6 +317,21 @@ def test_rollback_counts_and_refuses_when_nothing_is_applied():
         else:
             raise AssertionError("a rollback with nothing applied must be refused")
         assert not calls
+        # the database says 0 were put back (an upload came between the count and the UPDATE): a failure, not a success
+        pd.write_sql = lambda *a: calls.append(a[2]) or [["before", "2"], ["after", "2"]]
+        try:
+            pd.main(["--rollback", "2026-11-23", "--project", "/x"], counter=lambda q: 5 if "FROM place_update WHERE" in q else 3)
+        except SystemExit as e:
+            assert "nothing put back" in str(e), e
+        else:
+            raise AssertionError("a rollback that put nothing back must not end as a success")
+        # the counts did not come back: a warning that it was committed, not a FAILED line
+        pd.write_sql = lambda *a: calls.append(a[2]) or []
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            assert pd.main(["--rollback", "2026-11-23", "--project", "/x"], counter=lambda q: 5 if "FROM place_update WHERE" in q else 3) == 0
+        assert "committed; its counts were not read" in out.getvalue(), out.getvalue()
+        calls.clear()
         try:   # the backup table was dropped: said plainly, nothing written
             pd.main(["--rollback", "2026-11-23", "--project", "/x"], counter=lambda q: 0 if "information_schema" in q else 5)
         except SystemExit as e:
