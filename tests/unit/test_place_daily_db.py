@@ -78,6 +78,8 @@ def test_apply_then_rollback(project):
     assert applied() == {"s1": 0, "s2": 0, "s3": 1}, applied()      # the kept row stays applied
     assert pd.rollback_result(pd.write_sql(project, CONTAINER, pd.rollback_statements(DAY), DB)) == (0, 1)
     assert state()["s3"] == ("Haute Matsiatra", "<null>")
+    mysql("drop table " + pd.backup_table(DAY))            # the backup table gone: the refusal's check sees it
+    assert int(mysql(pd.backup_exists(DAY))[0][0]) == 0
     mysql("drop database %s" % DB, None)
 
 

@@ -261,7 +261,7 @@ def rollback_result(rows):
     """(put back, kept) from what rollback_statements selected: the rows still applied before and after the UPDATE."""
     got = {r[0]: int(r[1]) for r in rows or [] if len(r) == 2 and r[0] in ("before", "after")}
     if set(got) != {"before", "after"}:
-        raise RuntimeError("the rollback ran, but its counts were not read: " + repr(rows)[:200])
+        return None
     return got["before"] - got["after"], got["after"]
 
 
@@ -323,13 +323,21 @@ def main(argv=None, corrections=None, reader=None, counter=None):
         back = count(back_q)
         kept = applied - back
         if not back:   # every row left was kept (changed since), or the day was rolled back already
-            raise SystemExit("rollback " + args.rollback + ": nothing to put back (" + cc.n(kept) + " applied specimens changed since, kept)")
+            raise SystemExit("rollback " + args.rollback + ": nothing to put back (" + cc.n(kept) + " applied specimens not put back: changed since or deleted)")
         if args.dry_run:
-            log("place-daily rollback " + args.rollback + " (dry run): would put back " + cc.n(back) + " specimens; " + cc.n(kept) + " changed since, kept")
+            log("place-daily rollback " + args.rollback + " (dry run): would put back " + cc.n(back) + " specimens; " + cc.n(kept)
+                + " not put back (changed since or deleted)")
             return 0
-        back, kept = rollback_result(write_sql(project, args.container, rollback_statements(args.rollback)))
+        result = rollback_result(write_sql(project, args.container, rollback_statements(args.rollback)))
+        if result is None:   # committed, but the counts did not come back: said as a warning, not as a failure (review of #394)
+            log("place-daily rollback " + args.rollback + ": committed; its counts were not read. Count with: select count(*) from place_update"
+                " where " + applied_rows(args.rollback))
+            return 0
+        back, kept = result
+        if not back:   # an upload loaded the rest between the count and the UPDATE (review of #394)
+            raise SystemExit("rollback " + args.rollback + ": nothing put back (" + cc.n(kept) + " applied specimens not put back: changed since or deleted)")
         log("place-daily rollback " + args.rollback + ": " + cc.n(back) + " specimens put back from " + backup_table(args.rollback) + "; "
-            + cc.n(kept) + " changed since (an upload or edit), kept")
+            + cc.n(kept) + " not put back (changed since, by an upload or edit, or deleted)")
         return 0
     run_date = datetime.date.today().isoformat()
     started = time.time()

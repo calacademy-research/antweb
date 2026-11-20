@@ -166,29 +166,53 @@ def test_no_site_code():
 
 
 def test_the_daily_place_report_uses_no_hand_run_tool():
-    # review of #393: the exemption is by file name, so the scripts the host's cron runs every day (and the site) must
-    # not import or read a tool exempted as hand-run; a mention in a comment or docstring is allowed
+    # review of #393: the exemption is by file name, so neither the scripts the host's cron runs every day nor the site
+    # may import or read a tool exempted as hand-run. The scripts are parsed (ast): every imported module and every
+    # string constant is checked against the names and their stems; comments and docstrings do not count.
+    import ast
     import re
-    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
-    place = os.path.join(root, "tools", "place")
-    cron = open(os.path.join(place, "antweb-place-daily.cron"), encoding="utf-8").read()
+    root = Path(__file__).resolve().parents[2]
+    place = root / "tools" / "place"
+    names = set(gate.HAND_RUN_PLACE_TOOLS)
+    stems = {n.rsplit(".", 1)[0] for n in names}
+    cron = (place / "antweb-place-daily.cron").read_text(encoding="utf-8")
     daily = set(re.findall(r"tools/place/(\w+\.py)", cron))
-    assert "place_daily.py" in daily, daily
+    assert "place_daily.py" in daily, "the cron line no longer names place_daily.py: update this guard to what it runs"
     todo, seen = sorted(daily), set()
     while todo:
         f = todo.pop()
         if f in seen:
             continue
         seen.add(f)
-        text = open(os.path.join(place, f), encoding="utf-8").read()
-        code = re.sub(r'(?s)""".*?"""', "", text)
-        code = "\n".join(line.split("#")[0] for line in code.splitlines())
-        for name in gate.HAND_RUN_PLACE_TOOLS:
-            stem = name.rsplit(".", 1)[0]
-            assert not re.search(r"\b(import\s+%s|from\s+%s\s+import)\b" % (stem, stem), code) and name not in code, (f, name)
-        todo += [m + ".py" for m in re.findall(r"^\s*(?:import|from)\s+(\w+)", code, re.M) if os.path.exists(os.path.join(place, m + ".py"))]
-        todo += [m for m in re.findall(r'"(\w+\.py)"', code) if os.path.exists(os.path.join(place, m))]
+        tree = ast.parse((place / f).read_text(encoding="utf-8"))
+        docstrings = {id(n.body[0].value) for n in ast.walk(tree) if isinstance(n, (ast.Module, ast.FunctionDef, ast.ClassDef))
+                      and n.body and isinstance(n.body[0], ast.Expr) and isinstance(n.body[0].value, ast.Constant)}
+        modules = [a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names]
+        modules += [n.module for n in ast.walk(tree) if isinstance(n, ast.ImportFrom) and n.module]
+        strings = [n.value for n in ast.walk(tree) if isinstance(n, ast.Constant) and isinstance(n.value, str) and id(n) not in docstrings]
+        assert not stems & {m.split(".")[0] for m in modules}, (f, modules)
+        for text in strings:
+            assert not any(n in text for n in names) and not any(re.search(r"\b%s\b" % re.escape(st), text) for st in stems), (f, text[:80])
+            assert "iso3166" not in text.lower(), (f, text[:80])      # the ISO files, also by a name built in parts
+        for m in modules + [t for t in strings if t.endswith(".py")]:
+            m = m.split(".")[0] + ".py" if not m.endswith(".py") else m
+            if (place / m).exists():
+                todo.append(m)
     assert {"place_daily.py", "coordinate_country.py", "place_corrections.py"} <= seen, seen
+    # the site: the code, the pages, the image and the deploy never name one (outside Java and shell comments)
+    site = [p for d in ("src", "web", "docker", "api") for p in (root / d).rglob("*") if p.is_file() and p.suffix in
+            (".java", ".jsp", ".py", ".sh", ".xml", ".properties", ".yaml", ".yml", ".conf", "")]
+    site += [root / "deploy.sh"] + sorted((root / ".github" / "workflows").glob("deploy*.y*ml"))
+    for p in site:
+        if not p.exists():
+            continue
+        try:
+            text = p.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        code = re.sub(r"(?s)/\*.*?\*/", "", text)
+        code = "\n".join(re.split(r"//|(?<![\w$])#", line)[0] for line in code.splitlines())
+        assert not any("tools/place/" + n in code or (n.endswith(".tsv") and n in code) for n in names), p
 
 
 def test_staged_by_tree():
