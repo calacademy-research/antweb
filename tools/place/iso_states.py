@@ -614,8 +614,8 @@ def reviewed_lines(path):
             p = line.rstrip("\n").split("\t")
             if p[0] in ("rename", "merge", "alias") and len(p) >= 8:
                 out.append("\t".join([p[0], p[1], p[2], p[4], p[5], p[7]]))
-            elif p[0] == "left out" and len(p) >= 7:
-                out.append("left out\t" + p[6])
+            elif p[0] in ("left out", "note") and len(p) >= 7:
+                out.append(p[0] + "\t" + p[6])
     return out
 
 
@@ -670,7 +670,10 @@ def main(argv=None):
     if args.apply:
         if not os.path.exists(plan_file):
             raise SystemExit("No plan in %s: run without --apply first and review it. Nothing was changed." % plan_file)
-        if sorted(reviewed_lines(plan_file)) != sorted(decision_lines(decisions) + ["left out\t" + w.replace("\t", " ") for w in left]):
+        # the decisions, what is left out and the page text notes, all as reviewed (a note that appears since means text
+        # that would stay behind: review of #396)
+        if sorted(reviewed_lines(plan_file)) != sorted(decision_lines(decisions) + ["left out\t" + w.replace("\t", " ") for w in left]
+                                                       + ["note\t" + w.replace("\t", " ") for w in notes]):
             raise SystemExit("The plan differs from the one reviewed in %s (the data changed since): run without --apply again and "
                              "review it. Nothing was changed." % plan_file)
     else:
