@@ -507,5 +507,11 @@ name,Seychelles,ADM1,Pointe La,Pointe Larue,the name cut short in the file
 name,Seychelles,ADM1,Roche Caïm,Roche Caiman,the name cut short in the file
 name,Seychelles,ADM1,Saint Loui,Saint Louis,the name cut short in the file
 #
-# Not in the boundary files: Entre Ríos (Argentina) and Arima (Trinidad and Tobago) have no shape in
-# geoBoundaries; their specimens get no proposal until another source is chosen for the country.
+# Argentina and Trinidad and Tobago: geoBoundaries has no shape for Entre Ríos (612 specimens) or for Arima; Natural
+# Earth has every province and region of the two (read 2026-11-19), so it is their source.
+source,Argentina,naturalearth
+source,Trinidad and Tobago,naturalearth
+name,Argentina,NE,Ciudad de Buenos Aires,Ciudad Autónoma de Buenos Aires,the same city
+name,Trinidad and Tobago,NE,Rio Claro-Mayaro,Mayaro-Rio Claro,the same region
+Trinidad and Tobago,NE,Eastern Tobago,Tobago
+Trinidad and Tobago,NE,Western Tobago,Tobago
