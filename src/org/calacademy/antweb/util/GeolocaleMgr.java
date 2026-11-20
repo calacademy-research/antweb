@@ -146,6 +146,8 @@ public class GeolocaleMgr extends Manager {
 
         MultiKeyMap<String, Adm1> newAdm1CountryMap = new MultiKeyMap<>();
         newAdm1List.forEach(adm1 -> newAdm1CountryMap.put(adm1.getName(), adm1.getCountry(), adm1));
+        // built before either map is published, so an upload line never pairs a new exact map with an old spelling map
+        Map<String, Adm1> newAdm1SpellingMap = adm1sBySpelling(newAdm1List, newAdm1CountryMap);
 
         // A country name twice (for example once under its subregion and once without a parent) used to throw
         // here and stop the load; the first is kept and the duplicate logged.
@@ -158,7 +160,7 @@ public class GeolocaleMgr extends Manager {
         islands = newIslands;
         adm1List = newAdm1List;
         adm1CountryMap = newAdm1CountryMap;
-        adm1SpellingMap = adm1sBySpelling(newAdm1List, newAdm1CountryMap);
+        adm1SpellingMap = newAdm1SpellingMap;
         countrySpellingMap = countriesBySpelling(newCountryNameMap.values());
         countryNameMap = newCountryNameMap;
         s_geolocales = geolocales;
@@ -892,8 +894,50 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         if (adm1 == null || country == null) return null;
         Adm1 valid = validAdm1(adm1s, adm1, country);
         if (valid != null) return valid;
-        if (bySpelling == null) return null;
+        // a row of this exact name that leads nowhere (a unit split up) stays as the curator's mapping says: no
+        // second try by spelling (validAdm1's rule; review of #382)
+        if (bySpelling == null || (adm1s != null && adm1s.get(adm1, country) != null)) return null;
         return bySpelling.get(country + "\u0000" + adm1SpellingKey(adm1));
+    }
+
+    /**
+     * Another valid state of the country written like this name (adm1SpellingKey): the duplicate the Geolocale Manager
+     * refuses to make valid (2026-11-19: 269 such pairs, from the 2021 Geonames and Geonet loads, had to be merged).
+     * id: the row being saved, left out. Null when there is none.
+     */
+    public static @Nullable Geolocale validStateWrittenAlike(Collection<? extends Geolocale> validAdm1s, String country, String name, int id) {
+        if (validAdm1s == null || country == null || name == null) return null;
+        String key = adm1SpellingKey(name);
+        if (key.isEmpty()) return null;
+        for (Geolocale g : validAdm1s) {
+            if (g == null || g.getId() == id || !g.isValid() || !country.equals(g.getParent())) continue;
+            if (key.equals(adm1SpellingKey(g.getName()))) return g;
+        }
+        return null;
+    }
+
+    /**
+     * The pairs of valid states of one country written alike ("Kenya: Nairobi / Nairobi City" would not be one: another
+     * word), as "country: name / name", sorted. The daily update's box check lists them (BoxCheck.run).
+     */
+    public static List<String> duplicateValidStates(Collection<? extends Geolocale> validAdm1s) {
+        Map<String, List<String>> byKey = new TreeMap<>();
+        if (validAdm1s != null) {
+            for (Geolocale g : validAdm1s) {
+                if (g == null || !g.isValid() || g.getParent() == null || g.getName() == null) continue;
+                String key = adm1SpellingKey(g.getName());
+                if (key.isEmpty()) continue;
+                byKey.computeIfAbsent(g.getParent() + "\u0001" + key, k -> new ArrayList<>()).add(g.getName());
+            }
+        }
+        List<String> out = new ArrayList<>();
+        for (Map.Entry<String, List<String>> e : byKey.entrySet()) {
+            if (e.getValue().size() < 2) continue;
+            List<String> names = new ArrayList<>(e.getValue());
+            Collections.sort(names);
+            out.add(e.getKey().substring(0, e.getKey().indexOf('\u0001')) + ": " + String.join(" / ", names));
+        }
+        return out;
     }
 
     /** adm1ToStore on the loaded places (the specimen upload, SpecimenUploadParse.parseLine). Null before they are loaded. */
