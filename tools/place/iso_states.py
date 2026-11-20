@@ -6,9 +6,10 @@ Each valid state (adm1) is matched to an ISO 3166-2 subdivision of its country: 
 (rows that are not valid and lead to it), against the ISO name, its translations and the geoBoundaries shape names of
 that subdivision, written alike (capitals, accents, blanks and punctuation aside, as GeolocaleMgr.adm1SpellingKey).
 When none is written alike, a name with the generic words left out ("Kherson" for "Khersonska oblast") is tried, and
-used to rename one state when it finds exactly one subdivision and no other state finds it too, and to merge only when
-the state leaves out a generic word of the ISO name (Banskobystrický, Banskobystrický kraj), never when it adds one
-("Kiev Oblast" is not the city Kiev).
+used only when it finds exactly one subdivision, no other state finds it too, and the state leaves out a generic word
+of the ISO name (Banskobystrický, Banskobystrický kraj), never adds one ("Kiev Oblast" is not the city Kiev).
+Specimens are matched by the exact name (a spelling with other capitals or accents stays; the plan counts those
+written exactly).
 
   rename    one valid state matches the subdivision and is not written as ISO writes it: it takes the ISO name; the
             name it had becomes an old name of it (a row not valid, valid name the ISO name), so an upload that writes
@@ -39,11 +40,11 @@ written like both takes the kind most of its country's states match.
   python3 iso_states.py --skip FILE           lines "country|state" left alone (a state looked at by hand)
   python3 iso_states.py --project /root/antweb-next      staging (default: the project on this server)
 
-Rollback (same server, the date of the run):
+Rollback (same server, the date of the run; the rows added go first, so the old names are free again):
   update specimen s join iso_states_spec_<date> b on b.code = s.code set s.adm1 = b.adm1 where binary s.adm1 = binary b.new_adm1;
+  delete from geolocale where georank = 'adm1' and admin_notes like 'iso_states <date>: added%';
   update geolocale g join iso_states_bak_<date> b on b.id = g.id set g.name = concat('~rb~', g.id) where binary g.name <> binary b.name;
   update geolocale g join iso_states_bak_<date> b on b.id = g.id set g.name = b.name, g.is_valid = b.is_valid, g.valid_name = b.valid_name, g.admin_notes = b.admin_notes;
-  delete from geolocale where admin_notes like 'iso_states <date>: added%';
 then reload the places (util.do?action=reloadAntwebMgr&name=geolocale, administrator)."""
 import argparse
 import collections
@@ -206,6 +207,8 @@ def match_country(states, subs):
             st = group[0]
             if how[st.id] == "loose" and any(code in hits[o.id] for o in states if o.id != st.id):
                 reported.append((st, "loose match %s (%s) that another state finds too: looked at by hand" % (code, iso)))
+            elif how[st.id] == "loose" and not shorter(st.name, sub):
+                reported.append((st, "loose match %s (%s) adds a generic word: looked at by hand" % (code, iso)))
             elif st.name != iso:
                 decisions.append(("rename", st, sub, st))
             continue
@@ -272,48 +275,43 @@ def q(value):
 
 
 def statements(decisions, names, tag, no_merge=None):
-    """The SQL of the change, the list of what could not be done (left out), and the decisions done. Renames first,
-    then merges; a merge into a state whose rename was left out is left out too (no valid state would carry the ISO
-    name), and so is one in no_merge (ids: a curator species list on the state merged)."""
+    """The SQL of the change to the place rows, the list of what could not be done (left out), and the decisions
+    done. Renames first, then merges; a merge into a state whose rename was left out is left out too (no valid state
+    would carry the ISO name), and so is one in no_merge (ids: a curator species list on the state merged). The
+    specimens are moved by main, from the backup table (moved_specimens)."""
     sql, left, done = [], [], []
-    renamed, blocked = {}, set()
+    blocked = set()
     no_merge = no_merge or {}
     for d in decisions:
         if d["action"] != "rename":
             continue
         c, old, iso, vid = d["country"], d["name"], d["iso"], d["id"]
         other = [x for x in names.get((c, iso), []) if x[0] != vid]
-        if any(x[1] == 1 for x in other) and not any(m["action"] == "merge" and m["country"] == c and m["name"] == iso for m in decisions):
-            left.append("%s: %s, ISO name %s is another valid state" % (c, old, iso))
-            blocked.add(vid)
-            continue
-        note = "iso_states %s: named %s, ISO 3166-2 %s; was %s." % (tag, iso, d["code"], old)
         swap = [x for x in other if x[1] != 1 and x[2] in (old, "")]        # at most one: the name is unique in a country
-        if any(x[1] != 1 and x[2] not in (old, "") for x in other):
-            left.append("%s: %s, a row named %s is an old name of another state" % (c, old, iso))
-            blocked.add(vid)
-            continue
-        if any(m["action"] == "merge" and m["kept_id"] == vid and m["id"] in no_merge for m in decisions):
-            left.append("%s: %s, a state to be merged into it has a curator species list (%s)"
-                        % (c, old, ", ".join(m["name"] for m in decisions if m["action"] == "merge" and m["kept_id"] == vid and m["id"] in no_merge)))
+        why = None
+        if any(x[1] == 1 for x in other):          # match_country keeps the state written as ISO, so this is another state
+            why = "ISO name %s is another valid state" % iso
+        elif any(x[1] != 1 and x[2] not in (old, "") for x in other):
+            why = "a row named %s is an old name of another state" % iso
+        elif any(m["action"] == "merge" and m["kept_id"] == vid and m["id"] in no_merge for m in decisions):
+            why = "a state to be merged into it has a curator species list (%s)" % ", ".join(
+                m["name"] for m in decisions if m["action"] == "merge" and m["kept_id"] == vid and m["id"] in no_merge)
+        if why:
+            left.append("%s: %s, %s" % (c, old, why))
             blocked.add(vid)
             continue
         done.append(d)
-        if any(x[1] == 1 for x in other):        # a valid state of the ISO name merged into this one below: move it aside
-            for x in other:
-                sql.append("update geolocale set name = %s where id = %d" % (q("~iso~%d" % x[0]), x[0]))
-            renamed.update({x[0]: "~iso~%d" % x[0] for x in other})
-        elif swap:
+        note = "iso_states %s: named %s, ISO 3166-2 %s; was %s." % (tag, iso, d["code"], old)
+        if swap:
             sql.append("update geolocale set name = %s where id = %d" % (q("~iso~%d" % swap[0][0]), swap[0][0]))
         sql.append("update geolocale set name = %s, admin_notes = concat(ifnull(concat(admin_notes, '\\n'), ''), %s) where id = %d" % (q(iso), q(note), vid))
-        if swap and not any(x[1] == 1 for x in other):
+        if swap:
             sql.append("update geolocale set name = %s, is_valid = 0, valid_name = %s, admin_notes = concat(ifnull(concat(admin_notes, '\\n'), ''), %s) where id = %d"
                        % (q(old), q(iso), q("iso_states %s: old name of %s (id %d)." % (tag, iso, vid)), swap[0][0]))
         else:
             sql.append("insert into geolocale (name, georank, parent, source, is_valid, valid_name, admin_notes) values (%s, 'adm1', %s, 'antweb', 0, %s, %s)"
                        % (q(old), q(c), q(iso), q("iso_states %s: added, old name of %s (ISO 3166-2 %s), id %d." % (tag, iso, d["code"], vid))))
         sql.append("update geolocale set valid_name = %s where georank = 'adm1' and parent = %s and binary valid_name = binary %s" % (q(iso), q(c), q(old)))
-        sql.append("update specimen set adm1 = %s where country = %s and binary adm1 = binary %s" % (q(iso), q(c), q(old)))
     for d in decisions:
         if d["action"] != "merge":
             continue
@@ -326,16 +324,17 @@ def statements(decisions, names, tag, no_merge=None):
             continue
         done.append(d)
         note = "iso_states %s: the same state as %s (ISO 3166-2 %s, id %d); made an old name of it, its specimens moved there." % (tag, iso, d["code"], d["kept_id"])
-        name_now = renamed.get(d["id"])
-        if name_now:        # it had the ISO name and was moved aside above: it keeps no name of its own, so it takes the kept state's old name
-            sql.append("update geolocale set name = %s, is_valid = 0, valid_name = %s, admin_notes = concat(ifnull(concat(admin_notes, '\\n'), ''), %s) where id = %d"
-                       % (q("~merged~%d" % d["id"]), q(iso), q(note), d["id"]))
-        else:
-            sql.append("update geolocale set is_valid = 0, valid_name = %s, admin_notes = concat(ifnull(concat(admin_notes, '\\n'), ''), %s) where id = %d"
-                       % (q(iso), q(note), d["id"]))
+        sql.append("update geolocale set is_valid = 0, valid_name = %s, admin_notes = concat(ifnull(concat(admin_notes, '\\n'), ''), %s) where id = %d"
+                   % (q(iso), q(note), d["id"]))
         sql.append("update geolocale set valid_name = %s where georank = 'adm1' and parent = %s and binary valid_name = binary %s" % (q(iso), q(c), q(old)))
-        sql.append("update specimen set adm1 = %s where country = %s and binary adm1 = binary %s" % (q(iso), q(c), q(old)))
     return sql, left, done
+
+
+def moved_specimens(spec):
+    """The specimens moved: those in the backup table that still have the state the backup read. A specimen an upload
+    loaded after the backup keeps what it has (it is not in the backup, so a rollback could not put it back); the
+    after line counts it, and a second run moves it (review of 4054e85)."""
+    return "update specimen s join %s b on b.code = s.code set s.adm1 = b.new_adm1 where binary s.adm1 = binary b.adm1" % spec
 
 
 def curator_lists(db, decisions):
@@ -459,12 +458,25 @@ def main(argv=None):
     moving = " or ".join("(country = %s and binary adm1 = binary %s)" % (q(d["country"]), q(d["name"])) for d in decisions) or "false"
     new_adm1 = "case " + " ".join("when country = %s and binary adm1 = binary %s then %s" % (q(d["country"]), q(d["name"]), q(d["iso"])) for d in decisions) + " end"
     wait = "set session innodb_lock_wait_timeout = 600; set session transaction isolation level read committed;\n"
-    pf.run_sql(db, wait + "create table %s as select id, name, parent, is_valid, valid_name, admin_notes from geolocale where georank = 'adm1' and (id in (%s) or %s);"
-               % (bak, ",".join(map(str, touched)) or "0", pointing))
-    pf.run_sql(db, wait + "create table %s as select code, country, adm1, %s as new_adm1 from specimen where %s;" % (spec, new_adm1, moving))
+    # the backup tables are made empty first (CREATE TABLE commits), then filled in the transaction of the change, so
+    # the backup is exactly what the change reads; the specimens move from the backup by code (the primary key)
+    pf.run_sql(db, "create table %s as select id, name, parent, is_valid, valid_name, admin_notes from geolocale where false;"
+                   "create table %s (code varchar(128) not null primary key, country varchar(128), adm1 varchar(128), new_adm1 varchar(128))"
+                   " default charset=utf8mb4" % (bak, spec))
+    try:
+        pf.run_sql(db, wait + "start transaction;\n"
+                   + "insert into %s select id, name, parent, is_valid, valid_name, admin_notes from geolocale where georank = 'adm1' and (id in (%s) or %s);\n"
+                   % (bak, ",".join(map(str, touched)) or "0", pointing)
+                   + "insert into %s select code, country, adm1, %s from specimen where %s;\n" % (spec, new_adm1, moving)
+                   + ";\n".join(sql + [moved_specimens(spec)]) + ";\ncommit;")
+    except pf.SqlFailed:
+        # nothing was changed (one transaction); the empty backup tables go, so the run can be made again today
+        if int(pf.run_sql(db, "select (select count(*) from %s) + (select count(*) from %s)" % (bak, spec))[0][0]) == 0:
+            pf.run_sql(db, "drop table %s; drop table %s" % (bak, spec))
+            print("The change failed and was not made; the empty backup tables were dropped.")
+        raise
     print("backup: %s place rows in %s, %s specimens in %s" % (pf.run_sql(db, "select count(*) from " + bak)[0][0], bak,
                                                                pf.run_sql(db, "select count(*) from " + spec)[0][0], spec))
-    pf.run_sql(db, wait + "start transaction;\n" + ";\n".join(sql) + ";\ncommit;")
     after_spec = pf.run_sql(db, "select count(*) from specimen where " + moving)[0][0]
     after_valid = pf.run_sql(db, "select count(*) from geolocale where georank = 'adm1' and is_valid = 1 and id in (%s) and name like '~%%'"
                              % (",".join(map(str, touched)) or "0"))[0][0]

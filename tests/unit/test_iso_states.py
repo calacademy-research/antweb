@@ -79,7 +79,9 @@ def test_merge_statements():
     assert not left and done == d
     merge = [x for x in sql if "where id = 2" in x]
     assert merge and "is_valid = 0" in merge[0] and "unhex('%s')" % "Bratislavský kraj".encode().hex() in merge[0]
-    assert sum(x.startswith("update specimen") for x in sql) == 2
+    assert not any(x.startswith("update specimen") for x in sql)        # the specimens move from the backup table, in main
+    assert iso.moved_specimens("iso_states_spec_20261120") == ("update specimen s join iso_states_spec_20261120 b on b.code = s.code"
+                                                               " set s.adm1 = b.new_adm1 where binary s.adm1 = binary b.adm1")
 
 
 def test_a_left_out_rename_stops_its_merges():
@@ -103,6 +105,13 @@ def test_a_loose_match_never_merges():
     assert {r[0].name for r in rep} == {"Kiev", "Kiev Oblast"}
 
 
+def test_a_lone_loose_match_that_adds_a_word_is_reported():
+    # "Kiev Oblast" alone, no "Kiev": loosened it finds the city, but it adds "oblast": not renamed to Kyiv
+    subs = [S("UA-30", "UA", "City", "", "Kyiv", ["Kiev"]), S("UA-32", "UA", "Region", "", "Kyivska oblast", [])]
+    d, rep = iso.match_country([st(1, "Kiev Oblast", 30)], subs)
+    assert not d and rep[0][0].name == "Kiev Oblast" and "adds a generic word" in rep[0][1], (d, rep)
+
+
 def test_a_shared_loose_match_is_reported():
     # both loosen to "kherson"; "Kherson Province" adds a generic word ISO's names do not have: looked at by hand
     subs = [S("UA-65", "UA", "Region", "", "Khersonska oblast", ["Kherson Oblast"])]
@@ -110,7 +119,7 @@ def test_a_shared_loose_match_is_reported():
     assert not d and {r[0].name for r in rep} == {"Kherson", "Kherson Province"}, (d, rep)
 
 
-def test_the_reviewed_plan_reads_back(tmp_path=None):
+def test_the_reviewed_plan_reads_back():
     import tempfile
     d = [dec("rename", 1, "Bratislava", "Bratislavský kraj", 1, "Bratislava"), dec("merge", 2, "Bratislavsky", "Bratislavský kraj", 1, "Bratislava")]
     path = os.path.join(tempfile.mkdtemp(), "plan.tsv")
