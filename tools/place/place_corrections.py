@@ -654,10 +654,13 @@ class Rules:
     country -> plain state name -> the coarser unit it belongs to. names: (country, level, shape, state) of the
     "name" lines: the shape's name is another name of the state, tested with specimens like any name. splits:
     (country, shape, level, unit, state, note) of the "split" lines: the shape of the state level is told apart
-    by the units of a finer level; the unit "*" stands for every unit not named."""
+    by the units of a finer level; the unit "*" stands for every unit not named. levels: country -> the level of
+    the boundary file its states are (2026-11-20: Uganda's districts are geoBoundaries ADM3, but its counties, ADM2,
+    have the districts' names and were taken for them)."""
 
-    def __init__(self, new=(), convert=None, within=None, names=(), splits=(), sources=None):
+    def __init__(self, new=(), convert=None, within=None, names=(), splits=(), sources=None, levels=None):
         self.sources = dict(sources or {})                       # country -> the source of its state shapes: geoboundaries, naturalearth or ocha
+        self.levels = dict(levels or {})                         # country -> the level its states are (a "level" line)
         self.new = set(new)
         self.convert = dict(convert or {})
         self.within = {country: {plain(state): unit for state, unit in table.items()} for country, table in (within or {}).items()}
@@ -666,7 +669,7 @@ class Rules:
 
 
 def read_rules(path):
-    new, convert, within, names, splits, sources = set(), {}, collections.defaultdict(dict), [], [], {}
+    new, convert, within, names, splits, sources, levels = set(), {}, collections.defaultdict(dict), [], [], {}, {}
     for line in map_lines(path):
         kind = line[0].lower()
         if kind == "convert" and len(line) >= 3:
@@ -675,13 +678,15 @@ def read_rules(path):
             within[line[1]][line[2]] = line[3]
         elif kind == "source" and len(line) >= 3 and line[2].lower() in SOURCE_NAMES:
             sources[line[1]] = line[2].lower()
+        elif kind == "level" and len(line) >= 3 and line[2].upper() in LEVELS + [NE_LEVEL]:
+            levels[line[1]] = line[2].upper()
         elif kind == "name" and len(line) >= 5 and line[2].upper() in LEVELS + [NE_LEVEL]:
             names.append((line[1], line[2].upper(), line[3], line[4]))
         elif kind == "split" and len(line) >= 6 and line[3].upper() in LEVELS:
             splits.append((line[1], line[2], line[3].upper(), line[4], line[5], line[6] if len(line) > 6 else ""))
         elif len(line) >= 5 and line[1].upper() in LEVELS + [NE_LEVEL] and line[4].lower() == "new":
             new.add(tuple(line[:4]))
-    return Rules(new, convert, within, names, splits, sources)
+    return Rules(new, convert, within, names, splits, sources, levels)
 
 
 ISLAND = "island country"
@@ -1310,6 +1315,10 @@ class StateShapes:
             if c is not None:
                 self.convert[c.name] = {u for u in (states.valid_of(c.name, unit) for unit in units) if u}
                 self.within[c.name] = {state: states.valid_of(c.name, unit) for state, unit in self.rules.within.get(country, {}).items()}
+        self.levels = {}                                         # valid country -> the level of its states (a "level" line)
+        for country, level in self.rules.levels.items():
+            c = countries.resolve(country)
+            self.levels[c.name if c is not None else country] = level
         self.names = collections.defaultdict(list)               # (country, level, plain shape) -> AntWeb states of the "name" lines, in order
         for country, level, shape, state in self.rules.names:
             c = countries.resolve(country)
@@ -1636,10 +1645,12 @@ class StateShapes:
         both halves."""
         source = self.source_of(country)
         wanted = set(self.wanted(country))
+        forced = self.levels.get(country)                        # a "level" line: only that level is looked at
+        levels = [forced] if forced in source.levels else source.levels
         have = sum(p[3] for p in self.evidence.points.get(country, ()) if p[0] not in self.convert.get(country, ())) if self.evidence is not None else 0
         testing = have >= MIN_POINTS
         tried, kept = [], None
-        for level in source.levels:
+        for level in levels:
             if not source.has(code, level):
                 tried.append({"level": level, "shapes": 0})
                 continue

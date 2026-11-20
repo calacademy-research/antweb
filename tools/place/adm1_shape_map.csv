@@ -6,7 +6,7 @@
 # names are (mapping_tested.csv of each run). This file is for decisions the specimens cannot make. A row here
 # wins over the test and over the names.
 #
-# Six kinds of line.
+# Seven kinds of line.
 #
 # 1. country,level,shape,antweb_state[,new]
 #    country: AntWeb's valid country, or an old name of it (read through AntWeb's old names, so the rows keep
@@ -38,6 +38,10 @@
 #    (--ignore-source-lines to do without). ocha: UN OCHA's COD-AB file of the country, fetched from HDX
 #    (data.humdata.org) into the shapes folder; its units carry OCHA's P-code. The split lines of a country are
 #    not used with ocha: they mend older shapes.
+# 7. level,country,level
+#    The country's states are this level of its source (ADM1, ADM2 ... or NE); no other level is looked at. For a
+#    country whose finer units have the names of its states (2026-11-20: Uganda's counties, geoBoundaries ADM2,
+#    are named after its districts, ADM3) or whose names are spoilt so the level is not found (Slovenia ADM2).
 # 5. name,country,level,shape,antweb_state,why
 #    The shape's name is another name of this state (another language, spelling or transliteration). It is a
 #    name like any other: tested with AntWeb's specimens, reported and not used when they contradict it
@@ -627,3 +631,8 @@ name,Slovenia,ADM2,Vencur,Šenčur,the letters č/š/ž spoilt in the file
 name,Slovenia,ADM2,Vertej,Veržej,the letters č/š/ž spoilt in the file
 name,Slovenia,ADM2,Vmartno ob Paki,Šmartno ob Paki,the letters č/š/ž spoilt in the file
 name,Slovenia,ADM2,Voatanj,Šoštanj,the letters č/š/ž spoilt in the file
+#
+# 2026-11-20, the daily report of that morning: Uganda was read at ADM2 (its counties, named after the districts)
+# and Slovenia at ADM1 (two cohesion regions, the municipalities' names spoilt at ADM2). Their levels:
+level,Uganda,ADM3
+level,Slovenia,ADM2

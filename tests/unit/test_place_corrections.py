@@ -250,6 +250,21 @@ def test_level_is_chosen_by_how_the_names_fit():
     assert shapes.choose("Atoll", "ATL") is None and shapes.problems["Atoll"] == "geoBoundaries has no file of the divisions of ATL"
 
 
+def test_a_level_line_decides_the_level():
+    # 2026-11-20: "level,Reunion,ADM3": only ADM3 is looked at, though ADM4 fits the names better
+    work = setup()
+    work.shapes.levels["Reunion"] = "ADM3"
+    work.shapes.tables.pop("Reunion", None)
+    work.shapes._chosen.pop("Reunion", None)
+    work.shapes.choose("Reunion", "REU")
+    t = work.shapes.tables["Reunion"]
+    assert [pc.level_text(x) for x in t["tried"]] == ["ADM3 0/2 AntWeb states, 0/2 shapes"], t["tried"]
+    assert pc.Rules(levels={"Uganda": "ADM3"}).levels == {"Uganda": "ADM3"}
+    del work.shapes.levels["Reunion"]
+    work.shapes.tables.pop("Reunion", None)
+    work.shapes._chosen.pop("Reunion", None)
+
+
 def test_mapping_file_of_the_repository():
     rows = pc.read_map(pc.MAP_FILE)
     assert all(len(r) == 4 and r[1] in pc.LEVELS + [pc.NE_LEVEL] for r in rows) and ("country", "level", "shape", "antweb_state") not in rows and len(rows) == 34
@@ -268,6 +283,8 @@ def test_mapping_file_of_the_repository():
     # 2026-11-19: old coarser units converted by coordinates in seven more countries; within lines only for Madagascar
     assert sorted(rules.convert) == ["Dominican Republic", "Fiji", "Ireland", "Kenya", "Madagascar", "Malawi", "Morocco", "Nepal", "Philippines", "Uganda",
                                      "United Kingdom"]
+    # 2026-11-20: the levels of Uganda (districts, ADM3) and Slovenia (municipalities, ADM2)
+    assert rules.levels == {"Uganda": "ADM3", "Slovenia": "ADM2"}
     # the current units (Brian Fisher, 2026-11-19): the UK's nations and Ireland's provinces converted; Norway's counties of 2024;
     # Nepal's provinces, the five zones split between two provinces converted
     assert rules.convert["United Kingdom"] == ["England", "Northern Ireland", "Scotland", "Wales"] and len(rules.convert["Nepal"]) == 5
