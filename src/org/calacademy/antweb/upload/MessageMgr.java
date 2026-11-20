@@ -157,6 +157,9 @@ public class MessageMgr {
     /** A state stored under AntWeb's valid state: an old name of it or another spelling ("Nimba County" -> Nimba;
      *  GeolocaleMgr.adm1ToStore, 2026-11-19). One line per country and uploaded name, with the stored name. */
     public static final String adm1NameCorrected = "adm1NameCorrected";
+    /** 2026-11-20 (Brian Fisher): a state written like AntWeb's, other capitals, accents or punctuation only. Stored
+     *  in AntWeb's spelling and listed apart from the other names; a note, not a correction. */
+    public static final String adm1SpellingStored = "adm1SpellingStored";
     public static final String unrecognizedColumn = "unrecognizedColumn";
     public static final String invalidColumn = "invalidColumn";
     public static final String notValidAdm1 = "notValidAdm1";
@@ -359,6 +362,7 @@ public class MessageMgr {
       testList.add(new Test(notValidCountries, STR, "<b>Not Antweb valid countries</b>"));
       testList.add(new Test(countrySpellingCorrected, SET, "<b>Country spelling corrected <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(adm1NameCorrected, SET, "<b>State stored under AntWeb's name <font color=green>(uploaded)</font></b>"));
+      testList.add(new Test(adm1SpellingStored, SET, "<b>State written with other capitals, accents or punctuation <font color=green>(uploaded in AntWeb's spelling)</font></b>"));
       testList.add(new Test(invalidLatLon, STR, "<b>Invalid lat/lon <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(unrecognizedColumn, STR, "<b>" + COLUMNS_IGNORED_HEADING + "</b>"));
       testList.add(new Test(invalidColumn, SET, "<b>Invalid Column Count <font color=red>(not uploaded)</font></b>"));

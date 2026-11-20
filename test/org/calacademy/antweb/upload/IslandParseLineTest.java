@@ -344,6 +344,11 @@ public class IslandParseLineTest extends TestCase {
             && report.contains("Liberia: NIMBA COUNTY -&gt; Nimba"));
         assertFalse(report, report.contains("Liberia: Nimba -&gt;"));
         assertFalse(report, report.contains("adm1Name=Nimba"));
+        // 2026-11-20: "nimba" is Nimba written otherwise: its own section, after the other names, not a correction
+        int names = report.indexOf("State stored under AntWeb's name"), spelling = report.indexOf("State written with other capitals");
+        assertTrue(report, names >= 0 && spelling > names && report.indexOf("Liberia: nimba -&gt; Nimba") > spelling
+            && report.indexOf("Liberia: Nimba County -&gt; Nimba") < spelling);
+        assertFalse(MessageMgr.CORRECTED.contains(MessageMgr.adm1SpellingStored));
     }
 
     /** The caches are put back: another test in the same run sees what it would have seen. */
