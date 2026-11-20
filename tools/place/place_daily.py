@@ -286,15 +286,14 @@ def main(argv=None, corrections=None, reader=None, counter=None):
         if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", args.rollback):   # YYYY-MM-DD only (fromisoformat takes 20261123 and week forms too)
             raise ValueError("--rollback takes a date YYYY-MM-DD: " + args.rollback)
         datetime.date.fromisoformat(args.rollback)   # and a real date
-        if args.dry_run and counter is None:
-            log("place-daily rollback " + args.rollback + " (dry run): " + "; ".join(rollback_statements(args.rollback)))
-            return 0
         count = counter or (lambda q: int(cc.run_sql(project, q, args.container)[0][0]))
         applied, back = (count(q) for q in rollback_counts(args.rollback))
         if not applied:   # review of #388: say so instead of a rollback that puts nothing back
             raise SystemExit("rollback " + args.rollback + ": no applied rows of that day in place_update (rolled back already, or older than "
                              + str(KEEP_DAYS) + " days); nothing put back")
         kept = applied - back
+        if not back:   # every row left was kept (changed since), or the day was rolled back already
+            raise SystemExit("rollback " + args.rollback + ": nothing to put back (" + cc.n(kept) + " applied specimens changed since, kept)")
         if args.dry_run:
             log("place-daily rollback " + args.rollback + " (dry run): would put back " + cc.n(back) + " specimens; " + cc.n(kept) + " changed since, kept")
             return 0

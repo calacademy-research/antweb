@@ -1312,8 +1312,9 @@ Back to report mode: the same with the two sides swapped. Put back one day's app
 (else the next morning writes the same states again), then
 `python3 /root/antweb/tools/place/place_daily.py --rollback 2026-11-24` (the date of the run). It puts back only the
 specimens that still have the state that run wrote; a later upload or edit stays; the journal line says how many were
-put back and how many kept. Roll back the newest apply run first. A rollback of a day that has nothing applied (rolled
-back already, or older than 60 days) is refused. A skip file that cannot be read stops the apply and its dry run
+put back and how many kept (counted just before it runs); `--dry-run` shows the same counts. Roll back the newest apply
+run first. A rollback that would put nothing back (rolled back already, every specimen changed since, or older than 60
+days) is refused. A skip file that cannot be read stops the apply and its dry run
 ("apply refused"). A failed apply run leaves its backup table `place_apply_bak_<yyyymmdd>` (made before the
 transaction) and a rerun the same day stops at it: check `select count(*) from place_update where run_date = '<date>'
 and mode = 'apply' and applied = 1` is 0, then `DROP TABLE place_apply_bak_<yyyymmdd>` and rerun. An upload deletes and re-inserts its specimens, so `adm1_verbatim` is empty again

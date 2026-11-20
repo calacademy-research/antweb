@@ -277,15 +277,6 @@ def test_the_cron_line_runs_report_mode_on_production():
     assert line[0].startswith("10 9 * * * root /usr/bin/python3 /root/antweb/tools/place/place_daily.py >/dev/null 2>&1"), line
 
 
-if __name__ == "__main__":
-    n = 0
-    for name, fn in sorted(globals().items()):
-        if name.startswith("test_") and callable(fn):
-            fn()
-            n += 1
-    print(n, "tests passed")
-
-
 def test_rollback_counts_and_refuses_when_nothing_is_applied():
     import io
     import contextlib
@@ -298,8 +289,16 @@ def test_rollback_counts_and_refuses_when_nothing_is_applied():
             pd.main(["--rollback", "2026-11-23", "--project", "/x"], counter=lambda q: 5 if "from place_update where" in q else 3)
         assert len(calls) == 1 and "3 specimens put back" in out.getvalue() and "2 changed since" in out.getvalue(), out.getvalue()
         calls.clear()
-        with contextlib.redirect_stdout(io.StringIO()):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
             pd.main(["--rollback", "2026-11-23", "--project", "/x", "--dry-run"], counter=lambda q: 5 if "from place_update where" in q else 3)
+        assert not calls and "would put back 3 specimens; 2 changed since, kept" in out.getvalue(), out.getvalue()
+        try:   # every row left changed since (or rolled back already but some kept): refused
+            pd.main(["--rollback", "2026-11-23", "--project", "/x"], counter=lambda q: 2 if "from place_update where" in q else 0)
+        except SystemExit as e:
+            assert "nothing to put back" in str(e), e
+        else:
+            raise AssertionError("a rollback that puts nothing back must be refused")
         assert not calls
         try:   # rolled back already, or the rows aged out: refused, nothing written
             pd.main(["--rollback", "2026-11-23", "--project", "/x"], counter=lambda q: 0)
@@ -310,3 +309,11 @@ def test_rollback_counts_and_refuses_when_nothing_is_applied():
         assert not calls
     finally:
         pd.write_sql = was
+
+if __name__ == "__main__":
+    n = 0
+    for name, fn in sorted(globals().items()):
+        if name.startswith("test_") and callable(fn):
+            fn()
+            n += 1
+    print(n, "tests passed")
