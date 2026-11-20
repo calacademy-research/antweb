@@ -332,6 +332,33 @@ def test_crlf_mapping_and_a_name_of_punctuation():
     assert not d and rep and rep[0][1].startswith("no ISO"), rep
 
 
+def test_every_exonym_is_a_subdivision_of_its_country():
+    subs, countries = iso.read_iso(), iso.read_countries()
+    for country, names in iso.EXONYMS.items():
+        a2 = countries[iso.key(country)]
+        codes = {x.code for x in subs[a2]}
+        for name, code in names.items():
+            assert code in codes, (country, name, code)
+    for (country, name), why in iso.NOT_ISO.items():
+        assert iso.key(country) in countries and why
+
+
+def test_exonyms_and_states_that_are_not_iso():
+    subs = iso.read_iso()
+    # Spain's communities by AntWeb's English names; Germany's Länder; Graubünden and Canton Grisons are one canton
+    out, rep, noc = iso.plan({"Spain": [(1, "Canary Islands", 154), (2, "Navarre", 1), (3, "Basque Country", 3)],
+                              "Germany": [(4, "Lower Saxony", 47)], "Switzerland": [(5, "Graubünden", 3814), (6, "Canton Grisons", 2)]},
+                             {}, subs, iso.read_countries())
+    got = {(x["action"], x["name"]): x["target"] for x in out}
+    assert got[("rename", "Canary Islands")] == "Canarias" and got[("rename", "Navarre")] == "Comunidad Foral de Navarra", got
+    assert got[("rename", "Lower Saxony")] == "Niedersachsen" and got[("merge", "Canton Grisons")] == "Graubünden", got
+    assert got[("rename", "Basque Country")] == "País Vasco", got
+    # Quezon City is a city of Metro Manila, not Quezon province: never merged into it
+    out, rep, noc = iso.plan({"Philippines": [(7, "Quezon", 857), (8, "Quezon City", 12)]}, {}, subs, iso.read_countries())
+    assert not [x for x in out if x["action"] == "merge"] and ("Philippines", "Quezon City") in {(r[0], r[1]) for r in rep}, (out, rep)
+    assert [r for r in rep if r[1] == "Quezon City"][0][3].startswith("not an ISO 3166-2 subdivision: a city of Metro Manila")
+
+
 def test_the_iso_file_reads():
     subs = iso.read_iso()
     # translations and the boundary file's shape names are separate columns
