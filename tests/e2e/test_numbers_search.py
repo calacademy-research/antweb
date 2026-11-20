@@ -401,6 +401,26 @@ def test_comparison_counts_the_chosen_specimens():
     assert sorted(shown) == chosen, f"compareResults.do shows {sorted(shown)}, chosen {chosen} {ns.day_note()}"
 
 
+def test_comparison_lists_a_specimen_without_images_of_the_views():
+    """compareResults.do lists every chosen specimen, also one with no image of the views compared (2026-11-20 sample:
+    Monomorium of Iceland, casent0010943 has a label image only; it was counted in "2 specimens to compare" and not
+    shown)."""
+    s = _logged_in()
+    ns.fetch(search_url("Iceland", "Monomorium"), s)
+    prep = ns.fetch("/prepareCompareResults.do?resultRank=specimen", s) or ""
+    values = chosen_values(prep)
+    codes = [c for c, _p, _h in page_rows(prep)]
+    csrf = re.search(r'name="_csrf" value="([^"]+)"', prep)
+    if "casent0010943" not in codes or not csrf or len(codes) != len(values):
+        pytest.skip("casent0010943 is not on the compare page of Monomorium of Iceland")
+    pick = list(range(min(3, len(values))))
+    r = s.post(BASE_URL + "/compareResults.do", timeout=ns.SLOW,
+               data={"_csrf": csrf.group(1), "resultRank": "specimen", "chosen": [values[i] for i in pick]})
+    shown = [unquote(unescape(c)).strip().lower() for c in re.findall(
+        r'<div class="ratio_name">\s*<a href="[^"]*/specimen\.do\?name=([^"]+)"', r.text)]
+    assert sorted(shown) == sorted(codes[i] for i in pick), f"compareResults.do shows {sorted(shown)}"
+
+
 # ----------------------------------------------------------------------------------------------- rows 65, 66
 
 def _collections_of_sample():

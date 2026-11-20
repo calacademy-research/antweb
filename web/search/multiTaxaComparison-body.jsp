@@ -94,10 +94,13 @@ int fourth = 4;
      
     //A.log("multiTaxaComparison-body.jsp taxaToCompare entry:" + entry + " taxon:" + taxon + " hasImages:" + taxon.getHasImages() + " rank:" + taxon.getRank());     
 
-    if (taxon.getHasImages() && taxon.getImages() != null) {
+    // A chosen specimen is always listed (it is counted in "N specimens to compare"), even when it has no image of
+    // the views compared (a label image only); a species is listed when it has images.
+    boolean isSpecimen = entry.getKey().getRank().equals("specimen");
+    if (isSpecimen || (taxon.getHasImages() && taxon.getImages() != null)) {
 
       //A.log("2 taxon:" + taxon + " images:" + taxon.getImages()); 
-      if (entry.getKey().getRank().equals("specimen")) {
+      if (isSpecimen) {
  %>
             <div class="data_checkbox" style="float:left; margin-top:2px;"><input type="checkbox" name="chosen" value="<%= entry.getValue() %>"></div>
 
@@ -118,6 +121,11 @@ int fourth = 4;
 
 			<% //A.log("multiTaxaComparison-body.jsp allSpecimenShots:" + allSpecimenShots); %>
 
+            <% boolean anyShot = false;
+               if (taxon.getImages() != null) for (Object shotKey : allSpecimenShots) if (taxon.getImages().containsKey((String) shotKey)) anyShot = true;
+               if (!anyShot) { %>
+            <div class="compare_no_images">No image of these views for this specimen.</div>
+            <% } else { %>
             <logic:iterate id="shot" collection="<%=allSpecimenShots %>" >
 				<%
 				  ++position;
@@ -138,6 +146,7 @@ int fourth = 4;
 				</logic:iterate>
 
 			</logic:iterate>
+            <% } %>
 
             <div class="clear"></div>
 
