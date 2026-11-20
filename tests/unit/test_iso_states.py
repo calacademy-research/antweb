@@ -215,7 +215,15 @@ def test_page_text_moves_with_a_rename_and_blocks_a_conflict():
     d = [dec("rename", 1, "Bratislava", "Bratislavský kraj", 1, "Bratislava"), dec("merge", 2, "Bratislavsky", "Bratislavský kraj", 1, "Bratislava")]
     moved = []
     sql, left, done = iso.statements(d, {}, "20261120", texts={"Bratislava": 2}, allnames={"Bratislava": 1}, text_moves=moved)
-    assert moved == [("Bratislava", "Bratislavský kraj")] and sum("object_edit" in x or "object_hist" in x for x in sql) == 2, sql
+    assert moved == [("object_edit", "Bratislava", "Bratislavský kraj")] and sum("object_edit" in x for x in sql) == 1, sql
+    # the keys as stored move (a history row written "bratislava"); a name with history only is a conflict too
+    moved = []
+    sql, left, done = iso.statements(d, {}, "20261120", texts={"object_edit": {"Bratislava": 1}, "object_hist": {"bratislava": 3}},
+                                     allnames={"Bratislava": 1}, text_moves=moved)
+    assert moved == [("object_edit", "Bratislava", "Bratislavský kraj"), ("object_hist", "bratislava", "Bratislavský kraj")], moved
+    assert any("binary object_key = binary convert(unhex('%s')" % "bratislava".encode().hex() in x for x in sql)
+    sql, left, done = iso.statements(d, {}, "20261120", texts={"object_edit": {}, "object_hist": {"Bratislavský kraj": 2}}, allnames={})
+    assert not done and "already has page text" in left[0], left
     # text under a name another place also has stays where it is
     moved = []
     sql, left, done = iso.statements(d, {}, "20261120", texts={"Bratislava": 2}, allnames={"Bratislava": 2}, text_moves=moved)

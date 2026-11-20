@@ -51,7 +51,7 @@ PLACES = [  # id, name, parent, is_valid, valid_name
     (11, "Giza", "Egypt", 1, None),
 ]
 SPECIMENS = [("a1", "Bratislava"), ("a2", "Bratislava"), ("a3", "Bratislava"), ("b1", "Bratislavsky kraj"), ("k1", "Kosice"),
-             ("t1", "Trnava"), ("t2", "Trnavsky kraj"), ("n1", "Nitriansky kraj"), ("o1", "Pressburg"),
+             ("t1", "Trnava"), ("t2", "Trnavsky kraj"), ("n1", "Nitriansky kraj"), ("o1", "Pressburg"), ("x1", "Bratislavský kraj"),
              ("e1", "Cairo"), ("e2", "Cairo"), ("e3", "Al Qāhirah"), ("g1", "Giza")]
 COUNTRY = {"e1": "Egypt", "e2": "Egypt", "e3": "Egypt", "g1": "Egypt"}
 
@@ -89,7 +89,8 @@ def fresh():
           # page text: Bratislava's moves with its rename, Kosice's to Košický kraj (dates kept)
           + "; insert into object_edit (object_key, title, content, created) values ('Bratislava', 'overview', 'Capital region', '2020-01-02 03:04:05'),"
           " ('Kosice', 'overview', 'East', '2021-01-02 03:04:05')"
-          "; insert into object_hist (object_key, title, content, created) values ('Bratislava', 'overview', 'Older', '2019-01-02 03:04:05')")
+          "; insert into object_hist (object_key, title, content, created) values ('Bratislava', 'overview', 'Older', '2019-01-02 03:04:05'),"
+          " ('bratislava', 'overview', 'Oldest, its key written in small letters', '2018-01-02 03:04:05')")
 
 
 def snapshot():
@@ -134,7 +135,8 @@ def check_plan_apply_rollback(project):
     # the page text moved with the renames, dates kept
     text = {(r[0], r[1]): r[2] for r in mysql("select object_key, title, created from object_edit")}
     assert text == {("Bratislavský kraj", "overview"): "2020-01-02 03:04:05", ("Košický kraj", "overview"): "2021-01-02 03:04:05"}, text
-    assert mysql("select object_key, created from object_hist") == [["Bratislavský kraj", "2019-01-02 03:04:05"]]
+    assert sorted(mysql("select object_key, created from object_hist")) == [["Bratislavský kraj", "2018-01-02 03:04:05"],
+                                                                           ["Bratislavský kraj", "2019-01-02 03:04:05"]]
     assert places["Pressburg"][2] == "Bratislavský kraj", places
     assert places["Košický kraj"][1:] == ["1", "", "3"] and places["Kosice"][1:] == ["0", "Košický kraj", "4"], places
     assert places["Trnava"][1] == "1" and places["Trnavsky kraj"][1] == "1", places
@@ -146,10 +148,13 @@ def check_plan_apply_rollback(project):
     assert places["Giza"][1:3] == ["1", ""] and places["Al Jīzah"][1:3] == ["0", "Giza"], places
     assert spec["e3"] == "Cairo" and spec["g1"] == "Giza", spec
     assert "specimens under a former name 0 (expect 0)" in out, out
-    # an upload after the apply stores the new name (the old one is an old name of it): the rollback puts it back too
+    assert spec["x1"] == "Bratislavský kraj"          # already under the new name before the apply
+    # an upload after the apply stores the new name (the old one is an old name of it): the rollback puts it back too,
+    # but not x1, which had that name before
     mysql("insert into specimen values ('u1', 'Slovakia', 'Bratislavský kraj')")
     mysql(rollback_sql())
-    assert dict(mysql("select code, adm1 from specimen"))["u1"] == "Bratislava"
+    after = dict(mysql("select code, adm1 from specimen"))
+    assert after["u1"] == "Bratislava" and after["x1"] == "Bratislavský kraj", after
     mysql("delete from specimen where code = 'u1'")
     assert snapshot() == before, (snapshot(), before)
     mysql("drop table iso_states_bak_%s; drop table iso_states_spec_%s; drop table iso_states_text_%s" % (TAG, TAG, TAG))
