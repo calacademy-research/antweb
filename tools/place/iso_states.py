@@ -45,10 +45,20 @@ written like both takes the kind most of its country's states match.
 
 Rollback (same server, the date of the run; the rows added go first, so the old names are free again):
   update specimen s join iso_states_spec_<date> b on b.code = s.code set s.adm1 = b.adm1 where binary s.adm1 = binary b.new_adm1;
+  update specimen s join iso_states_bak_<date> b on b.parent = s.country and b.is_valid = 1 join geolocale g on g.id = b.id and binary g.name <> binary b.name set s.adm1 = b.name where binary s.adm1 = binary g.name;
+  update object_edit o join iso_states_text_<date> b on binary o.object_key = binary b.new_key set o.object_key = b.old_key, o.created = o.created;
+  update object_hist o join iso_states_text_<date> b on binary o.object_key = binary b.new_key set o.object_key = b.old_key, o.created = o.created;
   delete from geolocale where georank = 'adm1' and admin_notes like 'iso_states <date>: added%';
   update geolocale g join iso_states_bak_<date> b on b.id = g.id set g.name = concat('~rb~', g.id) where binary g.name <> binary b.name;
   update geolocale g join iso_states_bak_<date> b on b.id = g.id set g.name = b.name, g.is_valid = b.is_valid, g.valid_name = b.valid_name, g.admin_notes = b.admin_notes;
-then reload the places (util.do?action=reloadAntwebMgr&name=geolocale, administrator)."""
+then reload the places (util.do?action=reloadAntwebMgr&name=geolocale, administrator). The second line puts back
+specimens uploaded after the apply under a renamed state's new name (they are not in the backup); the third and fourth
+move the page text back.
+
+Page text: an overview page's text and its history (object_edit, object_hist) are keyed by the place's name, so a
+rename moves them as editGeolocale.do does (PageTextKeys), and a merge moves the merged state's text to the state it
+joins. A rename or merge whose new name already has page text is left out; text under a name another place also has
+stays where it is (GeolocaleDb.updateGeolocale does the same)."""
 import argparse
 import collections
 import csv
@@ -317,11 +327,25 @@ def read_db(db):
     return {c: [tuple(x) for x in v] for c, v in valid.items()}, olds, names
 
 
+def read_texts(db):
+    """(page text rows by object_key, how many geolocale rows have each name exactly, any rank and parent)."""
+    texts = collections.Counter()
+    for r in pf.run_sql(db, "select " + pf.hx("object_key") + ", count(*) from object_edit group by binary object_key"):
+        texts[pf.unhex(r[0])] += int(r[1])
+    allnames = collections.Counter()
+    for r in pf.run_sql(db, "select " + pf.hx("name") + ", count(*) from geolocale group by binary name"):
+        allnames[pf.unhex(r[0])] += int(r[1])
+    return texts, allnames
+
+
+SPECIMEN_ADM1 = 128          # specimen.adm1 is varchar(128): a longer name cannot be stored on a specimen
+
+
 def q(value):
     return "convert(unhex('%s') using utf8mb4)" % (value or "").encode("utf-8").hex()
 
 
-def statements(decisions, names, tag, no_merge=None):
+def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, text_moves=None):
     """The SQL of the change to the place rows, the list of what could not be done (left out), and the decisions
     done. Renames first, then merges; a merge into a state whose rename was left out is left out too (no valid state
     would carry the ISO name), and so is one in no_merge (ids: a curator species list on the state merged). The
@@ -329,6 +353,22 @@ def statements(decisions, names, tag, no_merge=None):
     sql, left, done = [], [], []
     blocked = set()
     no_merge = no_merge or {}
+    texts, allnames = texts or {}, allnames or {}
+    text_moves = text_moves if text_moves is not None else []
+    # object_edit's key compares without accents or capitals (its unique key): compare page text names the same way
+    has_text = {normal(k) for k, v in texts.items() if v}
+
+    def move_text(old, new):
+        """Page text of old to new (when old has text and no other place has that name): SQL, recorded for the rollback."""
+        if normal(old) == normal(new):        # one key to object_edit already
+            return []
+        if normal(old) in has_text and allnames.get(old, 0) <= 1:
+            text_moves.append((old, new))
+            has_text.discard(normal(old))
+            has_text.add(normal(new))
+            return ["update %s set object_key = %s, created = created where binary object_key = binary %s" % (t, q(new), q(old))
+                    for t in ("object_edit", "object_hist")]
+        return []
     for d in decisions:
         if d["action"] != "rename":
             continue
@@ -343,6 +383,10 @@ def statements(decisions, names, tag, no_merge=None):
         elif any(m["action"] == "merge" and m["kept_id"] == vid and m["id"] in no_merge for m in decisions):
             why = "a state to be merged into it has a curator species list (%s)" % ", ".join(
                 m["name"] for m in decisions if m["action"] == "merge" and m["kept_id"] == vid and m["id"] in no_merge)
+        elif len(iso) > SPECIMEN_ADM1:
+            why = "the ISO name is longer than a specimen's state can be (%d characters)" % SPECIMEN_ADM1
+        elif normal(iso) in has_text and normal(iso) != normal(old):
+            why = "the ISO name %s already has page text (or a name written like it)" % iso
         if why:
             left.append("%s: %s, %s" % (c, old, why))
             blocked.add(vid)
@@ -359,6 +403,7 @@ def statements(decisions, names, tag, no_merge=None):
             sql.append("insert into geolocale (name, georank, parent, source, is_valid, valid_name, admin_notes) values (%s, 'adm1', %s, 'antweb', 0, %s, %s)"
                        % (q(old), q(c), q(iso), q("iso_states %s: added, old name of %s (ISO 3166-2 %s), id %d." % (tag, iso, d["code"], vid))))
         sql.append("update geolocale set valid_name = %s where georank = 'adm1' and parent = %s and binary valid_name = binary %s" % (q(iso), q(c), q(old)))
+        sql += move_text(old, iso)
     for d in decisions:
         if d["action"] != "alias":
             continue
@@ -379,7 +424,11 @@ def statements(decisions, names, tag, no_merge=None):
         if d["id"] in no_merge:
             left.append("%s: %s, not merged into %s: it has a curator species list of %d taxa" % (c, old, iso, no_merge[d["id"]]))
             continue
+        if normal(old) != normal(iso) and normal(old) in has_text and allnames.get(old, 0) <= 1 and normal(iso) in has_text:
+            left.append("%s: %s, not merged into %s: both have page text" % (c, old, iso))
+            continue
         done.append(d)
+        sql += move_text(old, iso)
         note = "iso_states %s: the same state as %s (ISO 3166-2 %s, id %d); made an old name of it, its specimens moved there." % (tag, iso, d["code"], d["kept_id"])
         sql.append("update geolocale set is_valid = 0, valid_name = %s, admin_notes = concat(ifnull(concat(admin_notes, '\\n'), ''), %s) where id = %d"
                    % (q(iso), q(note), d["id"]))
@@ -562,8 +611,9 @@ def main(argv=None):
     if not args.apply:
         print("Plan only. Add --apply to make the change.")
         return 0
-    bak, spec = "iso_states_bak_" + tag, "iso_states_spec_" + tag
-    if int(pf.run_sql(db, "select count(*) from information_schema.tables where table_schema = database() and table_name in ('%s', '%s')" % (bak, spec))[0][0]):
+    bak, spec, text = "iso_states_bak_" + tag, "iso_states_spec_" + tag, "iso_states_text_" + tag
+    if int(pf.run_sql(db, "select count(*) from information_schema.tables where table_schema = database() and table_name in ('%s', '%s', '%s')"
+                      % (bak, spec, text))[0][0]):
         raise SystemExit("The backup table %s exists already: not applied twice today. Nothing was changed." % bak)
     # the renames rely on geolocale.name comparing exactly (utf8_bin since 2016, db/upgrade/6.10): under a collation
     # that ignores accents, Bratislavsky kraj and Bratislavský kraj would be one name to the unique key
@@ -572,7 +622,9 @@ def main(argv=None):
     if not coll or not coll[0][0].endswith("_bin"):
         raise SystemExit("geolocale.name has the collation %s, not a binary one: this tool cannot rename safely. Nothing was changed."
                          % (coll[0][0] if coll else "(unknown)"))
-    sql, left, decisions = statements(decisions, names, tag, curator)
+    texts, allnames = read_texts(db)
+    text_moves = []
+    sql, left, decisions = statements(decisions, names, tag, curator, texts, allnames, text_moves)
     if left:
         print("Left out:\n  " + "\n  ".join(left))
     if not decisions:
@@ -589,26 +641,33 @@ def main(argv=None):
     # the backup tables are made empty first (CREATE TABLE commits), then filled in the transaction of the change, so
     # the backup is exactly what the change reads; the specimens move from the backup by code (the primary key)
     # both built from the tables' own columns (same character sets and collations, so the joins by code use the key)
-    pf.run_sql(db, "create table %s as select id, name, parent, is_valid, valid_name, admin_notes from geolocale where false;"
-                   "create table %s as select code, country, adm1, adm1 as new_adm1 from specimen where false;"
-                   "alter table %s add primary key (code)" % (bak, spec, spec))
+    pairs = ",".join("(%s, %s)" % (q(o), q(n)) for o, n in text_moves)
     try:
+        pf.run_sql(db, "create table %s as select id, name, parent, is_valid, valid_name, admin_notes from geolocale where false;"
+                       "create table %s as select code, country, adm1, adm1 as new_adm1 from specimen where false;"
+                       "alter table %s add primary key (code);"
+                       "create table %s as select object_key as old_key, object_key as new_key from object_edit where false"
+                       % (bak, spec, spec, text))
         pf.run_sql(db, wait + "start transaction;\n"
                    + "insert into %s select id, name, parent, is_valid, valid_name, admin_notes from geolocale where georank = 'adm1' and (id in (%s) or %s);\n"
                    % (bak, ",".join(map(str, touched)) or "0", pointing)
                    + "insert into %s select code, country, adm1, %s from specimen where %s;\n" % (spec, new_adm1, moving)
+                   + ("insert into %s values %s;\n" % (text, pairs) if pairs else "")
                    + ";\n".join(sql + [moved_specimens(spec)]) + ";\ncommit;")
     except pf.SqlFailed:
         # nothing was changed (one transaction); the empty backup tables go, so the run can be made again today
-        if int(pf.run_sql(db, "select (select count(*) from %s) + (select count(*) from %s)" % (bak, spec))[0][0]) == 0:
-            pf.run_sql(db, "drop table %s; drop table %s" % (bak, spec))
+        made = [t for t in (bak, spec, text) if pf.run_sql(db, "select count(*) from information_schema.tables where table_schema = database()"
+                                                               " and table_name = '%s'" % t)[0][0] != "0"]
+        if sum(int(pf.run_sql(db, "select count(*) from " + t)[0][0]) for t in made) == 0:
+            if made:
+                pf.run_sql(db, ";".join("drop table " + t for t in made))
             print("The change failed and was not made; the empty backup tables were dropped.")
         else:
-            print("The backup tables %s and %s are filled: the change may have been committed after all (a lost connection)."
-                  " Check with the after line's queries before anything else; the rollback in this file's header undoes it." % (bak, spec))
+            print("The backup tables %s are filled: the change may have been committed after all (a lost connection)."
+                  " Check with the after line's queries before anything else; the rollback in this file's header undoes it." % ", ".join(made))
         raise
-    print("backup: %s place rows in %s, %s specimens in %s" % (pf.run_sql(db, "select count(*) from " + bak)[0][0], bak,
-                                                               pf.run_sql(db, "select count(*) from " + spec)[0][0], spec))
+    print("backup: %s place rows in %s, %s specimens in %s, %d page texts moved (%s)" % (
+        pf.run_sql(db, "select count(*) from " + bak)[0][0], bak, pf.run_sql(db, "select count(*) from " + spec)[0][0], spec, len(text_moves), text))
     after_spec = pf.run_sql(db, "select count(*) from specimen where " + moving)[0][0]
     after_valid = pf.run_sql(db, "select count(*) from geolocale where georank = 'adm1' and is_valid = 1 and id in (%s) and name like '~%%'"
                              % (",".join(map(str, touched)) or "0"))[0][0]

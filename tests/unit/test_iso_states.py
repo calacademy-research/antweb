@@ -211,6 +211,27 @@ def test_the_mapping_file_follows_the_renames():
     assert "name,Norway,ADM1,Oslo,Oslo,untouched" in lines and [n for n, l in check] == [6]
 
 
+def test_page_text_moves_with_a_rename_and_blocks_a_conflict():
+    d = [dec("rename", 1, "Bratislava", "Bratislavský kraj", 1, "Bratislava"), dec("merge", 2, "Bratislavsky", "Bratislavský kraj", 1, "Bratislava")]
+    moved = []
+    sql, left, done = iso.statements(d, {}, "20261120", texts={"Bratislava": 2}, allnames={"Bratislava": 1}, text_moves=moved)
+    assert moved == [("Bratislava", "Bratislavský kraj")] and sum("object_edit" in x or "object_hist" in x for x in sql) == 2, sql
+    # text under a name another place also has stays where it is
+    moved = []
+    sql, left, done = iso.statements(d, {}, "20261120", texts={"Bratislava": 2}, allnames={"Bratislava": 2}, text_moves=moved)
+    assert not moved and done == d
+    # the ISO name already has text, written with other accents (object_edit's key ignores them): left out with its merge
+    sql, left, done = iso.statements(d, {}, "20261120", texts={"Bratislavsky kraj": 1}, allnames={})
+    assert not done and "already has page text" in left[0] and "not merged" in left[1], left
+    # the merged state's text joins the kept one, unless both have text
+    sql, left, done = iso.statements(d[1:], {}, "20261120", texts={"Bratislavsky": 1, "Bratislavský kraj": 1}, allnames={"Bratislavsky": 1})
+    assert not done and "both have page text" in left[0], left
+    # a name longer than a specimen's state can be is left out
+    long = "X" * 129
+    sql, left, done = iso.statements([dec("rename", 3, "Y", long, 3, "Y")], {}, "20261120")
+    assert not done and "longer than" in left[0]
+
+
 def test_the_iso_file_reads():
     subs = iso.read_iso()
     assert len(subs["IT"]) > 100 and any(s.name == "Sicilia" for s in subs["IT"])
