@@ -1,0 +1,20 @@
+# Countries the daily place step's apply mode leaves out (tools/place/place_daily.py): their boundary shapes are at
+# another level than AntWeb's states, so a proposal would be a coarser or finer unit (state_sets.py on antweb-prod,
+# 2026-11-19: few shapes against many valid states, or the reverse). Remove a line once the country's level is set
+# right in adm1_shape_map.csv and its report rows look right. One country per line, AntWeb's valid name.
+United Kingdom
+Slovenia
+Ireland
+Iceland
+Norway
+Oman
+Nepal
+Denmark
+Uganda
+Poland
+Thailand
+American Samoa
+Monaco
+French Guiana
+Guadeloupe          # arrondissements made the states 2026-11-19; the shapes are communes
+Martinique          # the same
