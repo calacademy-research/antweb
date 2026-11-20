@@ -116,5 +116,13 @@ public class DuplicateStateTest extends TestCase {
         assertNull(EditGeolocaleAction.duplicateState(form("Grand Est", "Germany", true), grandEst, places));
         // a country or region, or no row: no check
         assertNull(EditGeolocaleAction.duplicateState(form("Kenya", null, true), null, places));
+        // a stored name with a blank at the end, saved unchanged: not a rename
+        Adm1 blank = adm1(2860, "Taita Taveta ", "Kenya", true);
+        assertNull(EditGeolocaleAction.duplicateState(form("Taita Taveta ", "Kenya", true), blank, places));
+        // before the places are loaded (no GeolocaleMgr here) a valid state's save waits; a save as not valid does not
+        if (!GeolocaleMgr.isInitialized()) {
+            assertEquals(EditGeolocaleAction.PLACES_LOADING, EditGeolocaleAction.duplicateState(form("Murang'A", "Kenya", true), merged));
+            assertNull(EditGeolocaleAction.duplicateState(form("Murang'A", "Kenya", false), merged));
+        }
     }
 }
