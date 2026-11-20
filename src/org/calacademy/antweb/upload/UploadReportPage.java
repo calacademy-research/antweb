@@ -86,7 +86,8 @@ public final class UploadReportPage {
         ACTIONS.put(MessageMgr.specimenIdSpacesRemoved, "Spaces removed from the code; loaded.");
         ACTIONS.put(MessageMgr.codeQuoteReplaced, "Each double quote replaced by -; loaded.");
         ACTIONS.put(MessageMgr.countrySpellingCorrected, "Loaded under AntWeb's spelling of the country (it differed only by capitals, accents or blanks).");
-        ACTIONS.put(MessageMgr.adm1NameCorrected, "Loaded under AntWeb's state: the file has an old name of it or writes it with other capitals, accents or punctuation.");
+        ACTIONS.put(MessageMgr.adm1NameCorrected, "Loaded under AntWeb's state: the file has another name of it (an old name, or the name in another language).");
+        ACTIONS.put(MessageMgr.adm1SpellingStored, "Loaded under AntWeb's state, which is written the same apart from capitals, accents or punctuation. Nothing to fix.");
         ACTIONS.put(MessageMgr.invalidDateCollectedStart, "Loaded without this date.");
         ACTIONS.put(MessageMgr.invalidDateCollectedEnd, "Loaded without this date.");
         ACTIONS.put(MessageMgr.invalidDateDetermined, "Loaded without this date.");
