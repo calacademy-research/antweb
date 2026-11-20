@@ -515,3 +515,116 @@ name,Argentina,NE,Ciudad de Buenos Aires,Ciudad Autónoma de Buenos Aires,the sa
 name,Trinidad and Tobago,NE,Rio Claro-Mayaro,Mayaro-Rio Claro,the same region
 Trinidad and Tobago,NE,Eastern Tobago,Tobago
 Trinidad and Tobago,NE,Western Tobago,Tobago
+#
+# 2026-11-19, the countries at another level (Brian Fisher: no biological question here; follow the current units,
+# and update them about once a year). AntWeb's valid states read on the country pages, shapes in geoBoundaries and
+# Natural Earth, all on 2026-11-19.
+#   United Kingdom: England, Scotland, Wales and Northern Ireland were valid states beside the local authorities;
+#   they are converted by coordinates, and the local authorities (geoBoundaries ADM2) are the states.
+convert,United Kingdom,England,Northern Ireland,Scotland,Wales
+#   Ireland: the four provinces were valid beside the counties; converted by coordinates. Natural Earth draws the
+#   counties (geoBoundaries ADM2 is the local electoral areas); it still has North and South Tipperary (one county
+#   since 2014).
+source,Ireland,naturalearth
+convert,Ireland,Connaught,Leinster,Munster,Ulster
+name,Ireland,NE,Laoighis,Laois,Irish spelling of the same county
+Ireland,NE,North Tipperary,Tipperary
+Ireland,NE,South Tipperary,Tipperary
+#   Norway: the counties since 1 January 2024. Eleven are the counties before 2020 again; four are mergers of two:
+#   Innlandet (Hedmark, Oppland), Agder (Aust-Agder, Vest-Agder), Vestland (Hordaland, Sogn og Fjordane), Trøndelag
+#   (Nord-Trøndelag, Sør-Trøndelag; since 2018). geoBoundaries has the counties of 2020-2023 (Viken ...); Natural
+#   Earth has the 19 before 2020, each wholly in one county of today.
+source,Norway,naturalearth
+Norway,NE,Hedmark,Innlandet
+Norway,NE,Oppland,Innlandet
+Norway,NE,Aust-Agder,Agder
+Norway,NE,Vest-Agder,Agder
+Norway,NE,Hordaland,Vestland
+Norway,NE,Sogn og Fjordane,Vestland
+Norway,NE,Nord-Trøndelag,Trøndelag
+Norway,NE,Sør-Trøndelag,Trøndelag
+#   Nepal: the seven provinces of the Constitution of 2015 replaced the 14 zones. The zones that lie wholly in one
+#   province become old names of it in AntWeb; the five split between two provinces (Sagarmatha, Janakpur, Narayani,
+#   Rapti, Bheri) are converted by coordinates. geoBoundaries still numbers two provinces (named Koshi and Madhesh
+#   in 2023).
+convert,Nepal,Sagarmāthā,Janakpur,Nārāyanī,Rāptī,Bherī
+name,Nepal,ADM1,Province 1,Koshi,named Koshi in 2023
+name,Nepal,ADM1,Province 2,Madhesh,named Madhesh in 2022
+name,Nepal,ADM1,Sudurpaschim,Sudurpashchim,spelling of the same province
+#   Iceland: the eight regions under their Icelandic names (the English names are old names in AntWeb).
+name,Iceland,ADM1,Capital Region,Höfuðborgarsvæði,English name of the region
+name,Iceland,ADM1,Eastern Region,Austurland,English name of the region
+name,Iceland,ADM1,Northeastern Region,Norðurland Eystra,English name of the region
+name,Iceland,ADM1,Northwestern Region,Norðurland Vestra,English name of the region
+name,Iceland,ADM1,Southern Peninsula,Suðurnes,English name of the region
+name,Iceland,ADM1,Southern Region,Suðurland,English name of the region
+name,Iceland,ADM1,Western Region,Vesturland,English name of the region
+name,Iceland,ADM1,Westfjords,Vestfirðir,English name of the region
+#   Oman: the eleven governorates of 2011. geoBoundaries has the regions before 2011; Natural Earth has the eleven.
+source,Oman,naturalearth
+name,Oman,NE,Ad Dakhliyah,Ad Dākhilīyah,spelling of the same governorate
+name,Oman,NE,Al Batnah North,Al Batinah North,spelling of the same governorate
+name,Oman,NE,Al Batnah South,Al Batinah South,spelling of the same governorate
+name,Oman,NE,Al Buraymi,Al Buraimi,spelling of the same governorate
+name,Oman,NE,Al Dhahira,Az̧ Z̧āhirah,spelling of the same governorate
+name,Oman,NE,Muscat,Masqaţ,spelling of the same governorate
+#   Slovenia: the municipalities are the states (geoBoundaries ADM2). The file spoils the letters č, š and ž
+#   (Brežice is Bretice, Škofja Loka is Mkofja Loka); each line below was paired by the rest of the name.
+name,Slovenia,ADM2,Koper / Capodistria,Koper,Slovene and Italian name
+name,Slovenia,ADM2,Piran / Pirano,Piran,Slovene and Italian name
+name,Slovenia,ADM2,Izola / Isola,Izola,Slovene and Italian name
+name,Slovenia,ADM2,Ankaran / Ancarano,Ankaran,Slovene and Italian name
+name,Slovenia,ADM2,Ajdovtcina,Ajdovščina,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Bretice,Brežice,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Centjernej,Šentjernej,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Cetale,Žetale,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Ckocjan,Škocjan,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Crencovci,Črenšovci,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Crna na Koroakem,Črna na Koroškem,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Domcale,Domžale,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Gelezniki,Železniki,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Goriunica,Gorišnica,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Hodoj,Hodos,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Ikofljica,Škofljica,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Jurkinci,Juršinci,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Kalovci,Šalovci,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Krcko,Krško,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Kritevci,Križevci,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Labko,Laško,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Lentjur,Sentjur,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Lmarje pri Jelcah,Šmarje pri Jelšah,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Ltore,Štore,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Majrperk,Majšperk,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Mengel,Mengeš,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Miklavl na Dravskem polju,Miklavž na Dravskem Polju,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Mkofja Loka,Škofja Loka,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Nempeter-Vrtojba,Šempeter-Vrtojba,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Ormo,Ormož,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Pentilj,Šentilj,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Ravne na Korokkem,Ravne na Koroškem,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Razkrirje,Razkrižje,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Rmartno pri Litiji,Šmartno pri Litiji,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Rogaoovci,Rogašovci,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Rogatka Slatina,Rogaška Slatina,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Rube,Ruše,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Senana,Sežana,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Siri,Žiri,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Smarjepke Toplice,Šmarješke Toplice,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Sodracica,Sodražica,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Sredikce ob Dravi,Središče ob Dravi,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Star-e,Starše,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Straca,Straža,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Suremberk,Žužemberk,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Sveti Andrac v Slov. goricah,Sveti Andraž v Slovenskih Goricah,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Sveti Jurij ob lcavnici,Sveti Jurij ob Ščavnici,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Sveti Tomaa,Sveti Tomaž,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Tigina,Tišina,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Tirovnica,Žirovnica,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Trsic,Tržič,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Turnicce,Turnišče,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Valec,Žalec,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Velike La,Velike Lašče,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Vencur,Šenčur,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Vertej,Veržej,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Vmartno ob Paki,Šmartno ob Paki,the letters č/š/ž spoilt in the file
+name,Slovenia,ADM2,Voatanj,Šoštanj,the letters č/š/ž spoilt in the file
