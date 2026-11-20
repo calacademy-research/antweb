@@ -685,7 +685,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				Geolocale validAdm1 = GeolocaleMgr.getAdm1ToStore(adm1, country);
 				if (validAdm1 != null) {
 				  if (!validAdm1.getName().equals(adm1)) {
-				    getMessageMgr().addToMessages(MessageMgr.adm1NameCorrected, countrySpellingLine(country + ": " + adm1, validAdm1.getName()));
+				    // 2026-11-20 (Brian Fisher): the same name written otherwise is listed apart from another name of the state
+				    String section = GeolocaleMgr.adm1SpellingKey(adm1).equals(GeolocaleMgr.adm1SpellingKey(validAdm1.getName()))
+				        ? MessageMgr.adm1SpellingStored : MessageMgr.adm1NameCorrected;
+				    getMessageMgr().addToMessages(section, countrySpellingLine(country + ": " + adm1, validAdm1.getName()));
 				    specimenItem.put("adm1", validAdm1.getName());
 				  }
 				  adm1 = validAdm1.getName(); // also used for bioregion validation

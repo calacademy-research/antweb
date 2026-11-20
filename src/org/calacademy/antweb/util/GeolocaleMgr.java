@@ -103,7 +103,35 @@ public class GeolocaleMgr extends Manager {
 
         GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
         // deep crawl through subregion, countries and adm1.  Use for Georegion menu.
-        s_regions = geolocaleDb.getRegions(true);
+        ArrayList<Region> regions = geolocaleDb.getRegions(true);
+        int dropped = pruneOldNameCountries(regions);
+        if (dropped > 0) s_log.warn("populateDeep() " + dropped + " states left out under old names of countries (not their own)");
+        s_regions = regions;
+    }
+
+    /**
+     * 2026-11-20: the database compares a child's parent with a country's name without accents, so the old name Panamá
+     * (id 8818, not valid, under Central America) was given every state of Panama (id 91) and the states were loaded
+     * twice (the daily box check listed each beside itself). A country that is not valid keeps only the states whose
+     * parent is its own name exactly; valid countries are left as they are (a state whose parent is written with other
+     * accents or capitals stays found). Returns how many states were left out.
+     */
+    public static int pruneOldNameCountries(List<? extends Geolocale> regions) {
+        int dropped = 0;
+        if (regions == null) return 0;
+        for (Geolocale region : regions) {
+            if (region == null || region.getChildren() == null) continue;
+            for (Geolocale subregion : region.getChildren()) {
+                if (subregion == null || subregion.getChildren() == null) continue;
+                for (Geolocale country : subregion.getChildren()) {
+                    if (country == null || country.getIsValid() || country.getChildren() == null) continue;
+                    ArrayList<Geolocale> own = ownChildren(country.getName(), country.getChildren());
+                    dropped += country.getChildren().size() - own.size();
+                    country.setChildren(own);
+                }
+            }
+        }
+        return dropped;
     }
 
     private static void populateShallow(Connection connection, boolean forceReload) {
@@ -139,6 +167,11 @@ public class GeolocaleMgr extends Manager {
         geolocales.addAll(geolocaleDb.getGeolocales("country", "none", false));
         //A.log("populateShallow() 2 c:" + countInstances("Albania", geolocales));
 
+        // Each state once (2026-11-20): a country reached twice (Panama, id 91, and its old name Panamá, id 8818, both
+        // under Central America) brought its states in twice, and the daily box check listed every state of Panama as a
+        // duplicate. The places list and the state list both keep each state once; the count dropped is logged.
+        int twice = onePlacePerId(geolocales);
+        if (twice > 0) s_log.warn("populateShallow() " + twice + " states reached twice (a country reached twice); each kept once");
         ArrayList<Adm1> newAdm1List = geolocales.stream()
                 .filter(Geolocale::isAdm1)
                 .map(adm1 -> (Adm1) adm1)
@@ -928,9 +961,11 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
      */
     public static List<String> duplicateValidStates(Collection<? extends Geolocale> validAdm1s) {
         Map<String, List<String>> byKey = new TreeMap<>();
+        Set<Integer> seen = new HashSet<>();      // one row met twice is not a pair (2026-11-20)
         if (validAdm1s != null) {
             for (Geolocale g : validAdm1s) {
                 if (g == null || !g.isValid() || g.getParent() == null || g.getName() == null) continue;
+                if (g.getId() > 0 && !seen.add(g.getId())) continue;
                 String key = adm1SpellingKey(g.getName());
                 if (key.isEmpty()) continue;
                 byKey.computeIfAbsent(g.getParent() + "\u0001" + key, k -> new ArrayList<>()).add(g.getName());
@@ -944,6 +979,26 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
             out.add(e.getKey().substring(0, e.getKey().indexOf('\u0001')) + ": " + String.join(" / ", names));
         }
         return out;
+    }
+
+    /** Removes from the list every state (adm1) met a second time (same id), the first kept; returns how many were
+     *  removed. Other places are left alone. Unit-tested. */
+    public static int onePlacePerId(List<Geolocale> places) {
+        int before = places.size();
+        Set<Integer> ids = new HashSet<>();
+        places.removeIf(g -> g != null && g.isAdm1() && g.getId() > 0 && !ids.add(g.getId()));
+        return before - places.size();
+    }
+
+    /** The children whose parent is the given name exactly (2026-11-20): the database compares names without accents,
+     *  so an old name of a country (Panamá) was given the states of the country (Panama). Unit-tested. */
+    public static <T extends Geolocale> ArrayList<T> ownChildren(String name, List<T> children) {
+        ArrayList<T> own = new ArrayList<>();
+        if (children == null) return own;
+        for (T child : children) {
+            if (child != null && (name == null || child.getParent() == null || name.equals(child.getParent()))) own.add(child);
+        }
+        return own;
     }
 
     /** adm1ToStore on the loaded places (the specimen upload, SpecimenUploadParse.parseLine). Null before they are loaded. */
