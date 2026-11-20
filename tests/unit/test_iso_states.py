@@ -311,6 +311,27 @@ def test_capitals_only_and_apostrophes():
     assert iso.display("Grande’Anse") == "Grande'Anse" and iso.display("Provence-Alpes-Côte-d’Azur") == "Provence-Alpes-Côte-d'Azur"
 
 
+def test_notes_and_left_outs_are_part_of_the_reviewed_plan():
+    import tempfile
+    d = [dec("rename", 1, "Bratislava", "Bratislavský kraj", 1, "Bratislava")]
+    path = os.path.join(tempfile.mkdtemp(), "plan.tsv")
+    iso.write_plan(path, d, [], [], {}, [], ["Slovakia: X, why"], ["Slovakia: Bratislava, its page text stays"])
+    got = iso.reviewed_lines(path)
+    assert "note\tSlovakia: Bratislava, its page text stays" in got and "left out\tSlovakia: X, why" in got, got
+
+
+def test_crlf_mapping_and_a_name_of_punctuation():
+    import tempfile
+    path = os.path.join(tempfile.mkdtemp(), "map.csv")
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        f.write("name,Croatia,ADM1,Split-Dalmatia,Splitsko-Dalmatinska,Croatian name\r\n")
+    d = [dec("rename", 2, "Splitsko-Dalmatinska", "Splitsko-dalmatinska županija", 2, "Splitsko-Dalmatinska", "Croatia", "HR-17")]
+    text, changed, check = iso.mapping_update(d, path)
+    assert text.split("\n")[0] == "name,Croatia,ADM1,Split-Dalmatia,Splitsko-dalmatinska županija,Croatian name", text
+    d, rep = iso.match_country([st(1, "--", 1)], [S("HR-17", "HR", "County", "", "Splitsko-dalmatinska županija", [])])
+    assert not d and rep and rep[0][1].startswith("no ISO"), rep
+
+
 def test_the_iso_file_reads():
     subs = iso.read_iso()
     # translations and the boundary file's shape names are separate columns
