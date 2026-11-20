@@ -43,7 +43,8 @@ written like both takes the kind most of its country's states match.
                                               then the changes; what was done in <folder>/applied.tsv
   python3 iso_states.py --skip FILE           lines "country|state" left alone (a state looked at by hand)
   python3 iso_states.py --tag 20261120b       a second run the same day (its own folder and backup tables; the rollback
-                                              with <date> = the tag)
+                                              with <date> = the tag). Roll back the newest tag first: a later run can
+                                              change rows an earlier one changed
   python3 iso_states.py --project /root/antweb-next      staging (default: the project on this server)
 
 Rollback (same server, the date of the run; one transaction; the rows added go first, so the old names are free again):
@@ -272,11 +273,13 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
     hits, how = {}, {}
     exonyms, not_iso = exonyms or {}, not_iso or {}
     for st in states:
-        if st.name in not_iso:                 # not the subdivision its name resembles: no hit
+        k = key(st.name)
+        if k in not_iso or st.name in not_iso:  # not the subdivision its name resembles: no hit
             hits[st.id], how[st.id] = set(), "not"
             continue
-        if exonyms.get(st.name) in by_code:     # the subdivision this state is, by AntWeb's name ISO does not carry
-            hits[st.id], how[st.id] = {exonyms[st.name]}, "table"
+        code = exonyms.get(k) or exonyms.get(st.name)
+        if code in by_code:                      # the subdivision this state is, by AntWeb's name ISO does not carry
+            hits[st.id], how[st.id] = {code}, "table"
             continue
         name, olds = [st.name], list(st.old_names)
         tiers = [(own, name), (trans, name), (own, olds), (trans, olds), (shapes, name), (shapes, olds)]
@@ -313,7 +316,8 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
         if len(h) == 1:
             chosen[st.id] = next(iter(h))
         elif not h:
-            reported.append((st, ("not an ISO 3166-2 subdivision: " + not_iso[st.name]) if st.name in not_iso else "no ISO 3166-2 subdivision written alike"))
+            why = not_iso.get(key(st.name)) or not_iso.get(st.name)
+            reported.append((st, ("not an ISO 3166-2 subdivision: " + why) if why else "no ISO 3166-2 subdivision written alike"))
         else:
             reported.append((st, "written like " + ", ".join(sorted(h))))
     by_sub = collections.defaultdict(list)
@@ -374,8 +378,9 @@ def plan(valid, olds, iso, countries, skip=frozenset()):
             continue
         english = a2 in ENGLISH
         # the tables by the country's ISO code, so another spelling of the country finds them too (review of #399)
-        exonyms = {n: code for c, names in EXONYMS.items() if countries.get(key(c)) == a2 for n, code in names.items()}
-        not_iso = {n: why for (c, n), why in NOT_ISO.items() if countries.get(key(c)) == a2}
+        # and by key(name), so a state written with other capitals, accents or punctuation finds its entry (review of #399)
+        exonyms = {key(n): code for c, names in EXONYMS.items() if countries.get(key(c)) == a2 for n, code in names.items()}
+        not_iso = {key(n): why for (c, n), why in NOT_ISO.items() if countries.get(key(c)) == a2}
         decisions, rep = match_country(rows, subs, english, exonyms, not_iso)
         for action, st, sub, kept in decisions:
             # target: the name the state, its old names and its specimens end up under

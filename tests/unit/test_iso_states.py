@@ -357,6 +357,10 @@ def test_exonyms_and_states_that_are_not_iso():
     out, rep, noc = iso.plan({"Philippines": [(7, "Quezon", 857), (8, "Quezon City", 900)]}, {}, subs, iso.read_countries())
     assert not [x for x in out if x["action"] == "merge"] and ("Philippines", "Quezon City") in {(r[0], r[1]) for r in rep}, (out, rep)
     assert [r for r in rep if r[1] == "Quezon City"][0][3].startswith("not an ISO 3166-2 subdivision: a city of Metro Manila")
+    # Quezon City alone (no loose rule to fall back on) and written otherwise: still not Quezon province; a table entry
+    # found with other capitals or accents (Castilla-Leon for Castile-Leon is not one; CASTILE-LEON is)
+    out, rep, noc = iso.plan({"Philippines": [(8, "quezon city", 900)], "Spain": [(9, "CASTILE-LEON", 37)]}, {}, subs, iso.read_countries())
+    assert [(x["name"], x["code"]) for x in out] == [("CASTILE-LEON", "ES-CL")] and rep[0][3].startswith("not an ISO"), (out, rep)
 
 
 def test_a_table_entry_decides_over_iso_names_and_finds_its_country_by_any_name():
