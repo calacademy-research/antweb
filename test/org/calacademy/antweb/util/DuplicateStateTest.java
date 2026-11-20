@@ -119,6 +119,10 @@ public class DuplicateStateTest extends TestCase {
         // a stored name with a blank at the end, saved unchanged: not a rename
         Adm1 blank = adm1(2860, "Taita Taveta ", "Kenya", true);
         assertNull(EditGeolocaleAction.duplicateState(form("Taita Taveta ", "Kenya", true), blank, places));
+        // the same, saved with no name or parent in the form (only the box or a note changed): not a rename either,
+        // also before the places are loaded (review of #387)
+        assertNull(EditGeolocaleAction.duplicateState(form(null, null, true), blank, places));
+        assertNull(EditGeolocaleAction.duplicateState(form(null, null, true), blank, null));
         // before the places are loaded (no list): a save that needs the check waits; one that does not goes ahead
         assertEquals(EditGeolocaleAction.PLACES_LOADING, EditGeolocaleAction.duplicateState(form("Murang'A", "Kenya", true), merged, null));
         assertNull(EditGeolocaleAction.duplicateState(form("Murang'A", "Kenya", false), merged, null));
@@ -132,6 +136,10 @@ public class DuplicateStateTest extends TestCase {
         Adm1 again = adm1(6001, "Bocas del Toro", "Panama", true);           // the same row, a second object
         List<Geolocale> twice = new ArrayList<>(List.of(bocas, chiriqui, bocas, again, chiriqui));
         assertTrue(GeolocaleMgr.duplicateValidStates(twice).isEmpty());
+        // rows with no id (not from the database): the same object twice is not a pair; two objects alike still are
+        Adm1 noId = adm1(0, "Coclé", "Panama", true);
+        assertTrue(GeolocaleMgr.duplicateValidStates(List.of(noId, noId)).isEmpty());
+        assertEquals(1, GeolocaleMgr.duplicateValidStates(List.of(noId, adm1(0, "Cocle", "Panama", true))).size());
         // the places list keeps each state once (the first); other places are left alone
         List<Geolocale> places = new ArrayList<>(List.of(bocas, chiriqui, again, chiriqui));
         assertEquals(2, GeolocaleMgr.onePlacePerId(places));

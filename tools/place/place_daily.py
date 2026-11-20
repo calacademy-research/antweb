@@ -191,24 +191,40 @@ def apply_statements(rows, run_date):
     return out
 
 
+def applied_rows(run_date):
+    """The rows of the apply run of run_date still applied (the WHERE of a select on place_update)."""
+    return "run_date = " + quote(run_date) + " AND mode = 'apply' AND applied = 1 AND field = 'adm1'"
+
+
+def put_back_join(run_date):
+    """The specimens a rollback puts back: those the run wrote that still have the state it wrote. The rollback's UPDATE
+    and the count before it share this text, so the two cannot drift apart (review of #389)."""
+    return ("specimen s JOIN " + backup_table(run_date) + " b ON b.code = s.code JOIN place_update p ON p.code = s.code AND p.run_date = "
+            + quote(run_date) + " AND p.mode = 'apply' AND p.applied = 1 AND p.field = 'adm1'", "BINARY s.adm1 = BINARY p.proposed")
+
+
 def rollback_statements(run_date):
     """Puts back adm1 and adm1_verbatim of the specimens the apply run of run_date wrote (from its backup table), only
-    where the specimen still has the state that run wrote: a later upload or edit is kept (review of #384)."""
-    bak = backup_table(run_date)
+    where the specimen still has the state that run wrote: a later upload or edit is kept (review of #384). The rows
+    still applied are counted, and locked, before the UPDATE and counted again after it in the same transaction: the
+    difference is what the rollback put back, the rest was kept (review of #389: the counts before were a prediction)."""
+    join, where = put_back_join(run_date)
+    count = "SELECT '%s', COUNT(*) FROM place_update WHERE " + applied_rows(run_date) + " FOR UPDATE"
     # one statement: a specimen put back and its place_update row marked not applied together; a kept row stays applied
-    return ["SET SESSION innodb_lock_wait_timeout = 600", "START TRANSACTION",
-            "UPDATE specimen s JOIN " + bak + " b ON b.code = s.code JOIN place_update p ON p.code = s.code AND p.run_date = " + quote(run_date)
-            + " AND p.mode = 'apply' AND p.applied = 1 AND p.field = 'adm1' SET s.adm1 = b.adm1, s.adm1_verbatim = b.adm1_verbatim, p.applied = 0"
-            " WHERE BINARY s.adm1 = BINARY p.proposed",
-            "COMMIT"]
+    return ["SET SESSION innodb_lock_wait_timeout = 600", "START TRANSACTION", count % "before",
+            "UPDATE " + join + " SET s.adm1 = b.adm1, s.adm1_verbatim = b.adm1_verbatim, p.applied = 0 WHERE " + where,
+            count % "after", "COMMIT"]
 
 
 def rollback_counts(run_date):
     """SQL for (rows of the run still applied, specimens a rollback would put back) before a rollback."""
-    bak = backup_table(run_date)
-    return ("select count(*) from place_update where run_date = " + quote(run_date) + " and mode = 'apply' and applied = 1 and field = 'adm1'",
-            "select count(*) from specimen s join " + bak + " b on b.code = s.code join place_update p on p.code = s.code and p.run_date = "
-            + quote(run_date) + " and p.mode = 'apply' and p.applied = 1 and p.field = 'adm1' where binary s.adm1 = binary p.proposed")
+    join, where = put_back_join(run_date)
+    return ("SELECT COUNT(*) FROM place_update WHERE " + applied_rows(run_date), "SELECT COUNT(*) FROM " + join + " WHERE " + where)
+
+
+def backup_exists(run_date):
+    return ("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = "
+            + quote(backup_table(run_date)))
 
 
 def read_state(project, container, codes):
@@ -229,14 +245,24 @@ def applied_today(project, container, run_date):
     return int(rows[0][0]) if rows else 0
 
 
-def write_sql(project, container, sql_statements):
-    """Runs the statements in one mysql session (the login from db.properties, through the environment)."""
+def write_sql(project, container, sql_statements, database="ant"):
+    """Runs the statements in one mysql session (the login from db.properties, through the environment). Returns the
+    rows the statements selected (tab separated, no header)."""
     user, password = cc.db_login(project)
-    cmd = ["docker", "exec", "-i", "-e", "MYSQL_PWD", container, "mysql", "-u", user, "ant", "--default-character-set=utf8mb4"]
+    cmd = ["docker", "exec", "-i", "-e", "MYSQL_PWD", container, "mysql", "-u", user, database, "--default-character-set=utf8mb4", "--batch", "-N"]
     text = ";\n".join(sql_statements) + ";\n"
     p = subprocess.run(cmd, input=text.encode("utf-8"), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=dict(os.environ, MYSQL_PWD=password))
     if p.returncode != 0:
         raise RuntimeError("mysql failed: " + p.stderr.decode("utf-8", "replace").strip()[:500])
+    return [line.split("\t") for line in p.stdout.decode("utf-8", "replace").splitlines() if line]
+
+
+def rollback_result(rows):
+    """(put back, kept) from what rollback_statements selected: the rows still applied before and after the UPDATE."""
+    got = {r[0]: int(r[1]) for r in rows or [] if len(r) == 2 and r[0] in ("before", "after")}
+    if set(got) != {"before", "after"}:
+        raise RuntimeError("the rollback ran, but its counts were not read: " + repr(rows)[:200])
+    return got["before"] - got["after"], got["after"]
 
 
 def summary(rows, seconds, mode):
@@ -287,17 +313,21 @@ def main(argv=None, corrections=None, reader=None, counter=None):
             raise ValueError("--rollback takes a date YYYY-MM-DD: " + args.rollback)
         datetime.date.fromisoformat(args.rollback)   # and a real date
         count = counter or (lambda q: int(cc.run_sql(project, q, args.container)[0][0]))
-        applied, back = (count(q) for q in rollback_counts(args.rollback))
+        applied_q, back_q = rollback_counts(args.rollback)
+        applied = count(applied_q)
         if not applied:   # review of #388: say so instead of a rollback that puts nothing back
-            raise SystemExit("rollback " + args.rollback + ": no applied rows of that day in place_update (rolled back already, or older than "
-                             + str(KEEP_DAYS) + " days); nothing put back")
+            raise SystemExit("rollback " + args.rollback + ": no applied rows of that day in place_update (no apply run that day, rolled back "
+                             "already, or older than " + str(KEEP_DAYS) + " days); nothing put back")
+        if not count(backup_exists(args.rollback)):   # review of #389: a dropped backup table, said plainly
+            raise SystemExit("rollback " + args.rollback + ": the backup table " + backup_table(args.rollback) + " is missing; cannot roll back")
+        back = count(back_q)
         kept = applied - back
         if not back:   # every row left was kept (changed since), or the day was rolled back already
             raise SystemExit("rollback " + args.rollback + ": nothing to put back (" + cc.n(kept) + " applied specimens changed since, kept)")
         if args.dry_run:
             log("place-daily rollback " + args.rollback + " (dry run): would put back " + cc.n(back) + " specimens; " + cc.n(kept) + " changed since, kept")
             return 0
-        write_sql(project, args.container, rollback_statements(args.rollback))
+        back, kept = rollback_result(write_sql(project, args.container, rollback_statements(args.rollback)))
         log("place-daily rollback " + args.rollback + ": " + cc.n(back) + " specimens put back from " + backup_table(args.rollback) + "; "
             + cc.n(kept) + " changed since (an upload or edit), kept")
         return 0

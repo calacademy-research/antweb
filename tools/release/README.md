@@ -36,7 +36,10 @@ runs, and runs with no PR (Deploy Staging serves a merge of the staged head), ga
   the run was of the head or of its `merge -s ours` staging commit (same files, the head's tree), and no deploy of
   other code started before the run ended. It passes a PR that
   changes only files outside the site (`NO_SITE_PATHS`: docs, unit tests, the production smoke and
-  speed checks, the release tools, this workflow).
+  speed checks, the release tools, this workflow, and the place tools that are only run by hand (`HAND_RUN_PLACE_TOOLS`: `iso_states.py`,
+  `build_iso3166_2.py`, the two ISO files, `country_rename.py`, `island_countries.py`, `place_fix.py`; a unit test checks
+  that the daily place report imports or reads none of them); not the daily place report, which the
+  host's cron runs and which writes to the database).
 - Check 4: Claude writes a PR comment with the line `nightly-checked: <head sha>` once the staging nightly ran that
   commit clean (morning compute.log and tests read). It is tied to the sha: it never passes another commit. Only
   comments of members and collaborators count.
