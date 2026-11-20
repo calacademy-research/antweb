@@ -158,6 +158,9 @@ public final class EditGeolocaleAction extends AntwebAction {
 			    message = "Nothing was saved. " + Html.esc(coordsError);
 			    request.setAttribute("centroidInput", request.getParameter("centroidFixed"));
 			    request.setAttribute("boundingBoxInput", request.getParameter("boundingBoxFixed"));
+			  } else if (duplicateState(editGeolocaleForm, tempGeolocale) != null) {
+			    isSaved = false;
+			    message = "Nothing was saved. " + duplicateState(editGeolocaleForm, tempGeolocale);
 			  } else {
 			    message = geolocaleDb.updateGeolocale(editGeolocaleForm);
 			    // A rename onto a name that already has page text is refused (GeolocaleDb.updateGeolocale).
@@ -254,6 +257,23 @@ public final class EditGeolocaleAction extends AntwebAction {
         String v = value.trim();
         if (v.isEmpty() || "none".equalsIgnoreCase(v) || "null".equals(v)) return null;
         return v;
+    }
+
+    /**
+     * A state (adm1) saved as valid while its country already has a valid state written alike (other capitals,
+     * accents, blanks or punctuation: GeolocaleMgr.adm1SpellingKey) is refused, with what to do instead (2026-11-19:
+     * 269 such duplicates from the 2021 Geonames and Geonet loads were merged that day; nothing stopped them before).
+     * Returns the message (HTML escaped), or null when the save may go ahead.
+     */
+    static String duplicateState(EditGeolocaleForm form, Geolocale current) {
+        if (current == null || !"adm1".equals(current.getGeorank()) || !form.isValid()) return null;
+        String name = form.getName() != null && !form.getName().trim().isEmpty() ? form.getName().trim() : current.getName();
+        Geolocale other = GeolocaleMgr.validStateWrittenAlike(GeolocaleMgr.getValidAdm1s(), current.getParent(), name, current.getId());
+        if (other == null) return null;
+        return Html.esc(current.getParent()) + " already has the valid state " + Html.esc(other.getName()) + " (id " + other.getId()
+            + "), written like " + Html.esc(name) + ". Two valid states of one place split its specimens and lists. Keep one:"
+            + " untick Valid here and set Valid name to " + Html.esc(other.getName()) + ", so that " + Html.esc(name)
+            + " becomes an old name of it (uploads that write it are filed under " + Html.esc(other.getName()) + ").";
     }
 
     /**
