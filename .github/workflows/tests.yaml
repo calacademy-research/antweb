@@ -1030,6 +1030,11 @@ jobs:
           GBIF_VIEW_TEST_CONTAINER=pfmysql GBIF_VIEW_TEST_PASSWORD=ci-root python3 tests/unit/test_gbif_image_view.py | tee /tmp/gbif_view.txt
           grep -q "^5 tests passed (texts)" /tmp/gbif_view.txt
           grep -q "^2 database tests passed (MySQL 8.4" /tmp/gbif_view.txt
+          # States under their ISO 3166-2 names (2026-11-20): plan, apply (backups in the change's transaction, specimens
+          # moved from the backup), the rollback of the tool's header back to the exact rows, a failed apply that leaves
+          # the day open, and a geolocale.name that ignores accents refused.
+          ISO_STATES_TEST_CONTAINER=pfmysql ISO_STATES_TEST_PASSWORD=ci-root python3 tests/unit/test_iso_states_db.py | tee /tmp/iso_states_db.txt
+          grep -q "^3 tests passed (MySQL 8.4" /tmp/iso_states_db.txt
           docker rm -f pfmysql
 
       - name: Coordinates against the stored country, report only (tests/unit/test_coordinate_country.py)
@@ -1037,6 +1042,12 @@ jobs:
 
       - name: Place corrections for TaxonWorks, the missing country and state from coordinates (tests/unit/test_place_corrections.py)
         run: python3 tests/unit/test_place_corrections.py
+
+      - name: States under their ISO 3166-2 names, the plan (tests/unit/test_iso_states.py)
+        # 2026-11-20 (Brian Fisher: "let's adopt ISO 3166-2"): a state matches its subdivision by name or old name;
+        # a looser match (generic words off) only when it leaves out a word, never adds one; a merge is left out when
+        # its target's rename is, or when the state merged has a curator species list; --apply takes only the reviewed plan.
+        run: python3 tests/unit/test_iso_states.py
 
       - name: Daily place step, report mode, without a database (tests/unit/test_place_daily.py)
         run: python3 tests/unit/test_place_daily.py
