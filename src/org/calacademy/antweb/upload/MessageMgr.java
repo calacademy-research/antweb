@@ -155,7 +155,7 @@ public class MessageMgr {
      *  AntWeb's name (Mexico), one line per spelling (GeolocaleMgr.getCountrySpelledLike). */
     public static final String countrySpellingCorrected = "countrySpellingCorrected";
     /** A state stored under AntWeb's valid state: an old name of it or another spelling ("Nimba County" -> Nimba;
-     *  GeolocaleMgr.adm1ToStore, 2026-11-19). One line per country, uploaded name and stored name. */
+     *  GeolocaleMgr.adm1ToStore, 2026-11-19). One line per country and uploaded name, with the stored name. */
     public static final String adm1NameCorrected = "adm1NameCorrected";
     public static final String unrecognizedColumn = "unrecognizedColumn";
     public static final String invalidColumn = "invalidColumn";

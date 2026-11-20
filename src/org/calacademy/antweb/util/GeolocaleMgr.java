@@ -146,6 +146,8 @@ public class GeolocaleMgr extends Manager {
 
         MultiKeyMap<String, Adm1> newAdm1CountryMap = new MultiKeyMap<>();
         newAdm1List.forEach(adm1 -> newAdm1CountryMap.put(adm1.getName(), adm1.getCountry(), adm1));
+        // built before either map is published, so an upload line never pairs a new exact map with an old spelling map
+        Map<String, Adm1> newAdm1SpellingMap = adm1sBySpelling(newAdm1List, newAdm1CountryMap);
 
         // A country name twice (for example once under its subregion and once without a parent) used to throw
         // here and stop the load; the first is kept and the duplicate logged.
@@ -158,7 +160,7 @@ public class GeolocaleMgr extends Manager {
         islands = newIslands;
         adm1List = newAdm1List;
         adm1CountryMap = newAdm1CountryMap;
-        adm1SpellingMap = adm1sBySpelling(newAdm1List, newAdm1CountryMap);
+        adm1SpellingMap = newAdm1SpellingMap;
         countrySpellingMap = countriesBySpelling(newCountryNameMap.values());
         countryNameMap = newCountryNameMap;
         s_geolocales = geolocales;
@@ -892,7 +894,9 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         if (adm1 == null || country == null) return null;
         Adm1 valid = validAdm1(adm1s, adm1, country);
         if (valid != null) return valid;
-        if (bySpelling == null) return null;
+        // a row of this exact name that leads nowhere (a unit split up) stays as the curator's mapping says: no
+        // second try by spelling (validAdm1's rule; review of #382)
+        if (bySpelling == null || (adm1s != null && adm1s.get(adm1, country) != null)) return null;
         return bySpelling.get(country + "\u0000" + adm1SpellingKey(adm1));
     }
 

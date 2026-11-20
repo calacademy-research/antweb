@@ -101,6 +101,10 @@ public class Adm1SpellingTest extends TestCase {
         assertNull(stored("Grand Est", "Germany"));
         // an old unit that leads nowhere, and a name AntWeb does not know
         assertNull(stored("Toliara", "Madagascar"));
+        // a row that leads nowhere is not overridden by a valid state written alike (review of #382)
+        adm1("Atsimo Andrefana", "Madagascar", false, null);
+        assertNull(stored("Atsimo Andrefana", "Madagascar"));
+        assertEquals("Atsimo-Andrefana", stored("ATSIMO-ANDREFANA", "Madagascar"));
         assertNull(stored("Atlantis", "Liberia"));
         assertNull(stored(null, "Liberia"));
         assertNull(stored("Nimba", null));
