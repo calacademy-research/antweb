@@ -53,6 +53,7 @@ import csv
 import datetime
 import fcntl
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -114,12 +115,13 @@ def statements(rows, run_date, mode):
 
 
 def skipped_countries(path=None):
-    """The countries the apply mode leaves out (SKIP_FILE): one per line; # starts a note."""
+    """The countries the apply mode leaves out (SKIP_FILE): one per line; # starts a note. A file that cannot be read
+    stops the apply (review of #384: without it the countries at another level would be written)."""
     try:
         with open(path or SKIP_FILE, encoding="utf-8") as f:
             return {l.split("#", 1)[0].strip() for l in f if l.split("#", 1)[0].strip()}
-    except OSError:
-        return set()
+    except OSError as e:
+        raise SystemExit("apply refused: the skip file " + (path or SKIP_FILE) + " cannot be read (" + e.__class__.__name__ + ")")
 
 
 LEFT_OUT = {
@@ -164,13 +166,17 @@ def backup_table(run_date):
 
 
 def apply_statements(rows, run_date):
-    """The SQL of one apply run, one transaction: the specimens' adm1 and adm1_verbatim to the backup table, each
-    state written (only if the specimen still has the state the report read), and the rows recorded in place_update."""
+    """The SQL of one apply run: the backup table made first (CREATE TABLE commits, so it stands before the
+    transaction: review of #384), then one transaction: the specimens' adm1 and adm1_verbatim to the backup table,
+    each state written (only if the specimen still has the state the report read), and the rows recorded in
+    place_update. A failure inside the transaction writes nothing; the backup table then stays, empty or partly
+    filled, and the next run the same day stops at its CREATE TABLE."""
     bak = backup_table(run_date)
     codes = [r["code"] for r in rows]
-    out = ["SET SESSION innodb_lock_wait_timeout = 600", "START TRANSACTION",
+    out = ["SET SESSION innodb_lock_wait_timeout = 600",
            "CREATE TABLE " + bak + " (code varchar(128) NOT NULL PRIMARY KEY, adm1 varchar(128) NULL, adm1_verbatim varchar(128) NULL)"
-           " ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"]
+           " ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+           "START TRANSACTION"]
     for i in range(0, len(codes), BATCH):
         out.append("INSERT INTO " + bak + " (code, adm1, adm1_verbatim) SELECT code, adm1, adm1_verbatim FROM specimen WHERE code IN ("
                    + ",".join(quote(c) for c in codes[i:i + BATCH]) + ")")
@@ -186,10 +192,13 @@ def apply_statements(rows, run_date):
 
 
 def rollback_statements(run_date):
-    """Puts back adm1 and adm1_verbatim of the specimens the apply run of run_date wrote (from its backup table)."""
+    """Puts back adm1 and adm1_verbatim of the specimens the apply run of run_date wrote (from its backup table), only
+    where the specimen still has the state that run wrote: a later upload or edit is kept (review of #384)."""
     bak = backup_table(run_date)
     return ["SET SESSION innodb_lock_wait_timeout = 600", "START TRANSACTION",
-            "UPDATE specimen s JOIN " + bak + " b ON b.code = s.code SET s.adm1 = b.adm1, s.adm1_verbatim = b.adm1_verbatim",
+            "UPDATE specimen s JOIN " + bak + " b ON b.code = s.code JOIN place_update p ON p.code = s.code AND p.run_date = " + quote(run_date)
+            + " AND p.mode = 'apply' AND p.applied = 1 AND p.field = 'adm1' SET s.adm1 = b.adm1, s.adm1_verbatim = b.adm1_verbatim"
+            " WHERE BINARY s.adm1 = BINARY p.proposed",
             "UPDATE place_update SET applied = 0 WHERE run_date = " + quote(run_date) + " AND mode = 'apply'",
             "COMMIT"]
 
@@ -265,7 +274,9 @@ def main(argv=None, corrections=None, reader=None):
     args = a.parse_args(argv)
     project = args.project or cc.default_project()
     if args.rollback:
-        datetime.date.fromisoformat(args.rollback)   # refuses anything but a date
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", args.rollback):   # YYYY-MM-DD only (fromisoformat takes 20261123 and week forms too)
+            raise ValueError("--rollback takes a date YYYY-MM-DD: " + args.rollback)
+        datetime.date.fromisoformat(args.rollback)   # and a real date
         if args.dry_run:
             log("place-daily rollback " + args.rollback + " (dry run): " + "; ".join(rollback_statements(args.rollback)))
             return 0
@@ -298,9 +309,8 @@ def main(argv=None, corrections=None, reader=None):
             left = ", ".join(LEFT_OUT[k] + " " + cc.n(v) for k, v in why.most_common())
             if done:
                 line += "; apply: none, today's apply run already wrote " + cc.n(done)
-            elif len(todo) > MAX_APPLY:
-                log(line + "; apply REFUSED: " + cc.n(len(todo)) + " changes, over the limit of " + cc.n(MAX_APPLY) + "; nothing applied")
-                raise SystemExit("apply over the limit")
+            elif len(todo) > MAX_APPLY:   # one journal line: run() logs it as FAILED
+                raise SystemExit(line + "; apply REFUSED: " + cc.n(len(todo)) + " changes, over the limit of " + cc.n(MAX_APPLY) + "; nothing applied")
             elif todo and not args.dry_run:
                 write_sql(project, args.container, apply_statements(todo, run_date))
                 line += "; applied " + cc.n(len(todo)) + " states (backup " + backup_table(run_date) + ")"

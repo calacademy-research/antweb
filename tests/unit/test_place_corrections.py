@@ -284,7 +284,6 @@ def test_mapping_file_of_the_repository():
                        "Ndiyona": "Kavango East", "Rundu Urban": "Kavango East"}
     # every county of Croatia's file has its Croatian name; no shape has two name lines at one level
     assert len({n[2] for n in rules.names if n[0] == "Croatia"}) == 21
-    assert len({n[:3] for n in rules.names}) == len(rules.names)
     within = rules.within["Madagascar"]
     # AntWeb's 22 regions (production, 2026-11-10) and the 22 shape names of the file geoBoundaries-MDG-ADM1 (read 2026-11-10)
     antweb = ["Alaotra Mangoro", "Amoron'i Mania", "Analamanga", "Analanjirofo", "Androy", "Anosy", "Atsimo-Andrefana", "Atsimo-Atsinanana", "Atsinanana", "Betsiboka",
@@ -316,12 +315,12 @@ def test_mapping_file_of_the_repository():
     assert both.split_targets("Madagascar", shapes, hows, True) == ["Ambatosoa", "Fitovinany", "Vatovavy"]
     assert both.wanted("Madagascar") == antweb and both.convert["Madagascar"] == set(rules.convert["Madagascar"])
     assert both.within["Madagascar"]["vatovavy fitovinany"] == "Fianarantsoa"
-    # Seychelles: La Digue is Inner Islands; Other Islands is a state to add. The rows are given for the two levels that have these shapes
+    # Seychelles: La Digue is Inner Islands; Other Islands is Outer Islands. The rows are given for the two levels that have these shapes
     assert [r for r in rows if r[0] == "Seychelles"] == [("Seychelles", "ADM2", "La Digue", "Inner Islands"), ("Seychelles", "ADM3", "La Digue", "Inner Islands"),
                                                         ("Seychelles", "ADM2", "Other Islands", "Outer Islands"), ("Seychelles", "ADM3", "Other Islands", "Outer Islands")]
-    assert {r for r in rules.new if r[0] == "Seychelles"} == {("Seychelles", "ADM2", "Other Islands", "Outer Islands"), ("Seychelles", "ADM3", "Other Islands", "Outer Islands")}
-    # the name lines: 148 pairs the lead checked by the names, 99 that are plain from the names, 147 of 2026-11-19 checked by both lists; no shape twice; none is a hard row as well
-    assert len(rules.names) == 394 and len({(c, l, pc.plain(x)) for c, l, x, _ in rules.names}) == 394 and all(l in pc.LEVELS + [pc.NE_LEVEL] and x and a for _, l, x, a in rules.names)
+    assert not {r for r in rules.new if r[0] == "Seychelles"}          # Outer Islands is a valid state now (2026-11-19)
+    # the name lines: 148 pairs the lead checked by the names, 99 that are plain from the names, 146 of 2026-11-19 checked by both lists; no shape twice; none is a hard row as well
+    assert len(rules.names) == 393 and len({(c, l, pc.plain(x)) for c, l, x, _ in rules.names}) == 393 and all(l in pc.LEVELS + [pc.NE_LEVEL] and x and a for _, l, x, a in rules.names)
     assert ("United Arab Emirates", "ADM1", "Ras al-Khaimah", "Ra's al Khaymah") in rules.names and ("Czech Republic", "ADM1", "Jiho\u010desk\u00fd kraj", "Jiho\u010desk\u00fd") in rules.names
     assert ("Democratic Republic of Congo", "ADM1", "Lower Uele", "Bas-U\u00e9l\u00e9") in rules.names and ("Macedonia", "ADM2", "Shtip", "\u0160tip") in rules.names
     assert not {(c, l, pc.plain(x)) for c, l, x, _ in rules.names} & {(c, l, pc.plain(x)) for c, l, x, _ in rows}
