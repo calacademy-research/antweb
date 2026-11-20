@@ -216,6 +216,7 @@ def test_the_mapping_file_follows_the_renames():
     assert "name,Sweden,ADM1,Gotlands län,Gotland,the same name" not in lines
     assert "name,Croatia,ADM1,Split-Dalmatia,Splitsko-dalmatinska županija,Croatian name" in lines, lines
     assert "convert,Malawi,Central,Northern,Southern Region" in lines
+    # a convert line keeps each name once (ARMM renamed to the name the line already has)
     assert "United States,ADM1,District of Columbia,\"Washington, D.C.\"" not in lines         # now by name: dropped
     assert "name,Norway,ADM1,Oslo,Oslo,untouched" in lines and [n for n, l in check] == [6]
     with open(path, "a", encoding="utf-8") as f:
@@ -279,6 +280,31 @@ def test_page_text_moves_with_a_rename_and_blocks_a_conflict():
     long = "X" * 129
     sql, left, done = iso.statements([dec("rename", 3, "Y", long, 3, "Y")], {}, "20261120")
     assert not done and "longer than" in left[0]
+
+
+def test_a_convert_line_keeps_each_name_once():
+    import tempfile
+    path = os.path.join(tempfile.mkdtemp(), "map.csv")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("convert,Philippines,ARMM,Autonomous Region in Muslim Mindanao,Bicol\n")
+    d = [dec("merge", 1, "ARMM", "Autonomous Region in Muslim Mindanao", 2, "Autonomous Region in Muslim Mindanao", "Philippines", "PH-14")]
+    text, changed, check = iso.mapping_update(d, path)
+    assert text.split("\n")[0] == "convert,Philippines,Autonomous Region in Muslim Mindanao,Bicol", text
+
+
+def test_the_name_comes_before_old_names():
+    # AntWeb has Cordoba as an old name of Andalusia: Andalusia is the community by its English name, not the province
+    es = iso.read_iso()["ES"]
+    d, rep = iso.match_country([st(1, "Andalusia", 247, olds=("Cordoba",)), st(2, "Catalonia", 302), st(3, "Madrid", 41), st(4, "Murcia", 22)], es)
+    got = {s.name: sub.code for a, s, sub, k in d}
+    assert got["Andalusia"] == "ES-AN", got
+
+
+def test_capitals_only_and_apostrophes():
+    za = [S("ZA-NL", "ZA", "Province", "", "Kwazulu-Natal", [])]
+    d, rep = iso.match_country([st(1, "KwaZulu-Natal", 6734)], za)
+    assert not d and not rep, (d, rep)
+    assert iso.display("Grande’Anse") == "Grande'Anse" and iso.display("Provence-Alpes-Côte-d’Azur") == "Provence-Alpes-Côte-d'Azur"
 
 
 def test_the_iso_file_reads():

@@ -146,7 +146,9 @@ def display(iso_name):
         n = n[0].upper() + n[1:]
     # a note in brackets is not part of the name: "Western Visayas (Region VI)", "Maritime (Région)",
     # "Guelmim-Oued Noun (EH-partial)", "National Capital District (Port Moresby)"
-    return re.sub(r"\s*\([^()]*\)\s*$", "", n).strip()
+    n = re.sub(r"\s*\([^()]*\)\s*$", "", n).strip()
+    # typographic apostrophes as AntWeb writes them (Côte d'Ivoire): Grande'Anse, Provence-Alpes-Côte-d'Azur, Farg'ona
+    return re.sub("[\u2018\u2019\u02bb\u02bc]", "'", n)
 
 
 Sub = collections.namedtuple("Sub", "code country type parent name others")
@@ -217,10 +219,13 @@ def match_country(states, subs, english=False):
                 looser[loose(n)].add(s.code)
     hits, how = {}, {}
     for st in states:
-        h, other = set(), set()
-        for n in [st.name] + list(st.old_names):
-            h |= own.get(key(n), set())
-            other |= exact.get(key(n), set())
+        # the state's own name first, its old names only when its name matches nothing: an old name can be a finer unit
+        # filed under the state (AntWeb has Cordoba as an old name of Andalusia; it must not make Andalusia Córdoba)
+        h, other = set(own.get(key(st.name), set())), set(exact.get(key(st.name), set()))
+        if not h and not other:
+            for n in st.old_names:
+                h |= own.get(key(n), set())
+                other |= exact.get(key(n), set())
         # an other name joins an ISO-name hit only when the state is that subdivision's ISO name with generic words left
         # out (Madrid: the province by name, Comunidad de Madrid by its English name; the kind decides below)
         words = set(key(st.name).split())
@@ -262,6 +267,8 @@ def match_country(states, subs, english=False):
                 reported.append((st, "loose match %s (%s) that another state finds too: looked at by hand" % (code, iso)))
             elif how[st.id] == "loose" and not shorter(st.name, sub):
                 reported.append((st, "loose match %s (%s) adds a generic word: looked at by hand" % (code, iso)))
+            elif st.name.lower() == iso.lower():                    # capitals only (KwaZulu-Natal, ISO Kwazulu-Natal): AntWeb's kept
+                pass
             elif st.name != iso and (english or "/" in iso):      # a slash in a name (Taita/Taveta, //Karas) is kept out of URLs
                 if key(iso) not in {key(n) for n in st.old_names}:
                     decisions.append(("alias", st, sub, st))
@@ -277,8 +284,9 @@ def match_country(states, subs, english=False):
         if english or "/" in iso:
             kept = max([st for st in group if key(st.name) != key(iso) and "/" not in st.name] or group, key=lambda st: (st.specimens, -st.id))
         else:
-            kept = next((st for st in group if st.name == iso), None) or max(group, key=lambda st: (st.specimens, -st.id))
-            if kept.name != iso:
+            kept = (next((st for st in group if st.name == iso), None) or next((st for st in group if st.name.lower() == iso.lower()), None)
+                    or max(group, key=lambda st: (st.specimens, -st.id)))
+            if kept.name.lower() != iso.lower():
                 decisions.append(("rename", kept, sub, kept))
         for st in group:
             if st is not kept:
@@ -305,7 +313,8 @@ def plan(valid, olds, iso, countries, skip=frozenset()):
         decisions, rep = match_country(rows, subs, english)
         for action, st, sub, kept in decisions:
             # target: the name the state, its old names and its specimens end up under
-            target = kept.name if english or "/" in display(sub.name) else display(sub.name)
+            iso_name = display(sub.name)
+            target = kept.name if english or "/" in iso_name or kept.name.lower() == iso_name.lower() else iso_name
             out.append({"country": country, "action": action, "id": st.id, "name": st.name, "specimens": st.specimens, "code": sub.code,
                         "type": sub.type, "iso": display(sub.name), "kept_id": kept.id, "kept_name": kept.name, "target": target})
         reported += [(country, st.name, st.specimens, why) for st, why in rep]
@@ -555,7 +564,12 @@ def mapping_update(decisions, path=None):
             cells2[4] = new[(country, cells[4])]
             drop = key(cells2[4]) == key(cells[3])
         elif kind == "convert":
-            cells2 = cells[:2] + [new.get((country, c), c) for c in cells[2:]]
+            seen = []
+            for c in cells[2:]:
+                c2 = new.get((country, c), c)
+                if c2 not in seen:
+                    seen.append(c2)
+            cells2 = cells[:2] + seen
         elif kind not in ("name", "convert", "within", "split", "level", "source") and len(cells) >= 4 and (country, cells[3]) in new:
             cells2[3] = new[(country, cells[3])]
             drop = key(cells2[3]) == key(cells[2]) and not (len(cells) > 4 and cells[4].lower() == "new")
