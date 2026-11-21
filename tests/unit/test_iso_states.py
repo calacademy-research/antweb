@@ -382,6 +382,18 @@ def test_a_table_entry_decides_over_iso_names_and_finds_its_country_by_any_name(
     assert "Kankan" not in {s.name for a, s, sub, k in d}, d
 
 
+def test_a_name_two_subdivisions_carry_is_not_a_match():
+    by = iso.read_iso()["BY"]
+    # without the table: "Brest" is a translation of Vitebsk province and Brest's shape name: ambiguous, reported
+    d, rep = iso.match_country([st(1, "Brest", 3), st(2, "Vitebsk", 0)], by, english=True)
+    assert not [x for x in d if x[0] == "merge"] and "Brest" in {r[0].name for r in rep}, (d, rep)
+    # with the table (as plan() passes it): Brest is Brest, Vitebsk is Vitebsk
+    out, rep, noc = iso.plan({"Belarus": [(1, "Brest", 3), (2, "Vitebsk", 0)]}, {}, iso.read_iso(), iso.read_countries())
+    assert {(x["name"], x["code"]) for x in out} == {("Brest", "BY-BR"), ("Vitebsk", "BY-VI")} and not [x for x in out if x["action"] == "merge"], out
+    out, rep, noc = iso.plan({"Latvia": [(3, "Jelgavas", 0), (4, "Jelgava", 0)]}, {}, iso.read_iso(), iso.read_countries())
+    assert ("rename", "Jelgavas", "Jelgavas novads") in {(x["action"], x["name"], x["target"]) for x in out}, out
+
+
 def test_the_iso_file_reads():
     subs = iso.read_iso()
     # translations and the boundary file's shape names are separate columns

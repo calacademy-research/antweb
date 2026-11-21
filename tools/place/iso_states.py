@@ -121,6 +121,11 @@ EXONYMS = {
               "Basque Country": "ES-PV", "Navarre": "ES-NC"},
     "Germany": {"Lower Saxony": "DE-NI", "Saxony": "DE-SN", "North Rhine-Westphalia": "DE-NW", "Saxony-Anhalt": "DE-ST", "Thuringia": "DE-TH"},
     "Switzerland": {"Canton Grisons": "CH-GR"},
+    # the source data names these wrongly: iso-codes translates Vitebsk province as "Brest"; the boundary file names
+    # Latvia's state cities Jelgavas and Rēzeknes (the 2026-11-20 first pass merged Vitebsk into Brest and the two
+    # municipalities into the cities; undone the same day)
+    "Belarus": {"Brest": "BY-BR", "Vitebsk": "BY-VI"},
+    "Latvia": {"Jelgavas": "LV-041", "Rēzeknes": "LV-077"},
     "Belgium": {"Brussels Capital": "BE-BRU"},
     "Portugal": {"Azores": "PT-20"},
     "Ireland": {"Cork City": "IE-CO"},
@@ -290,6 +295,12 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
             if h:
                 tier = i
                 break
+        # a translation or shape name that another subdivision also carries (in any tier but ISO's own names) is
+        # ambiguous: all of them count, and the state is matched only if the kind decides it (iso-codes has "Brest"
+        # as a translation of Vitebsk province; the boundary file has Brest as Brest's shape name)
+        if tier is not None and tier > 0:
+            for n in tiers[tier][1]:
+                h |= trans.get(key(n), set()) | shapes.get(key(n), set())
         # a translation or shape name joins the state's own ISO-name hit only when the state is that subdivision's ISO
         # name with generic words left out (Madrid: the province by name, Comunidad de Madrid by its English name; the
         # kind decides below)
