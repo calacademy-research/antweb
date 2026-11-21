@@ -354,7 +354,7 @@ def test_mapping_file_of_the_repository():
     assert not {r for r in rules.new if r[0] == "Seychelles"}          # Outer Islands is a valid state now (2026-11-19)
     # the name lines: 148 pairs the lead checked by the names, 99 that are plain from the names, 146 of 2026-11-19 checked by both lists,
     # less the 25 that the ISO renames of 2026-11-20 made unneeded (the Swedish län ...); no shape twice; none is a hard row as well
-    assert len(rules.names) == 368 and len({(c, l, pc.plain(x)) for c, l, x, _ in rules.names}) == 368 and all(l in pc.LEVELS + [pc.NE_LEVEL] and x and a for _, l, x, a in rules.names)
+    assert len(rules.names) == 353 and len({(c, l, pc.plain(x)) for c, l, x, _ in rules.names}) == 353 and all(l in pc.LEVELS + [pc.NE_LEVEL] and x and a for _, l, x, a in rules.names)
     assert ("United Arab Emirates", "ADM1", "Ras al-Khaimah", "Ra's al Khaymah") in rules.names and ("Czech Republic", "ADM1", "Jiho\u010desk\u00fd kraj", "Jiho\u010desk\u00fd") in rules.names
     assert ("Democratic Republic of Congo", "ADM1", "Lower Uele", "Bas-U\u00e9l\u00e9") in rules.names and ("Macedonia", "ADM2", "Shtip", "\u0160tip") in rules.names
     assert not {(c, l, pc.plain(x)) for c, l, x, _ in rules.names} & {(c, l, pc.plain(x)) for c, l, x, _ in rows}
