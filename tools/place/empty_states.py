@@ -25,7 +25,7 @@ Each state that fails one is listed with the reason and left as it is.
   python3 empty_states.py --project /root/antweb-next      staging (default: the project on this server)
 
 Rollback (same server, the date or --tag of the run; only rows still as the run left them, so a later edit stays):
-  update geolocale g join empty_states_bak_<date> b on b.id = g.id set g.is_valid = b.is_valid, g.valid_name = b.valid_name, g.admin_notes = b.admin_notes where g.is_valid = 0 and g.valid_name <=> b.valid_name and g.admin_notes like '%empty_states <date>: retired%';
+  update geolocale g join empty_states_bak_<date> b on b.id = g.id set g.is_valid = b.is_valid, g.valid_name = b.valid_name, g.admin_notes = b.admin_notes where g.is_valid = 0 and g.valid_name <=> b.valid_name and g.admin_notes <=> concat(ifnull(concat(b.admin_notes, '\\n'), ''), 'empty_states <date>: retired, no ISO 3166-2 subdivision and no specimens');
 then reload the places (util.do?action=reloadAntwebMgr&name=geolocale, administrator). Nothing else is changed: the
 rows keep their ids, so a state put back has its lists and counts as before."""
 import argparse
@@ -54,7 +54,8 @@ def candidates(valid, reported):
 def blockers(cands, spelled, olds, lists, disputes, texts, children=None):
     """{id: reason} for the candidates that must stay. spelled: Counter((key(valid country), key(adm1))) of specimens;
     olds: {(country, valid name): [old names]}; lists: {id: {source: rows}}; disputes: Counter(id); texts:
-    set(normal(key)); children: Counter((country, name)) of place rows whose parent is the state."""
+    set(normal(key)); children: Counter(name) of place rows (not countries, regions or states) whose parent has the
+    state's name, in any country: a name shared with another country's state keeps it too (on the safe side)."""
     out, children = {}, children or {}
     for i, c, n in cands:
         why = []
@@ -107,7 +108,7 @@ def read_checks(db, ids):
             disputes[int(r[0])] = int(r[1])
     texts = {iso.normal(pf.unhex(r[0])) for r in pf.run_sql(db, "select distinct " + pf.hx("object_key") + " from object_edit")}
     children = collections.Counter(pf.unhex(r[0]) for r in pf.run_sql(
-        db, "select " + pf.hx("parent") + " from geolocale where georank not in ('country', 'region', 'subregion', 'adm1')"))
+        db, "select " + pf.hx("parent") + " from geolocale where ifnull(georank, '') not in ('country', 'region', 'subregion', 'adm1')"))
     return spelled, lists, disputes, texts, children
 
 
@@ -140,16 +141,21 @@ def main(argv=None):
     lines = plan_lines(cands, blocked)
     retire = [i for i, c, n in cands if i not in blocked]
     plan_file = os.path.join(folder, "plan.tsv")
+    header = "# empty_states %s, %s: action, country, state, id (retire) or why it stays (keep)" % (tag, db.project)
     if args.apply:
         if not os.path.exists(plan_file):
             raise SystemExit("No plan in %s: run without --apply first and review it. Nothing was changed." % plan_file)
         with open(plan_file, encoding="utf-8") as f:
-            if sorted(l.rstrip("\n") for l in f if l.strip() and not l.startswith("#")) != lines:
-                raise SystemExit("The plan differs from the one reviewed in %s (the data changed since): run without --apply again. "
-                                 "Nothing was changed." % plan_file)
+            reviewed = f.read().split("\n")
+        if reviewed[0] != header:      # a plan of another database (staging) is not applied here (review of #407)
+            raise SystemExit("The plan in %s is of another run or database (%s): run without --apply here first. Nothing was changed."
+                             % (plan_file, reviewed[0]))
+        if sorted(l for l in reviewed[1:] if l.strip()) != lines:
+            raise SystemExit("The plan differs from the one reviewed in %s (the data changed since): run without --apply again. "
+                             "Nothing was changed." % plan_file)
     else:
         with open(plan_file, "w", encoding="utf-8") as f:
-            f.write("# empty_states %s, %s: action, country, state, id (retire) or why it stays (keep)\n" % (tag, db.project))
+            f.write(header + "\n")
             f.write("\n".join(lines) + "\n")
     by_country = collections.Counter(c for i, c, n in cands if i not in blocked)
     print("empty_states %s, %s: %d states reported as not in ISO 3166-2 with no specimens; retire %d, keep %d"

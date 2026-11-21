@@ -118,11 +118,24 @@ def check_plan_apply_rollback(project):
     rollback = es.__doc__.split("Rollback")[1].split("then reload")[0].strip().split("\n")[1:]
     mysql("\n".join(l.strip().replace("<date>", TAG) for l in rollback if l.strip()))
     assert snapshot() == before, "the rollback did not put the rows back"
-    # a row edited after the run is left alone by the rollback
-    mysql("update geolocale set is_valid = 0, admin_notes = 'empty_states %s: retired' where id = 1" % TAG)
-    mysql("update geolocale set admin_notes = 'edited by a curator' where id = 1")
+    # a row whose note a curator added to after the run is left alone by the rollback (second review of #407)
+    note = es.NOTE % TAG
+    mysql("update geolocale set is_valid = 0, admin_notes = %s where id = 1" % lit(note))
+    mysql("update geolocale set admin_notes = concat(admin_notes, ' checked with the Latvian list') where id = 1")
     mysql("\n".join(l.strip().replace("<date>", TAG) for l in rollback if l.strip()))
-    assert mysql("select is_valid, admin_notes from geolocale where id = 1") == [["0", "edited by a curator"]]
+    assert mysql("select is_valid, admin_notes from geolocale where id = 1") == [["0", note + " checked with the Latvian list"]]
+    # a plan made on another database is not applied here
+    with tempfile.TemporaryDirectory() as folder:
+        run(project, folder)
+        with open(os.path.join(folder, "plan.tsv"), encoding="utf-8") as f:
+            text = f.read()
+        with open(os.path.join(folder, "plan.tsv"), "w", encoding="utf-8") as f:
+            f.write(text.replace(project, "/root/antweb-next", 1))
+        try:
+            run(project, folder, "--apply")
+            raise AssertionError("a plan of another database was applied")
+        except SystemExit as e:
+            assert "another run or database" in str(e), e
 
 
 if __name__ == "__main__":

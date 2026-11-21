@@ -58,7 +58,8 @@ def test_the_sql_and_the_rollback():
                    + ") where g.georank = 'adm1' and g.is_valid = 1 and g.id in (3,7)"
                    " and not exists (select 1 from specimen s where s.country = g.parent and s.adm1 = g.name)"], sql
     assert "update geolocale g join empty_states_bak_<date> b on b.id = g.id set g.is_valid = b.is_valid" in es.__doc__
-    assert "g.admin_notes like '%empty_states <date>: retired%'" in es.__doc__
+    # the rollback puts back only a row whose note is exactly what the run wrote (second review of #407)
+    assert ("g.admin_notes <=> concat(ifnull(concat(b.admin_notes, '\\n'), ''), '" + es.NOTE % "<date>" + "')") in es.__doc__
 
 
 if __name__ == "__main__":
