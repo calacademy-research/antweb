@@ -348,6 +348,9 @@ def test_every_exonym_is_a_subdivision_of_its_country():
         assert len(set(keys)) == len(keys), a2
     seen = collections.Counter((countries[iso.key(c)], iso.key(n)) for c, n in iso.NOT_ISO)
     assert not [k for k, v in seen.items() if v > 1], seen
+    # a state is in one table or the other, never both (NOT_ISO would win unseen: fourth review of #400)
+    exo = {(countries[iso.key(c)], iso.key(n)) for c, names in iso.EXONYMS.items() for n in names}
+    assert not exo & set(seen), exo & set(seen)
     for (country, name), why in iso.NOT_ISO.items():
         assert iso.key(country) in countries and why
 
@@ -455,6 +458,14 @@ def test_two_states_found_loosely_by_their_own_names_are_not_merged():
     d, rep = iso.match_country([st(1, "Liberecký", 4), st(2, "Liberecky", 1), st(3, "Jihomoravský kraj", 9)], cz)
     assert not [x for x in d if x[0] == "merge"], d
     assert {"Liberecký", "Liberecky"} <= {r[0].name for r in rep}, rep
+
+
+def test_a_translation_and_a_shape_name_of_two_subdivisions_are_reported():
+    # the Brest case on an inline fixture (fourth review of #400: not tied to the shipped file's wrong translation):
+    # "Brest" is a translation of one subdivision and the shape name of another: reported with both codes
+    by = [S("BY-BR", "BY", "Oblast", "", "Brestskaya voblasts'", [], ["Brest"]), S("BY-VI", "BY", "Oblast", "", "Vitsyebskaya voblasts'", ["Brest"], [])]
+    d, rep = iso.match_country([st(1, "Brest", 3)], by, english=True)
+    assert not d and rep[0][1].startswith("written like BY-BR, BY-VI"), (d, rep)
 
 
 def test_the_iso_file_reads():
