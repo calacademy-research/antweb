@@ -161,4 +161,6 @@ def test_country_page_says_where_adm1_names_come_from(country, line):
     path = "/country.do?name=" + country
     r = fetch(path)
     assert_ok(r, path)
+    if not [p for p in links(r.text, "adm1") if params(p).get("name")]:
+        pytest.skip(f"no adm1 links on the {country} page")
     assert 'class="adm1-names-note"' in r.text and line in r.text, f"{path}: no line {line!r}"

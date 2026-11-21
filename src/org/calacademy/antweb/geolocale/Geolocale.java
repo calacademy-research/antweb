@@ -937,7 +937,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
       if (i > 0 && "overview".equals(overviewOrList) && geolocale instanceof Country) {
         String note = Country.adm1NamesNote(geolocale.getIsoCode(), geolocale.isIsland());
         if (!note.isEmpty()) display += "<br><span class=\"adm1-names-note\" style=\"font-size:smaller;color:#666\">" + Html.esc(note)
-            + " <a href=\"https://www.iso.org/iso-3166-country-codes.html\">About ISO 3166</a></span>";
+            + " <a href=\"https://www.iso.org/iso-3166-country-codes.html\">About ISO 3166-2</a></span>";
       }
       return display;
     }

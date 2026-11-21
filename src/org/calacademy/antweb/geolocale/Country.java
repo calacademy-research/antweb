@@ -122,14 +122,16 @@ public class Country extends Geolocale {
     /**
      * The line under a country's adm1s saying where their names come from (Brian Fisher, 2026-11-20: adopt ISO 3166-2,
      * "we just follow their usage", and say so on the site). Two countries keep newer units than ISO lists (Madagascar,
-     * the Central African Republic); an island that is its own country has none. Plain text; "" for none.
+     * the Central African Republic); an island flagged as its own country (is_island) and a country with no ISO code have
+     * none. Plain text; "" for none.
      */
     public static String adm1NamesNote(String isoCode, boolean island) {
       if (island) return "";
-      isoCode = isoCode == null ? null : isoCode.trim().toUpperCase(java.util.Locale.ROOT);   // as stored, any case (review of #406)
+      isoCode = isoCode == null ? "" : isoCode.trim().toUpperCase(java.util.Locale.ROOT);   // as stored, any case (review of #406)
+      if (isoCode.isEmpty()) return "";            // no ISO 3166 code: no claim about ISO 3166-2
       if ("MG".equals(isoCode)) return "Adm1s are Madagascar's regions (since 2004); ISO 3166-2 still lists the former provinces.";
       if ("CF".equals(isoCode)) return "Adm1s are the prefectures since the 2020 reform; ISO 3166-2 lists them as before it.";
-      if (isoCode != null && ENGLISH_NAMED.contains(isoCode)) return "Adm1 names follow ISO 3166-2, in English.";
+      if (ENGLISH_NAMED.contains(isoCode)) return "Adm1 names follow ISO 3166-2, in English.";
       return "Adm1 names follow ISO 3166-2.";
     }
 

@@ -15,7 +15,8 @@ public class Adm1NamesNoteTest extends TestCase {
 
     public void testLatinScriptCountry() {
         assertEquals("Adm1 names follow ISO 3166-2.", Country.adm1NamesNote("FR", false));
-        assertEquals("Adm1 names follow ISO 3166-2.", Country.adm1NamesNote(null, false));    // no code stored
+        assertEquals("", Country.adm1NamesNote(null, false));      // no code stored: no claim (review of #406)
+        assertEquals("", Country.adm1NamesNote("  ", false));
     }
 
     public void testEnglishNamedCountry() {
