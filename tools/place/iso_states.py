@@ -157,10 +157,14 @@ def needs_english(name, sub, english_names=None):
     k, iso_name = key(name), display(sub.name)
     if k == key(iso_name) or (loose(name) and loose(name) == loose(iso_name)):
         return True
-    e = key(en)
-    if e.startswith(k) and 0 < len(e) - len(k) <= 3:
+    # cut short: the name stops inside a word of the English or ISO name (Kur|sk, Moskov|skaya), never at a word's end
+    # (Almaty is not cut from "Almaty oblysy": review of #403)
+    def cut_from(full):
+        f = key(full)
+        return f.startswith(k) and len(f) > len(k) and f[len(k)].isalpha()
+    if cut_from(en) and len(key(en)) - len(k) <= 3:
         return True
-    return len(k) >= 4 and any(key(n).startswith(k) for n in [iso_name] + list(sub.others) if not n.isascii() or n == iso_name)
+    return len(k) >= 4 and any(cut_from(n) for n in [iso_name] + list(sub.others) if not n.isascii() or n == iso_name)
 
 
 # Countries whose ISO 3166-2 subdivisions are older than the ones in use: their states are reported, not changed.

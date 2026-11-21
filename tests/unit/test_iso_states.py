@@ -516,6 +516,13 @@ def test_the_english_table_is_complete_and_has_no_shared_names():
     assert covered == set("AE AF BH EG ER GR IQ IR JO JP KG KH KP KW KZ LA LB LY MN OM QA RU SY TJ YE".split()), sorted(covered)
     missing = [s.code for a2 in sorted(covered) for s in subs[a2] if s.code not in iso.ENGLISH_NAMES]
     assert not missing, missing
+    # page text is keyed by name: no English name shared across countries, none a bare compass word or "Capital"
+    across = collections.defaultdict(set)
+    for code, name in iso.ENGLISH_NAMES.items():
+        across[iso.key(name)].add(code[:2])
+        assert iso.key(name) not in {"capital", "north", "south", "east", "west", "northern", "southern", "eastern", "western",
+                                     "central", "centre"}, (code, name)
+    assert not [k for k, v in across.items() if len(v) > 1], [k for k, v in across.items() if len(v) > 1]
 
 
 def test_english_rename_review_cases():
@@ -551,6 +558,17 @@ def test_bern_not_berne():
     # 2026-11-21: ISO gives the canton two names; AntWeb uses Bern (the canton's language and the English name)
     out, rep, noc = iso.plan({"Switzerland": [(1, "Berne", 198)]}, {}, iso.read_iso(), iso.read_countries())
     assert [(x["action"], x["target"]) for x in out] == [("rename", "Bern")], out
+    # production after the first pass: "Bern" is an old-name row of "Berne": the rename swaps them (review of #403)
+    sql, left, done = iso.statements(out, {("Switzerland", "Bern"): [(9, 0, "Berne")]}, "20261121")
+    assert not left and [d["target"] for d in done] == ["Bern"], (left, done)
+    assert sql[0] == "update geolocale set name = %s where id = 9" % iso.q("~iso~9"), sql    # the old-name row moved aside first
+
+
+def test_a_name_ending_at_a_word_is_not_cut_short():
+    # review of #403: Almaty is not a stem of "Almaty oblysy"; Moskov is a stem of "Moskovskaya oblast'"
+    subs = {s.code: s for s in iso.read_iso()["KZ"] + iso.read_iso()["RU"]}
+    assert not iso.needs_english("Almaty", subs["KZ-19"])
+    assert iso.needs_english("Moskov", subs["RU-MOS"]) and iso.needs_english("Kur", subs["RU-KRS"])
 
 
 def test_the_iso_file_reads():

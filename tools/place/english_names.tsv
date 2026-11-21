@@ -1,6 +1,7 @@
 # English names for the states of countries written in another script (Brian Fisher, 2026-11-20: "ISO code,
 # English names"; Cairo, not Al Qahirah). The common English name, as English-language Wikipedia titles it,
-# without a generic word (Province, Governorate, Oblast, Krai) unless two units would share the name.
+# without a generic word (Province, Governorate, Oblast, Krai) unless two units would share the name, or the name
+# would be a bare compass word or "Capital" (page text is keyed by name: Bahrain's Northern and Malawi's Northern).
 # Draft from Natural Earth's English names (by name, not its codes), corrected by hand. Columns: ISO code, name.
 AE-AJ	Ajman
 AE-AZ	Abu Dhabi
@@ -43,10 +44,10 @@ AF-TAK	Takhar
 AF-URU	Uruzgan
 AF-WAR	Wardak
 AF-ZAB	Zabul
-BH-13	Capital
-BH-14	Southern
+BH-13	Capital Governorate
+BH-14	Southern Governorate
 BH-15	Muharraq
-BH-17	Northern
+BH-17	Northern Governorate
 EG-ALX	Alexandria
 EG-ASN	Aswan
 EG-AST	Asyut
@@ -254,7 +255,7 @@ KW-AH	Al Ahmadi
 KW-FA	Al Farwaniyah
 KW-HA	Hawally
 KW-JA	Al Jahra
-KW-KU	Capital
+KW-KU	Al Asimah
 KW-MU	Mubarak Al-Kabeer
 KZ-10	Abai
 KZ-11	Akmola
@@ -295,11 +296,11 @@ LA-XE	Sekong
 LA-XI	Xiangkhouang
 LA-XS	Xaisomboun
 LB-AK	Akkar
-LB-AS	North
+LB-AS	North Governorate
 LB-BA	Beirut
 LB-BH	Baalbek-Hermel
 LB-BI	Beqaa
-LB-JA	South
+LB-JA	South Governorate
 LB-JL	Mount Lebanon
 LB-NA	Nabatieh
 LY-BA	Benghazi
