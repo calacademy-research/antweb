@@ -382,7 +382,8 @@ def test_a_table_entry_decides_over_iso_names_and_finds_its_country_by_any_name(
     assert {(s.name, sub.code) for a, s, sub, k in d} == {("Kiev", "UA-32"), ("Kiev City", "UA-30")}, d
     # the table is found by the country's ISO code: Laos written as ISO writes it
     out, rep, noc = iso.plan({"Lao People's Democratic Republic": [(1, "Savannahkhét", 2)]}, {}, iso.read_iso(), iso.read_countries())
-    assert [(x["action"], x["code"]) for x in out] == [("alias", "LA-SV")], (out, rep)
+    # (since 2026-11-21 the transliteration Savannahkhét is renamed to the English name)
+    assert [(x["action"], x["code"], x["target"]) for x in out] == [("rename", "LA-SV", "Savannakhet")], (out, rep)
     # a table entry does not decide the country's main kind: a state written like a region and its prefecture keeps
     # the kind the country's own matches give (here prefectures)
     gn = [S("GN-K", "GN", "Administrative region", "", "Kankán", []), S("GN-KA", "GN", "Prefecture", "GN-K", "Kankan", []),
@@ -478,6 +479,96 @@ def test_a_tie_of_kinds_is_no_main_kind():
     b = iso.match_country([st(3, "Kiev"), st(1, "Kherson")], UA)
     norm = lambda r: (sorted((x[0], x[1].name, x[2].code) for x in r[0]), sorted((x[0].name, x[1]) for x in r[1]))
     assert norm(a) == norm(b), (norm(a), norm(b))
+
+
+def test_english_names_for_countries_in_another_script():
+    # 2026-11-21: AntWeb kept its own names for these countries, and they were often transliterations, ISO's
+    # romanization or names cut short, not English (Attikí, Al Başrah, Chelyabin): those are renamed to the English name
+    subs = iso.read_iso()
+    by = {s.code: s for a2 in ("GR", "RU", "IQ", "EG", "IR") for s in subs[a2]}
+    yes = [("Attikí", "GR-I"), ("Al Başrah", "IQ-BA"), ("Eşfahān", "IR-10"), ("Chelyabin", "RU-CHE"), ("Kur", "RU-KRS"),
+           ("Moskov", "RU-MOS"), ("Moskva", "RU-MOW"), ("Kamchatskiy", "RU-KAM"), ("Nizhegorod", "RU-NIZ")]
+    no = [("Crete", "GR-M"), ("Amur", "RU-AMU"), ("Sharqia", "EG-SHR"), ("Chuvashiya", "RU-CU"), ("Basra", "IQ-BA")]
+    for name, code in yes:
+        assert iso.needs_english(name, by[code]), (name, code, iso.ENGLISH_NAMES.get(code))
+    for name, code in no:
+        assert not iso.needs_english(name, by[code]), (name, code, iso.ENGLISH_NAMES.get(code))
+    assert iso.ENGLISH_NAMES["RU-MOS"] != iso.ENGLISH_NAMES["RU-MOW"] and iso.ENGLISH_NAMES["RU-AL"] != iso.ENGLISH_NAMES["RU-ALT"]
+    out, rep, noc = iso.plan({"Greece": [(1, "Attikí", 14), (2, "Crete", 3)]}, {}, iso.read_iso(), iso.read_countries())
+    got = {(x["action"], x["name"], x["target"]) for x in out}
+    assert ("rename", "Attikí", "Attica") in got and not [x for x in out if x["name"] == "Crete" and x["action"] == "rename"], out
+    assert [x["iso"] for x in out if x["name"] == "Attikí"] == ["Attica"], out
+
+
+def test_the_english_table_is_complete_and_has_no_shared_names():
+    # every entry is an ISO code of an ENGLISH country, and no two units of one country share an English name
+    subs = iso.read_iso()
+    codes = {s.code for a2 in subs for s in subs[a2]}
+    seen = collections.Counter()
+    for code, name in iso.ENGLISH_NAMES.items():
+        assert code in codes and code[:2] in iso.ENGLISH, code
+        assert name and name == name.strip() and "\t" not in name, code
+        seen[(code[:2], iso.key(name))] += 1
+    assert not [k for k, v in seen.items() if v > 1], [k for k, v in seen.items() if v > 1]
+    # complete: every subdivision of the 25 covered countries has its English name (a rebuilt iso3166_2.tsv with a new
+    # or recoded subdivision fails here instead of leaving its state silently in transliteration: review of #403)
+    covered = {code[:2] for code in iso.ENGLISH_NAMES}
+    assert covered == set("AE AF BH EG ER GR IQ IR JO JP KG KH KP KW KZ LA LB LY MN OM QA RU SY TJ YE".split()), sorted(covered)
+    missing = [s.code for a2 in sorted(covered) for s in subs[a2] if s.code not in iso.ENGLISH_NAMES]
+    assert not missing, missing
+    # page text is keyed by name: no English name shared across countries, none a bare compass word or "Capital"
+    across = collections.defaultdict(set)
+    for code, name in iso.ENGLISH_NAMES.items():
+        across[iso.key(name)].add(code[:2])
+        assert iso.key(name) not in {"capital", "north", "south", "east", "west", "northern", "southern", "eastern", "western",
+                                     "central", "centre"}, (code, name)
+    assert not [k for k, v in across.items() if len(v) > 1], [k for k, v in across.items() if len(v) > 1]
+
+
+def test_english_rename_review_cases():
+    # review of #403: (1) a loosely matched transliteration is renamed, never filed as an alias under the English name;
+    # (2) a state already written in English is kept and the other merged into it, no rename; (3) a renamed state
+    # keeps ISO's own form as an old name, under its English name
+    countries, subs = iso.read_countries(), iso.read_iso()
+    out, rep, noc = iso.plan({"Russia": [(1, "Chelyabinskaya", 4)]}, {}, subs, countries)
+    got = {(x["action"], x["name"], x["iso"], x["target"]) for x in out}
+    assert got == {("rename", "Chelyabinskaya", "Chelyabinsk", "Chelyabinsk"),
+                   ("alias", "Chelyabinskaya", "Chelyabinskaya oblast'", "Chelyabinsk")}, (got, rep)
+    # the 2021 stem with ISO's form as its old name (the first pass added it), beside a state written in English
+    olds = {("Russia", "Chelyabin"): ["Chelyabinskaya oblast'"]}
+    out, rep, noc = iso.plan({"Russia": [(1, "Chelyabinsk", 2), (2, "Chelyabin", 50)]}, olds, subs, countries)
+    got = {(x["action"], x["name"], x["target"]) for x in out}
+    assert got == {("merge", "Chelyabin", "Chelyabinsk")}, (got, rep)
+    out, rep, noc = iso.plan({"Russia": [(1, "Chelyabin", 50)]}, olds, subs, countries)
+    got = {(x["action"], x["name"], x["target"]) for x in out}
+    assert got == {("rename", "Chelyabin", "Chelyabinsk")}, got        # ISO's form is an old name already
+
+
+def test_an_alias_waits_for_its_english_rename():
+    # second review of #403: when the rename to the English name is left out (here: another state is an old name
+    # Chelyabinsk already), the ISO form is not added under that name either
+    out, rep, noc = iso.plan({"Russia": [(1, "Chelyabinskaya", 4)]}, {}, iso.read_iso(), iso.read_countries())
+    names = {("Russia", "Chelyabinsk"): [(7, 0, "Kurgan")]}
+    sql, left, done = iso.statements(out, names, "20261121")
+    assert not done and not sql, (done, sql)
+    assert len(left) == 2 and any("not added: the rename to Chelyabinsk was left out" in l for l in left), left
+
+
+def test_bern_not_berne():
+    # 2026-11-21: ISO gives the canton two names; AntWeb uses Bern (the canton's language and the English name)
+    out, rep, noc = iso.plan({"Switzerland": [(1, "Berne", 198)]}, {}, iso.read_iso(), iso.read_countries())
+    assert [(x["action"], x["target"]) for x in out] == [("rename", "Bern")], out
+    # production after the first pass: "Bern" is an old-name row of "Berne": the rename swaps them (review of #403)
+    sql, left, done = iso.statements(out, {("Switzerland", "Bern"): [(9, 0, "Berne")]}, "20261121")
+    assert not left and [d["target"] for d in done] == ["Bern"], (left, done)
+    assert sql[0] == "update geolocale set name = %s where id = 9" % iso.q("~iso~9"), sql    # the old-name row moved aside first
+
+
+def test_a_name_ending_at_a_word_is_not_cut_short():
+    # review of #403: Almaty is not a stem of "Almaty oblysy"; Moskov is a stem of "Moskovskaya oblast'"
+    subs = {s.code: s for s in iso.read_iso()["KZ"] + iso.read_iso()["RU"]}
+    assert not iso.needs_english("Almaty", subs["KZ-19"])
+    assert iso.needs_english("Moskov", subs["RU-MOS"]) and iso.needs_english("Kur", subs["RU-KRS"])
 
 
 def test_the_iso_file_reads():

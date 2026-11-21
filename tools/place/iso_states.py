@@ -113,6 +113,60 @@ grad gorod shahri rajons apskritis savivaldybe of de del la le the y and et und 
 ENGLISH = set("""AE AF AM BG BH BY CN CY EG ER GE GR IL IQ IR JO JP KG KH KP KR KW KZ LA LB LK LY MK MM MN OM PS QA RS RU SA
 SD SY TH TJ TW UA YE IN""".split())
 
+# Where ISO 3166-2 gives a subdivision two names (two official languages), the one AntWeb uses when the tool's choice
+# is not the unit's main language (Brian Fisher, 2026-11-21: Bern, the canton's language and the English name).
+PREFERRED = {"CH-BE": "Bern"}
+
+
+def read_english(path=None):
+    """english_names.tsv: {ISO code: English name} for the states of the ENGLISH countries (Brian Fisher, 2026-11-20:
+    "ISO code, English names"; 2026-11-21: AntWeb's names there were often transliterations, not English)."""
+    out = {}
+    with open(path or os.path.join(HERE, "english_names.tsv"), encoding="utf-8") as f:
+        for line in f:
+            if line.startswith("#") or not line.strip():
+                continue
+            code, name = line.rstrip("\n").split("\t")[:2]
+            out[code] = name
+    return out
+
+
+ENGLISH_NAMES = read_english()     # part of the repository: missing, the tool stops (review of #403)
+
+
+def iso_alias_needed(st, iso, en, group=()):
+    """After a rename to the English name: ISO's own form is added as an old name too (as in the earlier passes), unless
+    the state, a state merged into it or one of their old names is written so already."""
+    have = {key(st.name), key(en)} | {key(n) for n in st.old_names}
+    for o in group:
+        have |= {key(o.name)} | {key(n) for n in o.old_names}
+    return key(iso) not in have
+
+
+def needs_english(name, sub, english_names=None):
+    """A state of an ENGLISH country that has an English name in english_names.tsv and is not written in it, where
+    its name is plainly not English: a transliteration (Attikí, Al Başrah, Eşfahān), ISO's romanization (Kamchatskiy,
+    Moskva), or a name cut short of it (the 2021 load's Chelyabin, Kur, Moskov). Any other name, English already or
+    not (Sharqia, Chuvashiya), is left as it is."""
+    names = ENGLISH_NAMES if english_names is None else english_names
+    en = names.get(sub.code)
+    if not en or key(name) == key(en):
+        return False
+    if any(ch.isalpha() and not ch.isascii() for ch in name):
+        return True
+    k, iso_name = key(name), display(sub.name)
+    if k == key(iso_name) or (loose(name) and loose(name) == loose(iso_name)):
+        return True
+    # cut short: the name stops inside a word of the English or ISO name (Kur|sk, Moskov|skaya), never at a word's end
+    # (Almaty is not cut from "Almaty oblysy": review of #403)
+    def cut_from(full):
+        f = key(full)
+        return f.startswith(k) and len(f) > len(k) and f[len(k)].isalpha()
+    if cut_from(en) and len(key(en)) - len(k) <= 3:
+        return True
+    return len(k) >= 4 and any(cut_from(n) for n in [iso_name] + list(sub.others) if not n.isascii() or n == iso_name)
+
+
 # Countries whose ISO 3166-2 subdivisions are older than the ones in use: their states are reported, not changed.
 OUTDATED = {"CF": "ISO 3166-2 has the prefectures before the 2020 reform (Gribingui for Nana-Grébizi)",
             "MG": "ISO 3166-2 has the six provinces; Madagascar has had regions since 2004"}
@@ -425,13 +479,17 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
     decisions = []
     for code, group in sorted(by_sub.items()):
         sub = by_code[code]
-        iso = display(sub.name)
+        iso = PREFERRED.get(code, display(sub.name))
         if len(group) == 1:
             st = group[0]
             if how[st.id] == "loose" and any(code in hits[o.id] for o in states if o.id != st.id):
                 reported.append((st, "loose match %s (%s) that another state finds too: looked at by hand" % (code, iso)))
             elif how[st.id] == "loose" and not shorter(st.name, sub):
                 reported.append((st, "loose match %s (%s) adds a generic word: looked at by hand" % (code, iso)))
+            elif english and needs_english(st.name, sub):
+                decisions.append(("rename", st, sub, st))         # to its English name (plan: target and new name)
+                if iso_alias_needed(st, iso, ENGLISH_NAMES[code]):
+                    decisions.append(("alias", st, sub, st))      # ISO's form becomes an old name of the English name
             elif st.name.lower() == iso.lower():                    # capitals only (KwaZulu-Natal, ISO Kwazulu-Natal): AntWeb's kept
                 pass
             elif st.name != iso and (english or "/" in iso):      # a slash in a name (Taita/Taveta, //Karas) is kept out of URLs
@@ -449,7 +507,13 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
                 reported.append((st, "with %s matches %s (%s): looked at by hand" % (", ".join(o.name for o in group if o is not st), code, iso)))
             continue
         if english or "/" in iso:
-            kept = max([st for st in group if key(st.name) != key(iso) and "/" not in st.name] or group, key=lambda st: (st.specimens, -st.id))
+            en = ENGLISH_NAMES.get(code) if english else None
+            kept = (next((st for st in group if en and key(st.name) == key(en)), None)      # already written in English
+                    or max([st for st in group if key(st.name) != key(iso) and "/" not in st.name] or group, key=lambda st: (st.specimens, -st.id)))
+            if english and needs_english(kept.name, sub):
+                decisions.append(("rename", kept, sub, kept))
+                if iso_alias_needed(kept, iso, en, group):
+                    decisions.append(("alias", kept, sub, kept))
         else:
             kept = (next((st for st in group if st.name == iso), None) or next((st for st in group if st.name.lower() == iso.lower()), None)
                     or max(group, key=lambda st: (st.specimens, -st.id)))
@@ -484,10 +548,17 @@ def plan(valid, olds, iso, countries, skip=frozenset()):
         decisions, rep = match_country(rows, subs, english, exonyms, not_iso)
         for action, st, sub, kept in decisions:
             # target: the name the state, its old names and its specimens end up under
-            iso_name = display(sub.name)
-            target = kept.name if english or "/" in iso_name or kept.name.lower() == iso_name.lower() else iso_name
+            iso_name = PREFERRED.get(sub.code, display(sub.name))
+            to_english = english and ENGLISH_NAMES.get(sub.code) and needs_english(kept.name, sub)
+            if to_english and action in ("rename", "merge"):
+                iso_name = ENGLISH_NAMES[sub.code]     # the English name is the new name (2026-11-21)
+                target = iso_name
+            elif to_english:                           # the ISO form, an old name of the state under its English name
+                target = ENGLISH_NAMES[sub.code]
+            else:
+                target = kept.name if english or "/" in iso_name or kept.name.lower() == iso_name.lower() else iso_name
             out.append({"country": country, "action": action, "id": st.id, "name": st.name, "specimens": st.specimens, "code": sub.code,
-                        "type": sub.type, "iso": display(sub.name), "kept_id": kept.id, "kept_name": kept.name, "target": target})
+                        "type": sub.type, "iso": iso_name, "kept_id": kept.id, "kept_name": kept.name, "target": target})
         reported += [(country, st.name, st.specimens, why) for st, why in rep]
     return out, reported, nocountry
 
@@ -640,6 +711,10 @@ def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, 
         if d["action"] != "alias":
             continue
         c, name, iso = d["country"], d["name"], d["iso"]
+        under = d.get("target") or name          # the state's name after this run (its English name when renamed)
+        if under != name and d["id"] in blocked:  # its rename to under was left out: no valid state would carry under
+            left.append("%s: %s, ISO name %s not added: the rename to %s was left out" % (c, name, iso, under))
+            continue
         if names.get((c, iso)):
             left.append("%s: %s, a row named %s exists already (ISO name not added)" % (c, name, iso))
             continue
@@ -649,7 +724,7 @@ def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, 
         targets.add((c, iso))
         done.append(d)
         sql.append("insert into geolocale (name, georank, parent, source, is_valid, valid_name, admin_notes) values (%s, 'adm1', %s, 'antweb', 0, %s, %s)"
-                   % (q(iso), q(c), q(name), q("iso_states %s: added, ISO 3166-2 name (%s) of %s, id %d." % (tag, d["code"], name, d["id"]))))
+                   % (q(iso), q(c), q(under), q("iso_states %s: added, ISO 3166-2 name (%s) of %s, id %d." % (tag, d["code"], under, d["id"]))))
     for d in decisions:
         if d["action"] != "merge":
             continue
@@ -786,7 +861,7 @@ def reviewed_lines(path):
 
 def write_plan(path, decisions, reported, nocountry, curator=None, lines=(), left=(), notes=()):
     with open(path, "w", encoding="utf-8") as f:
-        f.write("action\tcountry\tstate\tspecimens\tiso_name\tcode\ttype\tkept\n")
+        f.write("action\tcountry\tstate\tspecimens\tnew_or_iso_name\tcode\ttype\tkept\n")   # English for renames in ENGLISH countries
         for why in notes:
             f.write("\t".join(["note", "", "", "", "", "", why.replace("\t", " "), ""]) + "\n")
         for why in left:

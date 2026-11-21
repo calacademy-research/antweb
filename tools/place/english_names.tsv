@@ -1,0 +1,492 @@
+# English names for the states of countries written in another script (Brian Fisher, 2026-11-20: "ISO code,
+# English names"; Cairo, not Al Qahirah). The common English name, as English-language Wikipedia titles it,
+# without a generic word (Province, Governorate, Oblast, Krai) unless two units would share the name, or the name
+# would be a bare compass word or "Capital" (page text is keyed by name: Bahrain's Northern and Malawi's Northern).
+# Draft from Natural Earth's English names (by name, not its codes), corrected by hand. Columns: ISO code, name.
+AE-AJ	Ajman
+AE-AZ	Abu Dhabi
+AE-DU	Dubai
+AE-FU	Fujairah
+AE-RK	Ras Al Khaimah
+AE-SH	Sharjah
+AE-UQ	Umm Al Quwain
+AF-BAL	Balkh
+AF-BAM	Bamyan
+AF-BDG	Badghis
+AF-BDS	Badakhshan
+AF-BGL	Baghlan
+AF-DAY	Daykundi
+AF-FRA	Farah
+AF-FYB	Faryab
+AF-GHA	Ghazni
+AF-GHO	Ghor
+AF-HEL	Helmand
+AF-HER	Herat
+AF-JOW	Jowzjan
+AF-KAB	Kabul
+AF-KAN	Kandahar
+AF-KAP	Kapisa
+AF-KDZ	Kunduz
+AF-KHO	Khost
+AF-KNR	Kunar
+AF-LAG	Laghman
+AF-LOG	Logar
+AF-NAN	Nangarhar
+AF-NIM	Nimruz
+AF-NUR	Nuristan
+AF-PAN	Panjshir
+AF-PAR	Parwan
+AF-PIA	Paktia
+AF-PKA	Paktika
+AF-SAM	Samangan
+AF-SAR	Sar-e Pol
+AF-TAK	Takhar
+AF-URU	Uruzgan
+AF-WAR	Wardak
+AF-ZAB	Zabul
+BH-13	Capital Governorate
+BH-14	Southern Governorate
+BH-15	Muharraq
+BH-17	Northern Governorate
+EG-ALX	Alexandria
+EG-ASN	Aswan
+EG-AST	Asyut
+EG-BA	Red Sea
+EG-BH	Beheira
+EG-BNS	Beni Suef
+EG-C	Cairo
+EG-DK	Dakahlia
+EG-DT	Damietta
+EG-FYM	Faiyum
+EG-GH	Gharbia
+EG-GZ	Giza
+EG-IS	Ismailia
+EG-JS	South Sinai
+EG-KB	Qalyubia
+EG-KFS	Kafr el-Sheikh
+EG-KN	Qena
+EG-LX	Luxor
+EG-MN	Minya
+EG-MNF	Monufia
+EG-MT	Matrouh
+EG-PTS	Port Said
+EG-SHG	Sohag
+EG-SHR	Sharqia
+EG-SIN	North Sinai
+EG-SUZ	Suez
+EG-WAD	New Valley
+ER-AN	Anseba
+ER-DK	Southern Red Sea
+ER-DU	Debub
+ER-GB	Gash-Barka
+ER-MA	Maekel
+ER-SK	Northern Red Sea
+GR-69	Mount Athos
+GR-A	East Macedonia and Thrace
+GR-B	Central Macedonia
+GR-C	Western Macedonia
+GR-D	Epirus
+GR-E	Thessaly
+GR-F	Ionian Islands
+GR-G	Western Greece
+GR-H	Central Greece
+GR-I	Attica
+GR-J	Peloponnese
+GR-K	North Aegean
+GR-L	South Aegean
+GR-M	Crete
+IQ-AN	Al Anbar
+IQ-AR	Erbil
+IQ-BA	Basra
+IQ-BB	Babylon
+IQ-BG	Baghdad
+IQ-DA	Duhok
+IQ-DI	Diyala
+IQ-DQ	Dhi Qar
+IQ-KA	Karbala
+IQ-KI	Kirkuk
+IQ-KR	Kurdistan Region
+IQ-MA	Maysan
+IQ-MU	Muthanna
+IQ-NA	Najaf
+IQ-NI	Nineveh
+IQ-QA	Al-Qadisiyah
+IQ-SD	Saladin
+IQ-SU	Sulaymaniyah
+IQ-WA	Wasit
+IR-00	Markazi
+IR-01	Gilan
+IR-02	Mazandaran
+IR-03	East Azerbaijan
+IR-04	West Azerbaijan
+IR-05	Kermanshah
+IR-06	Khuzestan
+IR-07	Fars
+IR-08	Kerman
+IR-09	Razavi Khorasan
+IR-10	Isfahan
+IR-11	Sistan and Baluchestan
+IR-12	Kurdistan
+IR-13	Hamadan
+IR-14	Chaharmahal and Bakhtiari
+IR-15	Lorestan
+IR-16	Ilam
+IR-17	Kohgiluyeh and Boyer-Ahmad
+IR-18	Bushehr
+IR-19	Zanjan
+IR-20	Semnan
+IR-21	Yazd
+IR-22	Hormozgan
+IR-23	Tehran
+IR-24	Ardabil
+IR-25	Qom
+IR-26	Qazvin
+IR-27	Golestan
+IR-28	North Khorasan
+IR-29	South Khorasan
+IR-30	Alborz
+JO-AJ	Ajloun
+JO-AM	Amman
+JO-AQ	Aqaba
+JO-AT	Tafilah
+JO-AZ	Zarqa
+JO-BA	Balqa
+JO-IR	Irbid
+JO-JA	Jerash
+JO-KA	Karak
+JO-MA	Mafraq
+JO-MD	Madaba
+JO-MN	Ma'an
+JP-01	Hokkaido
+JP-02	Aomori
+JP-03	Iwate
+JP-04	Miyagi
+JP-05	Akita
+JP-06	Yamagata
+JP-07	Fukushima
+JP-08	Ibaraki
+JP-09	Tochigi
+JP-10	Gunma
+JP-11	Saitama
+JP-12	Chiba
+JP-13	Tokyo
+JP-14	Kanagawa
+JP-15	Niigata
+JP-16	Toyama
+JP-17	Ishikawa
+JP-18	Fukui
+JP-19	Yamanashi
+JP-20	Nagano
+JP-21	Gifu
+JP-22	Shizuoka
+JP-23	Aichi
+JP-24	Mie
+JP-25	Shiga
+JP-26	Kyoto
+JP-27	Osaka
+JP-28	Hyogo
+JP-29	Nara
+JP-30	Wakayama
+JP-31	Tottori
+JP-32	Shimane
+JP-33	Okayama
+JP-34	Hiroshima
+JP-35	Yamaguchi
+JP-36	Tokushima
+JP-37	Kagawa
+JP-38	Ehime
+JP-39	Kochi
+JP-40	Fukuoka
+JP-41	Saga
+JP-42	Nagasaki
+JP-43	Kumamoto
+JP-44	Oita
+JP-45	Miyazaki
+JP-46	Kagoshima
+JP-47	Okinawa
+KG-B	Batken
+KG-C	Chuy
+KG-GB	Bishkek
+KG-GO	Osh City
+KG-J	Jalal-Abad
+KG-N	Naryn
+KG-O	Osh
+KG-T	Talas
+KG-Y	Issyk-Kul
+KH-1	Banteay Meanchey
+KH-10	Kratié
+KH-11	Mondulkiri
+KH-12	Phnom Penh
+KH-13	Preah Vihear
+KH-14	Prey Veng
+KH-15	Pursat
+KH-16	Ratanakiri
+KH-17	Siem Reap
+KH-18	Preah Sihanouk
+KH-19	Stung Treng
+KH-2	Battambang
+KH-20	Svay Rieng
+KH-21	Takéo
+KH-22	Oddar Meanchey
+KH-23	Kep
+KH-24	Pailin
+KH-25	Tbong Khmum
+KH-3	Kampong Cham
+KH-4	Kampong Chhnang
+KH-5	Kampong Speu
+KH-6	Kampong Thom
+KH-7	Kampot
+KH-8	Kandal
+KH-9	Koh Kong
+KP-01	Pyongyang
+KP-02	South Pyongan
+KP-03	North Pyongan
+KP-04	Chagang
+KP-05	South Hwanghae
+KP-06	North Hwanghae
+KP-07	Kangwon
+KP-08	South Hamgyong
+KP-09	North Hamgyong
+KP-10	Ryanggang
+KP-13	Rason
+KP-14	Nampo
+KP-15	Kaesong
+KW-AH	Al Ahmadi
+KW-FA	Al Farwaniyah
+KW-HA	Hawally
+KW-JA	Al Jahra
+KW-KU	Al Asimah
+KW-MU	Mubarak Al-Kabeer
+KZ-10	Abai
+KZ-11	Akmola
+KZ-15	Aktobe
+KZ-19	Almaty Region
+KZ-23	Atyrau
+KZ-27	West Kazakhstan
+KZ-31	Jambyl
+KZ-33	Jetisu
+KZ-35	Karaganda
+KZ-39	Kostanay
+KZ-43	Kyzylorda
+KZ-47	Mangystau
+KZ-55	Pavlodar
+KZ-59	North Kazakhstan
+KZ-61	Turkistan
+KZ-62	Ulytau
+KZ-63	East Kazakhstan
+KZ-71	Astana
+KZ-75	Almaty
+KZ-79	Shymkent
+LA-AT	Attapeu
+LA-BK	Bokeo
+LA-BL	Bolikhamsai
+LA-CH	Champasak
+LA-HO	Houaphanh
+LA-KH	Khammouane
+LA-LM	Luang Namtha
+LA-LP	Luang Prabang
+LA-OU	Oudomxay
+LA-PH	Phongsaly
+LA-SL	Salavan
+LA-SV	Savannakhet
+LA-VI	Vientiane Province
+LA-VT	Vientiane Prefecture
+LA-XA	Sainyabuli
+LA-XE	Sekong
+LA-XI	Xiangkhouang
+LA-XS	Xaisomboun
+LB-AK	Akkar
+LB-AS	North Governorate
+LB-BA	Beirut
+LB-BH	Baalbek-Hermel
+LB-BI	Beqaa
+LB-JA	South Governorate
+LB-JL	Mount Lebanon
+LB-NA	Nabatieh
+LY-BA	Benghazi
+LY-BU	Butnan
+LY-DR	Derna
+LY-GT	Ghat
+LY-JA	Jabal al Akhdar
+LY-JG	Jabal al Gharbi
+LY-JI	Jafara
+LY-JU	Jufra
+LY-KF	Kufra
+LY-MB	Murqub
+LY-MI	Misrata
+LY-MJ	Marj
+LY-MQ	Murzuq
+LY-NL	Nalut
+LY-NQ	Nuqat al Khams
+LY-SB	Sabha
+LY-SR	Sirte
+LY-TB	Tripoli
+LY-WA	Al Wahat
+LY-WD	Wadi al Hayaa
+LY-WS	Wadi al Shatii
+LY-ZA	Zawiya
+MN-035	Orkhon
+MN-037	Darkhan-Uul
+MN-039	Khentii
+MN-041	Khövsgöl
+MN-043	Khovd
+MN-046	Uvs
+MN-047	Töv
+MN-049	Selenge
+MN-051	Sükhbaatar
+MN-053	Ömnögovi
+MN-055	Övörkhangai
+MN-057	Zavkhan
+MN-059	Dundgovi
+MN-061	Dornod
+MN-063	Dornogovi
+MN-064	Govisümber
+MN-065	Govi-Altai
+MN-067	Bulgan
+MN-069	Bayankhongor
+MN-071	Bayan-Ölgii
+MN-073	Arkhangai
+MN-1	Ulaanbaatar
+OM-BJ	South Al Batinah
+OM-BS	North Al Batinah
+OM-BU	Al Buraimi
+OM-DA	Ad Dakhiliyah
+OM-MA	Muscat
+OM-MU	Musandam
+OM-SJ	South Ash Sharqiyah
+OM-SS	North Ash Sharqiyah
+OM-WU	Al Wusta
+OM-ZA	Ad Dhahirah
+OM-ZU	Dhofar
+QA-DA	Doha
+QA-KH	Al Khor
+QA-MS	Madinat ash Shamal
+QA-RA	Al Rayyan
+QA-SH	Al Sheehaniya
+QA-US	Umm Salal
+QA-WA	Al Wakrah
+QA-ZA	Al Daayen
+RU-AD	Adygea
+RU-AL	Altai Republic
+RU-ALT	Altai Krai
+RU-AMU	Amur
+RU-ARK	Arkhangelsk
+RU-AST	Astrakhan
+RU-BA	Bashkortostan
+RU-BEL	Belgorod
+RU-BRY	Bryansk
+RU-BU	Buryatia
+RU-CE	Chechnya
+RU-CHE	Chelyabinsk
+RU-CHU	Chukotka
+RU-CU	Chuvashia
+RU-DA	Dagestan
+RU-IN	Ingushetia
+RU-IRK	Irkutsk
+RU-IVA	Ivanovo
+RU-KAM	Kamchatka
+RU-KB	Kabardino-Balkaria
+RU-KC	Karachay-Cherkess
+RU-KDA	Krasnodar
+RU-KEM	Kemerovo
+RU-KGD	Kaliningrad
+RU-KGN	Kurgan
+RU-KHA	Khabarovsk
+RU-KHM	Khanty-Mansi
+RU-KIR	Kirov
+RU-KK	Khakassia
+RU-KL	Kalmykia
+RU-KLU	Kaluga
+RU-KO	Komi
+RU-KOS	Kostroma
+RU-KR	Karelia
+RU-KRS	Kursk
+RU-KYA	Krasnoyarsk
+RU-LEN	Leningrad
+RU-LIP	Lipetsk
+RU-MAG	Magadan
+RU-ME	Mari El
+RU-MO	Mordovia
+RU-MOS	Moscow Oblast
+RU-MOW	Moscow
+RU-MUR	Murmansk
+RU-NEN	Nenets
+RU-NGR	Novgorod
+RU-NIZ	Nizhny Novgorod
+RU-NVS	Novosibirsk
+RU-OMS	Omsk
+RU-ORE	Orenburg
+RU-ORL	Oryol
+RU-PER	Perm
+RU-PNZ	Penza
+RU-PRI	Primorsky
+RU-PSK	Pskov
+RU-ROS	Rostov
+RU-RYA	Ryazan
+RU-SA	Sakha
+RU-SAK	Sakhalin
+RU-SAM	Samara
+RU-SAR	Saratov
+RU-SE	North Ossetia-Alania
+RU-SMO	Smolensk
+RU-SPE	Saint Petersburg
+RU-STA	Stavropol
+RU-SVE	Sverdlovsk
+RU-TA	Tatarstan
+RU-TAM	Tambov
+RU-TOM	Tomsk
+RU-TUL	Tula
+RU-TVE	Tver
+RU-TY	Tuva
+RU-TYU	Tyumen
+RU-UD	Udmurtia
+RU-ULY	Ulyanovsk
+RU-VGG	Volgograd
+RU-VLA	Vladimir
+RU-VLG	Vologda
+RU-VOR	Voronezh
+RU-YAN	Yamalo-Nenets
+RU-YAR	Yaroslavl
+RU-YEV	Jewish Autonomous Oblast
+RU-ZAB	Zabaykalsky
+SY-DI	Damascus
+SY-DR	Daraa
+SY-DY	Deir ez-Zor
+SY-HA	Al-Hasakah
+SY-HI	Homs
+SY-HL	Aleppo
+SY-HM	Hama
+SY-ID	Idlib
+SY-LA	Latakia
+SY-QU	Quneitra
+SY-RA	Raqqa
+SY-RD	Rif Dimashq
+SY-SU	As-Suwayda
+SY-TA	Tartus
+TJ-DU	Dushanbe
+TJ-GB	Gorno-Badakhshan
+TJ-KT	Khatlon
+TJ-RA	Districts of Republican Subordination
+TJ-SU	Sughd
+YE-AB	Abyan
+YE-AD	Aden
+YE-AM	Amran
+YE-BA	Al Bayda
+YE-DA	Ad Dali
+YE-DH	Dhamar
+YE-HD	Hadhramaut
+YE-HJ	Hajjah
+YE-HU	Al Hudaydah
+YE-IB	Ibb
+YE-JA	Al Jawf
+YE-LA	Lahij
+YE-MA	Marib
+YE-MR	Al Mahrah
+YE-MW	Al Mahwit
+YE-RA	Raymah
+YE-SA	Amanat Al Asimah
+YE-SD	Saada
+YE-SH	Shabwah
+YE-SN	Sanaa
+YE-SU	Socotra
+YE-TA	Taiz
