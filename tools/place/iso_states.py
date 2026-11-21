@@ -51,7 +51,8 @@ written like both takes the kind most of its country's states match.
                                               change rows an earlier one changed
   python3 iso_states.py --project /root/antweb-next      staging (default: the project on this server)
 
-Rollback (same server, the date of the run; one transaction; the rows added go first, so the old names are free again):
+Rollback (same server, the date or --tag of the run; roll back the newest tag first; one transaction; the rows added go
+first, so the old names are free again):
   start transaction;
   update specimen s join iso_states_spec_<date> b on b.code = s.code set s.adm1 = b.adm1 where binary s.adm1 = binary b.new_adm1;
   update specimen s join iso_states_bak_<date> b on b.parent = s.country and b.is_valid = 1 join geolocale g on g.id = b.id and binary g.name <> binary b.name left join iso_states_spec_<date> x on x.code = s.code set s.adm1 = b.name where binary s.adm1 = binary g.name and x.code is null;
@@ -272,7 +273,8 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
     decisions [(action, state, sub, kept_state)] with action 'rename', 'merge' (state becomes an old name of
     kept_state, which takes sub's ISO name) or 'alias' (english: the state keeps its name, sub's ISO name is added as
     an old name of it); reported [(state, reason)]. english: a country written in another script (ENGLISH): no
-    rename; of states that are one, the one not written as ISO (the English name) is kept."""
+    rename; of states that are one, the one not written as ISO (the English name) is kept. exonyms, not_iso: the
+    country's EXONYMS and NOT_ISO entries keyed by key() of the state's name, as plan() passes them."""
     by_code = {s.code: s for s in subs}
     # Names in tiers, best first: ISO's own names, ISO's translations, then the boundary file's shape names, whose ISO
     # codes are wrong on some shapes (its Distrito Federal carries México state's code, its Niamey Tillabéri's). The

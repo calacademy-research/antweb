@@ -471,7 +471,7 @@ def test_a_translation_and_a_shape_name_of_two_subdivisions_are_reported():
 
 def test_a_tie_of_kinds_is_no_main_kind():
     # sixth review of #400: one vote each must not depend on the order the database returns the states
-    c = __import__("collections").Counter
+    c = collections.Counter
     assert iso.top_kind(c({"Region": 1, "City": 1})) is None and iso.top_kind(c({"Region": 2, "City": 1})) == "Region"
     assert iso.top_kind(c()) is None
     a = iso.match_country([st(1, "Kherson"), st(3, "Kiev")], UA)
