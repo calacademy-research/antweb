@@ -554,6 +554,37 @@ def test_an_alias_waits_for_its_english_rename():
     assert len(left) == 2 and any("not added: the rename to Chelyabinsk was left out" in l for l in left), left
 
 
+def test_stems_found_by_their_english_name():
+    # 2026-11-21: Russia's 2021 stems had no ISO old name to be found by; the English table finds them when exactly one
+    # subdivision fits, and they are renamed (with ISO's form as an old name)
+    countries, subs = iso.read_countries(), iso.read_iso()
+    states = [(1, "Kur", 3), (2, "Om", 2), (3, "Tul'", 1), (4, "Kaluzh", 4), (5, "Nizhegorod", 2), (6, "Moskov", 5), (7, "Kurgan", 1)]
+    out, rep, noc = iso.plan({"Russia": states}, {}, subs, countries)
+    got = {x["name"]: x["target"] for x in out if x["action"] == "rename"}
+    assert got == {"Kur": "Kursk", "Om": "Omsk", "Tul'": "Tula", "Kaluzh": "Kaluga", "Nizhegorod": "Nizhny Novgorod",
+                   "Moskov": "Moscow Oblast"}, (got, rep)
+    aliases = {x["name"]: (x["iso"], x["target"]) for x in out if x["action"] == "alias"}
+    assert aliases["Kur"] == ("Kurskaya oblast'", "Kursk"), aliases
+    # a word kept whole is no stem; one or no letter is too short
+    by = {s.code: s for s in subs["KZ"] + subs["RU"]}
+    assert not iso.english_fit("Almaty", by["KZ-19"]) and not iso.english_fit("K", by["RU-KRS"])
+
+
+def test_accents_only_and_the_alias_sql():
+    # Anseba is English; the transliteration with a macron is renamed (2026-11-21); the ISO form's old-name row is
+    # written under the English name (second review of #403)
+    countries, subs = iso.read_countries(), iso.read_iso()
+    out, rep, noc = iso.plan({"Eritrea": [(1, "Ānseba", 18)]}, {}, subs, countries)
+    assert [(x["action"], x["target"]) for x in out if x["action"] == "rename"] == [("rename", "Anseba")], out
+    out, rep, noc = iso.plan({"Kuwait": [(1, "Hawalli", 2)]}, {}, subs, countries)
+    assert not [x for x in out if x["action"] == "rename"], out
+    out, rep, noc = iso.plan({"Russia": [(1, "Chelyabinskaya", 4)]}, {}, subs, countries)
+    sql, left, done = iso.statements(out, {}, "20261121")
+    inserts = [q for q in sql if q.startswith("insert into geolocale")]
+    alias = [q for q in inserts if iso.q("Chelyabinskaya oblast'") in q]
+    assert len(alias) == 1 and (", 0, %s, " % iso.q("Chelyabinsk")) in alias[0], inserts
+
+
 def test_bern_not_berne():
     # 2026-11-21: ISO gives the canton two names; AntWeb uses Bern (the canton's language and the English name)
     out, rep, noc = iso.plan({"Switzerland": [(1, "Berne", 198)]}, {}, iso.read_iso(), iso.read_countries())
@@ -579,6 +610,76 @@ def test_the_iso_file_reads():
     assert len(subs["IT"]) > 100 and any(s.name == "Sicilia" for s in subs["IT"])
     c = iso.read_countries()
     assert c[iso.key("Russia")] == "RU" and c[iso.key("United States")] == "US" and c[iso.key("Türkiye")] == "TR"
+
+
+def test_two_stems_of_one_subdivision_are_not_merged():
+    # review of #404: Kalu and Kaluzh both fit only Kaluga; neither is matched by its stem, so nothing is merged or
+    # renamed without a look, and both are reported
+    out, rep, noc = iso.plan({"Russia": [(1, "Kalu", 3), (2, "Kaluzh", 4)]}, {}, iso.read_iso(), iso.read_countries())
+    assert not [x for x in out if x["action"] in ("rename", "merge")], out
+    assert {r[1] for r in rep} >= {"Kalu", "Kaluzh"}, rep
+    # a stem beside a state already found as that subdivision is not taken as it (Kaluzh with Kaluga)
+    out, rep, noc = iso.plan({"Russia": [(1, "Kaluga", 30), (2, "Kaluzh", 4)]}, {}, iso.read_iso(), iso.read_countries())
+    assert not [x for x in out if x["action"] == "merge"], out
+
+
+def test_an_accent_only_rename_with_page_text():
+    # review of #404: the state's own row is the only place named Anseba (accents aside): its rename is not left out
+    out, rep, noc = iso.plan({"Eritrea": [(1, "Ānseba", 18)]}, {}, iso.read_iso(), iso.read_countries())
+    sql, left, done = iso.statements(out, {}, "20261121", texts={"object_edit": {"Ānseba": 1}}, allnames={"anseba": 1})
+    assert not left and [d["target"] for d in done if d["action"] == "rename"] == ["Anseba"], (left, done)
+
+
+def test_mongolia_keeps_its_umlauts():
+    # the English table writes Khövsgöl with ö: a state so written is not renamed
+    sub = {s.code: s for s in iso.read_iso()["MN"]}["MN-041"]
+    assert not iso.needs_english("Khövsgöl", sub)
+    assert iso.needs_english("Hövsgöl", sub)          # ISO's romanization is renamed to the table's name
+
+
+def test_an_accent_only_rename_beside_another_place_of_that_name():
+    # review of #404: another country's place is written Anseba too; the rename is still made (the page text key is
+    # the same, so nothing moves)
+    out, rep, noc = iso.plan({"Eritrea": [(1, "\u0100nseba", 18)]}, {}, iso.read_iso(), iso.read_countries())
+    sql, left, done = iso.statements(out, {}, "20261121", texts={"object_edit": {"\u0100nseba": 1}}, allnames={"anseba": 2})
+    assert not left and [d["target"] for d in done if d["action"] == "rename"] == ["Anseba"], (left, done)
+
+
+def test_an_accent_pair_keeps_the_english_spelling():
+    # third review of #404: Ānseba (lower id) and Anseba in one country: Anseba is kept and Ānseba merged into it,
+    # with no rename (which statements() would leave out as "another valid state"); the same for Hokkaidō
+    out, rep, noc = iso.plan({"Eritrea": [(1, "\u0100nseba", 3), (2, "Anseba", 9)], "Japan": [(3, "Hokkaid\u014d", 1), (4, "Hokkaido", 5)]},
+                             {}, iso.read_iso(), iso.read_countries())
+    got = {(x["action"], x["name"], x["target"]) for x in out if x["action"] in ("rename", "merge")}
+    assert got == {("merge", "\u0100nseba", "Anseba"), ("merge", "Hokkaid\u014d", "Hokkaido")}, (got, rep)
+    out, rep, noc = iso.plan({"Japan": [(3, "Hokkaid\u014d", 1)]}, {}, iso.read_iso(), iso.read_countries())
+    assert [(x["action"], x["target"]) for x in out if x["action"] == "rename"] == [("rename", "Hokkaido")], out
+
+
+def test_a_stem_without_its_neighbour_is_reported():
+    # third review of #404: with no state Kurgan, Kur fits Kursk and Kurgan and is reported, not matched
+    out, rep, noc = iso.plan({"Russia": [(1, "Kur", 3)]}, {}, iso.read_iso(), iso.read_countries())
+    assert not [x for x in out if x["action"] in ("rename", "merge")] and [r[1] for r in rep] == ["Kur"], (out, rep)
+
+
+def test_stem_renames_are_notes_of_the_plan():
+    # fourth review of #404: every rename from a stem is a note, also one cut short of ISO's form (Kaluzh, Moskov)
+    states = [(1, "Kur", 3), (2, "Kaluzh", 4), (3, "Nizhegorod", 2), (4, "Moskov", 5), (5, "Kurgan", 1), (6, "Chelyabinskaya", 1)]
+    out, rep, noc = iso.plan({"Russia": states}, {}, iso.read_iso(), iso.read_countries())
+    sql, left, done = iso.statements(out, {}, "20261121")
+    notes = iso.stem_notes(done, iso.read_iso())
+    assert sorted(n.split(":")[1].split(" renamed")[0].strip() for n in notes) == ["Kaluzh", "Kur", "Moskov", "Nizhegorod"], notes
+    # Qatar's Al Shamal (the table) stays as it is
+    out, rep, noc = iso.plan({"Qatar": [(1, "Al Shamal", 2)]}, {}, iso.read_iso(), iso.read_countries())
+    assert not [x for x in out if x["action"] == "rename"], out
+
+
+def test_stems_only_in_russia():
+    # review of #404: outside STEM_COUNTRIES a prefix of a subdivision is no match (Abu for Abu Dhabi stays reported)
+    subs = {s.code: s for s in iso.read_iso()["AE"] + iso.read_iso()["RU"]}
+    assert not iso.english_fit("Abu Dha", subs["AE-AZ"]) and iso.english_fit("Om", subs["RU-OMS"])
+    out, rep, noc = iso.plan({"Russia": [(1, "Om", 2), (2, "Kurgan", 1)]}, {}, iso.read_iso(), iso.read_countries())
+    assert {x["name"]: x["target"] for x in out if x["action"] == "rename"} == {"Om": "Omsk"}, out
 
 
 if __name__ == "__main__":

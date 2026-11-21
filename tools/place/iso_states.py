@@ -143,6 +143,49 @@ def iso_alias_needed(st, iso, en, group=()):
     return key(iso) not in have
 
 
+def cut_short(name, full, at_least=1):
+    """name stops inside a word of full (Kur|sk, Moskov|skaya), never at a word's end (Almaty, "Almaty oblysy")."""
+    k, f = key(name), key(full)
+    return len(k) >= at_least and f.startswith(k) and len(f) > len(k) and f[len(k)].isalpha()
+
+
+# The countries whose states were loaded cut short (Russia's 2021 load: Kur, Om, Tul', Chelyabin): only there is a
+# stem taken as a subdivision (review of #404: elsewhere a two-letter abbreviation or a district could fit one)
+STEM_COUNTRIES = {"RU"}
+
+
+def english_fit(name, sub, english_names=None):
+    """The state is this subdivision by its English name: written so, or, in STEM_COUNTRIES, cut short of it (at most 3
+    letters missing, at least 2 kept) or of ISO's own name (at least 4 letters kept)."""
+    names = ENGLISH_NAMES if english_names is None else english_names
+    en = names.get(sub.code)
+    if not en:
+        return False
+    k = key(name)
+    if k == key(en):
+        return True
+    if sub.code.split("-")[0] not in STEM_COUNTRIES:
+        return False
+    if cut_short(name, en, 2) and len(key(en)) - len(k) <= 3:
+        return True
+    return any(cut_short(name, n, 4) for n in [display(sub.name)] + [o for o in sub.others if not o.isascii()])
+
+
+def stem_notes(done, iso_subs):
+    """Notes of the reviewed plan for the renames from a name cut short of the English name or of ISO's own name or a
+    translation in another script (Kur, Kaluzh, Nizhegorod, Moskov): looked at one by one (reviews of #404)."""
+    by_code = {s.code: s for subs in iso_subs.values() for s in subs}
+    out = []
+    for d in done:
+        sub = by_code.get(d["code"])
+        if d["action"] != "rename" or key(d["name"]) == key(d["target"]):
+            continue
+        forms = [d["target"], d["iso"]] + ([display(sub.name)] + [o for o in sub.others if not o.isascii()] if sub else [])
+        if any(cut_short(d["name"], f) for f in forms):
+            out.append("%s: %s renamed %s from a name cut short: look at it" % (d["country"], d["name"], d["target"]))
+    return out
+
+
 def needs_english(name, sub, english_names=None):
     """A state of an ENGLISH country that has an English name in english_names.tsv and is not written in it, where
     its name is plainly not English: a transliteration (Attikí, Al Başrah, Eşfahān), ISO's romanization (Kamchatskiy,
@@ -150,21 +193,20 @@ def needs_english(name, sub, english_names=None):
     not (Sharqia, Chuvashiya), is left as it is."""
     names = ENGLISH_NAMES if english_names is None else english_names
     en = names.get(sub.code)
-    if not en or key(name) == key(en):
+    if not en or name == en:
         return False
+    if key(name) == key(en):    # written alike but for accents: renamed when English drops them (Ānseba, Hokkaidō)
+        return en.isascii() and not name.isascii()
     if any(ch.isalpha() and not ch.isascii() for ch in name):
         return True
     k, iso_name = key(name), display(sub.name)
     if k == key(iso_name) or (loose(name) and loose(name) == loose(iso_name)):
         return True
     # cut short: the name stops inside a word of the English or ISO name (Kur|sk, Moskov|skaya), never at a word's end
-    # (Almaty is not cut from "Almaty oblysy": review of #403)
-    def cut_from(full):
-        f = key(full)
-        return f.startswith(k) and len(f) > len(k) and f[len(k)].isalpha()
-    if cut_from(en) and len(key(en)) - len(k) <= 3:
+    # (Almaty is not cut from "Almaty oblysy": review of #403); at least 2 letters kept of the English name
+    if cut_short(name, en, 2) and len(key(en)) - len(k) <= 3:
         return True
-    return len(k) >= 4 and any(cut_from(n) for n in [iso_name] + list(sub.others) if not n.isascii() or n == iso_name)
+    return any(cut_short(name, n, 4) for n in [iso_name] + list(sub.others) if not n.isascii() or n == iso_name)
 
 
 # Countries whose ISO 3166-2 subdivisions are older than the ones in use: their states are reported, not changed.
@@ -437,13 +479,28 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
         else:
             h = looser.get(loose(st.name), set()) if loose(st.name) else set()
             hits[st.id], how[st.id] = h, "loose"
+    if english:
+        # a state of an ENGLISH country found by nothing else, by its English name or as a name cut short of the
+        # English or ISO name: only when exactly one subdivision fits that no other state is already found as
+        # (2026-11-21: Russia's 2021 stems Kur, Om, Tul', Kaluzh, Nizhegorod had no ISO old name to be found by;
+        # Kur fits Kursk and Kurgan, and Kurgan is a state of its own). A subdivision any other state reaches, alone or
+        # among several, is taken; one that two of these states fit goes to neither; a state NOT_ISO rules out stays
+        # out (review of #404)
+        taken = set().union(*hits.values()) if hits else set()
+        fits = {st.id: {sub.code for sub in subs if sub.code not in taken and english_fit(st.name, sub)}
+                for st in states if st.id in hits and not hits[st.id] and how.get(st.id) != "not"}
+        fitted = collections.Counter(c for f in fits.values() for c in f)
+        for i, fit in fits.items():
+            if len(fit) == 1 and fitted[next(iter(fit))] == 1:
+                hits[i], how[i] = fit, "english"
     # the country's main kind from its states' own matches; a table entry does not count (it would decide the kind of
     # other states written like two kinds: review of #399)
-    kinds = collections.Counter(by_code[next(iter(h))].type for i, h in hits.items() if len(h) == 1 and how[i] != "table")
+    # nor does a state found by its English name or as a stem (review of #404)
+    kinds = collections.Counter(by_code[next(iter(h))].type for i, h in hits.items() if len(h) == 1 and how[i] not in ("table", "english"))
     main = top_kind(kinds)
     # subdivisions (not states) of each kind the states found alone: a loose own-name hit is reported for its level only
     # when the main kind has more of them (two states of one city do not outvote a region); equally many: renamed
-    level_codes = collections.Counter(by_code[c].type for c in {next(iter(h)) for i, h in hits.items() if len(h) == 1 and how[i] != "table"})
+    level_codes = collections.Counter(by_code[c].type for c in {next(iter(h)) for i, h in hits.items() if len(h) == 1 and how[i] not in ("table", "english")})
     chosen, reported = {}, []
     for st in states:
         h = hits[st.id]
@@ -502,13 +559,18 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
         # name ("Banskobystrický" for "Banskobystrický kraj"), never when it adds one: "Kiev Oblast" is not the city Kiev
         # two states found by their own names loosely are not merged without a look (third review of #400); one found
         # loosely beside one written as ISO is (Banskobystrický into Banskobystrický kraj)
-        if any(how[st.id] == "loose" and not shorter(st.name, sub) for st in group) or sum(st.id in own_loose for st in group) > 1:
+        # a state found only by its English name or as a stem is never merged without a look (review of #404); the
+        # English tier gives a state only a subdivision no other state reaches, so this guards a later change of it
+        if any(how[st.id] == "loose" and not shorter(st.name, sub) for st in group) or sum(st.id in own_loose for st in group) > 1 \
+                or any(how[st.id] == "english" for st in group):
             for st in group:
                 reported.append((st, "with %s matches %s (%s): looked at by hand" % (", ".join(o.name for o in group if o is not st), code, iso)))
             continue
         if english or "/" in iso:
             en = ENGLISH_NAMES.get(code) if english else None
-            kept = (next((st for st in group if en and key(st.name) == key(en)), None)      # already written in English
+            # already written in English: exactly first, then but for accents (review of #404: Anseba beside Ānseba)
+            kept = (next((st for st in group if en and st.name == en), None)
+                    or next((st for st in group if en and key(st.name) == key(en)), None)
                     or max([st for st in group if key(st.name) != key(iso) and "/" not in st.name] or group, key=lambda st: (st.specimens, -st.id)))
             if english and needs_english(kept.name, sub):
                 decisions.append(("rename", kept, sub, kept))
@@ -682,7 +744,7 @@ def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, 
             why = "the ISO name is longer than a specimen's state can be (%d characters)" % SPECIMEN_ADM1
         elif normal(iso) in has_text and normal(iso) != normal(old):
             why = "the ISO name %s already has page text (or a name written like it)" % iso
-        elif normal(old) in has_text and shared(iso) > len(swap) + sum(1 for m in decisions if m["action"] == "merge" and m["kept_id"] == vid
+        elif normal(old) in has_text and normal(old) != normal(iso) and shared(iso) > len(swap) + sum(1 for m in decisions if m["action"] == "merge" and m["kept_id"] == vid
                                                                           and normal(m["name"]) == normal(iso)):
             # this state's own old-name row of that name, and states of that spelling merged into it, aside
             # page text is keyed by name alone: under a name another place has, it would show on that place's page too
@@ -909,6 +971,7 @@ def main(argv=None):
     text_moves = []
     notes = []
     sql, left, done = statements(decisions, names, tag, curator, texts, allnames, text_moves, notes)
+    notes += stem_notes(done, read_iso())
     lines = mapping_lines(moves(done))         # the mapping follows what the apply does, not the plan (review of #395)
     plan_file = os.path.join(folder, "plan.tsv")
     if args.apply:
