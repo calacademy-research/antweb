@@ -554,6 +554,37 @@ def test_an_alias_waits_for_its_english_rename():
     assert len(left) == 2 and any("not added: the rename to Chelyabinsk was left out" in l for l in left), left
 
 
+def test_stems_found_by_their_english_name():
+    # 2026-11-21: Russia's 2021 stems had no ISO old name to be found by; the English table finds them when exactly one
+    # subdivision fits, and they are renamed (with ISO's form as an old name)
+    countries, subs = iso.read_countries(), iso.read_iso()
+    states = [(1, "Kur", 3), (2, "Om", 2), (3, "Tul'", 1), (4, "Kaluzh", 4), (5, "Nizhegorod", 2), (6, "Moskov", 5), (7, "Kurgan", 1)]
+    out, rep, noc = iso.plan({"Russia": states}, {}, subs, countries)
+    got = {x["name"]: x["target"] for x in out if x["action"] == "rename"}
+    assert got == {"Kur": "Kursk", "Om": "Omsk", "Tul'": "Tula", "Kaluzh": "Kaluga", "Nizhegorod": "Nizhny Novgorod",
+                   "Moskov": "Moscow Oblast"}, (got, rep)
+    aliases = {x["name"]: (x["iso"], x["target"]) for x in out if x["action"] == "alias"}
+    assert aliases["Kur"] == ("Kurskaya oblast'", "Kursk"), aliases
+    # a word kept whole is no stem; one or no letter is too short
+    by = {s.code: s for s in subs["KZ"] + subs["RU"]}
+    assert not iso.english_fit("Almaty", by["KZ-19"]) and not iso.english_fit("K", by["RU-KRS"])
+
+
+def test_accents_only_and_the_alias_sql():
+    # Anseba is English; the transliteration with a macron is renamed (2026-11-21); the ISO form's old-name row is
+    # written under the English name (second review of #403)
+    countries, subs = iso.read_countries(), iso.read_iso()
+    out, rep, noc = iso.plan({"Eritrea": [(1, "Ānseba", 18)]}, {}, subs, countries)
+    assert [(x["action"], x["target"]) for x in out if x["action"] == "rename"] == [("rename", "Anseba")], out
+    out, rep, noc = iso.plan({"Kuwait": [(1, "Hawalli", 2)]}, {}, subs, countries)
+    assert not [x for x in out if x["action"] == "rename"], out
+    out, rep, noc = iso.plan({"Russia": [(1, "Chelyabinskaya", 4)]}, {}, subs, countries)
+    sql, left, done = iso.statements(out, {}, "20261121")
+    inserts = [q for q in sql if q.startswith("insert into geolocale")]
+    alias = [q for q in inserts if iso.q("Chelyabinskaya oblast'") in q]
+    assert len(alias) == 1 and (", 0, %s, " % iso.q("Chelyabinsk")) in alias[0], inserts
+
+
 def test_bern_not_berne():
     # 2026-11-21: ISO gives the canton two names; AntWeb uses Bern (the canton's language and the English name)
     out, rep, noc = iso.plan({"Switzerland": [(1, "Berne", 198)]}, {}, iso.read_iso(), iso.read_countries())
