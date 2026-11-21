@@ -354,9 +354,9 @@ def test_mapping_file_of_the_repository():
     assert not {r for r in rules.new if r[0] == "Seychelles"}          # Outer Islands is a valid state now (2026-11-19)
     # the name lines: 148 pairs the lead checked by the names, 99 that are plain from the names, 146 of 2026-11-19 checked by both lists,
     # less the lines the place renames made unneeded (the state now has the shape's name): 25 of the first ISO pass
-    # (20261120: the Swedish län ...), 15 of the second (20261120b), 28 of the English names (20261121); no shape twice;
+    # (20261120: the Swedish län ...), 15 of the second (20261120b), 28 of the English names (20261121), 1 of their second pass (20261121b: Qatar's Al Shamal); no shape twice;
     # none is a hard row as well
-    assert len(rules.names) == 325 and len({(c, l, pc.plain(x)) for c, l, x, _ in rules.names}) == 325 and all(l in pc.LEVELS + [pc.NE_LEVEL] and x and a for _, l, x, a in rules.names)
+    assert len(rules.names) == 324 and len({(c, l, pc.plain(x)) for c, l, x, _ in rules.names}) == 324 and all(l in pc.LEVELS + [pc.NE_LEVEL] and x and a for _, l, x, a in rules.names)
     assert ("Czech Republic", "ADM1", "Jiho\u010desk\u00fd kraj", "Jiho\u010desk\u00fd") in rules.names
     # the renames' lines point to the new names, and the old names do not come back (review of #401)
     assert ("Belgium", "ADM2", "Brussels", "R\u00e9gion de Bruxelles-Capitale") in rules.names
@@ -364,7 +364,9 @@ def test_mapping_file_of_the_repository():
     gone = {("Spain", "ADM1", "Canarias", "Canary Islands"), ("United Arab Emirates", "ADM1", "Ras al-Khaimah", "Ra's al Khaymah"),
             ("Greece", "ADM2", "Attikis", "Attik\u00ed")}
     assert not gone & set(rules.names)
-    assert not {n for n in rules.names if n[3] in ("Brussels Capital", "Zanzibar Central/South")}
+    assert not {n for n in rules.names if n[3] in ("Brussels Capital", "Zanzibar Central/South", "Al A\u1e29mad\u012b")}
+    assert ("Kuwait", "ADM1", "Ahmadi", "Al Ahmadi") in rules.names and ("Syria", "ADM1", "As-Sweida", "As-Suwayda") in rules.names
+    assert not {n for n in rules.names if n[0] == "Qatar" and n[2] == "Al Shamal"}
     assert ("Democratic Republic of Congo", "ADM1", "Lower Uele", "Bas-U\u00e9l\u00e9") in rules.names and ("Macedonia", "ADM2", "Shtip", "\u0160tip") in rules.names
     assert not {(c, l, pc.plain(x)) for c, l, x, _ in rules.names} & {(c, l, pc.plain(x)) for c, l, x, _ in rows}
     # Nicaragua: the two Caribbean regions under the names of geoBoundaries and of OCHA's file; the department Jinotega by a row
