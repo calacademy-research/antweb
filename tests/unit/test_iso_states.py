@@ -590,6 +590,10 @@ def test_country_codes_fill_only_what_is_missing():
     assert "carried by TR: Turkey, Türkiye" in differ[0][2], differ
     fills, differ, missing = iso.country_codes([(1, "United States", "", ""), (2, "Hawaii", "US", "USA")])
     assert not fills and differ[0][0] == "United States" and missing == ["Hawaii (stored US/USA)"], (fills, differ, missing)
+    # second review of #405: a code an old-name country row holds is not given again; Kosovo found in any case
+    fills, differ, missing = iso.country_codes([(1, "T\u00fcrkiye", "", ""), (2, "kosovo ", "", "")], held={("Turkey", "TR"), ("Turkey", "TUR")})
+    assert [(n, a, b) for i, n, a, b in fills] == [("kosovo ", "XK", "XKX")] and "Turkey (not valid)" in differ[0][2], (fills, differ)
+    assert "<=> b.new_isoCode" in iso.CODES_ROLLBACK
 
 
 def test_the_iso_file_reads():
