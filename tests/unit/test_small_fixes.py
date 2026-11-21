@@ -326,7 +326,7 @@ def test_no_lost_ifs_and_whole_home_page(sources):
                 lost.append(f"{path}:{n}")
     assert not lost, "an if statement whose return is inside a comment: " + ", ".join(lost)
     geo = sources["src/org/calacademy/antweb/util/GeolocaleMgr.java"]
-    assert re.search(r'"northdakotaants"\.equals\(projectName\).*\) return GeolocaleMgr\.getAdm1\("North Dakota"', geo)
+    assert re.search(r'"northdakotaants"\.equals\(projectName\).*\) return projectAdm1\("North Dakota"', geo)
     with open(os.path.join(ROOT, "web/common/slideshow_homepage.jsp"), encoding="utf-8") as f:
         show = f.read()
     assert "StringBuilder slides" in show and "catch (RuntimeException e)" in show and "<%= slides %>" in show, \

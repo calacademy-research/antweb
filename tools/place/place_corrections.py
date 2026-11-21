@@ -1316,6 +1316,7 @@ class StateShapes:
                 self.convert[c.name] = {u for u in (states.valid_of(c.name, unit) for unit in units) if u}
                 self.within[c.name] = {state: states.valid_of(c.name, unit) for state, unit in self.rules.within.get(country, {}).items()}
         self.levels = {}                                         # valid country -> the level of its states (a "level" line)
+        self.level_warned = set()                                # countries whose level line names a level their source lacks (warned)
         for country, level in self.rules.levels.items():
             c = countries.resolve(country)
             self.levels[c.name if c is not None else country] = level
@@ -1646,6 +1647,10 @@ class StateShapes:
         source = self.source_of(country)
         wanted = set(self.wanted(country))
         forced = self.levels.get(country)                        # a "level" line: only that level is looked at
+        if forced and forced not in source.levels and country not in self.level_warned:   # said once, not ignored silently (review of #391)
+            self.level_warned.add(country)
+            print("warning: the level line of %s names %s, which %s does not have (%s); all its levels are looked at"
+                  % (country, forced, source.label, ", ".join(source.levels)), file=sys.stderr)
         levels = [forced] if forced in source.levels else source.levels
         have = sum(p[3] for p in self.evidence.points.get(country, ()) if p[0] not in self.convert.get(country, ())) if self.evidence is not None else 0
         testing = have >= MIN_POINTS

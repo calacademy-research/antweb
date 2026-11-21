@@ -260,6 +260,17 @@ def test_a_level_line_decides_the_level():
     t = work.shapes.tables["Reunion"]
     assert [pc.level_text(x) for x in t["tried"]] == ["ADM3 0/2 AntWeb states, 0/2 shapes"], t["tried"]
     assert pc.Rules(levels={"Uganda": "ADM3"}).levels == {"Uganda": "ADM3"}
+    # a level the source does not have: one warning, all levels looked at (review of #391)
+    import io
+    import contextlib
+    work.shapes.levels["Reunion"] = "ADM9"
+    for _ in range(2):
+        work.shapes.tables.pop("Reunion", None)
+        work.shapes._chosen.pop("Reunion", None)
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            work.shapes.choose("Reunion", "REU")
+        assert ("level line of Reunion names ADM9" in err.getvalue()) == (_ == 0), err.getvalue()
     del work.shapes.levels["Reunion"]
     work.shapes.tables.pop("Reunion", None)
     work.shapes._chosen.pop("Reunion", None)
@@ -267,10 +278,15 @@ def test_a_level_line_decides_the_level():
 
 def test_mapping_file_of_the_repository():
     rows = pc.read_map(pc.MAP_FILE)
-    assert all(len(r) == 4 and r[1] in pc.LEVELS + [pc.NE_LEVEL] for r in rows) and ("country", "level", "shape", "antweb_state") not in rows and len(rows) == 34
+    assert all(len(r) == 4 and r[1] in pc.LEVELS + [pc.NE_LEVEL] for r in rows) and ("country", "level", "shape", "antweb_state") not in rows and len(rows) == 32
     with open(pc.MAP_FILE, "rb") as f:
         assert b"\r" not in f.read()
-    assert ("Mexico", "ADM1", "Coahuila de Zaragoza", "Coahuila") in rows and ("United States", "ADM1", "District of Columbia", "Washington, D.C.") in rows
+    assert ("Mexico", "ADM1", "Coahuila de Zaragoza", "Coahuila") in rows
+    # 2026-11-20, states under their ISO 3166-2 names: lines whose shape now has the state's own name are gone (Veracruz de
+    # Ignacio de la Llave, District of Columbia, the Swedish län), the others name the new state
+    assert not [r for r in rows if r[0] in ("United States",) or r[2] == "Veracruz de Ignacio de la Llave"]
+    names = pc.read_rules(pc.MAP_FILE).names
+    assert ("Croatia", "ADM1", "Split-Dalmatia", "Splitsko-dalmatinska županija") in names and not [n for n in names if n[0] == "Sweden"]
     rules = pc.read_rules(pc.MAP_FILE)
     # Madagascar: the regions are AntWeb's states now. One shape has another name; the provinces are converted; each region has its province
     assert [r for r in rows if r[0] == "Madagascar"] == [("Madagascar", "ADM1", "Matsiatra Ambony", "Haute Matsiatra"), ("Madagascar", "ADM1", "Vatovavy", "Vatovavy"),
@@ -292,7 +308,7 @@ def test_mapping_file_of_the_repository():
     assert ("Nepal", "ADM1", "Province 1", "Koshi") in rules.names and len([n for n in rules.names if n[0] == "Slovenia"]) == 58
     assert rules.convert["Kenya"] == ["Central", "Coast", "Eastern", "North-Eastern", "Nyanza", "Rift Valley"] and len(rules.convert["Dominican Republic"]) == 10
     assert len(rules.convert["Morocco"]) == 13 and "National Capital" not in rules.convert["Philippines"] and sorted(rules.within) == ["Madagascar"]
-    assert [r[3] for r in rows if r[0] == "Philippines"] == ["National Capital"] * 4
+    assert [r[3] for r in rows if r[0] == "Philippines"] == ["National Capital Region"] * 4
     # Argentina and Trinidad and Tobago from Natural Earth (geoBoundaries has no Entre Ríos, no Arima); Tobago is two shapes there
     assert [r[2] for r in rows if r[0] == "Trinidad and Tobago" and r[3] == "Tobago"] == ["Eastern Tobago", "Western Tobago"]
     # Namibia: Kavango told apart by its old constituencies; the file's Rundu Rural (before 2003) has no line
@@ -336,8 +352,9 @@ def test_mapping_file_of_the_repository():
     assert [r for r in rows if r[0] == "Seychelles"] == [("Seychelles", "ADM2", "La Digue", "Inner Islands"), ("Seychelles", "ADM3", "La Digue", "Inner Islands"),
                                                         ("Seychelles", "ADM2", "Other Islands", "Outer Islands"), ("Seychelles", "ADM3", "Other Islands", "Outer Islands")]
     assert not {r for r in rules.new if r[0] == "Seychelles"}          # Outer Islands is a valid state now (2026-11-19)
-    # the name lines: 148 pairs the lead checked by the names, 99 that are plain from the names, 146 of 2026-11-19 checked by both lists; no shape twice; none is a hard row as well
-    assert len(rules.names) == 393 and len({(c, l, pc.plain(x)) for c, l, x, _ in rules.names}) == 393 and all(l in pc.LEVELS + [pc.NE_LEVEL] and x and a for _, l, x, a in rules.names)
+    # the name lines: 148 pairs the lead checked by the names, 99 that are plain from the names, 146 of 2026-11-19 checked by both lists,
+    # less the 25 that the ISO renames of 2026-11-20 made unneeded (the Swedish län ...); no shape twice; none is a hard row as well
+    assert len(rules.names) == 368 and len({(c, l, pc.plain(x)) for c, l, x, _ in rules.names}) == 368 and all(l in pc.LEVELS + [pc.NE_LEVEL] and x and a for _, l, x, a in rules.names)
     assert ("United Arab Emirates", "ADM1", "Ras al-Khaimah", "Ra's al Khaymah") in rules.names and ("Czech Republic", "ADM1", "Jiho\u010desk\u00fd kraj", "Jiho\u010desk\u00fd") in rules.names
     assert ("Democratic Republic of Congo", "ADM1", "Lower Uele", "Bas-U\u00e9l\u00e9") in rules.names and ("Macedonia", "ADM2", "Shtip", "\u0160tip") in rules.names
     assert not {(c, l, pc.plain(x)) for c, l, x, _ in rules.names} & {(c, l, pc.plain(x)) for c, l, x, _ in rows}
