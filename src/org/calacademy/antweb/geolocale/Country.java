@@ -113,7 +113,7 @@ public class Country extends Geolocale {
       return names + (islands.size() == 1 ? " has its own page and is not counted here." : " have their own pages and are not counted here.");
     }
     /** The countries whose ISO 3166-2 names are in another script: their adm1s are written in English, ISO's form kept
-     *  as an old name. Must equal ENGLISH in tools/place/iso_states.py (tests/unit/test_iso_states.py checks it). */
+     *  as an old name. Must equal ENGLISH in tools/place/iso_states.py (tests/unit/test_adm1_names_note.py checks it). */
     public static final Set<String> ENGLISH_NAMED = Collections.unmodifiableSet(new TreeSet<>(Arrays.asList(
         "AE", "AF", "AM", "BG", "BH", "BY", "CN", "CY", "EG", "ER", "GE", "GR", "IL", "IQ", "IR", "JO", "JP", "KG", "KH",
         "KP", "KR", "KW", "KZ", "LA", "LB", "LK", "LY", "MK", "MM", "MN", "OM", "PS", "QA", "RS", "RU", "SA", "SD", "SY",
@@ -126,6 +126,7 @@ public class Country extends Geolocale {
      */
     public static String adm1NamesNote(String isoCode, boolean island) {
       if (island) return "";
+      isoCode = isoCode == null ? null : isoCode.trim().toUpperCase(java.util.Locale.ROOT);   // as stored, any case (review of #406)
       if ("MG".equals(isoCode)) return "Adm1s are Madagascar's regions (since 2004); ISO 3166-2 still lists the former provinces.";
       if ("CF".equals(isoCode)) return "Adm1s are the prefectures since the 2020 reform; ISO 3166-2 lists them as before it.";
       if (isoCode != null && ENGLISH_NAMED.contains(isoCode)) return "Adm1 names follow ISO 3166-2, in English.";

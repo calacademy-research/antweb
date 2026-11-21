@@ -28,6 +28,7 @@ public class Adm1NamesNoteTest extends TestCase {
         assertTrue(Country.adm1NamesNote("MG", false).contains("regions"));
         assertTrue(Country.adm1NamesNote("CF", false).contains("2020"));
         assertFalse(Country.adm1NamesNote("MG", false).contains("follow"));
+        assertEquals(Country.adm1NamesNote("MG", false), Country.adm1NamesNote(" mg ", false));   // stored in another case
     }
 
     public void testIslandCountry() {
