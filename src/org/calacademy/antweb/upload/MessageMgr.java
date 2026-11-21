@@ -361,9 +361,9 @@ public class MessageMgr {
       testList.add(new Test(notValidBioregion, STR, "<b>Not valid Antweb Biogeographic Regions</b> "));
       //testList.add(new Test(adm1UpgradeToIsland, STR, "<b>Adm1 upgraded to Island Country</b>"));
       testList.add(new Test(notValidCountries, STR, "<b>Not Antweb valid countries</b>"));
-      testList.add(new Test(countrySpellingCorrected, SET, "<b>Country spelling corrected <font color=green>(uploaded)</font></b>"));
-      testList.add(new Test(adm1NameCorrected, SET, "<b>State stored under AntWeb's name <font color=green>(uploaded)</font></b>"));
-      testList.add(new Test(adm1SpellingStored, SET, "<b>State written with other capitals, accents or punctuation <font color=green>(uploaded in AntWeb's spelling)</font></b>"));
+      testList.add(new Test(countrySpellingCorrected, SET, "<b>Country written with other capitals, accents or blanks <font color=green>(uploaded in AntWeb's spelling)</font></b>"));
+      testList.add(new Test(adm1NameCorrected, SET, "<b>adm1 recognized under another name <font color=green>(uploaded under AntWeb's adm1)</font></b>"));
+      testList.add(new Test(adm1SpellingStored, SET, "<b>adm1 written with other capitals, accents or punctuation <font color=green>(uploaded in AntWeb's spelling)</font></b>"));
       testList.add(new Test(invalidLatLon, STR, "<b>Invalid lat/lon <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(unrecognizedColumn, STR, "<b>" + COLUMNS_IGNORED_HEADING + "</b>"));
       testList.add(new Test(invalidColumn, SET, "<b>Invalid Column Count <font color=red>(not uploaded)</font></b>"));
@@ -587,8 +587,6 @@ public class MessageMgr {
         genusConceptReplaced,                                       // old genus concept (GenusConceptRule)
         preferredSubfamilyForGenusReplaced, invalidSubfamilyForGenusReplaced,
         specimenIdSpacesRemoved, codeQuoteReplaced,                 // code changed
-        countrySpellingCorrected,                                   // country stored under AntWeb's spelling
-        adm1NameCorrected,                                          // state stored under AntWeb's valid state
         invalidDateCollectedStart, invalidDateCollectedEnd, invalidDateDetermined))); // uploaded without the date
 
     /*
@@ -666,11 +664,28 @@ public class MessageMgr {
     public static final String CORRECTED_KIND = "corrected";
     public static final String RED_FLAG = "redFlag";
     public static final String NOTE = "note";
+    /** 2026-11-21 (Brian Fisher: "I don't think we should tell uploaders to change their data if we recognize their
+     *  adm1s"; a curator cannot get a report with 5,000 things to fix): a country or adm1 AntWeb recognized under
+     *  another name or another spelling is loaded under AntWeb's name and listed in its own group, "nothing to fix";
+     *  it is no longer counted as corrected (before: CORRECTED, "Other corrections (please fix in your data)"). */
+    public static final String RECOGNIZED = "recognized";
+    public static final Set<String> RECOGNIZED_SECTIONS = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
+        countrySpellingCorrected, adm1NameCorrected, adm1SpellingStored)));
 
     private static String kind(Test test) {
       String a = attention(test.getKey(), test.getHeading());
       if (a != null) return a;
+      if (RECOGNIZED_SECTIONS.contains(test.getKey())) return RECOGNIZED;
       return "red".equals(test.getFlag()) ? RED_FLAG : NOTE;
+    }
+
+    /** Lines whose country or adm1 AntWeb recognized under another name or spelling (RECOGNIZED_SECTIONS). */
+    public int getRecognizedCount() {
+      int n = 0;
+      for (Test test : getTests()) {
+        if (RECOGNIZED.equals(kind(test))) n += test.getCount();
+      }
+      return n;
     }
 
     /** One section of the upload report: a check that found something. */
@@ -678,7 +693,7 @@ public class MessageMgr {
       public String key;
       /** The heading as before 2026-10-29, as HTML (MessageMgr's section texts, with their links). */
       public String headingHtml;
-      /** NOT_LOADED, CORRECTED_KIND, RED_FLAG or NOTE. */
+      /** NOT_LOADED, CORRECTED_KIND, RED_FLAG, RECOGNIZED or NOTE. */
       public String kind;
       /** The times the section was added to: once per line of the file (the email's counts); for "Columns ignored"
        *  the columns, for "Multiple bioregions" the taxa (unit). */

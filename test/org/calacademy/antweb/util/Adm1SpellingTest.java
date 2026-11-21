@@ -9,6 +9,7 @@ import junit.framework.TestCase;
 import org.apache.commons.collections4.map.MultiKeyMap;
 import org.calacademy.antweb.geolocale.Adm1;
 import org.calacademy.antweb.upload.MessageMgr;
+import org.calacademy.antweb.upload.SpecimenUploadParse;
 import org.calacademy.antweb.util.GeolocaleMgr;
 
 /**
@@ -128,10 +129,28 @@ public class Adm1SpellingTest extends TestCase {
         assertEquals("", GeolocaleMgr.adm1SpellingKey(null));
     }
 
-    public void testTheReportSectionCountsAsCorrected() {
-        assertTrue(MessageMgr.CORRECTED.contains(MessageMgr.adm1NameCorrected));
-        String heading = MessageMgr.getMessageDisplay(MessageMgr.adm1NameCorrected);
-        assertTrue(heading, heading.contains("State stored under AntWeb's name"));
-        assertEquals("corrected", MessageMgr.attention(MessageMgr.adm1NameCorrected, heading));
+    /** 2026-11-21 (Brian Fisher): an adm1 AntWeb recognizes is not a correction for the curator: its own group,
+     *  "Recognized ... (nothing to fix)", not counted as corrected; the heading says adm1, not State. */
+    public void testTheReportSectionsAreRecognizedNotCorrected() {
+        for (String key : new String[] {MessageMgr.adm1NameCorrected, MessageMgr.adm1SpellingStored}) {
+            assertFalse(key, MessageMgr.CORRECTED.contains(key));
+            assertTrue(key, MessageMgr.RECOGNIZED_SECTIONS.contains(key));
+            String heading = MessageMgr.getMessageDisplay(key);
+            assertTrue(heading, heading.contains("<b>adm1 "));
+            assertFalse(heading, heading.contains("State"));
+            assertNull(MessageMgr.attention(key, heading));
+        }
+        MessageMgr m = new MessageMgr();
+        m.addToMessages(MessageMgr.adm1NameCorrected, SpecimenUploadParse.countrySpellingLine("Spain: Canary Islands", "Canarias"));
+        m.addToMessages(MessageMgr.adm1NameCorrected, SpecimenUploadParse.countrySpellingLine("Spain: Canary Islands", "Canarias"));
+        m.addToMessages(MessageMgr.adm1SpellingStored, SpecimenUploadParse.countrySpellingLine("Cuba: Guantanamo", "Guantánamo"));
+        m.addToMessages(MessageMgr.notValidAdm1, "Nowhere");     // an adm1 AntWeb does not know: still a note
+        assertEquals(0, m.getCorrectedCount());
+        assertEquals(3, m.getRecognizedCount());
+        int notes = m.getNoteCount();
+        assertEquals(1, notes);
+        for (MessageMgr.ReportSection sec : m.reportSections()) {
+            if (MessageMgr.RECOGNIZED_SECTIONS.contains(sec.key)) assertEquals(sec.key, MessageMgr.RECOGNIZED, sec.kind);
+        }
     }
 }

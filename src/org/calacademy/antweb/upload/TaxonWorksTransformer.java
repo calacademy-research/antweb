@@ -302,7 +302,7 @@ public class TaxonWorksTransformer extends Transformer {
             // I think it's easier to debug if we don't transform it into the valid country name here
             // 2026-11-10: also a country written with other capitals, accents or blanks than AntWeb's name (it was
             // dropped here and the specimen loaded as "country missing"). It is passed on as TaxonWorks wrote it;
-            // the upload of the line stores AntWeb's name and lists it under "Country spelling corrected".
+            // the upload of the line stores AntWeb's name and lists it under "Country written with other capitals, accents or blanks" (recognized, nothing to fix).
             if (StringUtils.isNotEmpty(country)) {
                 if (GeolocaleMgr.isCountryOrSpelling(country)) {
                     row.put("Country", line.get("country"));

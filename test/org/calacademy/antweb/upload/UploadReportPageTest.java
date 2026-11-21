@@ -356,7 +356,7 @@ public class UploadReportPageTest extends TestCase {
     static void assertTilesAreSectionSums(String page) {
         String[][] tiles = {{"notLoaded", MessageMgr.NOT_LOADED}, {"corrected", MessageMgr.CORRECTED_KIND},
             {"redFlagged", MessageMgr.RED_FLAG}, {"notes", MessageMgr.NOTE}, {"nameChanges", MessageMgr.NAME_CHANGE},
-            {"alreadyInAntweb", MessageMgr.ALREADY_IN_ANTWEB}};
+            {"alreadyInAntweb", MessageMgr.ALREADY_IN_ANTWEB}, {"recognized", MessageMgr.RECOGNIZED}};
         for (String[] t : tiles) {
             if (!page.contains("id=\"rep-count-" + t[0] + "\"")) continue;
             int sum = 0;

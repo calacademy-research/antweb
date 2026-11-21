@@ -195,23 +195,26 @@ public class CountrySpellingTest extends TestCase {
         assertFalse(GeolocaleMgr.isCountryOrSpelling(names, null, "México"));
     }
 
-    /** The upload report: its own section, counted as corrected (the curator is asked to fix the file), the line escaped. */
+    /** The upload report: its own section, recognized and not counted as corrected (2026-11-21: nothing to fix), the
+     *  line escaped. */
     public void testReportLineAndSection() {
         assertEquals("México -&gt; Mexico", SpecimenUploadParse.countrySpellingLine("México", "Mexico"));
         assertEquals("&lt;b&gt;MEXICO -&gt; Mexico", SpecimenUploadParse.countrySpellingLine("<b>MEXICO", "Mexico"));
 
-        assertTrue(MessageMgr.CORRECTED.contains(MessageMgr.countrySpellingCorrected));
+        assertFalse(MessageMgr.CORRECTED.contains(MessageMgr.countrySpellingCorrected));
+        assertTrue(MessageMgr.RECOGNIZED_SECTIONS.contains(MessageMgr.countrySpellingCorrected));
         assertFalse(MessageMgr.NAME_CHANGES.contains(MessageMgr.countrySpellingCorrected));
         String heading = MessageMgr.getMessageDisplay(MessageMgr.countrySpellingCorrected);
-        assertTrue(heading, heading.contains("Country spelling corrected"));
-        assertEquals("corrected", MessageMgr.attention(MessageMgr.countrySpellingCorrected, heading));
+        assertTrue(heading, heading.contains("Country written with other capitals, accents or blanks"));
+        assertNull(MessageMgr.attention(MessageMgr.countrySpellingCorrected, heading));
 
         MessageMgr m = new MessageMgr();
         m.addToMessages(MessageMgr.countrySpellingCorrected, SpecimenUploadParse.countrySpellingLine("México", "Mexico"));
         m.addToMessages(MessageMgr.countrySpellingCorrected, SpecimenUploadParse.countrySpellingLine("México", "Mexico"));
         m.addToMessages(MessageMgr.countrySpellingCorrected, SpecimenUploadParse.countrySpellingLine("Bolívia", "Bolivia"));
         m.addToMessages(MessageMgr.notValidCountries, "Equador");   // a country AntWeb does not know: a note, as before
-        assertEquals(3, m.getCorrectedCount());
+        assertEquals(0, m.getCorrectedCount());
+        assertEquals(3, m.getRecognizedCount());
         assertEquals(0, m.getNotLoadedCount());
         assertEquals(0, m.getNameChangeCount());
         MessageMgr.ReportSection section = null;
@@ -219,7 +222,7 @@ public class CountrySpellingTest extends TestCase {
             if (MessageMgr.countrySpellingCorrected.equals(s.key)) section = s;
         }
         assertNotNull(section);
-        assertEquals(MessageMgr.CORRECTED_KIND, section.kind);
+        assertEquals(MessageMgr.RECOGNIZED, section.kind);
         assertEquals(3, section.count);
         assertEquals("one row per spelling", 2, section.rows.size());
     }

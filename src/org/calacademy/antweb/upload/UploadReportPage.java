@@ -50,6 +50,7 @@ public final class UploadReportPage {
         GROUP_TITLES.put(MessageMgr.CORRECTED_KIND, "Other corrections (please fix in your data)");
         GROUP_TITLES.put(MessageMgr.RED_FLAG, "Red-flagged (loaded, hidden from most pages until fixed)");
         GROUP_TITLES.put(MessageMgr.NOTE, "Notes");
+        GROUP_TITLES.put(MessageMgr.RECOGNIZED, "Recognized under AntWeb's place names (nothing to fix)");
         GROUP_TITLES.put(MessageMgr.ALREADY_IN_ANTWEB, "Already in AntWeb (nothing to do)");
     }
 
@@ -68,6 +69,7 @@ public final class UploadReportPage {
         GROUP_LEADS.put(MessageMgr.CORRECTED_KIND, "AntWeb changed what your file said for these specimens and loaded them. Please make the same change in your own data, so the next upload does not need it.");
         GROUP_LEADS.put(MessageMgr.RED_FLAG, "These specimens were loaded with a red flag: until the problem is fixed they do not appear in most of AntWeb. Open a section to see them.");
         GROUP_LEADS.put(MessageMgr.NOTE, "Loaded. Worth a look: names AntCat does not know, places AntWeb does not recognise, and similar. Open a section to see it.");
+        GROUP_LEADS.put(MessageMgr.RECOGNIZED, "AntWeb recognized these countries and adm1s and loaded the specimens under its own name for the place: another name of it (an old name, or the name in another language), or the same name with other capitals, accents or punctuation. Nothing to fix in your data; listed so you can see where AntWeb filed them.");
         GROUP_LEADS.put(MessageMgr.ALREADY_IN_ANTWEB, "Another collection uploaded these codes first; AntWeb keeps their record. Nothing to fix in your data.");
     }
 
@@ -85,9 +87,9 @@ public final class UploadReportPage {
         ACTIONS.put(MessageMgr.invalidSubfamilyForGenusReplaced, "Filed under AntCat's subfamily for the genus.");
         ACTIONS.put(MessageMgr.specimenIdSpacesRemoved, "Spaces removed from the code; loaded.");
         ACTIONS.put(MessageMgr.codeQuoteReplaced, "Each double quote replaced by -; loaded.");
-        ACTIONS.put(MessageMgr.countrySpellingCorrected, "Loaded under AntWeb's spelling of the country (it differed only by capitals, accents or blanks).");
-        ACTIONS.put(MessageMgr.adm1NameCorrected, "Loaded under AntWeb's state: the file has another name of it (an old name, or the name in another language).");
-        ACTIONS.put(MessageMgr.adm1SpellingStored, "Loaded under AntWeb's state, which is written the same apart from capitals, accents or punctuation. Nothing to fix.");
+        ACTIONS.put(MessageMgr.countrySpellingCorrected, "Loaded under AntWeb's spelling of the country (it differed only by capitals, accents or blanks). Nothing to fix.");
+        ACTIONS.put(MessageMgr.adm1NameCorrected, "Loaded under AntWeb's adm1: the file has another name of it (an old name, or the name in another language). Nothing to fix.");
+        ACTIONS.put(MessageMgr.adm1SpellingStored, "Loaded under AntWeb's adm1, which is written the same apart from capitals, accents or punctuation. Nothing to fix.");
         ACTIONS.put(MessageMgr.invalidDateCollectedStart, "Loaded without this date.");
         ACTIONS.put(MessageMgr.invalidDateCollectedEnd, "Loaded without this date.");
         ACTIONS.put(MessageMgr.invalidDateDetermined, "Loaded without this date.");
@@ -183,7 +185,7 @@ public final class UploadReportPage {
         String stop = MessageMgr.getStopMessage();
         if (stop != null && !stop.isEmpty()) b.append("<div class=\"aw-msg\" id=\"rep-stop\">").append(stop).append("</div>\n");
 
-        summary(b, f, counts, notes, specimen);
+        summary(b, f, counts, notes, m.getRecognizedCount(), specimen);
 
         // The sections that found something, in their groups.
         for (Map.Entry<String, String> g : GROUP_TITLES.entrySet()) {
@@ -225,7 +227,7 @@ public final class UploadReportPage {
         return b.toString();
     }
 
-    private static void summary(StringBuilder b, Facts f, UploadNotice.Facts c, int notes, boolean specimen) {
+    private static void summary(StringBuilder b, Facts f, UploadNotice.Facts c, int notes, int recognized, boolean specimen) {
         b.append("<div class=\"aw-card rep-summary\" id=\"rep-summary\">\n");
         b.append("<table class=\"aw-kv rep-facts\">");
         kv(b, "File", f.uploadedFileHtml);
@@ -250,6 +252,7 @@ public final class UploadReportPage {
             tile(b, "corrected", "Corrected", c.corrected, c.corrected > 0);
         }
         tile(b, "notes", "Notes", notes, false);
+        if (recognized > 0) tile(b, "recognized", "Recognized", recognized, false);
         b.append("</div>\n");
 
         String sentence = UploadNotice.attentionSummary(c);
