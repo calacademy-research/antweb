@@ -330,8 +330,9 @@ public class IslandParseLineTest extends TestCase {
 
     /**
      * 2026-11-19: an old state name, or a valid state or old name written with other capitals, accents, blanks or
-     * punctuation, is stored as the valid state (Nimba County -> Nimba), and the report lists it under "State stored
-     * under AntWeb's name". Before, the valid state was found but the uploaded name stored.
+     * punctuation, is stored as the valid state (Nimba County -> Nimba), and the report lists it under "adm1 recognized
+     * under another name" (until 2026-11-21 "State stored under AntWeb's name"). Before, the valid state was found but
+     * the uploaded name stored.
      */
     public void testAnOldStateNameIsStoredAsTheValidState() throws Exception {
         String nimba = "Liberia | - | Nimba | Africa | Western Africa | Afrotropical";
@@ -340,12 +341,12 @@ public class IslandParseLineTest extends TestCase {
         assertEquals(nimba, place(parse("Liberia", "NIMBA COUNTY")));
         assertEquals(nimba, place(parse("Liberia", "nimba")));
         String report = report();
-        assertTrue(report, report.contains("State stored under AntWeb's name") && report.contains("Liberia: Nimba County -&gt; Nimba")
+        assertTrue(report, report.contains("adm1 recognized under another name") && report.contains("Liberia: Nimba County -&gt; Nimba")
             && report.contains("Liberia: NIMBA COUNTY -&gt; Nimba"));
         assertFalse(report, report.contains("Liberia: Nimba -&gt;"));
         assertFalse(report, report.contains("adm1Name=Nimba"));
         // 2026-11-20: "nimba" is Nimba written otherwise: its own section, after the other names, not a correction
-        int names = report.indexOf("State stored under AntWeb's name"), spelling = report.indexOf("State written with other capitals");
+        int names = report.indexOf("adm1 recognized under another name"), spelling = report.indexOf("adm1 written with other capitals");
         assertTrue(report, names >= 0 && spelling > names && report.indexOf("Liberia: nimba -&gt; Nimba") > spelling
             && report.indexOf("Liberia: Nimba County -&gt; Nimba") < spelling);
         assertFalse(MessageMgr.CORRECTED.contains(MessageMgr.adm1SpellingStored));
