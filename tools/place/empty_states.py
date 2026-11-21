@@ -7,11 +7,14 @@ A state is retired (is_valid = 0, no valid name: no longer listed, its page says
   - iso_states.py reports it: no ISO 3166-2 subdivision of its country is written like it (or NOT_ISO rules it out);
     countries whose ISO list is older than their units (Madagascar, the Central African Republic) are never touched,
     nor countries ISO gives no subdivisions;
-  - no specimen has it as adm1, written exactly or with other capitals, accents or punctuation;
+  - no specimen has it as adm1, written exactly or with other capitals, accents or punctuation, under its country
+    in any spelling or by an old name of the country;
   - no old-name row leads to it (an upload of that name would find a state that is not valid);
   - no species list entry other than from specimens (geolocale_taxon: curator, antwiki or any other source), and no
     curator dispute (geolocale_taxon_dispute);
-  - no page text under its name (object_edit; keyed by name alone).
+  - no page text under its name (object_edit; keyed by name alone);
+  - no place row has it as parent (an adm2, which AntWeb does not load, or anything else).
+The update itself skips a state a specimen was uploaded to since the plan was read (its exact name).
 Each state that fails one is listed with the reason and left as it is.
 
   python3 empty_states.py                     plan only: the summary, and the plan in <folder>/plan.tsv
@@ -21,8 +24,8 @@ Each state that fails one is listed with the reason and left as it is.
   python3 empty_states.py --skip FILE         lines "country|state" left alone
   python3 empty_states.py --project /root/antweb-next      staging (default: the project on this server)
 
-Rollback (same server, the date or --tag of the run):
-  update geolocale g join empty_states_bak_<date> b on b.id = g.id set g.is_valid = b.is_valid, g.valid_name = b.valid_name, g.admin_notes = b.admin_notes;
+Rollback (same server, the date or --tag of the run; only rows still as the run left them, so a later edit stays):
+  update geolocale g join empty_states_bak_<date> b on b.id = g.id set g.is_valid = b.is_valid, g.valid_name = b.valid_name, g.admin_notes = b.admin_notes where g.is_valid = 0 and g.valid_name <=> b.valid_name and g.admin_notes like '%empty_states <date>: retired%';
 then reload the places (util.do?action=reloadAntwebMgr&name=geolocale, administrator). Nothing else is changed: the
 rows keep their ids, so a state put back has its lists and counts as before."""
 import argparse
@@ -48,14 +51,15 @@ def candidates(valid, reported):
     return sorted((ids[(c, n)], c, n) for c, n, s, why in reported if s == 0 and why.startswith(NOT_IN_ISO) and (c, n) in ids)
 
 
-def blockers(cands, spelled, olds, lists, disputes, texts):
-    """{id: reason} for the candidates that must stay. spelled: Counter((country, key(adm1))) of specimens; olds:
-    {(country, valid name): [old names]}; lists: {id: {source: rows}}; disputes: Counter(id); texts: set(normal(key))."""
-    out = {}
+def blockers(cands, spelled, olds, lists, disputes, texts, children=None):
+    """{id: reason} for the candidates that must stay. spelled: Counter((key(valid country), key(adm1))) of specimens;
+    olds: {(country, valid name): [old names]}; lists: {id: {source: rows}}; disputes: Counter(id); texts:
+    set(normal(key)); children: Counter((country, name)) of place rows whose parent is the state."""
+    out, children = {}, children or {}
     for i, c, n in cands:
         why = []
-        if spelled.get((c, iso.key(n))):
-            why.append("%d specimens with the name written otherwise" % spelled[(c, iso.key(n))])
+        if spelled.get((iso.key(c), iso.key(n))):
+            why.append("%d specimens with the name written otherwise" % spelled[(iso.key(c), iso.key(n))])
         if olds.get((c, n)):
             why.append("old names lead to it (%s)" % ", ".join(sorted(olds[(c, n)])[:3]))
         other = {s: k for s, k in lists.get(i, {}).items() if s != "specimen"}
@@ -65,6 +69,8 @@ def blockers(cands, spelled, olds, lists, disputes, texts):
             why.append("%d curator disputes" % disputes[i])
         if iso.normal(n) in texts:
             why.append("page text under its name")
+        if children.get(n):
+            why.append("%d places under it" % children[n])
         if why:
             out[i] = "; ".join(why)
     return out
@@ -75,14 +81,23 @@ def plan_lines(cands, blocked):
 
 
 def retire_sql(ids, tag):
-    return ["update geolocale set is_valid = 0, admin_notes = concat(ifnull(concat(admin_notes, '\\n'), ''), %s) "
-            "where georank = 'adm1' and is_valid = 1 and id in (%s)" % (iso.q(NOTE % tag), ",".join(map(str, sorted(ids))))]
+    # a specimen uploaded to the state since the plan was read keeps it (review of #407)
+    return ["update geolocale g set g.is_valid = 0, g.admin_notes = concat(ifnull(concat(g.admin_notes, '\\n'), ''), %s) "
+            "where g.georank = 'adm1' and g.is_valid = 1 and g.id in (%s) "
+            "and not exists (select 1 from specimen s where s.country = g.parent and s.adm1 = g.name)" % (iso.q(NOTE % tag), ",".join(map(str, sorted(ids))))]
 
 
 def read_checks(db, ids):
+    # a specimen's country in any spelling, or an old name of a country, counts for that country (review of #407)
+    country_of = {}
+    for r in pf.run_sql(db, "select " + pf.hx("name") + ", ifnull(is_valid, 0), " + pf.hx("valid_name") + " from geolocale where georank = 'country'"):
+        name, valid, vn = pf.unhex(r[0]), r[1] == "1", pf.unhex(r[2])
+        if not valid and vn:
+            country_of[iso.key(name)] = iso.key(vn)
     spelled = collections.Counter()
     for r in pf.run_sql(db, "select " + pf.hx("country") + ", " + pf.hx("adm1") + ", count(*) from specimen where adm1 <> '' group by 1, 2"):
-        spelled[(pf.unhex(r[0]), iso.key(pf.unhex(r[1])))] += int(r[2])
+        ck = iso.key(pf.unhex(r[0]))
+        spelled[(country_of.get(ck, ck), iso.key(pf.unhex(r[1])))] += int(r[2])
     lists, disputes = collections.defaultdict(dict), collections.Counter()
     if ids:
         inl = ",".join(map(str, ids))
@@ -91,7 +106,9 @@ def read_checks(db, ids):
         for r in pf.run_sql(db, "select geolocale_id, count(*) from geolocale_taxon_dispute where geolocale_id in (%s) group by 1" % inl):
             disputes[int(r[0])] = int(r[1])
     texts = {iso.normal(pf.unhex(r[0])) for r in pf.run_sql(db, "select distinct " + pf.hx("object_key") + " from object_edit")}
-    return spelled, lists, disputes, texts
+    children = collections.Counter(pf.unhex(r[0]) for r in pf.run_sql(
+        db, "select " + pf.hx("parent") + " from geolocale where georank not in ('country', 'region', 'subregion', 'adm1')"))
+    return spelled, lists, disputes, texts, children
 
 
 def main(argv=None):
@@ -118,8 +135,8 @@ def main(argv=None):
     valid, olds, names = iso.read_db(db)
     decisions, reported, nocountry = iso.plan(valid, olds, iso.read_iso(), iso.read_countries(), skip)
     cands = candidates(valid, reported)
-    spelled, lists, disputes, texts = read_checks(db, [i for i, c, n in cands])
-    blocked = blockers(cands, spelled, olds, lists, disputes, texts)
+    spelled, lists, disputes, texts, children = read_checks(db, [i for i, c, n in cands])
+    blocked = blockers(cands, spelled, olds, lists, disputes, texts, children)
     lines = plan_lines(cands, blocked)
     retire = [i for i, c, n in cands if i not in blocked]
     plan_file = os.path.join(folder, "plan.tsv")
@@ -154,12 +171,22 @@ def main(argv=None):
     if int(pf.run_sql(db, "select count(*) from information_schema.tables where table_schema = database() and table_name = '%s'" % bak)[0][0]):
         raise SystemExit("The backup table %s exists already: not applied twice. Nothing was changed." % bak)
     inl = ",".join(map(str, sorted(retire)))
+    # the backup is made empty first (CREATE TABLE commits), then filled in the change's transaction; a failed change
+    # drops it again, so the day stays open (review of #407)
     pf.run_sql(db, "create table %s as select id, name, parent, is_valid, valid_name, admin_notes from geolocale where false" % bak)
-    pf.run_sql(db, "start transaction;\ninsert into %s select id, name, parent, is_valid, valid_name, admin_notes from geolocale where id in (%s);\n"
-               % (bak, inl) + ";\n".join(retire_sql(retire, tag)) + ";\ncommit;")
+    try:
+        pf.run_sql(db, "start transaction;\ninsert into %s select id, name, parent, is_valid, valid_name, admin_notes from geolocale where id in (%s);\n"
+                   % (bak, inl) + ";\n".join(retire_sql(retire, tag)) + ";\ncommit;")
+    except pf.SqlFailed:
+        if pf.run_sql(db, "select count(*) from " + bak)[0][0] == "0":
+            pf.run_sql(db, "drop table " + bak)
+            print("The change failed and was not made; the empty backup table was dropped.")
+        else:
+            print("The backup table %s is filled: the change may have been committed after all (a lost connection). Check before anything else." % bak)
+        raise
     print("backup: %s rows in %s" % (pf.run_sql(db, "select count(*) from " + bak)[0][0], bak))
     left = pf.run_sql(db, "select count(*) from geolocale where id in (%s) and is_valid = 1" % inl)[0][0]
-    print("after: states of the plan still valid %s (expect 0)" % left)
+    print("after: states of the plan still valid %s (expect 0; more: a specimen was uploaded to them since the plan)" % left)
     print("Now reload the places: /util.do?action=reloadAntwebMgr&name=geolocale")
     return 0
 

@@ -1,7 +1,7 @@
 """tools/place/empty_states.py against a real MySQL (8.4 in CI): plan, apply, the header's rollback (2026-11-21).
 
 Latvia's states: an empty former district (retired), one with specimens written otherwise, one an old name leads to,
-one with a curator species list, one with page text (all kept), and Riga (an ISO subdivision, never a candidate);
+one with a curator species list, one with page text (all kept; the specimen's country written LATVIA), and Riga (an ISO subdivision, never a candidate);
 Madagascar's empty region (its ISO list is older: never touched). --apply refuses without a reviewed plan; the change
 sets is_valid = 0 on the one state with a backup row; the rollback in the module's header puts it back exactly; a
 second apply the same day is refused.
@@ -65,7 +65,7 @@ def fresh():
              create table object_edit (object_key varchar(250), title varchar(100), content text) default charset=utf8mb3;""")
     mysql("insert into geolocale (id, name, georank, parent, source, is_valid, valid_name) values "
           + ",".join("(%d, %s, 'adm1', %s, 'antweb', %d, %s)" % (i, lit(n), lit(p), v, lit(vn)) for i, n, p, v, vn in PLACES)
-          + "; insert into specimen values ('s1', 'Latvia', 'balvu old district'), ('s2', 'Latvia', 'Riga')"
+          + "; insert into specimen values ('s1', 'LATVIA', 'balvu old district'), ('s2', 'Latvia', 'Riga')"
           + "; insert into geolocale_taxon values (5, 'Formicinaelasius niger', 'curator'), (1, 'Formicinaelasius flavus', 'specimen')"
           + "; insert into object_edit values ('Jelgavas Old District', 'overview', 'text')")
 
@@ -92,6 +92,16 @@ def check_plan_apply_rollback(project):
             assert "No plan" in str(e), e
         code, out = run(project, folder)
         assert "retire 1, keep 4" in out, out
+        # review of #407: a change that fails (a trigger refuses it) changes nothing and drops its empty backup
+        mysql("create trigger no_update before update on geolocale for each row signal sqlstate '45000' set message_text = 'refused'")
+        try:
+            run(project, folder, "--apply")
+            raise AssertionError("the change should have failed")
+        except es.pf.SqlFailed:
+            pass
+        mysql("drop trigger no_update")
+        assert snapshot() == before and not mysql("select table_name from information_schema.tables where table_schema = database()"
+                                                  " and table_name like 'empty\\_states\\_bak%'"), "a failed apply left something behind"
         plan = open(os.path.join(folder, "plan.tsv"), encoding="utf-8").read()
         assert "retire\tLatvia\tAglonas Old District\t1" in plan and "Riga" not in plan and "Analamanga" not in plan, plan
         assert snapshot() == before, "the plan changed the database"
@@ -108,6 +118,11 @@ def check_plan_apply_rollback(project):
     rollback = es.__doc__.split("Rollback")[1].split("then reload")[0].strip().split("\n")[1:]
     mysql("\n".join(l.strip().replace("<date>", TAG) for l in rollback if l.strip()))
     assert snapshot() == before, "the rollback did not put the rows back"
+    # a row edited after the run is left alone by the rollback
+    mysql("update geolocale set is_valid = 0, admin_notes = 'empty_states %s: retired' where id = 1" % TAG)
+    mysql("update geolocale set admin_notes = 'edited by a curator' where id = 1")
+    mysql("\n".join(l.strip().replace("<date>", TAG) for l in rollback if l.strip()))
+    assert mysql("select is_valid, admin_notes from geolocale where id = 1") == [["0", "edited by a curator"]]
 
 
 if __name__ == "__main__":
