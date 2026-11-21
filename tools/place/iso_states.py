@@ -266,7 +266,7 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
     # filed under the state (AntWeb has Cordoba as an old name of Andalusia; Andalusia is the community by its English
     # name, not Córdoba).
     own, trans, shapes = (collections.defaultdict(set) for _ in range(3))
-    looser = collections.defaultdict(set)
+    looser, loose_named = collections.defaultdict(set), collections.defaultdict(set)
     for s in subs:
         for index, names in ((own, iso_names(s)), (trans, s.others), (shapes, s.shapes)):
             for n in names:
@@ -275,8 +275,14 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
         for n in sub_names(s):
             if loose(n):
                 looser[loose(n)].add(s.code)
+        for n in iso_names(s) + list(s.others):
+            if loose(n):
+                loose_named[loose(n)].add(s.code)
     hits, how = {}, {}
     exonyms, not_iso = exonyms or {}, not_iso or {}
+    # First pass: the state's own name, in ISO's names and their translations (tiers 0 and 1), and failing that its
+    # own name loosely (generic words off), to learn the country's main kind before any old name is tried.
+    first = {}
     for st in states:
         k = key(st.name)
         if k in not_iso or st.name in not_iso:  # not the subdivision its name resembles: no hit
@@ -286,15 +292,41 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
         if code in by_code:                      # the subdivision this state is, by AntWeb's name ISO does not carry
             hits[st.id], how[st.id] = {code}, "table"
             continue
-        name, olds = [st.name], list(st.old_names)
-        tiers = [(own, name), (trans, name), (own, olds), (trans, olds), (shapes, name), (shapes, olds)]
         h, tier = set(), None
-        for i, (index, names) in enumerate(tiers):
-            for n in names:
-                h |= index.get(key(n), set())
+        for i, index in enumerate((own, trans)):
+            h = set(index.get(k, set()))
             if h:
                 tier = i
                 break
+        if tier is None:
+            first[st.id] = (looser.get(loose(st.name), set()) if loose(st.name) else set(), None)
+        else:
+            first[st.id] = (h, tier)
+    kinds = collections.Counter(by_code[next(iter(h))].type for h, t in first.values() if len(h) == 1)
+    early = kinds.most_common(1)[0][0] if kinds else None
+    for st in states:
+        if st.id not in first:
+            continue
+        name, olds = [st.name], list(st.old_names)
+        tiers = [(own, name), (trans, name), (own, olds), (trans, olds), (shapes, name), (shapes, olds)]
+        h, tier = first[st.id]
+        if tier is None:
+            h = set()
+            # the state's own name loosely, in ISO's names and translations of the main kind, before its old names:
+            # "Liberecký" is Liberecký kraj (a region, as Czechia's other states are), not its old name Liberec (a
+            # district); "Kauno" is Kauno apskritis, not Kaunas or Kauno miestas. Only a name that leaves out generic
+            # words, never one that adds them: "Kiev City" with the old name Kiev goes on to its old name.
+            same = {c for c in loose_named.get(loose(st.name), set()) if by_code[c].type == early and shorter(st.name, by_code[c])} \
+                if early and loose(st.name) else set()
+            if len(same) == 1:
+                hits[st.id], how[st.id] = same, "loose"
+                continue
+            for i, (index, names) in enumerate(tiers[2:], 2):
+                for n in names:
+                    h |= index.get(key(n), set())
+                if h:
+                    tier = i
+                    break
         # a translation or shape name that another subdivision also carries (in any tier but ISO's own names) is
         # ambiguous: all of them count, and the state is matched only if the kind decides it (iso-codes has "Brest"
         # as a translation of Vitebsk province; the boundary file has Brest as Brest's shape name)

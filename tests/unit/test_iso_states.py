@@ -394,6 +394,23 @@ def test_a_name_two_subdivisions_carry_is_not_a_match():
     assert ("rename", "Jelgavas", "Jelgavas novads") in {(x["action"], x["name"], x["target"]) for x in out}, out
 
 
+def test_the_state_s_own_name_loosely_comes_before_its_old_names():
+    # the first pass renamed Liberecký (old name Liberec) to the district Liberec and Kauno (old name Kaunas) to the
+    # city municipality Kauno miestas: the state's own name, generic words off, within the country's main kind, counts first
+    cz = iso.read_iso()["CZ"]
+    d, rep = iso.match_country([st(1, "Liberecký", 4, olds=("Liberec",)), st(2, "Karlovarský", 2, olds=("Karlovy Vary",)),
+                                st(3, "Jihomoravský", 9), st(4, "Zlínský", 1, olds=("Zlín",))], cz)
+    got = {s.name: (a, sub.code) for a, s, sub, k in d}
+    assert got == {"Liberecký": ("rename", "CZ-51"), "Karlovarský": ("rename", "CZ-41"), "Jihomoravský": ("rename", "CZ-64"),
+                   "Zlínský": ("rename", "CZ-72")}, (got, rep)
+    lt = iso.read_iso()["LT"]
+    d, rep = iso.match_country([st(1, "Kauno", 6, olds=("Kaunas",)), st(2, "Vilniaus", 3, olds=("Vilnius",)), st(3, "Utenos", 1),
+                                st(4, "Alytaus", 2)], lt)
+    got = {s.name: (a, sub.code, iso.display(sub.name)) for a, s, sub, k in d}
+    assert got["Kauno"] == ("rename", "LT-KU", "Kauno apskritis") and got["Vilniaus"][1] == "LT-VL" and got["Alytaus"][1] == "LT-AL", (got, rep)
+    assert not [x for x in d if x[0] == "merge"], d
+
+
 def test_the_iso_file_reads():
     subs = iso.read_iso()
     # translations and the boundary file's shape names are separate columns
