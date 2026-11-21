@@ -531,6 +531,16 @@ def test_english_rename_review_cases():
     assert got == {("rename", "Chelyabin", "Chelyabinsk")}, got        # ISO's form is an old name already
 
 
+def test_an_alias_waits_for_its_english_rename():
+    # second review of #403: when the rename to the English name is left out (here: another state is an old name
+    # Chelyabinsk already), the ISO form is not added under that name either
+    out, rep, noc = iso.plan({"Russia": [(1, "Chelyabinskaya", 4)]}, {}, iso.read_iso(), iso.read_countries())
+    names = {("Russia", "Chelyabinsk"): [(7, 0, "Kurgan")]}
+    sql, left, done = iso.statements(out, names, "20261121")
+    assert not done and not sql, (done, sql)
+    assert len(left) == 2 and any("not added: the rename to Chelyabinsk was left out" in l for l in left), left
+
+
 def test_bern_not_berne():
     # 2026-11-21: ISO gives the canton two names; AntWeb uses Bern (the canton's language and the English name)
     out, rep, noc = iso.plan({"Switzerland": [(1, "Berne", 198)]}, {}, iso.read_iso(), iso.read_countries())

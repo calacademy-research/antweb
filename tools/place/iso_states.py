@@ -708,6 +708,9 @@ def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, 
             continue
         c, name, iso = d["country"], d["name"], d["iso"]
         under = d.get("target") or name          # the state's name after this run (its English name when renamed)
+        if under != name and d["id"] in blocked:  # its rename to under was left out: no valid state would carry under
+            left.append("%s: %s, ISO name %s not added: the rename to %s was left out" % (c, name, iso, under))
+            continue
         if names.get((c, iso)):
             left.append("%s: %s, a row named %s exists already (ISO name not added)" % (c, name, iso))
             continue
