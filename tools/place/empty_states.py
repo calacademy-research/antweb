@@ -54,7 +54,7 @@ def candidates(valid, reported):
 def blockers(cands, spelled, olds, lists, disputes, texts, children=None):
     """{id: reason} for the candidates that must stay. spelled: Counter((key(valid country), key(adm1))) of specimens;
     olds: {(country, valid name): [old names]}; lists: {id: {source: rows}}; disputes: Counter(id); texts:
-    set(normal(key)); children: Counter(name) of place rows (not countries, regions or states) whose parent has the
+    set(normal(key)); children: Counter(normal(name)) of place rows (not countries, regions or states) whose parent has the
     state's name, in any country: a name shared with another country's state keeps it too (on the safe side)."""
     out, children = {}, children or {}
     for i, c, n in cands:
@@ -70,8 +70,8 @@ def blockers(cands, spelled, olds, lists, disputes, texts, children=None):
             why.append("%d curator disputes" % disputes[i])
         if iso.normal(n) in texts:
             why.append("page text under its name")
-        if children.get(n):
-            why.append("%d places under it" % children[n])
+        if children.get(iso.normal(n)):
+            why.append("%d places under it" % children[iso.normal(n)])
         if why:
             out[i] = "; ".join(why)
     return out
@@ -82,10 +82,11 @@ def plan_lines(cands, blocked):
 
 
 def retire_sql(ids, tag):
-    # a specimen uploaded to the state since the plan was read keeps it (review of #407)
+    # a specimen uploaded to the state since the plan was read keeps it (review of #407); compared as bytes, so the
+    # two tables' collations never mix (as iso_states.py does)
     return ["update geolocale g set g.is_valid = 0, g.admin_notes = concat(ifnull(concat(g.admin_notes, '\\n'), ''), %s) "
             "where g.georank = 'adm1' and g.is_valid = 1 and g.id in (%s) "
-            "and not exists (select 1 from specimen s where s.country = g.parent and s.adm1 = g.name)" % (iso.q(NOTE % tag), ",".join(map(str, sorted(ids))))]
+            "and not exists (select 1 from specimen s where binary s.country = binary g.parent and binary s.adm1 = binary g.name)" % (iso.q(NOTE % tag), ",".join(map(str, sorted(ids))))]
 
 
 def read_checks(db, ids):
@@ -107,7 +108,7 @@ def read_checks(db, ids):
         for r in pf.run_sql(db, "select geolocale_id, count(*) from geolocale_taxon_dispute where geolocale_id in (%s) group by 1" % inl):
             disputes[int(r[0])] = int(r[1])
     texts = {iso.normal(pf.unhex(r[0])) for r in pf.run_sql(db, "select distinct " + pf.hx("object_key") + " from object_edit")}
-    children = collections.Counter(pf.unhex(r[0]) for r in pf.run_sql(
+    children = collections.Counter(iso.normal(pf.unhex(r[0])) for r in pf.run_sql(
         db, "select " + pf.hx("parent") + " from geolocale where ifnull(georank, '') not in ('country', 'region', 'subregion', 'adm1')"))
     return spelled, lists, disputes, texts, children
 
@@ -141,7 +142,8 @@ def main(argv=None):
     lines = plan_lines(cands, blocked)
     retire = [i for i, c, n in cands if i not in blocked]
     plan_file = os.path.join(folder, "plan.tsv")
-    header = "# empty_states %s, %s: action, country, state, id (retire) or why it stays (keep)" % (tag, db.project)
+    header = "# empty_states %s, %s, container %s, database %s: action, country, state, id (retire) or why it stays (keep)" % (
+        tag, db.project, args.container, args.database)
     if args.apply:
         if not os.path.exists(plan_file):
             raise SystemExit("No plan in %s: run without --apply first and review it. Nothing was changed." % plan_file)

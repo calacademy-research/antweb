@@ -37,7 +37,7 @@ def test_reasons_to_keep():
     lists = {3: {"curator": 5, "specimen": 1}, 6: {"specimen": 3}}             # stale specimen rows do not keep a state
     disputes = collections.Counter({4: 1})
     texts = {iso.normal("E")}
-    got = es.blockers(cands, spelled, olds, lists, disputes, texts, collections.Counter({"G": 1}))
+    got = es.blockers(cands, spelled, olds, lists, disputes, texts, collections.Counter({iso.normal("g"): 1}))   # written "g"
     assert sorted(got) == [1, 2, 3, 4, 5, 7, 8], got
     assert "written otherwise" in got[1] and "old names" in got[2] and "curator 5" in got[3] and "disputes" in got[4] and "page text" in got[5]
     assert "places under it" in got[7] and "written otherwise" in got[8]
@@ -56,7 +56,7 @@ def test_the_sql_and_the_rollback():
     assert sql == ["update geolocale g set g.is_valid = 0, g.admin_notes = concat(ifnull(concat(g.admin_notes, '\\n'), ''), "
                    + iso.q("empty_states 20261121: retired, no ISO 3166-2 subdivision and no specimens")
                    + ") where g.georank = 'adm1' and g.is_valid = 1 and g.id in (3,7)"
-                   " and not exists (select 1 from specimen s where s.country = g.parent and s.adm1 = g.name)"], sql
+                   " and not exists (select 1 from specimen s where binary s.country = binary g.parent and binary s.adm1 = binary g.name)"], sql
     assert "update geolocale g join empty_states_bak_<date> b on b.id = g.id set g.is_valid = b.is_valid" in es.__doc__
     # the rollback puts back only a row whose note is exactly what the run wrote (second review of #407)
     assert ("g.admin_notes <=> concat(ifnull(concat(b.admin_notes, '\\n'), ''), '" + es.NOTE % "<date>" + "')") in es.__doc__
