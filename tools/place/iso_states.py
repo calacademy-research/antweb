@@ -5,9 +5,13 @@ changing, so this is run again about once a year with a new iso3166_2.tsv, see b
 Each valid state (adm1) is matched to an ISO 3166-2 subdivision of its country: by its name, or by one of its old names
 (rows that are not valid and lead to it), against the ISO name, its translations and the geoBoundaries shape names of
 that subdivision, written alike (capitals, accents, blanks and punctuation aside, as GeolocaleMgr.adm1SpellingKey).
-When none is written alike, a name with the generic words left out ("Kherson" for "Khersonska oblast") is tried, and
-used only when it finds exactly one subdivision, no other state finds it too, and the state leaves out a generic word
-of the ISO name (Banskobystrický, Banskobystrický kraj), never adds one ("Kiev Oblast" is not the city Kiev).
+The state's own name comes first. When it is not written alike, its name with the generic words left out
+("Liberecký" for "Liberecký kraj") is tried among ISO's names and translations of the country's main kind (the kind its
+states match by their own names), before its old names: an old name can be a finer unit (Liberec, a district). It is
+used when it finds exactly one subdivision, the state leaves out a generic word of the ISO name and never adds one, and
+no old name of the state is written as another subdivision of the main kind (then the state is reported). Failing all
+that, a looser name of any kind is tried last, with the same rules: used only when it finds exactly one subdivision, no
+other state finds it too, and the state leaves out a generic word ("Kiev Oblast" is not the city Kiev).
 Specimens are matched by the exact name (a spelling with other capitals or accents stays; the plan counts those
 written exactly).
 
@@ -299,10 +303,14 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
                 tier = i
                 break
         if tier is None:
-            first[st.id] = (looser.get(loose(st.name), set()) if loose(st.name) else set(), None)
+            first[st.id] = (loose_named.get(loose(st.name), set()) if loose(st.name) else set(), None)
         else:
             first[st.id] = (h, tier)
-    kinds = collections.Counter(by_code[next(iter(h))].type for h, t in first.values() if len(h) == 1)
+    # the main kind from the states found by their own names; only when none is, from their own names loosely (ISO's
+    # names and translations, not the boundary file's shape names: review of #400)
+    kinds = collections.Counter(by_code[next(iter(h))].type for h, t in first.values() if len(h) == 1 and t is not None)
+    if not kinds:
+        kinds = collections.Counter(by_code[next(iter(h))].type for h, t in first.values() if len(h) == 1)
     early = kinds.most_common(1)[0][0] if kinds else None
     for st in states:
         if st.id not in first:
@@ -318,8 +326,14 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
             # words, never one that adds them: "Kiev City" with the old name Kiev goes on to its old name.
             same = {c for c in loose_named.get(loose(st.name), set()) if by_code[c].type == early and shorter(st.name, by_code[c])} \
                 if early and loose(st.name) else set()
-            if len(same) == 1:
+            # an old name written as another subdivision of the main kind disagrees: both count, and the state is
+            # reported (review of #400); an old name of another kind (Liberec, a district) does not
+            old_hits = {c for n in olds for index in (own, trans) for c in index.get(key(n), set()) if by_code[c].type == early}
+            if len(same) == 1 and not old_hits - same:
                 hits[st.id], how[st.id] = same, "loose"
+                continue
+            if len(same) == 1:
+                hits[st.id], how[st.id] = same | old_hits, "exact"
                 continue
             for i, (index, names) in enumerate(tiers[2:], 2):
                 for n in names:
@@ -327,10 +341,11 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
                 if h:
                     tier = i
                     break
-        # a translation or shape name that another subdivision also carries (in any tier but ISO's own names) is
-        # ambiguous: all of them count, and the state is matched only if the kind decides it (iso-codes has "Brest"
-        # as a translation of Vitebsk province; the boundary file has Brest as Brest's shape name)
-        if tier is not None and tier > 0:
+        # a translation or shape name that another subdivision also carries (in any tier but ISO's own names, by the
+        # state's name or an old name) is ambiguous: all of them count, and the state is matched only if the kind
+        # decides it (iso-codes has "Brest" as a translation of Vitebsk province; the boundary file has Brest as
+        # Brest's shape name)
+        if tier is not None and tier not in (0, 2):
             for n in tiers[tier][1]:
                 h |= trans.get(key(n), set()) | shapes.get(key(n), set())
         # a translation or shape name joins the state's own ISO-name hit only when the state is that subdivision's ISO

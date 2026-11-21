@@ -1,4 +1,5 @@
 """tools/place/iso_states.py: AntWeb's states under their ISO 3166-2 names (2026-11-20)."""
+import collections
 import os
 import sys
 
@@ -339,6 +340,10 @@ def test_every_exonym_is_a_subdivision_of_its_country():
         codes = {x.code for x in subs[a2]}
         for name, code in names.items():
             assert code in codes, (country, name, code)
+        # looked up by key(): two entries of one country must not share a key (the later would win unseen)
+        assert len({iso.key(n) for n in names}) == len(names), country
+    seen = collections.Counter((iso.key(c), iso.key(n)) for c, n in iso.NOT_ISO)
+    assert not [k for k, v in seen.items() if v > 1], seen
     for (country, name), why in iso.NOT_ISO.items():
         assert iso.key(country) in countries and why
 
@@ -360,7 +365,8 @@ def test_exonyms_and_states_that_are_not_iso():
     # Quezon City alone (no loose rule to fall back on) and written otherwise: still not Quezon province; a table entry
     # found with other capitals or accents (Castilla-Leon for Castile-Leon is not one; CASTILE-LEON is)
     out, rep, noc = iso.plan({"Philippines": [(8, "quezon city", 900)], "Spain": [(9, "CASTILE-LEON", 37)]}, {}, subs, iso.read_countries())
-    assert [(x["name"], x["code"]) for x in out] == [("CASTILE-LEON", "ES-CL")] and rep[0][3].startswith("not an ISO"), (out, rep)
+    assert [(x["name"], x["code"]) for x in out] == [("CASTILE-LEON", "ES-CL")], (out, rep)
+    assert [r for r in rep if r[1] == "quezon city"][0][3].startswith("not an ISO"), rep
 
 
 def test_a_table_entry_decides_over_iso_names_and_finds_its_country_by_any_name():
@@ -409,6 +415,15 @@ def test_the_state_s_own_name_loosely_comes_before_its_old_names():
     got = {s.name: (a, sub.code, iso.display(sub.name)) for a, s, sub, k in d}
     assert got["Kauno"] == ("rename", "LT-KU", "Kauno apskritis") and got["Vilniaus"][1] == "LT-VL" and got["Alytaus"][1] == "LT-AL", (got, rep)
     assert not [x for x in d if x[0] == "merge"], d
+
+
+def test_an_old_name_of_the_main_kind_that_disagrees_is_reported():
+    # review of #400: Liberecký loosely is Liberecký kraj, but an old name written as another region (Karlovarský kraj)
+    # disagrees: reported, not renamed
+    cz = iso.read_iso()["CZ"]
+    d, rep = iso.match_country([st(1, "Liberecký", 4, olds=("Karlovarský kraj",)), st(2, "Jihomoravský kraj", 9),
+                                st(3, "Plzeňský kraj", 3)], cz)
+    assert "Liberecký" not in {s.name for a, s, sub, k in d} and "Liberecký" in {r[0].name for r in rep}, (d, rep)
 
 
 def test_the_iso_file_reads():
