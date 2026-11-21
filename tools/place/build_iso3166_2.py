@@ -9,7 +9,7 @@ files are on disk (not on the servers):
 
   pip install pycountry
   python3 build_iso3166_2.py --geoboundaries DIR > iso3166_2.tsv      DIR holds <ISO3>-ADM1.geojson files
-  python3 build_iso3166_2.py --countries > iso3166_countries.tsv     the countries (alpha-2, names) for matching
+  python3 build_iso3166_2.py --countries > iso3166_countries.tsv     the countries (alpha-2, alpha-3, names) for matching
 
 Columns: code, country (ISO alpha-2), type, parent code, the ISO name, its translations, the boundary file's shape
 names ( | between names). Translations are ISO's own (iso-codes); the shape names carry the boundary file's ISO code,

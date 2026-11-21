@@ -198,8 +198,12 @@ def check_country_codes(project):
         run(project, folder, "--codes", "--apply")       # nothing left to fill: no second change
     except SystemExit as e:
         raise AssertionError("a run with nothing to fill must end quietly: %s" % e)
-    mysql("update geolocale g join iso_codes_bak_%s b on b.id = g.id set g.isoCode = b.isoCode, g.iso3Code = b.iso3Code" % TAG)
-    assert mysql("select ifnull(isoCode, '-'), iso3Code from geolocale where id = 23") == [["", ""]]
+    rollback = out.split("Rollback: ")[1].split("\n")[0]
+    # a code fixed by hand after the run stays (review of #405): Russia's alpha-3 written otherwise is not put back
+    mysql("update geolocale set iso3Code = 'RUX' where id = 23")
+    mysql(rollback)
+    assert mysql("select ifnull(isoCode, '-'), ifnull(iso3Code, '-') from geolocale where id in (20, 22, 23) order by id") == [["-", "-"], ["-", "-"], ["RU", "RUX"]]
+    mysql("update geolocale set isoCode = '', iso3Code = '' where id = 23")
     mysql("drop table iso_codes_bak_%s" % TAG)
     # review of #405: a change that fails (here a trigger refuses the update) changes nothing and drops its empty
     # backup, so the run can be made again the same day

@@ -595,6 +595,8 @@ def country_codes(rows, countries=None, a3=None):
     fills, differ, missing, want = [], [], [], {}
     for i, name, c2, c3 in rows:
         code = EXTRA_CODES.get(name) or ((countries[key(name)], a3.get(countries[key(name)], "")) if key(name) in countries else None)
+        if code and not all(code):          # an alpha-2 with no alpha-3 in the file: not found (review of #405)
+            code = None
         if not code:
             missing.append(name + (" (stored %s/%s)" % (c2 or "", c3 or "") if c2 or c3 else ""))
             continue
@@ -606,9 +608,9 @@ def country_codes(rows, countries=None, a3=None):
     for i, name, c2, c3 in rows:
         for c in {c2 or (want.get(i) or ("", ""))[0], c3 or (want.get(i) or ("", ""))[1]} - {""}:
             carriers[c].append(name)
-    differs = {d[0] for d in differ}
+    differs = {i for i, name, c2, c3 in rows if i in want and ((c2 or "") and c2 != want[i][0] or (c3 or "") and c3 != want[i][1])}
     for i, name, c2, c3 in rows:
-        if i not in want or name in differs:
+        if i not in want or i in differs:
             continue
         shared = sorted({c for c in want[i] if len(carriers.get(c, ())) > 1})
         if shared:
@@ -621,8 +623,9 @@ def country_codes(rows, countries=None, a3=None):
 
 def codes_main(db, folder, tag, apply):
     """--codes: the countries' two- and three-letter ISO 3166-1 codes (geolocale.isoCode, iso3Code) where none is
-    stored. Backup iso_codes_bak_<date>; rollback (printed with the run):
-      update geolocale g join iso_codes_bak_<date> b on b.id = g.id set g.isoCode = b.isoCode, g.iso3Code = b.iso3Code;"""
+    stored. Backup iso_codes_bak_<date> (the codes before and the ones written); rollback (printed with the run; only
+    rows that still have the codes written, so a later fix by hand stays: review of #405):
+      update geolocale g join iso_codes_bak_<date> b on b.id = g.id set g.isoCode = b.isoCode, g.iso3Code = b.iso3Code where g.isoCode <=> b.new_isoCode and g.iso3Code <=> b.new_iso3Code;"""
     rows = [(int(r[0]), pf.unhex(r[1]), pf.unhex(r[2]), pf.unhex(r[3])) for r in pf.run_sql(
         db, "select id, " + pf.hx("name") + ", " + pf.hx("ifnull(isoCode, '')") + ", " + pf.hx("ifnull(iso3Code, '')")
         + " from geolocale where georank = 'country' and is_valid = 1")]
@@ -635,8 +638,9 @@ def codes_main(db, folder, tag, apply):
             f.write("differs\t%s\t%s\t%s\n" % (name, stored, want))
         for name in missing:
             f.write("no ISO country\t%s\t\t\n" % name)
-    print("iso_states --codes %s, %s: %d valid countries; fill %d, %d stored codes differ from ISO (not changed), %d not an ISO country"
-          % (tag, db.project, len(rows), len(fills), len(differ), len(missing)))
+    shared = sum(1 for d in differ if " carried by " in d[2])
+    print("iso_states --codes %s, %s: %d valid countries; fill %d, %d stored codes differ from ISO and %d codes two rows would carry (not changed), %d not an ISO country"
+          % (tag, db.project, len(rows), len(fills), len(differ) - shared, shared, len(missing)))
     for i, name, c2, c3 in fills:
         print("  fill    %-40s %s %s" % (name[:40], c2, c3))
     for name, stored, want in differ:
@@ -648,12 +652,12 @@ def codes_main(db, folder, tag, apply):
     bak = "iso_codes_bak_" + tag
     if int(pf.run_sql(db, "select count(*) from information_schema.tables where table_schema = database() and table_name = '%s'" % bak)[0][0]):
         raise SystemExit("The backup table %s exists already: not applied twice today. Nothing was changed." % bak)
-    ids = ",".join(str(i) for i, n, a, b in fills)
     # the backup is made empty first (CREATE TABLE commits), then filled in the transaction of the change; a failed
     # change drops it again, so the run can be made again today (review of #405)
-    pf.run_sql(db, "create table %s as select id, name, isoCode, iso3Code from geolocale where false" % bak)
+    pf.run_sql(db, "create table %s as select id, name, isoCode, iso3Code, isoCode as new_isoCode, iso3Code as new_iso3Code from geolocale where false" % bak)
     try:
-        pf.run_sql(db, "start transaction;\ninsert into %s select id, name, isoCode, iso3Code from geolocale where id in (%s);\n" % (bak, ids)
+        pf.run_sql(db, "start transaction;\n" + "".join("insert into %s select id, name, isoCode, iso3Code, %s, %s from geolocale where id = %d;\n"
+                                                          % (bak, q(a), q(b), i) for i, n, a, b in fills)
                    + ";\n".join("update geolocale set isoCode = %s, iso3Code = %s where id = %d" % (q(a), q(b), i) for i, n, a, b in fills)
                    + ";\ncommit;")
     except pf.SqlFailed:
