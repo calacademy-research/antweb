@@ -149,15 +149,24 @@ def cut_short(name, full, at_least=1):
     return len(k) >= at_least and f.startswith(k) and len(f) > len(k) and f[len(k)].isalpha()
 
 
+# The countries whose states were loaded cut short (Russia's 2021 load: Kur, Om, Tul', Chelyabin): only there is a
+# stem taken as a subdivision (review of #404: elsewhere a two-letter abbreviation or a district could fit one)
+STEM_COUNTRIES = {"RU"}
+
+
 def english_fit(name, sub, english_names=None):
-    """The state is this subdivision by its English name: written so, or cut short of it (at most 3 letters, at least
-    2 kept) or of ISO's own name (at least 4 letters kept)."""
+    """The state is this subdivision by its English name: written so, or, in STEM_COUNTRIES, cut short of it (at most 3
+    letters missing, at least 2 kept) or of ISO's own name (at least 4 letters kept)."""
     names = ENGLISH_NAMES if english_names is None else english_names
     en = names.get(sub.code)
     if not en:
         return False
     k = key(name)
-    if k == key(en) or (cut_short(name, en, 2) and len(key(en)) - len(k) <= 3):
+    if k == key(en):
+        return True
+    if sub.code.split("-")[0] not in STEM_COUNTRIES:
+        return False
+    if cut_short(name, en, 2) and len(key(en)) - len(k) <= 3:
         return True
     return any(cut_short(name, n, 4) for n in [display(sub.name)] + [o for o in sub.others if not o.isascii()])
 
@@ -471,11 +480,12 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
                 hits[i], how[i] = fit, "english"
     # the country's main kind from its states' own matches; a table entry does not count (it would decide the kind of
     # other states written like two kinds: review of #399)
-    kinds = collections.Counter(by_code[next(iter(h))].type for i, h in hits.items() if len(h) == 1 and how[i] != "table")
+    # nor does a state found by its English name or as a stem (review of #404)
+    kinds = collections.Counter(by_code[next(iter(h))].type for i, h in hits.items() if len(h) == 1 and how[i] not in ("table", "english"))
     main = top_kind(kinds)
     # subdivisions (not states) of each kind the states found alone: a loose own-name hit is reported for its level only
     # when the main kind has more of them (two states of one city do not outvote a region); equally many: renamed
-    level_codes = collections.Counter(by_code[c].type for c in {next(iter(h)) for i, h in hits.items() if len(h) == 1 and how[i] != "table"})
+    level_codes = collections.Counter(by_code[c].type for c in {next(iter(h)) for i, h in hits.items() if len(h) == 1 and how[i] not in ("table", "english")})
     chosen, reported = {}, []
     for st in states:
         h = hits[st.id]
@@ -972,6 +982,9 @@ def main(argv=None):
         print("  %d decisions the apply leaves out (%d page texts would move with the rest):\n    %s" % (len(left), len(text_moves), "\n    ".join(left)))
     if notes:
         print("  %d notes (done, but look):\n    %s" % (len(notes), "\n    ".join(notes)))
+    stems = [d for d in ren if cut_short(d["name"], d["target"]) or cut_short(d["name"], d["iso"])]
+    if stems:   # review of #404: a rename from a name cut short is looked at one by one
+        print("  %d renames of a name cut short (look at each): %s" % (len(stems), ", ".join("%s -> %s" % (d["name"], d["target"]) for d in stems)))
     for d in (mer + ren + ali)[:args.show]:
         print("  %-6s %-22s %-34s -> %-34s %-8s %5d" % (d["action"], d["country"][:22], d["name"][:34], (d["target"] if d["action"] == "merge" else d["iso"])[:34],
                                                          d["code"], d["specimens"]))

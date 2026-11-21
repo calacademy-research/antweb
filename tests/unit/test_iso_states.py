@@ -612,14 +612,6 @@ def test_the_iso_file_reads():
     assert c[iso.key("Russia")] == "RU" and c[iso.key("United States")] == "US" and c[iso.key("Türkiye")] == "TR"
 
 
-if __name__ == "__main__":
-    n = 0
-    for name, fn in sorted(globals().items()):
-        if name.startswith("test_") and callable(fn):
-            fn()
-            n += 1
-    print(n, "tests passed")
-
 
 def test_two_stems_of_one_subdivision_are_not_merged():
     # review of #404: Kalu and Kaluzh both fit only Kaluga; neither is matched by its stem, so nothing is merged or
@@ -643,4 +635,29 @@ def test_mongolia_keeps_its_umlauts():
     # the English table writes Khövsgöl with ö: a state so written is not renamed
     sub = {s.code: s for s in iso.read_iso()["MN"]}["MN-041"]
     assert not iso.needs_english("Khövsgöl", sub)
-    assert iso.needs_english("Hövsgöl", sub) or iso.english_fit("Khövsgöl", sub)
+    assert iso.needs_english("Hövsgöl", sub)          # ISO's romanization is renamed to the table's name
+
+
+def test_an_accent_only_rename_beside_another_place_of_that_name():
+    # review of #404: another country's place is written Anseba too; the rename is still made (the page text key is
+    # the same, so nothing moves)
+    out, rep, noc = iso.plan({"Eritrea": [(1, "\u0100nseba", 18)]}, {}, iso.read_iso(), iso.read_countries())
+    sql, left, done = iso.statements(out, {}, "20261121", texts={"object_edit": {"\u0100nseba": 1}}, allnames={"anseba": 2})
+    assert not left and [d["target"] for d in done if d["action"] == "rename"] == ["Anseba"], (left, done)
+
+
+def test_stems_only_in_russia():
+    # review of #404: outside STEM_COUNTRIES a prefix of a subdivision is no match (Abu for Abu Dhabi stays reported)
+    subs = {s.code: s for s in iso.read_iso()["AE"] + iso.read_iso()["RU"]}
+    assert not iso.english_fit("Abu Dha", subs["AE-AZ"]) and iso.english_fit("Om", subs["RU-OMS"])
+    out, rep, noc = iso.plan({"Russia": [(1, "Om", 2), (2, "Kurgan", 1)]}, {}, iso.read_iso(), iso.read_countries())
+    assert {x["name"]: x["target"] for x in out if x["action"] == "rename"} == {"Om": "Omsk"}, out
+
+
+if __name__ == "__main__":
+    n = 0
+    for name, fn in sorted(globals().items()):
+        if name.startswith("test_") and callable(fn):
+            fn()
+            n += 1
+    print(n, "tests passed")
