@@ -51,8 +51,8 @@ written like both takes the kind most of its country's states match.
                                               change rows an earlier one changed
   python3 iso_states.py --project /root/antweb-next      staging (default: the project on this server)
 
-Rollback (same server, the date or --tag of the run; roll back the newest tag first; one transaction; the rows added go
-first, so the old names are free again):
+Roll back the newest tag first: a later run can change rows an earlier one changed.
+Rollback (same server, the date or --tag of the run; one transaction; the rows added go first, so the old names are free again):
   start transaction;
   update specimen s join iso_states_spec_<date> b on b.code = s.code set s.adm1 = b.adm1 where binary s.adm1 = binary b.new_adm1;
   update specimen s join iso_states_bak_<date> b on b.parent = s.country and b.is_valid = 1 join geolocale g on g.id = b.id and binary g.name <> binary b.name left join iso_states_spec_<date> x on x.code = s.code set s.adm1 = b.name where binary s.adm1 = binary g.name and x.code is null;
