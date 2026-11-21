@@ -24,7 +24,7 @@ import org.calacademy.antweb.util.GeolocaleMgr;
  *     as that valid state ("grand-est", "NIMBA COUNTY", "Murang'A");
  *   - a key two valid states share is not used; another word ("St. Elizabeth" for Saint Elizabeth) is not a spelling;
  *     a name of another country's state is not used;
- *   - the report section counts as corrected.
+ *   - the report sections are in the Recognized group, not counted as corrected (2026-11-21, Brian Fisher).
  * No database: the rows are made here (GeolocaleMgr.adm1sBySpelling, adm1ToStore). IslandParseLineTest runs the same
  * through SpecimenUploadParse.parseLine.
  */
