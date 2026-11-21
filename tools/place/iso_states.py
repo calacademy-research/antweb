@@ -308,12 +308,11 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
             first[st.id] = (loose_named.get(loose(st.name), set()) if loose(st.name) else set(), None)
         else:
             first[st.id] = (h, tier)
-    # the main kind from the states found by their own names; only when none is, from their own names loosely (ISO's
-    # names and translations, not the boundary file's shape names: review of #400)
-    kinds = collections.Counter(by_code[next(iter(h))].type for h, t in first.values() if len(h) == 1 and t is not None)
-    if not kinds:   # a loose name votes only when it leaves out generic words, never adds them (review of #400)
-        kinds = collections.Counter(by_code[next(iter(h))].type for i, (h, t) in first.items()
-                                    if len(h) == 1 and shorter(names_of[i], by_code[next(iter(h))], shapes=False))
+    # the main kind from the states' own names: exactly, or loosely when the name leaves out generic words and never
+    # adds them (ISO's names and translations, not the boundary file's shape names). Both vote together, so one state
+    # written exactly as a capital does not decide the kind for every loose state (reviews of #400)
+    kinds = collections.Counter(by_code[next(iter(h))].type for i, (h, t) in first.items()
+                                if len(h) == 1 and (t is not None or shorter(names_of[i], by_code[next(iter(h))], shapes=False)))
     early = kinds.most_common(1)[0][0] if kinds else None
     for st in states:
         if st.id not in first:
@@ -321,6 +320,7 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
         name, olds = [st.name], list(st.old_names)
         tiers = [(own, name), (trans, name), (own, olds), (trans, olds), (shapes, name), (shapes, olds)]
         h, tier = first[st.id]
+        hit_names = []
         if tier is None:
             h = set()
             # the state's own name loosely, in ISO's names and translations of the main kind, before its old names:
@@ -377,6 +377,9 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
     # other states written like two kinds: review of #399)
     kinds = collections.Counter(by_code[next(iter(h))].type for i, h in hits.items() if len(h) == 1 and how[i] != "table")
     main = kinds.most_common(1)[0][0] if kinds else None
+    # subdivisions (not states) of each kind the states found alone: a loose own-name hit is reported for its level only
+    # when the main kind has more of them (two states of one city do not outvote a region)
+    level_codes = collections.Counter(by_code[c].type for c in {next(iter(h)) for i, h in hits.items() if len(h) == 1 and how[i] != "table"})
     chosen, reported = {}, []
     for st in states:
         h = hits[st.id]
@@ -384,7 +387,8 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
             same = {c for c in h if by_code[c].type == main}
             if len(same) == 1:
                 h = same
-        if len(h) == 1 and st.id in own_loose and main and by_code[next(iter(h))].type != main:
+        if len(h) == 1 and st.id in own_loose and main and by_code[next(iter(h))].type != main \
+                and level_codes[main] > level_codes[by_code[next(iter(h))].type]:
             # found loosely by its own name at one level while the country's states end up at another (review of
             # #400): looked at by hand rather than renamed to another level than the rest
             c = next(iter(h))

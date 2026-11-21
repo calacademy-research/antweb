@@ -397,11 +397,10 @@ def test_a_table_entry_decides_over_iso_names_and_finds_its_country_by_any_name(
 
 def test_a_name_two_subdivisions_carry_is_not_a_match():
     by = iso.read_iso()["BY"]
-    # without the table: "Brest" is a translation of Vitebsk province and Brest's shape name: ambiguous, reported
+    # without the table: never merged (the ambiguity rule itself is tested on an inline fixture below, so this holds
+    # whether or not a rebuilt file still carries the wrong translation: fifth review of #400)
     d, rep = iso.match_country([st(1, "Brest", 3), st(2, "Vitebsk", 0)], by, english=True)
     assert not [x for x in d if x[0] == "merge"], d
-    why = [r[1] for r in rep if r[0].name == "Brest"]
-    assert why and "BY-BR" in why[0] and "BY-VI" in why[0], rep
     # with the table (as plan() passes it): Brest is Brest, Vitebsk is Vitebsk
     out, rep, noc = iso.plan({"Belarus": [(1, "Brest", 3), (2, "Vitebsk", 0)]}, {}, iso.read_iso(), iso.read_countries())
     assert {(x["name"], x["code"]) for x in out} == {("Brest", "BY-BR"), ("Vitebsk", "BY-VI")} and not [x for x in out if x["action"] == "merge"], out
@@ -419,11 +418,13 @@ def test_the_state_s_own_name_loosely_comes_before_its_old_names():
     # the first pass renamed Liberecký (old name Liberec) to the district Liberec and Kauno (old name Kaunas) to the
     # city municipality Kauno miestas: the state's own name, generic words off, within the country's main kind, counts first
     cz = iso.read_iso()["CZ"]
+    # with a state written exactly as the capital, which must not decide the kind for the loose states (fifth review)
     d, rep = iso.match_country([st(1, "Liberecký", 4, olds=("Liberec",)), st(2, "Karlovarský", 2, olds=("Karlovy Vary",)),
-                                st(3, "Jihomoravský", 9), st(4, "Zlínský", 1, olds=("Zlín",))], cz)
+                                st(3, "Jihomoravský", 9), st(4, "Zlínský", 1, olds=("Zlín",)), st(5, "Hlavní město Praha", 20)], cz)
     got = {s.name: (a, sub.code) for a, s, sub, k in d}
     assert got == {"Liberecký": ("rename", "CZ-51"), "Karlovarský": ("rename", "CZ-41"), "Jihomoravský": ("rename", "CZ-64"),
                    "Zlínský": ("rename", "CZ-72")}, (got, rep)
+    assert not [r for r in rep if r[0].name != "Hlavní město Praha"], rep
     lt = iso.read_iso()["LT"]
     d, rep = iso.match_country([st(1, "Kauno", 6, olds=("Kaunas",)), st(2, "Vilniaus", 3, olds=("Vilnius",)), st(3, "Utenos", 1),
                                 st(4, "Alytaus", 2)], lt)
