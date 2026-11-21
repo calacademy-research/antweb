@@ -512,6 +512,25 @@ def test_the_english_table_is_complete_and_has_no_shared_names():
     assert not [k for k, v in seen.items() if v > 1], [k for k, v in seen.items() if v > 1]
 
 
+def test_english_rename_review_cases():
+    # review of #403: (1) a loosely matched transliteration is renamed, never filed as an alias under the English name;
+    # (2) a state already written in English is kept and the other merged into it, no rename; (3) a renamed state
+    # keeps ISO's own form as an old name, under its English name
+    countries, subs = iso.read_countries(), iso.read_iso()
+    out, rep, noc = iso.plan({"Russia": [(1, "Chelyabinskaya", 4)]}, {}, subs, countries)
+    got = {(x["action"], x["name"], x["iso"], x["target"]) for x in out}
+    assert got == {("rename", "Chelyabinskaya", "Chelyabinsk", "Chelyabinsk"),
+                   ("alias", "Chelyabinskaya", "Chelyabinskaya oblast'", "Chelyabinsk")}, (got, rep)
+    # the 2021 stem with ISO's form as its old name (the first pass added it), beside a state written in English
+    olds = {("Russia", "Chelyabin"): ["Chelyabinskaya oblast'"]}
+    out, rep, noc = iso.plan({"Russia": [(1, "Chelyabinsk", 2), (2, "Chelyabin", 50)]}, olds, subs, countries)
+    got = {(x["action"], x["name"], x["target"]) for x in out}
+    assert got == {("merge", "Chelyabin", "Chelyabinsk")}, (got, rep)
+    out, rep, noc = iso.plan({"Russia": [(1, "Chelyabin", 50)]}, olds, subs, countries)
+    got = {(x["action"], x["name"], x["target"]) for x in out}
+    assert got == {("rename", "Chelyabin", "Chelyabinsk")}, got        # ISO's form is an old name already
+
+
 def test_bern_not_berne():
     # 2026-11-21: ISO gives the canton two names; AntWeb uses Bern (the canton's language and the English name)
     out, rep, noc = iso.plan({"Switzerland": [(1, "Berne", 198)]}, {}, iso.read_iso(), iso.read_countries())
