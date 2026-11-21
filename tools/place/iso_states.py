@@ -282,11 +282,11 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
         for n in iso_names(s) + list(s.others):
             if loose(n):
                 loose_named[loose(n)].add(s.code)
-    hits, how = {}, {}
+    hits, how, own_loose, disagree = {}, {}, set(), {}
     exonyms, not_iso = exonyms or {}, not_iso or {}
     # First pass: the state's own name, in ISO's names and their translations (tiers 0 and 1), and failing that its
     # own name loosely (generic words off), to learn the country's main kind before any old name is tried.
-    first = {}
+    first, names_of = {}, {st.id: st.name for st in states}
     for st in states:
         k = key(st.name)
         if k in not_iso or st.name in not_iso:  # not the subdivision its name resembles: no hit
@@ -309,8 +309,9 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
     # the main kind from the states found by their own names; only when none is, from their own names loosely (ISO's
     # names and translations, not the boundary file's shape names: review of #400)
     kinds = collections.Counter(by_code[next(iter(h))].type for h, t in first.values() if len(h) == 1 and t is not None)
-    if not kinds:
-        kinds = collections.Counter(by_code[next(iter(h))].type for h, t in first.values() if len(h) == 1)
+    if not kinds:   # a loose name votes only when it leaves out generic words, never adds them (review of #400)
+        kinds = collections.Counter(by_code[next(iter(h))].type for i, (h, t) in first.items()
+                                    if len(h) == 1 and shorter(names_of[i], by_code[next(iter(h))]))
     early = kinds.most_common(1)[0][0] if kinds else None
     for st in states:
         if st.id not in first:
@@ -331,13 +332,16 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
             old_hits = {c for n in olds for index in (own, trans) for c in index.get(key(n), set()) if by_code[c].type == early}
             if len(same) == 1 and not old_hits - same:
                 hits[st.id], how[st.id] = same, "loose"
+                own_loose.add(st.id)
                 continue
             if len(same) == 1:
                 hits[st.id], how[st.id] = same | old_hits, "exact"
+                disagree[st.id] = (next(iter(same)), sorted(old_hits - same))
                 continue
             for i, (index, names) in enumerate(tiers[2:], 2):
-                for n in names:
-                    h |= index.get(key(n), set())
+                hit_names = [n for n in names if index.get(key(n))]
+                for n in hit_names:
+                    h |= index[key(n)]
                 if h:
                     tier = i
                     break
@@ -346,7 +350,8 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
         # decides it (iso-codes has "Brest" as a translation of Vitebsk province; the boundary file has Brest as
         # Brest's shape name)
         if tier is not None and tier not in (0, 2):
-            for n in tiers[tier][1]:
+            # only the names that hit (review of #400: another old name's shape name is not this tier's)
+            for n in (tiers[tier][1] if tier == 1 else hit_names):
                 h |= trans.get(key(n), set()) | shapes.get(key(n), set())
         # a translation or shape name joins the state's own ISO-name hit only when the state is that subdivision's ISO
         # name with generic words left out (Madrid: the province by name, Comunidad de Madrid by its English name; the
@@ -371,13 +376,24 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
             same = {c for c in h if by_code[c].type == main}
             if len(same) == 1:
                 h = same
-        if len(h) == 1:
+        if len(h) == 1 and st.id in own_loose and main and by_code[next(iter(h))].type != main:
+            # found loosely by its own name at one level while the country's states end up at another (review of
+            # #400): looked at by hand rather than renamed to another level than the rest
+            c = next(iter(h))
+            reported.append((st, "loose match %s (%s, a %s) while the country's states are %s: looked at by hand"
+                             % (c, display(by_code[c].name), by_code[c].type, main)))
+        elif len(h) == 1:
             chosen[st.id] = next(iter(h))
         elif not h:
             why = not_iso.get(key(st.name)) or not_iso.get(st.name)
             reported.append((st, ("not an ISO 3166-2 subdivision: " + why) if why else "no ISO 3166-2 subdivision written alike"))
         else:
-            reported.append((st, "written like " + ", ".join(sorted(h))))
+            if st.id in disagree:
+                c, others = disagree[st.id]
+                reported.append((st, "loosely %s (%s), but an old name is written as %s: looked at by hand"
+                                 % (c, display(by_code[c].name), ", ".join(others))))
+            else:
+                reported.append((st, "written like " + ", ".join(sorted(h))))
     by_sub = collections.defaultdict(list)
     for st in states:
         if st.id in chosen:

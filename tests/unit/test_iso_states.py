@@ -396,8 +396,14 @@ def test_a_name_two_subdivisions_carry_is_not_a_match():
     # with the table (as plan() passes it): Brest is Brest, Vitebsk is Vitebsk
     out, rep, noc = iso.plan({"Belarus": [(1, "Brest", 3), (2, "Vitebsk", 0)]}, {}, iso.read_iso(), iso.read_countries())
     assert {(x["name"], x["code"]) for x in out} == {("Brest", "BY-BR"), ("Vitebsk", "BY-VI")} and not [x for x in out if x["action"] == "merge"], out
-    out, rep, noc = iso.plan({"Latvia": [(3, "Jelgavas", 0), (4, "Jelgava", 0)]}, {}, iso.read_iso(), iso.read_countries())
-    assert ("rename", "Jelgavas", "Jelgavas novads") in {(x["action"], x["name"], x["target"]) for x in out}, out
+    out, rep, noc = iso.plan({"Latvia": [(3, "Jelgavas", 0), (4, "Jelgava", 0), (5, "Rēzeknes", 0), (6, "Rēzekne", 0)]}, {},
+                             iso.read_iso(), iso.read_countries())
+    got = {(x["action"], x["name"], x["target"]) for x in out}
+    # the first pass merged the municipalities into the state cities (review of #400): no merge, each stays its own
+    assert ("rename", "Jelgavas", "Jelgavas novads") in got and ("rename", "Rēzeknes", "Rēzeknes novads") in got, out
+    assert not [x for x in out if x["action"] == "merge"], out
+    assert {x["code"] for x in out if x["name"] == "Jelgavas"} == {"LV-041"} and {x["code"] for x in out if x["name"] == "Rēzeknes"} == {"LV-077"}, out
+    assert not [x for x in out if x["name"] in ("Jelgava", "Rēzekne") and x["code"] in ("LV-041", "LV-077")], out
 
 
 def test_the_state_s_own_name_loosely_comes_before_its_old_names():
@@ -423,7 +429,18 @@ def test_an_old_name_of_the_main_kind_that_disagrees_is_reported():
     cz = iso.read_iso()["CZ"]
     d, rep = iso.match_country([st(1, "Liberecký", 4, olds=("Karlovarský kraj",)), st(2, "Jihomoravský kraj", 9),
                                 st(3, "Plzeňský kraj", 3)], cz)
-    assert "Liberecký" not in {s.name for a, s, sub, k in d} and "Liberecký" in {r[0].name for r in rep}, (d, rep)
+    assert "Liberecký" not in {s.name for a, s, sub, k in d}, d
+    assert [r[1] for r in rep if r[0].name == "Liberecký"][0].startswith("loosely CZ-51 (Liberecký kraj), but an old name is written as CZ-41"), rep
+
+
+def test_a_loose_own_name_at_another_level_than_the_country_s_states_is_reported():
+    # review of #400: one state is a region by its own name (the early kind), but most states end up districts through
+    # old names (the final kind): Liberecký, found loosely as a region, is looked at by hand, not renamed
+    cz = iso.read_iso()["CZ"]
+    d, rep = iso.match_country([st(1, "Plzeňský kraj", 3), st(2, "Liberecký", 4), st(3, "A", 1, olds=("Benešov",)),
+                                st(4, "B", 1, olds=("Beroun",)), st(5, "C", 1, olds=("Kladno",))], cz)
+    assert "Liberecký" not in {s.name for a, s, sub, k in d}, d
+    assert [r[1] for r in rep if r[0].name == "Liberecký"][0].startswith("loose match CZ-51 (Liberecký kraj, a Region) while"), rep
 
 
 def test_the_iso_file_reads():
