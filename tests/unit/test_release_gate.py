@@ -148,10 +148,10 @@ def test_no_site_code():
                               "tests/unit/test_prod_smoke_logic.py", "tools/release/gate.py", "README.md"])
     assert gate.no_site_code([".github/workflows/release-gate.yaml"])
     # the place tools run only by hand need no staging run; the daily place report (host cron, writes) and the site do
-    for f in ("iso_states.py", "build_iso3166_2.py", "iso3166_2.tsv", "iso3166_countries.tsv", "country_rename.py", "island_countries.py", "place_fix.py"):
+    for f in ("iso_states.py", "build_iso3166_2.py", "iso3166_2.tsv", "iso3166_countries.tsv", "english_names.tsv", "country_rename.py", "island_countries.py", "place_fix.py"):
         assert gate.no_site_code(["tools/place/" + f, "tests/unit/test_iso_states.py"]), f
     assert sorted(gate.HAND_RUN_PLACE_TOOLS) == sorted(["iso_states.py", "build_iso3166_2.py", "iso3166_2.tsv", "iso3166_countries.tsv",
-                                                        "country_rename.py", "island_countries.py", "place_fix.py"])
+                                                        "english_names.tsv", "country_rename.py", "island_countries.py", "place_fix.py"])
     for f in ("tools/place/place_daily.py", "tools/place/place_corrections.py", "tools/place/coordinate_country.py",
               "tools/place/adm1_shape_map.csv", "tools/place/antweb-place-daily.cron", "tools/place/sub/iso_states.py",
               "src/org/calacademy/antweb/util/GeolocaleMgr.java"):
