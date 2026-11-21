@@ -193,8 +193,27 @@ def check_country_codes(project):
     code, out = run(project, folder, "--codes", "--apply")
     got = {r[0]: (r[1], r[2]) for r in mysql("select name, ifnull(isoCode, ''), ifnull(iso3Code, '') from geolocale where georank = 'country'")}
     assert got == {"Slovakia": ("SK", "SVK"), "Egypt": ("EG", "EGY"), "Hawaii": ("", ""), "Russia": ("RU", "RUS")}, got
+    assert "Rollback: update geolocale g join iso_codes_bak_%s b" % TAG in out, out
+    try:
+        run(project, folder, "--codes", "--apply")       # nothing left to fill: no second change
+    except SystemExit as e:
+        raise AssertionError("a run with nothing to fill must end quietly: %s" % e)
     mysql("update geolocale g join iso_codes_bak_%s b on b.id = g.id set g.isoCode = b.isoCode, g.iso3Code = b.iso3Code" % TAG)
     assert mysql("select ifnull(isoCode, '-'), iso3Code from geolocale where id = 23") == [["", ""]]
+    mysql("drop table iso_codes_bak_%s" % TAG)
+    # review of #405: a change that fails (here a trigger refuses the update) changes nothing and drops its empty
+    # backup, so the run can be made again the same day
+    mysql("create trigger no_update before update on geolocale for each row signal sqlstate '45000' set message_text = 'refused'")
+    try:
+        run(project, folder, "--codes", "--apply")
+        raise AssertionError("the change should have failed")
+    except iso.pf.SqlFailed:
+        pass
+    assert mysql("select ifnull(isoCode, '-') from geolocale where id = 20") == [["-"]]
+    assert not mysql("select table_name from information_schema.tables where table_schema = database() and table_name like 'iso\\_codes\\_%'")
+    mysql("drop trigger no_update")
+    code, out = run(project, folder, "--codes", "--apply")
+    assert "filled 2 countries" in out, out
     mysql("drop table iso_codes_bak_%s" % TAG)
 
 

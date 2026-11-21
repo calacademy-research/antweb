@@ -100,7 +100,7 @@ COUNTRY_NAMES = {
     "Taiwan": "TW", "Tanzania": "TZ", "Türkiye": "TR", "Turkey": "TR", "United Kingdom": "GB", "United States": "US",
     "Venezuela": "VE", "Vietnam": "VN", "Saint Helena, Ascension and Tristan da Cunha": "SH",
     "Vatican City": "VA", "United States Virgin Islands": "VI", "British Virgin Islands": "VG", "Saint Martin": "MF",
-    "Falkland Islands": "FK", "Chagos Islands": "IO", "Reunion": "RE", "Curacao": "CW", "Aland Islands": "AX",
+    "Falkland Islands": "FK", "Chagos Islands": "IO", "Curacao": "CW", "Aland Islands": "AX",
 }
 
 GENERIC = set("""province provincia provinsi provincie region regiao región région regione state estado departement département
@@ -586,27 +586,42 @@ def plan(valid, olds, iso, countries, skip=frozenset()):
 def country_codes(rows, countries=None, a3=None):
     """rows: [(id, name, isoCode, iso3Code)] of the valid countries. Returns (fills [(id, name, a2, a3)] for codes not
     stored yet, differences [(name, stored, ISO)], not found [names]: island places ISO counts as part of a country
-    (their code is the subdivision's) and the like). A stored code is never overwritten here."""
+    (their code is the subdivision's) and the like, with a code stored marked "(stored XX/XXX)"). Never filled, for a
+    person to decide (review of #405): a row whose stored code differs from ISO's (its other code too), and a code two
+    rows would carry (stored on one or both: Turkey and Türkiye, an island country that holds US), listed as a
+    difference "carried by ..." on each. A stored code is never overwritten here."""
     countries = countries if countries is not None else read_countries()
     a3 = a3 if a3 is not None else alpha3()
-    fills, differ, missing = [], [], []
+    fills, differ, missing, want = [], [], [], {}
     for i, name, c2, c3 in rows:
         code = EXTRA_CODES.get(name) or ((countries[key(name)], a3.get(countries[key(name)], "")) if key(name) in countries else None)
         if not code:
-            if not c2:
-                missing.append(name)
+            missing.append(name + (" (stored %s/%s)" % (c2 or "", c3 or "") if c2 or c3 else ""))
             continue
-        want2, want3 = code
-        if (c2 or "") and c2 != want2 or (c3 or "") and c3 != want3:
-            differ.append((name, "%s/%s" % (c2 or "", c3 or ""), "%s/%s" % (want2, want3)))
-        if not c2 or not c3:
-            fills.append((i, name, c2 or want2, c3 or want3))
+        want[i] = code
+        if (c2 or "") and c2 != code[0] or (c3 or "") and c3 != code[1]:
+            differ.append((name, "%s/%s" % (c2 or "", c3 or ""), "%s/%s" % code))
+    # who would carry each code after the fill: what is stored, else what ISO gives
+    carriers = collections.defaultdict(list)
+    for i, name, c2, c3 in rows:
+        for c in {c2 or (want.get(i) or ("", ""))[0], c3 or (want.get(i) or ("", ""))[1]} - {""}:
+            carriers[c].append(name)
+    differs = {d[0] for d in differ}
+    for i, name, c2, c3 in rows:
+        if i not in want or name in differs:
+            continue
+        shared = sorted({c for c in want[i] if len(carriers.get(c, ())) > 1})
+        if shared:
+            differ.append((name, "%s/%s" % (c2 or "", c3 or ""), "%s/%s carried by %s" % (want[i] + ("; ".join(
+                "%s: %s" % (c, ", ".join(sorted(carriers[c]))) for c in shared),))))
+        elif not c2 or not c3:
+            fills.append((i, name, c2 or want[i][0], c3 or want[i][1]))
     return fills, differ, missing
 
 
 def codes_main(db, folder, tag, apply):
     """--codes: the countries' two- and three-letter ISO 3166-1 codes (geolocale.isoCode, iso3Code) where none is
-    stored. Backup iso_codes_bak_<date>; rollback:
+    stored. Backup iso_codes_bak_<date>; rollback (printed with the run):
       update geolocale g join iso_codes_bak_<date> b on b.id = g.id set g.isoCode = b.isoCode, g.iso3Code = b.iso3Code;"""
     rows = [(int(r[0]), pf.unhex(r[1]), pf.unhex(r[2]), pf.unhex(r[3])) for r in pf.run_sql(
         db, "select id, " + pf.hx("name") + ", " + pf.hx("ifnull(isoCode, '')") + ", " + pf.hx("ifnull(iso3Code, '')")
@@ -634,10 +649,22 @@ def codes_main(db, folder, tag, apply):
     if int(pf.run_sql(db, "select count(*) from information_schema.tables where table_schema = database() and table_name = '%s'" % bak)[0][0]):
         raise SystemExit("The backup table %s exists already: not applied twice today. Nothing was changed." % bak)
     ids = ",".join(str(i) for i, n, a, b in fills)
-    pf.run_sql(db, "create table %s as select id, name, isoCode, iso3Code from geolocale where id in (%s)" % (bak, ids))
-    pf.run_sql(db, "start transaction;\n" + ";\n".join("update geolocale set isoCode = %s, iso3Code = %s where id = %d" % (q(a), q(b), i)
-                                                      for i, n, a, b in fills) + ";\ncommit;")
+    # the backup is made empty first (CREATE TABLE commits), then filled in the transaction of the change; a failed
+    # change drops it again, so the run can be made again today (review of #405)
+    pf.run_sql(db, "create table %s as select id, name, isoCode, iso3Code from geolocale where false" % bak)
+    try:
+        pf.run_sql(db, "start transaction;\ninsert into %s select id, name, isoCode, iso3Code from geolocale where id in (%s);\n" % (bak, ids)
+                   + ";\n".join("update geolocale set isoCode = %s, iso3Code = %s where id = %d" % (q(a), q(b), i) for i, n, a, b in fills)
+                   + ";\ncommit;")
+    except pf.SqlFailed:
+        if pf.run_sql(db, "select count(*) from " + bak)[0][0] == "0":
+            pf.run_sql(db, "drop table " + bak)
+            print("The change failed and was not made; the empty backup table was dropped.")
+        else:
+            print("The backup table %s is filled: the change may have been committed after all (a lost connection). Check before anything else." % bak)
+        raise
     print("filled %d countries; backup %s. Now reload the places: /util.do?action=reloadAntwebMgr&name=geolocale" % (len(fills), bak))
+    print("Rollback: " + codes_main.__doc__.split("rollback (printed with the run):")[1].strip().replace("<date>", tag))
     return 0
 
 
