@@ -335,14 +335,18 @@ def test_crlf_mapping_and_a_name_of_punctuation():
 
 def test_every_exonym_is_a_subdivision_of_its_country():
     subs, countries = iso.read_iso(), iso.read_countries()
+    by_a2 = collections.defaultdict(list)
     for country, names in iso.EXONYMS.items():
         a2 = countries[iso.key(country)]
         codes = {x.code for x in subs[a2]}
         for name, code in names.items():
             assert code in codes, (country, name, code)
-        # looked up by key(): two entries of one country must not share a key (the later would win unseen)
-        assert len({iso.key(n) for n in names}) == len(names), country
-    seen = collections.Counter((iso.key(c), iso.key(n)) for c, n in iso.NOT_ISO)
+        by_a2[a2] += [iso.key(n) for n in names]
+    # looked up by key() under the ISO country code: two entries of one country (under any of its names) must not share
+    # a key, the later would win unseen (review of #400)
+    for a2, keys in by_a2.items():
+        assert len(set(keys)) == len(keys), a2
+    seen = collections.Counter((countries[iso.key(c)], iso.key(n)) for c, n in iso.NOT_ISO)
     assert not [k for k, v in seen.items() if v > 1], seen
     for (country, name), why in iso.NOT_ISO.items():
         assert iso.key(country) in countries and why
@@ -392,7 +396,9 @@ def test_a_name_two_subdivisions_carry_is_not_a_match():
     by = iso.read_iso()["BY"]
     # without the table: "Brest" is a translation of Vitebsk province and Brest's shape name: ambiguous, reported
     d, rep = iso.match_country([st(1, "Brest", 3), st(2, "Vitebsk", 0)], by, english=True)
-    assert not [x for x in d if x[0] == "merge"] and "Brest" in {r[0].name for r in rep}, (d, rep)
+    assert not [x for x in d if x[0] == "merge"], d
+    why = [r[1] for r in rep if r[0].name == "Brest"]
+    assert why and "BY-BR" in why[0] and "BY-VI" in why[0], rep
     # with the table (as plan() passes it): Brest is Brest, Vitebsk is Vitebsk
     out, rep, noc = iso.plan({"Belarus": [(1, "Brest", 3), (2, "Vitebsk", 0)]}, {}, iso.read_iso(), iso.read_countries())
     assert {(x["name"], x["code"]) for x in out} == {("Brest", "BY-BR"), ("Vitebsk", "BY-VI")} and not [x for x in out if x["action"] == "merge"], out
@@ -441,6 +447,14 @@ def test_a_loose_own_name_at_another_level_than_the_country_s_states_is_reported
                                 st(4, "B", 1, olds=("Beroun",)), st(5, "C", 1, olds=("Kladno",))], cz)
     assert "Liberecký" not in {s.name for a, s, sub, k in d}, d
     assert [r[1] for r in rep if r[0].name == "Liberecký"][0].startswith("loose match CZ-51 (Liberecký kraj, a Region) while"), rep
+
+
+def test_two_states_found_loosely_by_their_own_names_are_not_merged():
+    # third review of #400: "Liberecký" and a stray "Liberecky" both find Liberecký kraj loosely: looked at by hand
+    cz = iso.read_iso()["CZ"]
+    d, rep = iso.match_country([st(1, "Liberecký", 4), st(2, "Liberecky", 1), st(3, "Jihomoravský kraj", 9)], cz)
+    assert not [x for x in d if x[0] == "merge"], d
+    assert {"Liberecký", "Liberecky"} <= {r[0].name for r in rep}, rep
 
 
 def test_the_iso_file_reads():

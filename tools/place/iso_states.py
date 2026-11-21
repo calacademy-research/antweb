@@ -251,10 +251,12 @@ def sub_names(sub):
     return iso_names(sub) + list(sub.others) + list(sub.shapes)
 
 
-def shorter(name, sub):
-    """The state's name is one of the subdivision's names with generic words left out, none added."""
+def shorter(name, sub, shapes=True):
+    """The state's name is one of the subdivision's names with generic words left out, none added. shapes=False: ISO's
+    names and translations only, not the boundary file's shape names."""
     words = set(key(name).split())
-    return any(loose(n) == loose(name) and words <= set(key(n).split()) for n in sub_names(sub))
+    names = sub_names(sub) if shapes else iso_names(sub) + list(sub.others)
+    return any(loose(n) == loose(name) and words <= set(key(n).split()) for n in names)
 
 
 def match_country(states, subs, english=False, exonyms=None, not_iso=None):
@@ -282,7 +284,7 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
         for n in iso_names(s) + list(s.others):
             if loose(n):
                 loose_named[loose(n)].add(s.code)
-    hits, how, own_loose, disagree = {}, {}, set(), {}
+    hits, how, own_loose, disagree, widened = {}, {}, set(), {}, set()
     exonyms, not_iso = exonyms or {}, not_iso or {}
     # First pass: the state's own name, in ISO's names and their translations (tiers 0 and 1), and failing that its
     # own name loosely (generic words off), to learn the country's main kind before any old name is tried.
@@ -311,7 +313,7 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
     kinds = collections.Counter(by_code[next(iter(h))].type for h, t in first.values() if len(h) == 1 and t is not None)
     if not kinds:   # a loose name votes only when it leaves out generic words, never adds them (review of #400)
         kinds = collections.Counter(by_code[next(iter(h))].type for i, (h, t) in first.items()
-                                    if len(h) == 1 and shorter(names_of[i], by_code[next(iter(h))]))
+                                    if len(h) == 1 and shorter(names_of[i], by_code[next(iter(h))], shapes=False))
     early = kinds.most_common(1)[0][0] if kinds else None
     for st in states:
         if st.id not in first:
@@ -325,7 +327,7 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
             # "Liberecký" is Liberecký kraj (a region, as Czechia's other states are), not its old name Liberec (a
             # district); "Kauno" is Kauno apskritis, not Kaunas or Kauno miestas. Only a name that leaves out generic
             # words, never one that adds them: "Kiev City" with the old name Kiev goes on to its old name.
-            same = {c for c in loose_named.get(loose(st.name), set()) if by_code[c].type == early and shorter(st.name, by_code[c])} \
+            same = {c for c in loose_named.get(loose(st.name), set()) if by_code[c].type == early and shorter(st.name, by_code[c], shapes=False)} \
                 if early and loose(st.name) else set()
             # an old name written as another subdivision of the main kind disagrees: both count, and the state is
             # reported (review of #400); an old name of another kind (Liberec, a district) does not
@@ -351,8 +353,14 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
         # Brest's shape name)
         if tier is not None and tier not in (0, 2):
             # only the names that hit (review of #400: another old name's shape name is not this tier's)
+            grown = set()
             for n in (tiers[tier][1] if tier == 1 else hit_names):
-                h |= trans.get(key(n), set()) | shapes.get(key(n), set())
+                grown |= trans.get(key(n), set()) | shapes.get(key(n), set())
+            # a state whose set grew this way is reported, never decided by the kind: the boundary file has wrong codes
+            # on some shapes (third review of #400)
+            if grown - h:
+                widened.add(st.id)
+            h |= grown
         # a translation or shape name joins the state's own ISO-name hit only when the state is that subdivision's ISO
         # name with generic words left out (Madrid: the province by name, Comunidad de Madrid by its English name; the
         # kind decides below)
@@ -372,7 +380,7 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
     chosen, reported = {}, []
     for st in states:
         h = hits[st.id]
-        if len(h) > 1 and main:
+        if len(h) > 1 and main and st.id not in widened:
             same = {c for c in h if by_code[c].type == main}
             if len(same) == 1:
                 h = same
@@ -392,6 +400,8 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
                 c, others = disagree[st.id]
                 reported.append((st, "loosely %s (%s), but an old name is written as %s: looked at by hand"
                                  % (c, display(by_code[c].name), ", ".join(others))))
+            elif st.id in widened:
+                reported.append((st, "written like " + ", ".join(sorted(h)) + " (a translation or shape name more than one carries)"))
             else:
                 reported.append((st, "written like " + ", ".join(sorted(h))))
     by_sub = collections.defaultdict(list)
@@ -418,7 +428,9 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
             continue
         # a looser match joins a merge (which moves specimens) only when the state leaves out a generic word of the ISO
         # name ("Banskobystrický" for "Banskobystrický kraj"), never when it adds one: "Kiev Oblast" is not the city Kiev
-        if any(how[st.id] == "loose" and not shorter(st.name, sub) for st in group):
+        # two states found by their own names loosely are not merged without a look (third review of #400); one found
+        # loosely beside one written as ISO is (Banskobystrický into Banskobystrický kraj)
+        if any(how[st.id] == "loose" and not shorter(st.name, sub) for st in group) or sum(st.id in own_loose for st in group) > 1:
             for st in group:
                 reported.append((st, "with %s matches %s (%s): looked at by hand" % (", ".join(o.name for o in group if o is not st), code, iso)))
             continue
