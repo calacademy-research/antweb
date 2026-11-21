@@ -612,7 +612,6 @@ def test_the_iso_file_reads():
     assert c[iso.key("Russia")] == "RU" and c[iso.key("United States")] == "US" and c[iso.key("Türkiye")] == "TR"
 
 
-
 def test_two_stems_of_one_subdivision_are_not_merged():
     # review of #404: Kalu and Kaluzh both fit only Kaluga; neither is matched by its stem, so nothing is merged or
     # renamed without a look, and both are reported
@@ -644,6 +643,23 @@ def test_an_accent_only_rename_beside_another_place_of_that_name():
     out, rep, noc = iso.plan({"Eritrea": [(1, "\u0100nseba", 18)]}, {}, iso.read_iso(), iso.read_countries())
     sql, left, done = iso.statements(out, {}, "20261121", texts={"object_edit": {"\u0100nseba": 1}}, allnames={"anseba": 2})
     assert not left and [d["target"] for d in done if d["action"] == "rename"] == ["Anseba"], (left, done)
+
+
+def test_an_accent_pair_keeps_the_english_spelling():
+    # third review of #404: Ānseba (lower id) and Anseba in one country: Anseba is kept and Ānseba merged into it,
+    # with no rename (which statements() would leave out as "another valid state"); the same for Hokkaidō
+    out, rep, noc = iso.plan({"Eritrea": [(1, "\u0100nseba", 3), (2, "Anseba", 9)], "Japan": [(3, "Hokkaid\u014d", 1), (4, "Hokkaido", 5)]},
+                             {}, iso.read_iso(), iso.read_countries())
+    got = {(x["action"], x["name"], x["target"]) for x in out if x["action"] in ("rename", "merge")}
+    assert got == {("merge", "\u0100nseba", "Anseba"), ("merge", "Hokkaid\u014d", "Hokkaido")}, (got, rep)
+    out, rep, noc = iso.plan({"Japan": [(3, "Hokkaid\u014d", 1)]}, {}, iso.read_iso(), iso.read_countries())
+    assert [(x["action"], x["target"]) for x in out if x["action"] == "rename"] == [("rename", "Hokkaido")], out
+
+
+def test_a_stem_without_its_neighbour_is_reported():
+    # third review of #404: with no state Kurgan, Kur fits Kursk and Kurgan and is reported, not matched
+    out, rep, noc = iso.plan({"Russia": [(1, "Kur", 3)]}, {}, iso.read_iso(), iso.read_countries())
+    assert not [x for x in out if x["action"] in ("rename", "merge")] and [r[1] for r in rep] == ["Kur"], (out, rep)
 
 
 def test_stems_only_in_russia():

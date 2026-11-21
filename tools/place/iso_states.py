@@ -552,7 +552,9 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
             continue
         if english or "/" in iso:
             en = ENGLISH_NAMES.get(code) if english else None
-            kept = (next((st for st in group if en and key(st.name) == key(en)), None)      # already written in English
+            # already written in English: exactly first, then but for accents (review of #404: Anseba beside Ānseba)
+            kept = (next((st for st in group if en and st.name == en), None)
+                    or next((st for st in group if en and key(st.name) == key(en)), None)
                     or max([st for st in group if key(st.name) != key(iso) and "/" not in st.name] or group, key=lambda st: (st.specimens, -st.id)))
             if english and needs_english(kept.name, sub):
                 decisions.append(("rename", kept, sub, kept))
@@ -953,6 +955,9 @@ def main(argv=None):
     text_moves = []
     notes = []
     sql, left, done = statements(decisions, names, tag, curator, texts, allnames, text_moves, notes)
+    # a rename from a name cut short is a note of the plan, reviewed with it (review of #404)
+    notes += ["%s: %s renamed %s from a name cut short: look at it" % (d["country"], d["name"], d["target"]) for d in done
+              if d["action"] == "rename" and (cut_short(d["name"], d["target"]) or cut_short(d["name"], d["iso"]))]
     lines = mapping_lines(moves(done))         # the mapping follows what the apply does, not the plan (review of #395)
     plan_file = os.path.join(folder, "plan.tsv")
     if args.apply:
@@ -982,9 +987,6 @@ def main(argv=None):
         print("  %d decisions the apply leaves out (%d page texts would move with the rest):\n    %s" % (len(left), len(text_moves), "\n    ".join(left)))
     if notes:
         print("  %d notes (done, but look):\n    %s" % (len(notes), "\n    ".join(notes)))
-    stems = [d for d in ren if cut_short(d["name"], d["target"]) or cut_short(d["name"], d["iso"])]
-    if stems:   # review of #404: a rename from a name cut short is looked at one by one
-        print("  %d renames of a name cut short (look at each): %s" % (len(stems), ", ".join("%s -> %s" % (d["name"], d["target"]) for d in stems)))
     for d in (mer + ren + ali)[:args.show]:
         print("  %-6s %-22s %-34s -> %-34s %-8s %5d" % (d["action"], d["country"][:22], d["name"][:34], (d["target"] if d["action"] == "merge" else d["iso"])[:34],
                                                          d["code"], d["specimens"]))
