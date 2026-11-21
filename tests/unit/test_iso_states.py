@@ -662,6 +662,18 @@ def test_a_stem_without_its_neighbour_is_reported():
     assert not [x for x in out if x["action"] in ("rename", "merge")] and [r[1] for r in rep] == ["Kur"], (out, rep)
 
 
+def test_stem_renames_are_notes_of_the_plan():
+    # fourth review of #404: every rename from a stem is a note, also one cut short of ISO's form (Kaluzh, Moskov)
+    states = [(1, "Kur", 3), (2, "Kaluzh", 4), (3, "Nizhegorod", 2), (4, "Moskov", 5), (5, "Kurgan", 1), (6, "Chelyabinskaya", 1)]
+    out, rep, noc = iso.plan({"Russia": states}, {}, iso.read_iso(), iso.read_countries())
+    sql, left, done = iso.statements(out, {}, "20261121")
+    notes = iso.stem_notes(done, iso.read_iso())
+    assert sorted(n.split(":")[1].split(" renamed")[0].strip() for n in notes) == ["Kaluzh", "Kur", "Moskov", "Nizhegorod"], notes
+    # Qatar's Al Shamal (the table) stays as it is
+    out, rep, noc = iso.plan({"Qatar": [(1, "Al Shamal", 2)]}, {}, iso.read_iso(), iso.read_countries())
+    assert not [x for x in out if x["action"] == "rename"], out
+
+
 def test_stems_only_in_russia():
     # review of #404: outside STEM_COUNTRIES a prefix of a subdivision is no match (Abu for Abu Dhabi stays reported)
     subs = {s.code: s for s in iso.read_iso()["AE"] + iso.read_iso()["RU"]}

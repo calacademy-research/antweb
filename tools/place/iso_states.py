@@ -171,6 +171,21 @@ def english_fit(name, sub, english_names=None):
     return any(cut_short(name, n, 4) for n in [display(sub.name)] + [o for o in sub.others if not o.isascii()])
 
 
+def stem_notes(done, iso_subs):
+    """Notes of the reviewed plan for the renames from a name cut short of the English name or of ISO's own name or a
+    translation in another script (Kur, Kaluzh, Nizhegorod, Moskov): looked at one by one (reviews of #404)."""
+    by_code = {s.code: s for subs in iso_subs.values() for s in subs}
+    out = []
+    for d in done:
+        sub = by_code.get(d["code"])
+        if d["action"] != "rename" or key(d["name"]) == key(d["target"]):
+            continue
+        forms = [d["target"], d["iso"]] + ([display(sub.name)] + [o for o in sub.others if not o.isascii()] if sub else [])
+        if any(cut_short(d["name"], f) for f in forms):
+            out.append("%s: %s renamed %s from a name cut short: look at it" % (d["country"], d["name"], d["target"]))
+    return out
+
+
 def needs_english(name, sub, english_names=None):
     """A state of an ENGLISH country that has an English name in english_names.tsv and is not written in it, where
     its name is plainly not English: a transliteration (Attikí, Al Başrah, Eşfahān), ISO's romanization (Kamchatskiy,
@@ -544,7 +559,8 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
         # name ("Banskobystrický" for "Banskobystrický kraj"), never when it adds one: "Kiev Oblast" is not the city Kiev
         # two states found by their own names loosely are not merged without a look (third review of #400); one found
         # loosely beside one written as ISO is (Banskobystrický into Banskobystrický kraj)
-        # a state found only by its English name or as a stem is never merged without a look (review of #404)
+        # a state found only by its English name or as a stem is never merged without a look (review of #404); the
+        # English tier gives a state only a subdivision no other state reaches, so this guards a later change of it
         if any(how[st.id] == "loose" and not shorter(st.name, sub) for st in group) or sum(st.id in own_loose for st in group) > 1 \
                 or any(how[st.id] == "english" for st in group):
             for st in group:
@@ -955,9 +971,7 @@ def main(argv=None):
     text_moves = []
     notes = []
     sql, left, done = statements(decisions, names, tag, curator, texts, allnames, text_moves, notes)
-    # a rename from a name cut short is a note of the plan, reviewed with it (review of #404)
-    notes += ["%s: %s renamed %s from a name cut short: look at it" % (d["country"], d["name"], d["target"]) for d in done
-              if d["action"] == "rename" and (cut_short(d["name"], d["target"]) or cut_short(d["name"], d["iso"]))]
+    notes += stem_notes(done, read_iso())
     lines = mapping_lines(moves(done))         # the mapping follows what the apply does, not the plan (review of #395)
     plan_file = os.path.join(folder, "plan.tsv")
     if args.apply:
