@@ -933,7 +933,12 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
           if (!georank.equals("country") || getIsUseChildren())
             display += "<a href='" + Html.escAttr(AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=" + rank + "&" + child.getParams()) + "'>" + Html.esc(child.getName()) + "</a>";
       }
-      //display += "</b>";
+      // where the names come from, under a country's own list (2026-11-21)
+      if (i > 0 && "overview".equals(overviewOrList) && this instanceof Country) {
+        String note = Country.adm1NamesNote(geolocale.getIsoCode(), geolocale.isIsland());
+        if (!note.isEmpty()) display += "<br><span class=\"adm1-names-note\" style=\"font-size:smaller;color:#666\">" + Html.esc(note)
+            + " <a href=\"https://www.iso.org/iso-3166-country-codes.html\">About ISO 3166</a></span>";
+      }
       return display;
     }
     

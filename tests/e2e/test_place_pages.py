@@ -149,3 +149,17 @@ def test_diversity_numbers_open_their_lists(path):
         p = params(hrefs[0])
         assert (p.get("rank"), p.get("statusSet")) == (rank, view), f"{path} {stat}: {hrefs[0]}"
         assert "countReport" not in cell, f"{path}: {stat} still links the count report"
+
+
+# 2026-11-21 (Brian Fisher: adopt ISO 3166-2 for adm1s and say so on the site): the line under a country's adm1s
+@pytest.mark.parametrize("country, line", [
+    ("France", "Adm1 names follow ISO 3166-2."),
+    ("Russia", "Adm1 names follow ISO 3166-2, in English."),
+    ("Madagascar", "Adm1s are Madagascar's regions (since 2004)"),
+])
+def test_country_page_says_where_adm1_names_come_from(country, line):
+    path = "/country.do?name=" + country
+    r = fetch(path)
+    assert_ok(r, path)
+    # Html.esc writes the apostrophe as &#39;
+    assert 'class="adm1-names-note"' in r.text and line.replace("'", "&#39;") in r.text, f"{path}: no line {line!r}"

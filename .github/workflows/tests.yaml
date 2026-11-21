@@ -802,6 +802,8 @@ jobs:
         # (México, MEXICO) under the one valid country it is a spelling of, the rule of tools/place/place_fix.py; another
         # word, two valid countries with the same spelling, or an island: no change; exact and old names as before; the
         # report section counts as corrected; the TaxonWorks upload passes such a spelling on instead of dropping it.
+        # Adm1NamesNoteTest (2026-11-21): the line under a country's adm1s says they follow ISO 3166-2 (in English for
+        # the countries written in another script; Madagascar's regions and the CAR's prefectures newer than ISO's list).
         # Adm1SpellingTest (2026-11-19): the upload stores the valid state for a valid state, an old name of one (Nimba
         # County -> Nimba, the 269 duplicates merged that day) or either written with other capitals, accents, blanks or
         # punctuation (grand-est -> Grand Est); a key two valid states share, another word or another country's state:
@@ -870,6 +872,7 @@ jobs:
               /t/org/calacademy/antweb/upload/LocalityCodePlainTest.java \
               /t/org/calacademy/antweb/util/CountrySpellingTest.java \
               /t/org/calacademy/antweb/util/Adm1SpellingTest.java \
+              /t/org/calacademy/antweb/util/Adm1NamesNoteTest.java \
               /t/org/calacademy/antweb/util/DuplicateStateTest.java \
               /t/org/calacademy/antweb/util/PlaceBioregionTest.java \
               /t/org/calacademy/antweb/upload/IslandCountryTest.java \
@@ -884,7 +887,7 @@ jobs:
                      util.BackgroundJobsTest:16 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
                      util.JobSummaryTest:8 upload.SubfamilyFromGenusTest:9 upload.LocalityCodePlainTest:6 \
-                     util.CountrySpellingTest:8 util.Adm1SpellingTest:7 util.DuplicateStateTest:5 util.PlaceBioregionTest:10 upload.IslandCountryTest:10 upload.IslandParseLineTest:10 upload.AntcatLocalityTest:9 util.QuoteTrimTest:5 util.DataExtractTest:19 upload.AntcatStatusTest:3; do
+                     util.CountrySpellingTest:8 util.Adm1SpellingTest:7 util.Adm1NamesNoteTest:4 util.DuplicateStateTest:5 util.PlaceBioregionTest:10 upload.IslandCountryTest:10 upload.IslandParseLineTest:10 upload.AntcatLocalityTest:9 util.QuoteTrimTest:5 util.DataExtractTest:19 upload.AntcatStatusTest:3; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
@@ -1048,6 +1051,9 @@ jobs:
 
       - name: Place corrections for TaxonWorks, the missing country and state from coordinates (tests/unit/test_place_corrections.py)
         run: python3 tests/unit/test_place_corrections.py
+
+      - name: The country page's adm1 line and the renames use one list of English-named countries (tests/unit/test_adm1_names_note.py)
+        run: python3 tests/unit/test_adm1_names_note.py
 
       - name: States under their ISO 3166-2 names, the plan (tests/unit/test_iso_states.py)
         # 2026-11-20 (Brian Fisher: "let's adopt ISO 3166-2"): a state matches its subdivision by name or old name;
