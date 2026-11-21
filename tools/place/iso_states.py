@@ -459,13 +459,16 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
         # a state of an ENGLISH country found by nothing else, by its English name or as a name cut short of the
         # English or ISO name: only when exactly one subdivision fits that no other state is already found as
         # (2026-11-21: Russia's 2021 stems Kur, Om, Tul', Kaluzh, Nizhegorod had no ISO old name to be found by;
-        # Kur fits Kursk and Kurgan, and Kurgan is a state of its own)
-        taken = {next(iter(h)) for i, h in hits.items() if len(h) == 1}
-        for st in states:
-            if st.id in hits and not hits[st.id]:
-                fit = {sub.code for sub in subs if sub.code not in taken and english_fit(st.name, sub)}
-                if len(fit) == 1:
-                    hits[st.id], how[st.id] = fit, "english"
+        # Kur fits Kursk and Kurgan, and Kurgan is a state of its own). A subdivision any other state reaches, alone or
+        # among several, is taken; one that two of these states fit goes to neither; a state NOT_ISO rules out stays
+        # out (review of #404)
+        taken = set().union(*hits.values()) if hits else set()
+        fits = {st.id: {sub.code for sub in subs if sub.code not in taken and english_fit(st.name, sub)}
+                for st in states if st.id in hits and not hits[st.id] and how.get(st.id) != "not"}
+        fitted = collections.Counter(c for f in fits.values() for c in f)
+        for i, fit in fits.items():
+            if len(fit) == 1 and fitted[next(iter(fit))] == 1:
+                hits[i], how[i] = fit, "english"
     # the country's main kind from its states' own matches; a table entry does not count (it would decide the kind of
     # other states written like two kinds: review of #399)
     kinds = collections.Counter(by_code[next(iter(h))].type for i, h in hits.items() if len(h) == 1 and how[i] != "table")
@@ -531,7 +534,9 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
         # name ("Banskobystrický" for "Banskobystrický kraj"), never when it adds one: "Kiev Oblast" is not the city Kiev
         # two states found by their own names loosely are not merged without a look (third review of #400); one found
         # loosely beside one written as ISO is (Banskobystrický into Banskobystrický kraj)
-        if any(how[st.id] == "loose" and not shorter(st.name, sub) for st in group) or sum(st.id in own_loose for st in group) > 1:
+        # a state found only by its English name or as a stem is never merged without a look (review of #404)
+        if any(how[st.id] == "loose" and not shorter(st.name, sub) for st in group) or sum(st.id in own_loose for st in group) > 1 \
+                or any(how[st.id] == "english" for st in group):
             for st in group:
                 reported.append((st, "with %s matches %s (%s): looked at by hand" % (", ".join(o.name for o in group if o is not st), code, iso)))
             continue
@@ -711,7 +716,7 @@ def statements(decisions, names, tag, no_merge=None, texts=None, allnames=None, 
             why = "the ISO name is longer than a specimen's state can be (%d characters)" % SPECIMEN_ADM1
         elif normal(iso) in has_text and normal(iso) != normal(old):
             why = "the ISO name %s already has page text (or a name written like it)" % iso
-        elif normal(old) in has_text and shared(iso) > len(swap) + sum(1 for m in decisions if m["action"] == "merge" and m["kept_id"] == vid
+        elif normal(old) in has_text and normal(old) != normal(iso) and shared(iso) > len(swap) + sum(1 for m in decisions if m["action"] == "merge" and m["kept_id"] == vid
                                                                           and normal(m["name"]) == normal(iso)):
             # this state's own old-name row of that name, and states of that spelling merged into it, aside
             # page text is keyed by name alone: under a name another place has, it would show on that place's page too

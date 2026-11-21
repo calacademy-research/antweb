@@ -619,3 +619,28 @@ if __name__ == "__main__":
             fn()
             n += 1
     print(n, "tests passed")
+
+
+def test_two_stems_of_one_subdivision_are_not_merged():
+    # review of #404: Kalu and Kaluzh both fit only Kaluga; neither is matched by its stem, so nothing is merged or
+    # renamed without a look, and both are reported
+    out, rep, noc = iso.plan({"Russia": [(1, "Kalu", 3), (2, "Kaluzh", 4)]}, {}, iso.read_iso(), iso.read_countries())
+    assert not [x for x in out if x["action"] in ("rename", "merge")], out
+    assert {r[1] for r in rep} >= {"Kalu", "Kaluzh"}, rep
+    # a stem beside a state already found as that subdivision is not taken as it (Kaluzh with Kaluga)
+    out, rep, noc = iso.plan({"Russia": [(1, "Kaluga", 30), (2, "Kaluzh", 4)]}, {}, iso.read_iso(), iso.read_countries())
+    assert not [x for x in out if x["action"] == "merge"], out
+
+
+def test_an_accent_only_rename_with_page_text():
+    # review of #404: the state's own row is the only place named Anseba (accents aside): its rename is not left out
+    out, rep, noc = iso.plan({"Eritrea": [(1, "Ānseba", 18)]}, {}, iso.read_iso(), iso.read_countries())
+    sql, left, done = iso.statements(out, {}, "20261121", texts={"object_edit": {"Ānseba": 1}}, allnames={"anseba": 1})
+    assert not left and [d["target"] for d in done if d["action"] == "rename"] == ["Anseba"], (left, done)
+
+
+def test_mongolia_keeps_its_umlauts():
+    # the English table writes Khövsgöl with ö: a state so written is not renamed
+    sub = {s.code: s for s in iso.read_iso()["MN"]}["MN-041"]
+    assert not iso.needs_english("Khövsgöl", sub)
+    assert iso.needs_english("Hövsgöl", sub) or iso.english_fit("Khövsgöl", sub)
