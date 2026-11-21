@@ -510,6 +510,12 @@ def test_the_english_table_is_complete_and_has_no_shared_names():
         assert name and name == name.strip() and "\t" not in name, code
         seen[(code[:2], iso.key(name))] += 1
     assert not [k for k, v in seen.items() if v > 1], [k for k, v in seen.items() if v > 1]
+    # complete: every subdivision of the 25 covered countries has its English name (a rebuilt iso3166_2.tsv with a new
+    # or recoded subdivision fails here instead of leaving its state silently in transliteration: review of #403)
+    covered = {code[:2] for code in iso.ENGLISH_NAMES}
+    assert covered == set("AE AF BH EG ER GR IQ IR JO JP KG KH KP KW KZ LA LB LY MN OM QA RU SY TJ YE".split()), sorted(covered)
+    missing = [s.code for a2 in sorted(covered) for s in subs[a2] if s.code not in iso.ENGLISH_NAMES]
+    assert not missing, missing
 
 
 def test_english_rename_review_cases():
