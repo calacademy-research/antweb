@@ -251,6 +251,14 @@ def sub_names(sub):
     return iso_names(sub) + list(sub.others) + list(sub.shapes)
 
 
+def top_kind(kinds):
+    """The kind with the most votes, or None on a tie: never the row order of the database (sixth review of #400)."""
+    best = kinds.most_common(2)
+    if not best or (len(best) == 2 and best[0][1] == best[1][1]):
+        return None
+    return best[0][0]
+
+
 def shorter(name, sub, shapes=True):
     """The state's name is one of the subdivision's names with generic words left out, none added. shapes=False: ISO's
     names and translations only, not the boundary file's shape names."""
@@ -313,7 +321,7 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
     # written exactly as a capital does not decide the kind for every loose state (reviews of #400)
     kinds = collections.Counter(by_code[next(iter(h))].type for i, (h, t) in first.items()
                                 if len(h) == 1 and (t is not None or shorter(names_of[i], by_code[next(iter(h))], shapes=False)))
-    early = kinds.most_common(1)[0][0] if kinds else None
+    early = top_kind(kinds)
     for st in states:
         if st.id not in first:
             continue
@@ -376,9 +384,9 @@ def match_country(states, subs, english=False, exonyms=None, not_iso=None):
     # the country's main kind from its states' own matches; a table entry does not count (it would decide the kind of
     # other states written like two kinds: review of #399)
     kinds = collections.Counter(by_code[next(iter(h))].type for i, h in hits.items() if len(h) == 1 and how[i] != "table")
-    main = kinds.most_common(1)[0][0] if kinds else None
+    main = top_kind(kinds)
     # subdivisions (not states) of each kind the states found alone: a loose own-name hit is reported for its level only
-    # when the main kind has more of them (two states of one city do not outvote a region)
+    # when the main kind has more of them (two states of one city do not outvote a region); equally many: renamed
     level_codes = collections.Counter(by_code[c].type for c in {next(iter(h)) for i, h in hits.items() if len(h) == 1 and how[i] != "table"})
     chosen, reported = {}, []
     for st in states:
@@ -486,7 +494,7 @@ def plan(valid, olds, iso, countries, skip=frozenset()):
 
 def read_db(db):
     valid = collections.defaultdict(list)
-    for r in pf.run_sql(db, "select id, " + pf.hx("parent") + ", " + pf.hx("name") + " from geolocale where georank = 'adm1' and is_valid = 1"):
+    for r in pf.run_sql(db, "select id, " + pf.hx("parent") + ", " + pf.hx("name") + " from geolocale where georank = 'adm1' and is_valid = 1 order by id"):
         valid[pf.unhex(r[1])].append([int(r[0]), pf.unhex(r[2]), 0])
     count = collections.Counter()
     for r in pf.run_sql(db, "select " + pf.hx("country") + ", " + pf.hx("adm1") + ", count(*) from specimen where adm1 <> '' group by 1, 2"):

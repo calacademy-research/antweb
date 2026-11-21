@@ -469,6 +469,17 @@ def test_a_translation_and_a_shape_name_of_two_subdivisions_are_reported():
     assert not d and rep[0][1].startswith("written like BY-BR, BY-VI"), (d, rep)
 
 
+def test_a_tie_of_kinds_is_no_main_kind():
+    # sixth review of #400: one vote each must not depend on the order the database returns the states
+    c = __import__("collections").Counter
+    assert iso.top_kind(c({"Region": 1, "City": 1})) is None and iso.top_kind(c({"Region": 2, "City": 1})) == "Region"
+    assert iso.top_kind(c()) is None
+    a = iso.match_country([st(1, "Kherson"), st(3, "Kiev")], UA)
+    b = iso.match_country([st(3, "Kiev"), st(1, "Kherson")], UA)
+    norm = lambda r: (sorted((x[0], x[1].name, x[2].code) for x in r[0]), sorted((x[0].name, x[1]) for x in r[1]))
+    assert norm(a) == norm(b), (norm(a), norm(b))
+
+
 def test_the_iso_file_reads():
     subs = iso.read_iso()
     # translations and the boundary file's shape names are separate columns
