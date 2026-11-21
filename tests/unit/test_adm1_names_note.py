@@ -12,7 +12,8 @@ import iso_states  # noqa: E402
 def test_the_two_lists_are_the_same():
     java = open(os.path.join(ROOT, "src/org/calacademy/antweb/geolocale/Country.java"), encoding="utf-8").read()
     block = re.search(r"ENGLISH_NAMED = .*?\)\)\);", java, re.S).group(0)
-    assert set(re.findall(r'"([A-Z]{2})"', block)) == set(iso_states.ENGLISH)
+    codes = re.findall(r'"([A-Z]{2})"', block)
+    assert len(codes) == len(set(codes)) and set(codes) == set(iso_states.ENGLISH), sorted(set(codes) ^ set(iso_states.ENGLISH))
 
 
 if __name__ == "__main__":
