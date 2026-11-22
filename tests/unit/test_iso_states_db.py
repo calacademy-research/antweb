@@ -221,6 +221,39 @@ def check_country_codes(project):
     mysql("drop table iso_codes_bak_%s" % TAG)
 
 
+def check_codes_move_from_an_old_name(project):
+    # 2026-11-21: Russia, Vietnam and 12 more valid countries had their codes only on an old-name row. A code only old
+    # names of this very country hold moves to it (the old row's codes cleared); one held by an old name of another
+    # country stays listed. The rollback puts both rows back.
+    fresh()
+    mysql("insert into geolocale (id, name, georank, parent, source, is_valid, valid_name, isoCode, iso3Code) values"
+          " (30, 'Vietnam', 'country', 'South-eastern Asia', 'antweb', 1, null, null, null),"
+          " (31, 'Viet Nam', 'country', 'South-eastern Asia', 'antweb', 0, 'Vietnam', 'VN', 'VNM'),"
+          " (32, 'C\u00f4te d''Ivoire', 'country', 'Western Africa', 'antweb', 1, null, null, null),"
+          " (33, 'Ivory Coast', 'country', 'Western Africa', 'antweb', 0, 'Ghana', 'CI', 'CIV')")
+    folder = tempfile.mkdtemp()
+    code, out = run(project, folder, "--codes")
+    assert "fill 1, 1 old-name rows cleared" in out and "clear   Viet Nam (VN/VNM)" in out and "carried by CI" in out, out
+    assert "clear\tViet Nam (VN/VNM)" in open(os.path.join(folder, "codes.tsv"), encoding="utf-8").read()
+    # third review of #409: the apply refuses when the data changed after the plan (here a second old name appears)
+    mysql("insert into geolocale (id, name, georank, parent, source, is_valid, valid_name, isoCode, iso3Code) values"
+          " (34, 'Vietnam Old', 'country', 'South-eastern Asia', 'antweb', 0, 'Vietnam', 'VN', null)")
+    try:
+        run(project, folder, "--codes", "--apply")
+        raise AssertionError("an apply of a plan that changed was not refused")
+    except SystemExit as e:
+        assert "differs from the one reviewed" in str(e), e
+    mysql("delete from geolocale where id = 34")
+    code, out = run(project, folder, "--codes", "--apply")
+    got = mysql("select id, ifnull(isoCode, '-'), ifnull(iso3Code, '-') from geolocale where id >= 30 order by id")
+    assert got == [["30", "VN", "VNM"], ["31", "-", "-"], ["32", "-", "-"], ["33", "CI", "CIV"]], got
+    assert "After a rollback, codes on two rows: select code" in out, out
+    mysql(out.split("Rollback: ")[1].split("\n")[0])
+    got = mysql("select id, ifnull(isoCode, '-'), ifnull(iso3Code, '-') from geolocale where id >= 30 order by id")
+    assert got == [["30", "-", "-"], ["31", "VN", "VNM"], ["32", "-", "-"], ["33", "CI", "CIV"]], got
+    mysql("drop table iso_codes_bak_%s" % TAG)
+
+
 def check_a_collation_that_ignores_accents_is_refused(project):
     fresh()
     mysql("alter table geolocale modify name varchar(250) character set utf8mb3 collate utf8mb3_general_ci")
@@ -247,5 +280,6 @@ if __name__ == "__main__":
         check_a_failed_apply_leaves_the_day_open(d)
         check_a_collation_that_ignores_accents_is_refused(d)
         check_country_codes(d)
+        check_codes_move_from_an_old_name(d)
     mysql("drop database %s" % DB, None)
-    print("4 tests passed (MySQL %s)" % mysql("select version()", None)[0][0])
+    print("5 tests passed (MySQL %s)" % mysql("select version()", None)[0][0])

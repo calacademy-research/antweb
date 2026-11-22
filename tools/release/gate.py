@@ -254,7 +254,8 @@ def review_state(comments, head_sha):
     if not m or not head_sha.startswith(m.group(1)):
         return False, f"the review is of {m.group(1) if m else 'an unknown commit'}, not the head {head_sha[:7]}"
     text = body[len(REVIEW_MARKER):].replace("### Claude review", "", 1).strip()
-    if not text.startswith("No blocking issues"):
+    # the verdict line, with or without bold (the review of #409 wrote "**No blocking issues**")
+    if not text.lstrip("*_ ").startswith("No blocking issues"):
         return False, "the review lists blocking issues: " + text.splitlines()[0][:120]
     return True, f"no blocking issues ({head_sha[:7]})"
 
