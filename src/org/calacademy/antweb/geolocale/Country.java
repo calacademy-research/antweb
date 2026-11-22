@@ -119,6 +119,14 @@ public class Country extends Geolocale {
         "KP", "KR", "KW", "KZ", "LA", "LB", "LK", "LY", "MK", "MM", "MN", "OM", "PS", "QA", "RS", "RU", "SA", "SD", "SY",
         "TH", "TJ", "TW", "UA", "YE", "IN")));
 
+    /** The codes ISO 3166-2 gives no subdivisions (tools/place/iso3166_2.tsv has no row for them), and Kosovo's XK,
+     *  which is not an ISO code: their pages make no claim about ISO 3166-2 (review of #408). Must equal the codes of
+     *  iso3166_countries.tsv with no row in iso3166_2.tsv, plus XK (tests/unit/test_adm1_names_note.py checks it). */
+    public static final Set<String> NO_ISO_SUBDIVISIONS = Collections.unmodifiableSet(new TreeSet<>(Arrays.asList(
+        "AI", "AQ", "AS", "AW", "AX", "BL", "BM", "BV", "CC", "CK", "CW", "CX", "EH", "FK", "FO", "GF", "GG", "GI",
+        "GP", "GS", "GU", "HK", "HM", "IM", "IO", "JE", "KY", "MF", "MO", "MP", "MQ", "MS", "NC", "NF", "NU", "PF",
+        "PM", "PN", "PR", "RE", "SJ", "SX", "TC", "TF", "TK", "VA", "VG", "VI", "YT", "XK")));
+
     /**
      * The line under a country's adm1s saying where their names come from (Brian Fisher, 2026-11-20: adopt ISO 3166-2,
      * "we just follow their usage", and say so on the site). Two countries keep newer units than ISO lists (Madagascar,
@@ -128,7 +136,7 @@ public class Country extends Geolocale {
     public static String adm1NamesNote(String isoCode, boolean island) {
       if (island) return "";
       isoCode = isoCode == null ? "" : isoCode.trim().toUpperCase(java.util.Locale.ROOT);   // as stored, any case (review of #406)
-      if (isoCode.isEmpty()) return "";            // no ISO 3166 code: no claim about ISO 3166-2
+      if (isoCode.isEmpty() || NO_ISO_SUBDIVISIONS.contains(isoCode)) return "";   // no ISO 3166-2 list to follow
       if ("MG".equals(isoCode)) return "Adm1s are Madagascar's regions (since 2004); ISO 3166-2 still lists the former provinces.";
       if ("CF".equals(isoCode)) return "Adm1s are the prefectures since the 2020 reform; ISO 3166-2 lists them as before it.";
       if (ENGLISH_NAMED.contains(isoCode)) return "Adm1 names follow ISO 3166-2, in English.";

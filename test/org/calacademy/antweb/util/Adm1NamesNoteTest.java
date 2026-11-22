@@ -34,5 +34,9 @@ public class Adm1NamesNoteTest extends TestCase {
 
     public void testIslandCountry() {
         assertEquals("", Country.adm1NamesNote("US", true));
+        // no ISO 3166-2 subdivisions (Réunion, Puerto Rico), or no ISO code at all (Kosovo): no line (review of #408)
+        assertEquals("", Country.adm1NamesNote("RE", false));
+        assertEquals("", Country.adm1NamesNote("PR", false));
+        assertEquals("", Country.adm1NamesNote("XK", false));
     }
 }
