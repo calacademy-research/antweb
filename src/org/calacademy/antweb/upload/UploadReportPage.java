@@ -28,7 +28,8 @@ import org.calacademy.antweb.util.Html;
  * Old reports are static files and stay as they are; the file names do not change. Every value written here is
  * escaped; the rows' values (MessageMgr) are HTML escaped where each message is added (they carry links).
  * Each tile is the sum of its group's section counts (2026-10-30: "Columns ignored" counts columns, not lines;
- * "Multiple bioregions" counts taxa; non-ants are a note, never corrected).
+ * "Multiple bioregions" counts taxa; non-ants are a note, never corrected). The tiles: lines read, loaded, name
+ * changes, not loaded, corrected, red-flagged, notes, recognized (2026-11-21) and already in AntWeb.
  * Tested in UploadReportPageTest (the summary's counts equal the email's and the sections' sums) and tests/e2e.
  */
 public final class UploadReportPage {

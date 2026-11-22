@@ -146,9 +146,7 @@ Mexico,ADM1,Mexico,Estado de México
 # as the shapes named plain Jinotega in OCHA's file and in Natural Earth are by the rule for an exact name.
 Nicaragua,ADM1,Jinotega (Departamento),Jinotega
 # Names: the shape's name is another name of the state. Tested with AntWeb's specimens (see 5 above).
-name,United Arab Emirates,ADM1,Ras al-Khaimah,Ra's al Khaymah,spelling or language of the same name
-name,United Arab Emirates,ADM1,Sharjah,Ash Shāriqah,"the same emirate, AntWeb's transliteration"
-name,Eritrea,ADM1,Northen Red Sea Region,Semēnawī K'eyih Bahrī,spelling or language of the same name (by AntWeb's old name Northern Red Sea)
+name,Eritrea,ADM1,Northen Red Sea Region,Northern Red Sea,spelling or language of the same name (by AntWeb's old name Northern Red Sea)
 name,Democratic Republic of Congo,ADM1,Lower Uele,Bas-Uélé,English for Bas-Uélé
 name,Myanmar,ADM1,Tanitharyi,Taninthayi,spelling or language of the same name
 name,Brazil,ADM1,Rio de Jeneiro,Rio de Janeiro,spelling or language of the same name
@@ -156,54 +154,49 @@ name,Tunisia,ADM1,El Kef,Le Kef,spelling or language of the same name
 name,Ivory Coast,ADM1,District Autonome D'Abidjan,Abidjan,spelling or language of the same name
 name,Democratic Republic of Congo,ADM1,Upper Uele,Haut-Uélé,English for Haut-Uélé
 name,Fiji,ADM2,Nadroga-Navosa,Nadroga and Navosa,spelling or language of the same name
-name,United Arab Emirates,ADM1,Fujairah,Al Fujayrah,spelling or language of the same name
 name,Turkmenistan,ADM1,Ahai,Ahal,spelling or language of the same name
 name,Morocco,ADM1,Fez-Meknes,Fès-Meknès,spelling or language of the same name
 name,Saudi Arabia,ADM1,Makkah Region,Makkah al Mukarramah,spelling or language of the same name (by AntWeb's old name Makkah)
 name,Saudi Arabia,ADM1,Riyadh Region,Ar Riyad,spelling or language of the same name (by AntWeb's old name Riyadh)
 name,South Africa,ADM1,Nothern Cape,Northern Cape,spelling or language of the same name
-name,Greece,ADM2,Kentrikis Makedonias,Kentrikí Makedonía,spelling or language of the same name
+name,Greece,ADM2,Kentrikis Makedonias,Central Macedonia,spelling or language of the same name
 name,Greece,ADM2,Kritis,Crete,spelling or language of the same name (by AntWeb's old name Kríti)
 name,Colombia,ADM1,Bogota Capital District,Distrito Capital de Bogotá,spelling or language of the same name
-name,Greece,ADM2,Notioy Aigaioy,Notío Aigaío,spelling or language of the same name
+name,Greece,ADM2,Notioy Aigaioy,South Aegean,spelling or language of the same name
 name,Croatia,ADM1,Split-Dalmatia,Splitsko-dalmatinska županija,spelling or language of the same name
 name,Croatia,ADM1,Zadar County,Zadarska županija,spelling or language of the same name
-name,Greece,ADM2,Peloponnisoy,Peloponnísos,spelling or language of the same name
+name,Greece,ADM2,Peloponnisoy,Peloponnese,spelling or language of the same name
 name,Seychelles,ADM3,Belombre,Bel Ombre,spelling or language of the same name
 name,Saudi Arabia,ADM1,Eastern Region,Ash Sharqiyah,spelling or language of the same name (by AntWeb's old name Eastern)
 name,Czech Republic,ADM1,Středočeský kraj,Středočeský,spelling or language of the same name
-name,Oman,ADM1,Muscat,Masqaţ,Muscat; AntWeb also has Muḩāfaz̧at Masqaţ as a valid state
 name,Democratic Republic of Congo,ADM1,Central Kasai,Kasaï Central,spelling or language of the same name
 name,Thailand,ADM1,Nong Bua Lam Phu Province,Nong Bua Lamphu,spelling or language of the same name
-name,Greece,ADM2,Ionion Nison,Ionía Nísia,spelling or language of the same name
+name,Greece,ADM2,Ionion Nison,Ionian Islands,spelling or language of the same name
 name,Kazakhstan,ADM1,Jambyl Region,Zhambyl,spelling or language of the same name
 name,Kyrgyzstan,ADM1,Jalal-Abad Region,Jalal-Abad,the same place; AntWeb also has Jalal-Abad oblast as a valid state
-name,Syria,ADM1,Damascus,Dimashq,Damascus
-name,Bahrain,ADM1,Capital Governorate,Al 'Āşimah,Capital governorate
 name,Cuba,ADM1,Havana,La Habana,Havana
 name,Panama,ADM1,Comarca Ngäbe-Buglé,Ngäbe-Buglé,spelling or language of the same name
 name,Panama,ADM1,Ngöbe Buglé,Ngäbe-Buglé,spelling of the same name as OCHA's file has it (production 2026-11-10)
 name,Solomon Islands,ADM1,Makira,Makira-Ulawa,the same place; AntWeb also has Makira and Ulawa as a valid state
 name,Spain,ADM1,Cataluña/Catalunya,Catalunya,spelling or language of the same name (by AntWeb's old name Cataluña)
 name,Tanzania,ADM1,South Pemba,Pemba South,spelling or language of the same name
-name,Greece,ADM2,Attikis,Attikí,spelling or language of the same name
-name,Egypt,ADM1,Matrouh Governorate,Matruh,spelling or language of the same name
-name,Greece,ADM2,Dytikis Elladas,Dytikí Elláda,spelling or language of the same name
-name,Greece,ADM2,Stereas Elladas,Stereá Elláda,spelling or language of the same name
+name,Greece,ADM2,Attikis,Attica,spelling or language of the same name
+name,Egypt,ADM1,Matrouh Governorate,Matrouh,spelling or language of the same name
+name,Greece,ADM2,Dytikis Elladas,Western Greece,spelling or language of the same name
+name,Greece,ADM2,Stereas Elladas,Central Greece,spelling or language of the same name
 name,Uganda,ADM3,Kalanga,Kalangala,spelling or language of the same name
 name,Belgium,ADM2,Brussels,Région de Bruxelles-Capitale,spelling or language of the same name
 name,China,ADM1,Xinjiang Uyghur Autonomous Region,Xinjiang,spelling or language of the same name (by AntWeb's old name Xinjiang Uyghur Autonomous)
 name,Czech Republic,ADM1,Kraj Vysočina,Vysočina,spelling or language of the same name
 name,Indonesia,ADM1,Jakarta Special Capital Region,Jakarta Raya,spelling or language of the same name
-name,Iraq,ADM1,Erbil,Arbīl,spelling or language of the same name
-name,Kuwait,ADM1,Ahmadi,Al Aḩmadī,spelling or language of the same name
+name,Kuwait,ADM1,Ahmadi,Al Ahmadi,spelling or language of the same name
 name,Morocco,ADM1,Tangier-Tetouan-Al Hoceima,Tanger-Tétouan-Al Hoceïma,spelling or language of the same name
 name,Papua New Guinea,ADM1,West Sepik (Sandaun) Province,West Sepik,spelling or language of the same name
 name,Belgium,ADM2,Luik,Liège,Dutch name of Liège
 name,Chile,ADM1,Región del Bío-Bío,Biobío,spelling or language of the same name
-name,Greece,ADM2,Ipeiroy,Ípeiros,spelling or language of the same name
-name,Russia,ADM1,Irkutsk Oblast,Irkut,spelling or language of the same name (by AntWeb's old name Irkutsk)
-name,Syria,ADM1,Rural Damascus,Rīf Dimashq,Rural Damascus; AntWeb also has Rif-dimashq as a valid state
+name,Greece,ADM2,Ipeiroy,Epirus,spelling or language of the same name
+name,Russia,ADM1,Irkutsk Oblast,Irkutsk,spelling or language of the same name (by AntWeb's old name Irkutsk)
+name,Syria,ADM1,Rural Damascus,Rif Dimashq,Rural Damascus; AntWeb also has Rif-dimashq as a valid state
 name,Chile,ADM1,Región del Libertador Bernardo O'Higgins,Libertador General Bernardo O'Higgins,spelling or language of the same name
 name,Kazakhstan,ADM1,Kyzylorda Region,Qyzylorda,spelling or language of the same name
 name,Uzbekistan,ADM1,Bukhara Region,Buxoro,Uzbek spelling
@@ -216,49 +209,43 @@ name,Croatia,ADM1,Primorje-Gorski Kotar,Primorsko-goranska županija,Croatian na
 name,Croatia,ADM1,Šibenik-Knin,Šibensko-kninska županija,spelling or language of the same name
 name,Czech Republic,ADM1,Liberecký kraj,Liberecký,spelling or language of the same name
 name,Czech Republic,ADM1,Olomoucký kraj,Olomoucký,spelling or language of the same name
-name,Greece,ADM2,Anatolikis Makedonias kai Thr*,Anatolikí Makedonía kai Thráki,spelling or language of the same name
-name,Greece,ADM2,Thessalias,Thessalía,spelling or language of the same name
+name,Greece,ADM2,Anatolikis Makedonias kai Thr*,East Macedonia and Thrace,spelling or language of the same name
+name,Greece,ADM2,Thessalias,Thessaly,spelling or language of the same name
 name,Haiti,ADM1,Département de la Grande-Anse,Grande'Anse,spelling or language of the same name
 name,Kenya,ADM1,Tharaka,Tharaka-Nithi,the same place
-name,Mongolia,ADM1,Khentii,Hentiy,spelling or language of the same name
 name,Papua New Guinea,ADM1,Northern (Oro) Province,Northern,spelling or language of the same name
-name,Russia,ADM1,Ivanovo Oblast,Ivanov,spelling or language of the same name (by AntWeb's old name Ivanovo)
+name,Russia,ADM1,Ivanovo Oblast,Ivanovo,spelling or language of the same name (by AntWeb's old name Ivanovo)
 name,Spain,ADM1,Comunitat Valenciana,Valencia,spelling or language of the same name
-name,Tanzania,ADM1,Zanzibar South & Central,Zanzibar South,spelling or language of the same name
+name,Tanzania,ADM1,Zanzibar South & Central,Zanzibar South,"the state Zanzibar Central/South, renamed Zanzibar South (ISO 3166-2, 2026-11-20)"
 name,Bahamas,ADM1,Biminis,Bimini,spelling or language of the same name
 name,Benin,ADM1,Atlanique,Atlantique,spelling or language of the same name
 name,Cyprus,ADM1,Famagusta,Ammochostos,Greek name of Famagusta
 name,Gambia,ADM1,Kerewan,North Bank,Kerewan is the area of the North Bank region
 name,Georgia,ADM1,Adjara,Ajaria,spelling or language of the same name
-name,Greece,ADM2,Voreioy Aigaioy,Voreío Aigaío,spelling or language of the same name
+name,Greece,ADM2,Voreioy Aigaioy,North Aegean,spelling or language of the same name
 name,Kazakhstan,ADM1,Kostanay Region,Qostanay,spelling or language of the same name
-name,Laos,ADM1,Savannakhet,Savannahkhét,the same place; AntWeb also has Khouèng Savannakhét as a valid state
 name,Mali,ADM1,Koulikouro,Koulikoro,spelling or language of the same name
-name,Mongolia,ADM1,Bayankhongor,Bayanhongor,spelling or language of the same name
 name,Myanmar,ADM1,Saigang,Sagaing,spelling or language of the same name
 name,Papua New Guinea,ADM1,Chimbu (Simbu) Province,Chimbu,spelling or language of the same name
 name,Saudi Arabia,ADM1,Northern Borders Region,Al Hudud ash Shamaliyah,spelling or language of the same name (by AntWeb's old name Northern Borders)
 name,Somalia,ADM1,Banadir,Banaadir,spelling or language of the same name
 name,South Korea,ADM1,North Chungcheong,Chungcheongbuk-do,spelling or language of the same name
 name,Spain,ADM1,País Vasco/Euskadi,País Vasco,the same community
-name,Syria,ADM1,Al-Hasakeh,Al Ḩasakah,the same place; AntWeb also has Al-Hasakah as a valid state
+name,Syria,ADM1,Al-Hasakeh,Al-Hasakah,the same place; AntWeb also has Al-Hasakah as a valid state
 name,Tanzania,ADM1,North Pemba,Pemba North,spelling or language of the same name
 name,Botswana,ADM1,North-West District,North West,the same place; AntWeb also has North-West as a valid state
 name,China,ADM1,Guangzhou Province,Guangdong,the file names the province after its capital
 name,China,ADM1,Inner Mongolia Autonomous Region,Inner Mongolia,spelling or language of the same name
 name,Cyprus,ADM1,Larnaca,Larnaka,spelling or language of the same name
 name,Czech Republic,ADM1,Hlavní město Praha,Praha,"spelling or language of the same name (by AntWeb's old name Praha, Hlavní Město)"
-name,Eritrea,ADM1,Maekel Region,Ma'ākel,spelling or language of the same name (by AntWeb's old name Maekel)
-name,Eritrea,ADM1,Southern Red Sea Region,Debubawī K'eyih Bahrī,spelling or language of the same name (by AntWeb's old name Southern Red Sea)
+name,Eritrea,ADM1,Maekel Region,Maekel,spelling or language of the same name (by AntWeb's old name Maekel)
+name,Eritrea,ADM1,Southern Red Sea Region,Southern Red Sea,spelling or language of the same name (by AntWeb's old name Southern Red Sea)
 name,Finland,ADM1,Tavastia Proper,Kanta-Häme,English name
-name,Greece,ADM2,Dytikis Makedonias,Dytikí Makedonía,spelling or language of the same name
+name,Greece,ADM2,Dytikis Makedonias,Western Macedonia,spelling or language of the same name
 name,Guyana,ADM1,Barina-Waini,Barima-Waini,spelling or language of the same name
-name,Iran,ADM1,Kohgiluyeh and Boyer-Ahmad,Kohgīlūyeh va Bowyer Aḩmad,spelling or language of the same name
-name,Iran,ADM1,West Azerbaijan,Āz̄arbāyjān-e Gharbī,West Azerbaijan (the tool suggested East)
 name,Kazakhstan,ADM1,Karaganda Region,Qaraghandy,spelling or language of the same name
-name,Laos,ADM1,Vientiane Capital,Viangchan (prefecture),"the capital prefecture, not the province"
-name,Libya,ADM1,Ash Shati',Wādī ash Shāţi',spelling or language of the same name
-name,Mongolia,ADM1,Darkhan-Uul,Darhan-Uul,spelling or language of the same name
+name,Laos,ADM1,Vientiane Capital,Vientiane Prefecture,"the capital prefecture, not the province"
+name,Libya,ADM1,Ash Shati',Wadi al Shatii,spelling or language of the same name
 name,Nicaragua,ADM1,South Atlantic Autonomous Region,Costa Caribe Sur,the region's present name (the tool suggested Norte)
 name,Nicaragua,ADM1,North Carribean Coast Autonomous Region,Costa Caribe Norte,the region's name in English as geoBoundaries spells it
 name,Nicaragua,ADM1,Matagalpa (Departemento),Matagalpa,the department; geoBoundaries misspells Departamento
@@ -268,16 +255,15 @@ name,North Korea,ADM1,North Hwanghae,Hwanghae-bukto,AntWeb also has Hwangbuk as 
 name,Papua New Guinea,ADM1,Autonomous Region of Bougainville,Bougainville,spelling or language of the same name
 name,Poland,ADM1,Świętokrzyskie Voivodeship,Świętokrzyskie,spelling or language of the same name
 name,Puerto Rico,ADM2,Isabela,Municipio de Isabela,spelling or language of the same name
-name,Qatar,ADM1,Al Khor and Al Thakhira,Al Khawr wa adh Dhakhīrah,spelling or language of the same name
-name,Russia,ADM1,Kostroma Oblast,Kostrom,spelling or language of the same name (by AntWeb's old name Kostroma)
+name,Qatar,ADM1,Al Khor and Al Thakhira,Al Khor,spelling or language of the same name
+name,Russia,ADM1,Kostroma Oblast,Kostroma,spelling or language of the same name (by AntWeb's old name Kostroma)
 name,Russia,ADM1,Sakha Republic,Sakha (Yakutiya),spelling or language of the same name (by AntWeb's old name Sakha)
-name,Russia,ADM1,Ulyanovsk Oblast,Ul'yanov,spelling or language of the same name (by AntWeb's old name Ulyanovsk)
+name,Russia,ADM1,Ulyanovsk Oblast,Ulyanovsk,spelling or language of the same name (by AntWeb's old name Ulyanovsk)
 name,Serbia,ADM2,Belgrade,Beograd,spelling or language of the same name
 name,Switzerland,ADM1,St. Gallen,Sankt Gallen,the same place
 name,Tajikistan,ADM1,Gorno-Badakhshan Autonomous Region,Gorno-Badakhshan,spelling or language of the same name
 name,Ukraine,ADM1,Autonomous Republic of Crimea,Crimea,spelling or language of the same name
 name,Uzbekistan,ADM1,Jizzakh Region,Jizzax,spelling or language of the same name
-name,United Arab Emirates,ADM1,Umm al-Quwain,Umm al Qaywayn,the same name in another spelling or language
 name,Saudi Arabia,ADM1,Al Madinah Region,Al Madinah al Munawwarah,the same name in another spelling or language
 name,Saudi Arabia,ADM1,Al-Qassim Region,Al Qasim,the same name in another spelling or language
 name,Saudi Arabia,ADM1,Hayel Region,Ha'il,the same name in another spelling or language
@@ -293,31 +279,17 @@ name,Czech Republic,ADM1,Zlínský kraj,Zlínský,the same name with the word kr
 name,Syria,ADM1,Idleb,Idlib,the same name in another spelling or language
 name,Syria,ADM1,Tartous,Tartus,the same name in another spelling or language
 name,Syria,ADM1,Lattakia,Latakia,the same name in another spelling or language; AntWeb has a second valid state for this place
-name,Syria,ADM1,Ar-Raqqa,Ar Raqqah,the same name in another spelling or language; AntWeb has a second valid state for this place
-name,Syria,ADM1,As-Sweida,As Suwaydā',the same name in another spelling or language; AntWeb has a second valid state for this place
-name,Mongolia,ADM1,Khovd,Hovd,the same name in another spelling or language; AntWeb has a second valid state for this place
-name,Mongolia,ADM1,Zavkhan,Dzavhan,the same name in another spelling or language; AntWeb has a second valid state for this place
-name,Mongolia,ADM1,Sükhbaatar,Sühbaatar,the same name in another spelling or language; AntWeb has a second valid state for this place
-name,Mongolia,ADM1,Govi-Altai,Govĭ-Altay,the same name in another spelling or language; AntWeb has a second valid state for this place
-name,Mongolia,ADM1,Orkhon,Orhon,the same name in another spelling or language; AntWeb has a second valid state for this place
-name,Mongolia,ADM1,Arkhangai,Arhangay,the same name in another spelling or language; AntWeb has a second valid state for this place
-name,Mongolia,ADM1,Övörkhangai,Övörhangay,the same name in another spelling or language; AntWeb has a second valid state for this place
-name,Mongolia,ADM1,Hovsgel,Hövsgöl,the same name in another spelling or language; AntWeb has a second valid state for this place
-name,Mongolia,ADM1,Bayan-Ölgii,Bayan-Ölgiy,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Syria,ADM1,Ar-Raqqa,Raqqa,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Syria,ADM1,As-Sweida,As-Suwayda,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Mongolia,ADM1,Hovsgel,Khövsgöl,the same name in another spelling or language; AntWeb has a second valid state for this place
 name,Belgium,ADM2,Antwerpen,Antwerp,the same name in another spelling or language
 name,Belgium,ADM2,Henegouwen,Hainaut,the same name in another spelling or language
 name,Belgium,ADM2,Namen,Namur,the same name in another spelling or language
 name,Belgium,ADM2,Waals-Brabant,Brabant wallon,the same name in another spelling or language
 name,Kuwait,ADM1,Farwaniya,Al Farwaniyah,the same name in another spelling or language
-name,Kuwait,ADM1,Mubarak Al-Kabeer,Mubārak al Kabīr,the same name in another spelling or language
-name,Kuwait,ADM1,Jahra,Al Jahrā',the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Kuwait,ADM1,Jahra,Al Jahra,the same name in another spelling or language; AntWeb has a second valid state for this place
 name,Qatar,ADM1,Al Wakra,Al Wakrah,the same name in another spelling or language; AntWeb has a second valid state for this place
-name,Qatar,ADM1,Al Shamal,Ash Shamāl,the same name in another spelling or language; AntWeb has a second valid state for this place
-name,Qatar,ADM1,Al Rayyan,Ar Rayyān,the same name in another spelling or language; AntWeb has a second valid state for this place
-name,Qatar,ADM1,Al Sheehaniya,Ash Shīḩānīyah,the same name in another spelling or language; AntWeb has a second valid state for this place
-name,Qatar,ADM1,Doha,Ad Dawḩah,the same name in another spelling or language; AntWeb has a second valid state for this place
-name,Qatar,ADM1,Umm Slal,Umm Şalāl,the same name in another spelling or language; AntWeb has a second valid state for this place
-name,Qatar,ADM1,Al Daayen,Az̧ Z̧a'āyin,the same name in another spelling or language; AntWeb has a second valid state for this place
+name,Qatar,ADM1,Umm Slal,Umm Salal,the same name in another spelling or language; AntWeb has a second valid state for this place
 name,Macedonia,ADM2,Kavadartsi,Kavadarci,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
 name,Macedonia,ADM2,Chashka,Čaška,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
 name,Macedonia,ADM2,Vinitsa,Vinica,"the same name: the file writes ts, ch, sh, zh for c, č, š, ž"
@@ -524,12 +496,11 @@ name,Iceland,ADM1,Western Region,Vesturland,English name of the region
 name,Iceland,ADM1,Westfjords,Vestfirðir,English name of the region
 #   Oman: the eleven governorates of 2011. geoBoundaries has the regions before 2011; Natural Earth has the eleven.
 source,Oman,naturalearth
-name,Oman,NE,Ad Dakhliyah,Ad Dākhilīyah,spelling of the same governorate
+name,Oman,NE,Ad Dakhliyah,Ad Dakhiliyah,spelling of the same governorate
 name,Oman,NE,Al Batnah North,Al Batinah North,spelling of the same governorate
 name,Oman,NE,Al Batnah South,Al Batinah South,spelling of the same governorate
 name,Oman,NE,Al Buraymi,Al Buraimi,spelling of the same governorate
-name,Oman,NE,Al Dhahira,Az̧ Z̧āhirah,spelling of the same governorate
-name,Oman,NE,Muscat,Masqaţ,spelling of the same governorate
+name,Oman,NE,Al Dhahira,Ad Dhahirah,spelling of the same governorate
 #   Slovenia: the municipalities are the states (geoBoundaries ADM2). The file spoils the letters č, š and ž
 #   (Brežice is Bretice, Škofja Loka is Mkofja Loka); each line below was paired by the rest of the name.
 name,Slovenia,ADM2,Koper / Capodistria,Koper,Slovene and Italian name

@@ -602,6 +602,31 @@ def test_a_name_ending_at_a_word_is_not_cut_short():
     assert iso.needs_english("Moskov", subs["RU-MOS"]) and iso.needs_english("Kur", subs["RU-KRS"])
 
 
+def test_country_codes_fill_only_what_is_missing():
+    rows = [(1, "Russia", "", ""), (2, "Madagascar", "MG", "MDG"), (3, "Iran", "IR", ""), (4, "Hawaii", "", ""), (5, "Kosovo", "", ""),
+            (6, "Ruritania", "RR", "RRR"), (7, "Vatican City", None, None), (8, "Mexico", "MX", "MEX")]
+    fills, differ, missing = iso.country_codes(rows)
+    assert sorted((n, a, b) for i, n, a, b in fills) == [("Iran", "IR", "IRN"), ("Kosovo", "XK", "XKX"), ("Russia", "RU", "RUS"),
+                                                        ("Vatican City", "VA", "VAT")], fills
+    assert missing == ["Hawaii", "Ruritania (stored RR/RRR)"] and not differ, (missing, differ)   # a stored code is shown (review of #405)
+    fills, differ, missing = iso.country_codes([(1, "Mexico", "ME", "MEX")])
+    assert differ == [("Mexico", "ME/MEX", "MX/MEX")] and not fills           # a stored code that differs is listed, not changed
+    assert iso.alpha3()["RU"] == "RUS" and iso.read_countries()[iso.key("Réunion")] == "RE"
+    # review of #405: a half-filled row with a wrong code is listed and not filled
+    fills, differ, missing = iso.country_codes([(1, "Mexico", "ME", "")])
+    assert differ == [("Mexico", "ME/", "MX/MEX")] and not fills, (differ, fills)
+    # one code for two rows (two names of one country; an island country that holds US): listed on each, not filled
+    fills, differ, missing = iso.country_codes([(1, "Turkey", "", ""), (2, "Türkiye", "", ""), (3, "Spain", "", "")])
+    assert [(n, a) for i, n, a, b in fills] == [("Spain", "ES")] and sorted(d[0] for d in differ) == ["Turkey", "Türkiye"], (fills, differ)
+    assert "carried by TR: Turkey, Türkiye" in differ[0][2], differ
+    fills, differ, missing = iso.country_codes([(1, "United States", "", ""), (2, "Hawaii", "US", "USA")])
+    assert not fills and differ[0][0] == "United States" and missing == ["Hawaii (stored US/USA)"], (fills, differ, missing)
+    # second review of #405: a code an old-name country row holds is not given again; Kosovo found in any case
+    fills, differ, missing = iso.country_codes([(1, "T\u00fcrkiye", "", ""), (2, "kosovo ", "", "")], held={("Turkey", "TR"), ("Turkey", "TUR")})
+    assert [(n, a, b) for i, n, a, b in fills] == [("kosovo ", "XK", "XKX")] and "Turkey (not valid)" in differ[0][2], (fills, differ)
+    assert "<=> b.new_isoCode" in iso.CODES_ROLLBACK
+
+
 def test_the_iso_file_reads():
     subs = iso.read_iso()
     # translations and the boundary file's shape names are separate columns

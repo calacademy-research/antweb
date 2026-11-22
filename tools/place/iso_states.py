@@ -49,6 +49,8 @@ written like both takes the kind most of its country's states match.
   python3 iso_states.py --tag 20261120b       a second run the same day (its own folder and backup tables; the rollback
                                               with <date> = the tag). Roll back the newest tag first: a later run can
                                               change rows an earlier one changed
+  python3 iso_states.py --codes [--apply]     the countries' two- and three-letter ISO 3166-1 codes (geolocale.isoCode,
+                                              iso3Code) where none is stored; a stored code that differs is listed only
   python3 iso_states.py --project /root/antweb-next      staging (default: the project on this server)
 
 Roll back the newest tag first: a later run can change rows an earlier one changed.
@@ -97,6 +99,8 @@ COUNTRY_NAMES = {
     "North Macedonia": "MK", "Macedonia": "MK", "Palestine": "PS", "Reunion": "RE", "Russia": "RU", "South Korea": "KR", "Syria": "SY",
     "Taiwan": "TW", "Tanzania": "TZ", "Türkiye": "TR", "Turkey": "TR", "United Kingdom": "GB", "United States": "US",
     "Venezuela": "VE", "Vietnam": "VN", "Saint Helena, Ascension and Tristan da Cunha": "SH",
+    "Vatican City": "VA", "United States Virgin Islands": "VI", "British Virgin Islands": "VG", "Saint Martin": "MF",
+    "Falkland Islands": "FK", "Chagos Islands": "IO", "Curacao": "CW", "Aland Islands": "AX",
 }
 
 GENERIC = set("""province provincia provinsi provincie region regiao región région regione state estado departement département
@@ -322,18 +326,35 @@ def read_iso(path=ISO_FILE):
 
 
 def read_countries(path=COUNTRY_FILE):
+    """{key(name): alpha-2} from the country file (alpha-2, alpha-3, names) and COUNTRY_NAMES."""
     by_name = {}
+    for a2, a3, names in read_country_rows(path):
+        for n in names:
+            by_name[key(n)] = a2
+    for n, a2 in COUNTRY_NAMES.items():
+        by_name[key(n)] = a2
+    return by_name
+
+
+def read_country_rows(path=COUNTRY_FILE):
+    """[(alpha-2, alpha-3, [names])] of the country file."""
+    rows = []
     with open(path, encoding="utf-8") as f:
         for line in f:
             if line.startswith("#") or not line.strip():
                 continue
             parts = line.rstrip("\n").split("\t")
-            for n in parts[1:]:
-                if n:
-                    by_name[key(n)] = parts[0]
-    for n, a2 in COUNTRY_NAMES.items():
-        by_name[key(n)] = a2
-    return by_name
+            rows.append((parts[0], parts[1], [n for n in parts[2:] if n]))
+    return rows
+
+
+def alpha3(path=COUNTRY_FILE):
+    return {a2: a3 for a2, a3, names in read_country_rows(path)}
+
+
+# Not in ISO 3166-1 but used as country codes by GBIF and others (user-assigned codes of ISO 3166-1)
+EXTRA_CODES = {"Kosovo": ("XK", "XKX")}
+EXTRA_BY_KEY = {key(n): c for n, c in EXTRA_CODES.items()}
 
 
 State = collections.namedtuple("State", "id name specimens old_names")
@@ -623,6 +644,103 @@ def plan(valid, olds, iso, countries, skip=frozenset()):
                         "type": sub.type, "iso": iso_name, "kept_id": kept.id, "kept_name": kept.name, "target": target})
         reported += [(country, st.name, st.specimens, why) for st, why in rep]
     return out, reported, nocountry
+
+
+def country_codes(rows, countries=None, a3=None, held=()):
+    """rows: [(id, name, isoCode, iso3Code)] of the valid countries. Returns (fills [(id, name, a2, a3)] for codes not
+    stored yet, differences [(name, stored, ISO)], not found [names]: island places ISO counts as part of a country
+    (their code is the subdivision's) and the like, with a code stored marked "(stored XX/XXX)"). Never filled, for a
+    person to decide (review of #405): a row whose stored code differs from ISO's (its other code too), and a code two
+    rows would carry (stored on one or both: Turkey and Türkiye, an island country that holds US), listed as a
+    difference "carried by ..." on each; held: (name, code) of country rows that are not valid (old names), whose codes
+    count as carried too (second review of #405). A stored code is never overwritten here."""
+    countries = countries if countries is not None else read_countries()
+    a3 = a3 if a3 is not None else alpha3()
+    fills, differ, missing, want = [], [], [], {}
+    for i, name, c2, c3 in rows:
+        code = EXTRA_BY_KEY.get(key(name)) or ((countries[key(name)], a3.get(countries[key(name)], "")) if key(name) in countries else None)
+        if code and not all(code):          # an alpha-2 with no alpha-3 in the file: not found (review of #405)
+            code = None
+        if not code:
+            missing.append(name + (" (stored %s/%s)" % (c2 or "", c3 or "") if c2 or c3 else ""))
+            continue
+        want[i] = code
+        if (c2 or "") and c2 != code[0] or (c3 or "") and c3 != code[1]:
+            differ.append((name, "%s/%s" % (c2 or "", c3 or ""), "%s/%s" % code))
+    # who would carry each code after the fill: what is stored, else what ISO gives
+    carriers = collections.defaultdict(list)
+    for name, c in held:
+        carriers[c].append(name + " (not valid)")
+    for i, name, c2, c3 in rows:
+        for c in {c2 or (want.get(i) or ("", ""))[0], c3 or (want.get(i) or ("", ""))[1]} - {""}:
+            carriers[c].append(name)
+    differs = {i for i, name, c2, c3 in rows if i in want and ((c2 or "") and c2 != want[i][0] or (c3 or "") and c3 != want[i][1])}
+    for i, name, c2, c3 in rows:
+        if i not in want or i in differs:
+            continue
+        shared = sorted({c for c in want[i] if len(carriers.get(c, ())) > 1})
+        if shared:
+            differ.append((name, "%s/%s" % (c2 or "", c3 or ""), "%s/%s carried by %s" % (want[i] + ("; ".join(
+                "%s: %s" % (c, ", ".join(sorted(carriers[c]))) for c in shared),))))
+        elif not c2 or not c3:
+            fills.append((i, name, c2 or want[i][0], c3 or want[i][1]))
+    return fills, differ, missing
+
+
+# the rollback of --codes: only rows that still have the codes written, so a later fix by hand stays (review of #405)
+CODES_ROLLBACK = ("update geolocale g join iso_codes_bak_<date> b on b.id = g.id set g.isoCode = b.isoCode, g.iso3Code = b.iso3Code"
+                  " where g.isoCode <=> b.new_isoCode and g.iso3Code <=> b.new_iso3Code;")
+
+
+def codes_main(db, folder, tag, apply):
+    """--codes: the countries' two- and three-letter ISO 3166-1 codes (geolocale.isoCode, iso3Code) where none is
+    stored, on the valid countries; a code another country row holds (an old name too) is not given again. Backup
+    iso_codes_bak_<date> (the codes before and the ones written); the rollback, CODES_ROLLBACK, is printed with the run."""
+    every = [(int(r[0]), pf.unhex(r[1]), pf.unhex(r[2]), pf.unhex(r[3]), r[4] == "1") for r in pf.run_sql(
+        db, "select id, " + pf.hx("name") + ", " + pf.hx("ifnull(isoCode, '')") + ", " + pf.hx("ifnull(iso3Code, '')")
+        + ", ifnull(is_valid, 0) from geolocale where georank = 'country'")]
+    rows = [(i, n, a, b) for i, n, a, b, v in every if v]
+    fills, differ, missing = country_codes(rows, held={(n, c) for i, n, a, b, v in every if not v for c in (a, b) if c})
+    with open(os.path.join(folder, "codes.tsv"), "w", encoding="utf-8") as f:
+        f.write("what\tcountry\tstored\tiso\n")
+        for i, name, c2, c3 in fills:
+            f.write("fill\t%s\t\t%s/%s\n" % (name, c2, c3))
+        for name, stored, want in differ:
+            f.write("differs\t%s\t%s\t%s\n" % (name, stored, want))
+        for name in missing:
+            f.write("no ISO country\t%s\t\t\n" % name)
+    shared = sum(1 for d in differ if " carried by " in d[2])
+    print("iso_states --codes %s, %s: %d valid countries; fill %d, %d stored codes differ from ISO and %d codes two rows would carry (not changed), %d not an ISO country"
+          % (tag, db.project, len(rows), len(fills), len(differ) - shared, shared, len(missing)))
+    for i, name, c2, c3 in fills:
+        print("  fill    %-40s %s %s" % (name[:40], c2, c3))
+    for name, stored, want in differ:
+        print("  differs %-40s stored %s, ISO %s" % (name[:40], stored, want))
+    print("  not an ISO country: " + ", ".join(missing))
+    if not apply or not fills:
+        print("Codes plan only." if not apply else "Nothing to fill.")
+        return 0
+    bak = "iso_codes_bak_" + tag
+    if int(pf.run_sql(db, "select count(*) from information_schema.tables where table_schema = database() and table_name = '%s'" % bak)[0][0]):
+        raise SystemExit("The backup table %s exists already: not applied twice today. Nothing was changed." % bak)
+    # the backup is made empty first (CREATE TABLE commits), then filled in the transaction of the change; a failed
+    # change drops it again, so the run can be made again today (review of #405)
+    pf.run_sql(db, "create table %s as select id, name, isoCode, iso3Code, isoCode as new_isoCode, iso3Code as new_iso3Code from geolocale where false" % bak)
+    try:
+        pf.run_sql(db, "start transaction;\n" + "".join("insert into %s select id, name, isoCode, iso3Code, %s, %s from geolocale where id = %d;\n"
+                                                          % (bak, q(a), q(b), i) for i, n, a, b in fills)
+                   + ";\n".join("update geolocale set isoCode = %s, iso3Code = %s where id = %d" % (q(a), q(b), i) for i, n, a, b in fills)
+                   + ";\ncommit;")
+    except pf.SqlFailed:
+        if pf.run_sql(db, "select count(*) from " + bak)[0][0] == "0":
+            pf.run_sql(db, "drop table " + bak)
+            print("The change failed and was not made; the empty backup table was dropped.")
+        else:
+            print("The backup table %s is filled: the change may have been committed after all (a lost connection). Check before anything else." % bak)
+        raise
+    print("filled %d countries; backup %s. Now reload the places: /util.do?action=reloadAntwebMgr&name=geolocale" % (len(fills), bak))
+    print("Rollback: " + CODES_ROLLBACK.replace("<date>", tag))
+    return 0
 
 
 # --- the database --------------------------------------------------------------------------------------------------
@@ -952,6 +1070,7 @@ def main(argv=None):
     a.add_argument("--tag", default=None, help="the run's name in its folder and backup tables (default: the date, YYYYMMDD); "
                                                 "a second run the same day takes the date and a letter, as 20261120b")
     a.add_argument("--show", type=int, default=40, help="plan lines printed (all are in plan.tsv)")
+    a.add_argument("--codes", action="store_true", help="the countries' ISO 3166-1 codes where none is stored (with --apply: fill them)")
     a.add_argument("--mapping", action="store_true", help="print the change to adm1_shape_map.csv the plan needs (and write it to <folder>)")
     args = a.parse_args(argv)
     db = pf.Db(args.project or pf.default_project(), args.container, args.database)
@@ -960,6 +1079,8 @@ def main(argv=None):
         raise SystemExit("--tag takes the date and at most one letter (20261120 or 20261120b): " + tag)
     folder = args.folder or os.path.join("/root/antweb-place-fix/iso", tag)
     os.makedirs(folder, exist_ok=True)
+    if args.codes:
+        return codes_main(db, folder, tag, args.apply)
     skip = set()
     if args.skip:
         with open(args.skip, encoding="utf-8") as f:

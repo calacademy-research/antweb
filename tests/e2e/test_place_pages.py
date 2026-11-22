@@ -149,3 +149,29 @@ def test_diversity_numbers_open_their_lists(path):
         p = params(hrefs[0])
         assert (p.get("rank"), p.get("statusSet")) == (rank, view), f"{path} {stat}: {hrefs[0]}"
         assert "countReport" not in cell, f"{path}: {stat} still links the count report"
+
+
+# 2026-11-21 (Brian Fisher: adopt ISO 3166-2 for adm1s and say so on the site): the line under a country's adm1s.
+# A visitor sees only the live adm1s, and often none (France's states have no live flag on staging); the menu's adm1
+# links are other countries' (the first run of #408 took them for France's). So a visitor's page is checked only when it
+# lists this country's adm1s; a curator, who sees the valid ones, always (test_display_cleanup.py, logged-in tests run
+# one at a time).
+NOTE_PAGES = [
+    ("France", "Adm1 names follow ISO 3166-2."),
+    ("Japan", "Adm1 names follow ISO 3166-2, in English."),
+    ("Madagascar", "regions (since 2004); ISO 3166-2 still lists the former provinces"),
+]
+
+
+def _own_adm1s(html, country):
+    return [p for p in links(html, "adm1") if params(p).get("country") == country]
+
+
+@pytest.mark.parametrize("country, line", NOTE_PAGES)
+def test_country_page_says_where_adm1_names_come_from(country, line):
+    path = "/country.do?name=" + country
+    r = fetch(path)
+    assert_ok(r, path)
+    if not _own_adm1s(r.text, country):
+        pytest.skip(f"the {country} page lists no live adm1s to a visitor")
+    assert 'class="adm1-names-note"' in r.text and line in r.text, f"{path}: no line {line!r}"

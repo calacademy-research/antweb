@@ -87,7 +87,7 @@ NIGHTLY_PATHS = [
 # cron line), which writes to the database, so it keeps the staging run. tests/e2e is not here: e2e tests run against
 # staging.
 HAND_RUN_PLACE_TOOLS = ["iso_states.py", "build_iso3166_2.py", "iso3166_2.tsv", "iso3166_countries.tsv", "english_names.tsv", "country_rename.py",
-                        "island_countries.py", "place_fix.py"]
+                        "island_countries.py", "place_fix.py", "empty_states.py"]
 NO_SITE_PATHS = [
     "docs/*", "release-notes/*", "tools/release/*", "tests/unit/*", "tests/smoke/*",
     *("tools/place/" + f for f in HAND_RUN_PLACE_TOOLS),

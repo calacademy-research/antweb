@@ -73,7 +73,7 @@ def fresh():
     # as production: geolocale in utf8 with utf8_bin (db/upgrade/6.10/2016-09-12.sql), specimen in another collation
     mysql("""create table geolocale (id int not null auto_increment primary key,
                name varchar(250), georank varchar(30), parent varchar(128), source varchar(30), is_valid tinyint,
-               valid_name varchar(250), admin_notes text,
+               valid_name varchar(250), admin_notes text, isoCode varchar(2), iso3Code varchar(3),
                unique key name_parent_georank (name, parent(50), georank)) default charset=utf8mb3 collate utf8mb3_bin;
              create table specimen (code varchar(128) not null primary key, country varchar(128), adm1 varchar(128))
                default charset=utf8mb3 collate utf8mb3_general_ci;
@@ -181,6 +181,46 @@ def check_a_failed_apply_leaves_the_day_open(project):
     assert code == 0 and dict(mysql("select code, adm1 from specimen"))["a1"] == "Bratislavský kraj"
 
 
+def check_country_codes(project):
+    fresh()
+    mysql("insert into geolocale (id, name, georank, parent, source, is_valid, isoCode, iso3Code) values"
+          " (20, 'Slovakia', 'country', 'Eastern Europe', 'antweb', 1, null, null), (21, 'Egypt', 'country', 'Northern Africa', 'antweb', 1, 'EG', 'EGY'),"
+          " (22, 'Hawaii', 'country', 'Polynesia', 'antweb', 1, null, null), (23, 'Russia', 'country', 'Eastern Europe', 'antweb', 1, '', '')")
+    folder = tempfile.mkdtemp()
+    code, out = run(project, folder, "--codes")
+    assert "fill 2," in out and "not an ISO country: Hawaii" in out, out
+    assert mysql("select ifnull(isoCode, '-') from geolocale where id = 20") == [["-"]]          # the plan changes nothing
+    code, out = run(project, folder, "--codes", "--apply")
+    got = {r[0]: (r[1], r[2]) for r in mysql("select name, ifnull(isoCode, ''), ifnull(iso3Code, '') from geolocale where georank = 'country'")}
+    assert got == {"Slovakia": ("SK", "SVK"), "Egypt": ("EG", "EGY"), "Hawaii": ("", ""), "Russia": ("RU", "RUS")}, got
+    assert "Rollback: update geolocale g join iso_codes_bak_%s b" % TAG in out, out
+    try:
+        run(project, folder, "--codes", "--apply")       # nothing left to fill: no second change
+    except SystemExit as e:
+        raise AssertionError("a run with nothing to fill must end quietly: %s" % e)
+    rollback = out.split("Rollback: ")[1].split("\n")[0]
+    # a code fixed by hand after the run stays (review of #405): Russia's alpha-3 written otherwise is not put back
+    mysql("update geolocale set iso3Code = 'RUX' where id = 23")
+    mysql(rollback)
+    assert mysql("select ifnull(isoCode, '-'), ifnull(iso3Code, '-') from geolocale where id in (20, 22, 23) order by id") == [["-", "-"], ["-", "-"], ["RU", "RUX"]]
+    mysql("update geolocale set isoCode = '', iso3Code = '' where id = 23")
+    mysql("drop table iso_codes_bak_%s" % TAG)
+    # review of #405: a change that fails (here a trigger refuses the update) changes nothing and drops its empty
+    # backup, so the run can be made again the same day
+    mysql("create trigger no_update before update on geolocale for each row signal sqlstate '45000' set message_text = 'refused'")
+    try:
+        run(project, folder, "--codes", "--apply")
+        raise AssertionError("the change should have failed")
+    except iso.pf.SqlFailed:
+        pass
+    assert mysql("select ifnull(isoCode, '-') from geolocale where id = 20") == [["-"]]
+    assert not mysql("select table_name from information_schema.tables where table_schema = database() and table_name like 'iso\\_codes\\_%'")
+    mysql("drop trigger no_update")
+    code, out = run(project, folder, "--codes", "--apply")
+    assert "filled 2 countries" in out, out
+    mysql("drop table iso_codes_bak_%s" % TAG)
+
+
 def check_a_collation_that_ignores_accents_is_refused(project):
     fresh()
     mysql("alter table geolocale modify name varchar(250) character set utf8mb3 collate utf8mb3_general_ci")
@@ -206,5 +246,6 @@ if __name__ == "__main__":
         check_plan_apply_rollback(d)
         check_a_failed_apply_leaves_the_day_open(d)
         check_a_collation_that_ignores_accents_is_refused(d)
+        check_country_codes(d)
     mysql("drop database %s" % DB, None)
-    print("3 tests passed (MySQL %s)" % mysql("select version()", None)[0][0])
+    print("4 tests passed (MySQL %s)" % mysql("select version()", None)[0][0])
