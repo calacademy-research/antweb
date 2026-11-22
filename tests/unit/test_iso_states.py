@@ -625,6 +625,13 @@ def test_country_codes_fill_only_what_is_missing():
     fills, differ, missing = iso.country_codes([(1, "T\u00fcrkiye", "", ""), (2, "kosovo ", "", "")], held={("Turkey", "TR"), ("Turkey", "TUR")})
     assert [(n, a, b) for i, n, a, b in fills] == [("kosovo ", "XK", "XKX")] and "Turkey (not valid)" in differ[0][2], (fills, differ)
     assert "<=> b.new_isoCode" in iso.CODES_ROLLBACK
+    # 2026-11-21: a code only an old name of this country holds moves to it; one an old name of another holds stays
+    moves = []
+    fills, differ, missing = iso.country_codes([(1, "Russia", "", ""), (2, "Vietnam", "", "")],
+                                               held={("Russian Federation", "RU", "Russia", 9), ("Russian Federation", "RUS", "Russia", 9),
+                                                     ("Viet Nam", "VN", "Laos", 8)}, moves=moves)
+    assert [(n, a, b) for i, n, a, b in fills] == [("Russia", "RU", "RUS")] and moves == [9], (fills, moves)
+    assert [d[0] for d in differ] == ["Vietnam"], differ
 
 
 def test_the_iso_file_reads():

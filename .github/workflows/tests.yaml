@@ -1043,7 +1043,7 @@ jobs:
           # moved from the backup), the rollback of the tool's header back to the exact rows, a failed apply that leaves
           # the day open, and a geolocale.name that ignores accents refused.
           ISO_STATES_TEST_CONTAINER=pfmysql ISO_STATES_TEST_PASSWORD=ci-root python3 tests/unit/test_iso_states_db.py | tee /tmp/iso_states_db.txt
-          grep -q "^4 tests passed (MySQL 8.4" /tmp/iso_states_db.txt
+          grep -q "^5 tests passed (MySQL 8.4" /tmp/iso_states_db.txt
           # Empty states ISO 3166-2 does not have, retired (2026-11-21): plan, apply with a backup, the header's rollback.
           EMPTY_STATES_TEST_CONTAINER=pfmysql EMPTY_STATES_TEST_PASSWORD=ci-root python3 tests/unit/test_empty_states_db.py | tee /tmp/empty_states_db.txt
           grep -q "^1 test passed (MySQL 8.4" /tmp/empty_states_db.txt

@@ -646,14 +646,17 @@ def plan(valid, olds, iso, countries, skip=frozenset()):
     return out, reported, nocountry
 
 
-def country_codes(rows, countries=None, a3=None, held=()):
+def country_codes(rows, countries=None, a3=None, held=(), moves=None):
     """rows: [(id, name, isoCode, iso3Code)] of the valid countries. Returns (fills [(id, name, a2, a3)] for codes not
     stored yet, differences [(name, stored, ISO)], not found [names]: island places ISO counts as part of a country
     (their code is the subdivision's) and the like, with a code stored marked "(stored XX/XXX)"). Never filled, for a
     person to decide (review of #405): a row whose stored code differs from ISO's (its other code too), and a code two
     rows would carry (stored on one or both: Turkey and Türkiye, an island country that holds US), listed as a
     difference "carried by ..." on each; held: (name, code) of country rows that are not valid (old names), whose codes
-    count as carried too (second review of #405). A stored code is never overwritten here."""
+    count as carried too (second review of #405). A stored code is never overwritten here. With moves (a list) and held
+    rows given as (name, code, valid name, id): a code only old-name rows of this very country hold (Russian Federation
+    for Russia, Viet Nam for Vietnam) moves to the country: the row is filled and the old rows' ids go into moves, for
+    their codes to be cleared (2026-11-21: 14 valid countries had their codes on an old name only)."""
     countries = countries if countries is not None else read_countries()
     a3 = a3 if a3 is not None else alpha3()
     fills, differ, missing, want = [], [], [], {}
@@ -668,9 +671,11 @@ def country_codes(rows, countries=None, a3=None, held=()):
         if (c2 or "") and c2 != code[0] or (c3 or "") and c3 != code[1]:
             differ.append((name, "%s/%s" % (c2 or "", c3 or ""), "%s/%s" % code))
     # who would carry each code after the fill: what is stored, else what ISO gives
-    carriers = collections.defaultdict(list)
-    for name, c in held:
-        carriers[c].append(name + " (not valid)")
+    carriers, old_rows = collections.defaultdict(list), collections.defaultdict(list)
+    for h in held:
+        carriers[h[1]].append(h[0] + " (not valid)")
+        if len(h) >= 4:
+            old_rows[h[1]].append((h[2], h[3]))
     for i, name, c2, c3 in rows:
         for c in {c2 or (want.get(i) or ("", ""))[0], c3 or (want.get(i) or ("", ""))[1]} - {""}:
             carriers[c].append(name)
@@ -679,7 +684,14 @@ def country_codes(rows, countries=None, a3=None, held=()):
         if i not in want or i in differs:
             continue
         shared = sorted({c for c in want[i] if len(carriers.get(c, ())) > 1})
-        if shared:
+        # every other carrier an old name of this country: the code moves here
+        movable = moves is not None and shared and not c2 and not c3 and all(
+            len([x for x in carriers[c] if not x.endswith(" (not valid)")]) == 1 and old_rows.get(c)
+            and len(old_rows[c]) == len(carriers[c]) - 1 and all(vn == name for vn, hid in old_rows[c]) for c in shared)
+        if movable:
+            fills.append((i, name, want[i][0], want[i][1]))
+            moves.extend(sorted({hid for c in shared for vn, hid in old_rows[c]}))
+        elif shared:
             differ.append((name, "%s/%s" % (c2 or "", c3 or ""), "%s/%s carried by %s" % (want[i] + ("; ".join(
                 "%s: %s" % (c, ", ".join(sorted(carriers[c]))) for c in shared),))))
         elif not c2 or not c3:
@@ -696,24 +708,30 @@ def codes_main(db, folder, tag, apply):
     """--codes: the countries' two- and three-letter ISO 3166-1 codes (geolocale.isoCode, iso3Code) where none is
     stored, on the valid countries; a code another country row holds (an old name too) is not given again. Backup
     iso_codes_bak_<date> (the codes before and the ones written); the rollback, CODES_ROLLBACK, is printed with the run."""
-    every = [(int(r[0]), pf.unhex(r[1]), pf.unhex(r[2]), pf.unhex(r[3]), r[4] == "1") for r in pf.run_sql(
+    every = [(int(r[0]), pf.unhex(r[1]), pf.unhex(r[2]), pf.unhex(r[3]), r[4] == "1", pf.unhex(r[5])) for r in pf.run_sql(
         db, "select id, " + pf.hx("name") + ", " + pf.hx("ifnull(isoCode, '')") + ", " + pf.hx("ifnull(iso3Code, '')")
-        + ", ifnull(is_valid, 0) from geolocale where georank = 'country'")]
-    rows = [(i, n, a, b) for i, n, a, b, v in every if v]
-    fills, differ, missing = country_codes(rows, held={(n, c) for i, n, a, b, v in every if not v for c in (a, b) if c})
+        + ", ifnull(is_valid, 0), " + pf.hx("ifnull(valid_name, '')") + " from geolocale where georank = 'country'")]
+    rows = [(i, n, a, b) for i, n, a, b, v, vn in every if v]
+    moves = []
+    fills, differ, missing = country_codes(rows, held={(n, c, vn, i) for i, n, a, b, v, vn in every if not v for c in (a, b) if c}, moves=moves)
+    old_names = {i: n for i, n, a, b, v, vn in every}
     with open(os.path.join(folder, "codes.tsv"), "w", encoding="utf-8") as f:
         f.write("what\tcountry\tstored\tiso\n")
         for i, name, c2, c3 in fills:
             f.write("fill\t%s\t\t%s/%s\n" % (name, c2, c3))
+        for i in moves:
+            f.write("clear\t%s\t(old name)\t\n" % old_names[i])
         for name, stored, want in differ:
             f.write("differs\t%s\t%s\t%s\n" % (name, stored, want))
         for name in missing:
             f.write("no ISO country\t%s\t\t\n" % name)
     shared = sum(1 for d in differ if " carried by " in d[2])
-    print("iso_states --codes %s, %s: %d valid countries; fill %d, %d stored codes differ from ISO and %d codes two rows would carry (not changed), %d not an ISO country"
-          % (tag, db.project, len(rows), len(fills), len(differ) - shared, shared, len(missing)))
+    print("iso_states --codes %s, %s: %d valid countries; fill %d (%d moved from an old name), %d stored codes differ from ISO and %d codes two rows would carry (not changed), %d not an ISO country"
+          % (tag, db.project, len(rows), len(fills), len(moves), len(differ) - shared, shared, len(missing)))
     for i, name, c2, c3 in fills:
         print("  fill    %-40s %s %s" % (name[:40], c2, c3))
+    for i in moves:
+        print("  clear   %-40s (an old name; its code moves to the valid country)" % old_names[i][:40])
     for name, stored, want in differ:
         print("  differs %-40s stored %s, ISO %s" % (name[:40], stored, want))
     print("  not an ISO country: " + ", ".join(missing))
@@ -729,6 +747,8 @@ def codes_main(db, folder, tag, apply):
     try:
         pf.run_sql(db, "start transaction;\n" + "".join("insert into %s select id, name, isoCode, iso3Code, %s, %s from geolocale where id = %d;\n"
                                                           % (bak, q(a), q(b), i) for i, n, a, b in fills)
+                   + "".join("insert into %s select id, name, isoCode, iso3Code, null, null from geolocale where id = %d;\n" % (bak, i) for i in moves)
+                   + "".join("update geolocale set isoCode = null, iso3Code = null where id = %d;\n" % i for i in moves)
                    + ";\n".join("update geolocale set isoCode = %s, iso3Code = %s where id = %d" % (q(a), q(b), i) for i, n, a, b in fills)
                    + ";\ncommit;")
     except pf.SqlFailed:
@@ -738,7 +758,7 @@ def codes_main(db, folder, tag, apply):
         else:
             print("The backup table %s is filled: the change may have been committed after all (a lost connection). Check before anything else." % bak)
         raise
-    print("filled %d countries; backup %s. Now reload the places: /util.do?action=reloadAntwebMgr&name=geolocale" % (len(fills), bak))
+    print("filled %d countries (%d codes moved from an old name); backup %s. Now reload the places: /util.do?action=reloadAntwebMgr&name=geolocale" % (len(fills), len(moves), bak))
     print("Rollback: " + CODES_ROLLBACK.replace("<date>", tag))
     return 0
 
