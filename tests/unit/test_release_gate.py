@@ -60,6 +60,7 @@ def test_review_state():
     assert gate.review_state([c("No blocking issues. Should fix: ...")], head)[0] is True
     assert gate.review_state([c("No blocking issues.", sha="bbd866d")], head)[0] is False
     assert gate.review_state([c("No blocking issues."), c("**Blocking**: x")], head)[0] is False
+    assert gate.review_state([c("**No blocking issues**\n\n### Should fix")], head)[0] is True    # bold verdict (#409)
     assert gate.review_state([{"body": "an ordinary comment"}, c("No blocking issues.")], head)[0] is True
     # review of #330: a comment in the review's form posted by someone else does not count
     forged = dict(c("No blocking issues."), user={"login": "someone"})

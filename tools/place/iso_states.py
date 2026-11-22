@@ -51,7 +51,8 @@ written like both takes the kind most of its country's states match.
                                               change rows an earlier one changed
   python3 iso_states.py --codes [--apply]     the countries' two- and three-letter ISO 3166-1 codes (geolocale.isoCode,
                                               iso3Code) where none is stored; a stored code that differs is listed only;
-                                              a code only old names of the country hold moves to it
+                                              a code only old names of the country hold moves to it; --apply only
+                                              after a plan (codes.tsv) of the same tag and server, unchanged
   python3 iso_states.py --project /root/antweb-next      staging (default: the project on this server)
 
 Roll back the newest tag first: a later run can change rows an earlier one changed.
@@ -721,16 +722,13 @@ def codes_main(db, folder, tag, apply):
     moves = []
     fills, differ, missing = country_codes(rows, held={(n, c, vn, i) for i, n, a, b, v, vn in every if not v for c in (a, b) if c}, moves=moves)
     old_names = {i: "%s (%s/%s)" % (n, a, b) for i, n, a, b, v, vn in every}
-    with open(os.path.join(folder, "codes.tsv"), "w", encoding="utf-8") as f:
-        f.write("what\tcountry\tstored\tiso\n")
-        for i, name, c2, c3 in fills:
-            f.write("fill\t%s\t\t%s/%s\n" % (name, c2, c3))
-        for i in moves:
-            f.write("clear\t%s\t(old name)\t\n" % old_names[i])
-        for name, stored, want in differ:
-            f.write("differs\t%s\t%s\t%s\n" % (name, stored, want))
-        for name in missing:
-            f.write("no ISO country\t%s\t\t\n" % name)
+    lines = (["fill\t%s\t\t%s/%s" % (name, c2, c3) for i, name, c2, c3 in fills] + ["clear\t%s\t(old name)\t" % old_names[i] for i in moves]
+             + ["differs\t%s\t%s\t%s" % d for d in differ] + ["no ISO country\t%s\t\t" % name for name in missing])
+    codes_file = os.path.join(folder, "codes.tsv")
+    header = "what\tcountry\tstored\tiso (iso_states --codes %s, %s)" % (tag, db.project)
+    if not apply:
+        with open(codes_file, "w", encoding="utf-8") as f:
+            f.write(header + "\n" + "\n".join(lines) + "\n")
     shared = sum(1 for d in differ if " carried by " in d[2])
     print("iso_states --codes %s, %s: %d valid countries; fill %d, %d old-name rows cleared (their codes moved to the country), "
           "%d stored codes differ from ISO and %d codes two rows would carry (not changed), %d not an ISO country"
@@ -745,6 +743,15 @@ def codes_main(db, folder, tag, apply):
     if not apply or not fills:
         print("Codes plan only." if not apply else "Nothing to fill.")
         return 0
+    # the apply makes only the change reviewed: the plan of this tag and server, unchanged (review of #409: a clear of
+    # an old row no one saw must not run)
+    if not os.path.exists(codes_file):
+        raise SystemExit("No codes plan in %s: run --codes without --apply first and review it. Nothing was changed." % codes_file)
+    with open(codes_file, encoding="utf-8") as f:
+        reviewed = f.read().split("\n")
+    if reviewed[0] != header or [l for l in reviewed[1:] if l] != lines:
+        raise SystemExit("The codes plan differs from the one reviewed in %s (another run or server, or the data changed): "
+                         "run --codes without --apply again. Nothing was changed." % codes_file)
     bak = "iso_codes_bak_" + tag
     if int(pf.run_sql(db, "select count(*) from information_schema.tables where table_schema = database() and table_name = '%s'" % bak)[0][0]):
         raise SystemExit("The backup table %s exists already: not applied twice today. Nothing was changed." % bak)

@@ -235,12 +235,21 @@ def check_codes_move_from_an_old_name(project):
     code, out = run(project, folder, "--codes")
     assert "fill 1, 1 old-name rows cleared" in out and "clear   Viet Nam (VN/VNM)" in out and "carried by CI" in out, out
     assert "clear\tViet Nam (VN/VNM)" in open(os.path.join(folder, "codes.tsv"), encoding="utf-8").read()
+    # third review of #409: the apply refuses when the data changed after the plan (here a second old name appears)
+    mysql("insert into geolocale (id, name, georank, parent, source, is_valid, valid_name, isoCode, iso3Code) values"
+          " (34, 'Vietnam Old', 'country', 'South-eastern Asia', 'antweb', 0, 'Vietnam', 'VN', null)")
+    try:
+        run(project, folder, "--codes", "--apply")
+        raise AssertionError("an apply of a plan that changed was not refused")
+    except SystemExit as e:
+        assert "differs from the one reviewed" in str(e), e
+    mysql("delete from geolocale where id = 34")
     code, out = run(project, folder, "--codes", "--apply")
-    got = mysql("select id, ifnull(isoCode, '-'), ifnull(iso3Code, '-') from geolocale order by id")
+    got = mysql("select id, ifnull(isoCode, '-'), ifnull(iso3Code, '-') from geolocale where id >= 30 order by id")
     assert got == [["30", "VN", "VNM"], ["31", "-", "-"], ["32", "-", "-"], ["33", "CI", "CIV"]], got
     assert "After a rollback, codes on two rows: select code" in out, out
     mysql(out.split("Rollback: ")[1].split("\n")[0])
-    got = mysql("select id, ifnull(isoCode, '-'), ifnull(iso3Code, '-') from geolocale order by id")
+    got = mysql("select id, ifnull(isoCode, '-'), ifnull(iso3Code, '-') from geolocale where id >= 30 order by id")
     assert got == [["30", "-", "-"], ["31", "VN", "VNM"], ["32", "-", "-"], ["33", "CI", "CIV"]], got
     mysql("drop table iso_codes_bak_%s" % TAG)
 
