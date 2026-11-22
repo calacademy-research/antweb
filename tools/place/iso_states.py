@@ -50,7 +50,8 @@ written like both takes the kind most of its country's states match.
                                               with <date> = the tag). Roll back the newest tag first: a later run can
                                               change rows an earlier one changed
   python3 iso_states.py --codes [--apply]     the countries' two- and three-letter ISO 3166-1 codes (geolocale.isoCode,
-                                              iso3Code) where none is stored; a stored code that differs is listed only
+                                              iso3Code) where none is stored; a stored code that differs is listed only;
+                                              a code only old names of the country hold moves to it
   python3 iso_states.py --project /root/antweb-next      staging (default: the project on this server)
 
 Roll back the newest tag first: a later run can change rows an earlier one changed.
@@ -687,7 +688,7 @@ def country_codes(rows, countries=None, a3=None, held=(), moves=None):
         # every other carrier an old name of this country: the code moves here
         movable = moves is not None and shared and not c2 and not c3 and all(
             len([x for x in carriers[c] if not x.endswith(" (not valid)")]) == 1 and old_rows.get(c)
-            and len(old_rows[c]) == len(carriers[c]) - 1 and all(vn == name for vn, hid in old_rows[c]) for c in shared)
+            and len(old_rows[c]) == len(carriers[c]) - 1 and all(key(vn) == key(name) for vn, hid in old_rows[c]) for c in shared)
         if movable:
             fills.append((i, name, want[i][0], want[i][1]))
             moves.extend(sorted({hid for c in shared for vn, hid in old_rows[c]}))
@@ -704,9 +705,14 @@ CODES_ROLLBACK = ("update geolocale g join iso_codes_bak_<date> b on b.id = g.id
                   " where g.isoCode <=> b.new_isoCode and g.iso3Code <=> b.new_iso3Code;")
 
 
+CODES_TWICE = ("select code, group_concat(name) from (select isoCode code, name from geolocale where georank = 'country' and isoCode <> ''"
+               " union all select iso3Code, name from geolocale where georank = 'country' and iso3Code <> '') c group by code having count(*) > 1;")
+
+
 def codes_main(db, folder, tag, apply):
     """--codes: the countries' two- and three-letter ISO 3166-1 codes (geolocale.isoCode, iso3Code) where none is
-    stored, on the valid countries; a code another country row holds (an old name too) is not given again. Backup
+    stored, on the valid countries; a code another country row holds is not given again, except one only old names of
+    this very country hold: it moves to the country, the old rows' codes cleared (country_codes). Backup
     iso_codes_bak_<date> (the codes before and the ones written); the rollback, CODES_ROLLBACK, is printed with the run."""
     every = [(int(r[0]), pf.unhex(r[1]), pf.unhex(r[2]), pf.unhex(r[3]), r[4] == "1", pf.unhex(r[5])) for r in pf.run_sql(
         db, "select id, " + pf.hx("name") + ", " + pf.hx("ifnull(isoCode, '')") + ", " + pf.hx("ifnull(iso3Code, '')")
@@ -714,7 +720,7 @@ def codes_main(db, folder, tag, apply):
     rows = [(i, n, a, b) for i, n, a, b, v, vn in every if v]
     moves = []
     fills, differ, missing = country_codes(rows, held={(n, c, vn, i) for i, n, a, b, v, vn in every if not v for c in (a, b) if c}, moves=moves)
-    old_names = {i: n for i, n, a, b, v, vn in every}
+    old_names = {i: "%s (%s/%s)" % (n, a, b) for i, n, a, b, v, vn in every}
     with open(os.path.join(folder, "codes.tsv"), "w", encoding="utf-8") as f:
         f.write("what\tcountry\tstored\tiso\n")
         for i, name, c2, c3 in fills:
@@ -726,12 +732,13 @@ def codes_main(db, folder, tag, apply):
         for name in missing:
             f.write("no ISO country\t%s\t\t\n" % name)
     shared = sum(1 for d in differ if " carried by " in d[2])
-    print("iso_states --codes %s, %s: %d valid countries; fill %d (%d moved from an old name), %d stored codes differ from ISO and %d codes two rows would carry (not changed), %d not an ISO country"
+    print("iso_states --codes %s, %s: %d valid countries; fill %d, %d old-name rows cleared (their codes moved to the country), "
+          "%d stored codes differ from ISO and %d codes two rows would carry (not changed), %d not an ISO country"
           % (tag, db.project, len(rows), len(fills), len(moves), len(differ) - shared, shared, len(missing)))
     for i, name, c2, c3 in fills:
         print("  fill    %-40s %s %s" % (name[:40], c2, c3))
     for i in moves:
-        print("  clear   %-40s (an old name; its code moves to the valid country)" % old_names[i][:40])
+        print("  clear   %-40s (an old name; its codes move to the valid country)" % old_names[i][:60])
     for name, stored, want in differ:
         print("  differs %-40s stored %s, ISO %s" % (name[:40], stored, want))
     print("  not an ISO country: " + ", ".join(missing))
@@ -758,8 +765,10 @@ def codes_main(db, folder, tag, apply):
         else:
             print("The backup table %s is filled: the change may have been committed after all (a lost connection). Check before anything else." % bak)
         raise
-    print("filled %d countries (%d codes moved from an old name); backup %s. Now reload the places: /util.do?action=reloadAntwebMgr&name=geolocale" % (len(fills), len(moves), bak))
+    print("filled %d countries, %d old-name rows cleared; backup %s. Now reload the places: /util.do?action=reloadAntwebMgr&name=geolocale" % (len(fills), len(moves), bak))
     print("Rollback: " + CODES_ROLLBACK.replace("<date>", tag))
+    if moves:   # a row fixed by hand stays as it is, so a rollback can leave one code on two rows: this finds them (review of #409)
+        print("After a rollback, codes on two rows: " + CODES_TWICE)
     return 0
 
 

@@ -632,6 +632,12 @@ def test_country_codes_fill_only_what_is_missing():
                                                      ("Viet Nam", "VN", "Laos", 8)}, moves=moves)
     assert [(n, a, b) for i, n, a, b in fills] == [("Russia", "RU", "RUS")] and moves == [9], (fills, moves)
     assert [d[0] for d in differ] == ["Vietnam"], differ
+    # second review of #409: two old rows, one holding only the alpha-2, both cleared; a valid name in other capitals
+    moves = []
+    fills, differ, missing = iso.country_codes([(1, "Russia", "", "")], held={("Russian Federation", "RU", "russia ", 9),
+                                               ("Russian Federation", "RUS", "russia ", 9), ("Rossiya", "RU", "Russia", 7)}, moves=moves)
+    assert [(n, a, b) for i, n, a, b in fills] == [("Russia", "RU", "RUS")] and moves == [7, 9], (fills, moves, differ)
+    assert "group by code having count(*) > 1" in iso.CODES_TWICE
 
 
 def test_the_iso_file_reads():

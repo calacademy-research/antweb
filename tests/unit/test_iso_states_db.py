@@ -233,10 +233,12 @@ def check_codes_move_from_an_old_name(project):
           " (33, 'Ivory Coast', 'country', 'Western Africa', 'antweb', 0, 'Ghana', 'CI', 'CIV')")
     folder = tempfile.mkdtemp()
     code, out = run(project, folder, "--codes")
-    assert "fill 1 (1 moved from an old name)" in out and "clear   Viet Nam" in out and "carried by CI" in out, out
+    assert "fill 1, 1 old-name rows cleared" in out and "clear   Viet Nam (VN/VNM)" in out and "carried by CI" in out, out
+    assert "clear\tViet Nam (VN/VNM)" in open(os.path.join(folder, "codes.tsv"), encoding="utf-8").read()
     code, out = run(project, folder, "--codes", "--apply")
     got = mysql("select id, ifnull(isoCode, '-'), ifnull(iso3Code, '-') from geolocale order by id")
     assert got == [["30", "VN", "VNM"], ["31", "-", "-"], ["32", "-", "-"], ["33", "CI", "CIV"]], got
+    assert "After a rollback, codes on two rows: select code" in out, out
     mysql(out.split("Rollback: ")[1].split("\n")[0])
     got = mysql("select id, ifnull(isoCode, '-'), ifnull(iso3Code, '-') from geolocale order by id")
     assert got == [["30", "-", "-"], ["31", "VN", "VNM"], ["32", "-", "-"], ["33", "CI", "CIV"]], got
