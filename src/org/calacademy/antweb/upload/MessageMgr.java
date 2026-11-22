@@ -577,8 +577,8 @@ public class MessageMgr {
      * lines of the report need the curator's attention, so no one has to write to curators about small mistakes.
      *   not loaded: every section marked "(not uploaded)", and "Code not found (fix these)" (a line without a code).
      *   corrected:  the sections where AntWeb changed what the curator wrote and loaded the line (CORRECTED). A country
- *               or adm1 loaded under AntWeb's name from another name or spelling is not a correction: it is in the
- *               Recognized group (RECOGNIZED_SECTIONS, 2026-11-21), nothing for the curator to fix.
+     *               or adm1 loaded under AntWeb's name from another name or spelling is not a correction: it is in the
+     *               Recognized group (RECOGNIZED_SECTIONS, 2026-11-21), nothing for the curator to fix.
      * Red-flagged specimens are counted by compileMessages() (getRedFlagCount()). Every other section is a note
      * (adm1 or country not recognised, names not in AntCat, bioregion filled from the country, ...) and is not
      * counted: the email links to the report, which lists them.
