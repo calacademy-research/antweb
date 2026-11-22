@@ -7,12 +7,10 @@ statistics and image numbers are tested by test_region_counts.py, test_place_ima
 test_numbers_pages.py; the links of every page type by test_site_links.py; field guides and the compare
 tool by test_field_guide_compare.py.
 """
-import os
 import re
 
 import pytest
 
-from antweb import BASE_URL, IS_PRODUCTION, TIMEOUT, new_session, post_login
 from public_pages import api_json, assert_message, assert_ok, fetch, links, params, title
 
 # list page, its title, the page type it links to, the parameter that names the place
@@ -156,7 +154,8 @@ def test_diversity_numbers_open_their_lists(path):
 # 2026-11-21 (Brian Fisher: adopt ISO 3166-2 for adm1s and say so on the site): the line under a country's adm1s.
 # A visitor sees only the live adm1s, and often none (France's states have no live flag on staging); the menu's adm1
 # links are other countries' (the first run of #408 took them for France's). So a visitor's page is checked only when it
-# lists this country's adm1s, and a curator, who sees the valid ones, always.
+# lists this country's adm1s; a curator, who sees the valid ones, always (test_display_cleanup.py, logged-in tests run
+# one at a time).
 NOTE_PAGES = [
     ("France", "Adm1 names follow ISO 3166-2."),
     ("Japan", "Adm1 names follow ISO 3166-2, in English."),
@@ -176,19 +175,3 @@ def test_country_page_says_where_adm1_names_come_from(country, line):
     if not _own_adm1s(r.text, country):
         pytest.skip(f"the {country} page lists no live adm1s to a visitor")
     assert 'class="adm1-names-note"' in r.text and line in r.text, f"{path}: no line {line!r}"
-
-
-USER = os.environ.get("ANTWEB_TEST_USER")
-PASSWORD = os.environ.get("ANTWEB_TEST_PASSWORD")
-
-
-@pytest.mark.skipif(not USER or not PASSWORD or IS_PRODUCTION, reason="needs ANTWEB_TEST_USER / ANTWEB_TEST_PASSWORD, never production")
-def test_country_page_adm1_line_for_a_curator():
-    s = new_session()
-    post_login(s, USER, PASSWORD)
-    for country, line in NOTE_PAGES:
-        path = "/country.do?name=" + country
-        r = s.get(BASE_URL + path, timeout=max(TIMEOUT, 120))
-        assert r.status_code == 200, f"{path}: HTTP {r.status_code}"
-        assert _own_adm1s(r.text, country), f"{path}: a curator sees no adm1 of {country}"
-        assert 'class="adm1-names-note"' in r.text and line in r.text, f"{path}: no line {line!r}"

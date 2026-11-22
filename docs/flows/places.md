@@ -94,7 +94,7 @@ Message page, HTTP 200: "name:<name> not found." (country, region, subregion, ad
 | `tests/e2e/test_place_pages.py::test_list_and_place_page` | each list page and its first place: titles, statistics table, species list links |
 | `test_place_pages.py::test_species_list_of_a_country`, `test_place_selects_the_species_list`, `test_adm1_page_of_its_country`, `test_geolocale_id_opens_the_place_page` | species lists, the place parameter, adm1, geolocale.do |
 | `test_place_pages.py::test_unknown_place_message` | the messages above |
-| `test_place_pages.py::test_country_page_says_where_adm1_names_come_from` (a visitor, when live adm1s are listed), `::test_country_page_adm1_line_for_a_curator`, `Adm1NamesNoteTest`, `tests/unit/test_adm1_names_note.py` | the line under a country's adm1s; one list of English-named countries |
+| `test_place_pages.py::test_country_page_says_where_adm1_names_come_from` (a visitor, when live adm1s are listed), `test_display_cleanup.py::test_country_page_adm1_line_for_a_curator`, `Adm1NamesNoteTest`, `tests/unit/test_adm1_names_note.py` | the line under a country's adm1s; one list of English-named countries |
 | `tests/e2e/test_field_guide_compare.py` | field guide of a small genus and of Comoros, image and map comparison of the genus (test curator); anonymous comparisons ask to log in |
 | `test_specimen_pages.py::test_specimen_map`, `test_taxon_and_place_maps`, `test_map_needs_parameters`, `test_lower_case_map_alias` | maps |
 | `test_region_counts.py`, `test_place_image_counts.py`, `test_numbers_pages.py`, `test_count_check.py` | the place numbers |

@@ -81,3 +81,16 @@ def test_curator_dropdown_projects_have_public_pages(curator):
     for name in projects:
         p = visitor.get(BASE_URL + "/project.do?name=" + name, timeout=max(TIMEOUT, 120))
         assert p.status_code == 200 and f"Project:{name} not found" not in p.text, f"project {name} has no public page"
+
+
+# 2026-11-21: the country page's adm1 line, as a curator sees it (all valid adm1s); the visitor's check is in
+# test_place_pages.py (NOTE_PAGES).
+@needs_curator
+def test_country_page_adm1_line_for_a_curator(curator):
+    from test_place_pages import NOTE_PAGES, _own_adm1s
+    for country, line in NOTE_PAGES:
+        path = "/country.do?name=" + country
+        r = curator.get(BASE_URL + path, timeout=max(TIMEOUT, 120))
+        assert r.status_code == 200, f"{path}: HTTP {r.status_code}"
+        assert _own_adm1s(r.text, country), f"{path}: a curator sees no adm1 of {country}"
+        assert 'class="adm1-names-note"' in r.text and line in r.text, f"{path}: no line {line!r}"
