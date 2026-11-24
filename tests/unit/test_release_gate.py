@@ -100,6 +100,17 @@ def test_an_early_run_never_opens_the_window_before_0515():
         raise AssertionError("a parsing fault must not be read as no answer")
     finally:
         gate.todays_update_ended = was
+    # the same for check 8 (review of d55812d)
+    was = gate.daily_update_state
+    gate.daily_update_state = lambda *a: (_ for _ in ()).throw(TypeError("bug"))
+    try:
+        gate.daily_check(early, True)
+    except TypeError:
+        pass
+    else:
+        raise AssertionError("a parsing fault in check 8 must not be read as unknown")
+    finally:
+        gate.daily_update_state = was
 
 
 def test_the_two_flags_reach_their_own_check_with_one_request():

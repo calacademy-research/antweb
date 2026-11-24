@@ -229,7 +229,6 @@ def test_apply_mode_dry_run_and_guards():
                 pd.main(args + ["--max-apply", "3"], corrections=path, reader=lambda *a: (VALID, NOW, 0))
             assert len(calls) == 2 and "applied 3 states" in out.getvalue(), out.getvalue()
             assert pd.MAX_APPLY == limit
-            calls.clear()
             # a skip file that cannot be read stops the apply (review of #384)
             calls.clear()
             os.remove(pd.SKIP_FILE)

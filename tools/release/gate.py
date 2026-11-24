@@ -26,7 +26,8 @@ tools/release/README.md):
               cannot be read inside the window (from Claude's workspace it cannot; the HTML form of the page has
               no date and never opens it), --daily-update-ended says a person read on dailyUpdate.do that the run
               that started today has ended; it opens the window from 05:15 on (the run starts at 05:00, so none
-              has ended before). It is not --daily-update-checked ("not running", true also before today's run
+              has ended before). The same floor holds when the gate reads the status itself: no run of today
+              opens the window before 05:15, so a scheduled run that fails at 05:03 waits until 05:15 too. It is not --daily-update-checked ("not running", true also before today's run
               starts). Without it the window stays closed until 08:15.
  7. rollback  The PR text has a "Rollback:" line.
  8. daily     The daily update is not running on production now (dailyUpdate.do?format=json, the latest run's state).
@@ -191,7 +192,10 @@ def todays_update_ended(status, headers, text, now):
     return "ended", detail
 
 
-BY_HAND_FROM = dt.time(5, 15)   # the daily update starts at 05:00: no scheduled run of today has ended before (both paths)
+# The daily update starts at 05:00: no scheduled run of today has ended before 05:15 (both paths). The floor rests on
+# the 05:00 run being listed as running by 05:15; when its row is written was not checked for this floor, so a row
+# written later than that (Tomcat restarting at 05:00) is not covered: check 8 is the rest.
+BY_HAND_FROM = dt.time(5, 15)
 
 
 def window_check(now, fetch, ended_by_hand=False):
@@ -311,9 +315,11 @@ def daily_update_checks(now, fetch, ended_by_hand, checked_by_hand):
 def daily_check(fetch, checked_by_hand):
     """(ok, text) for check 8. fetch() returns (status, headers, text) or raises."""
     try:
-        state, detail = daily_update_state(*fetch())
-    except Exception as e:  # no network, DNS, timeout, proxy refusal
+        answer = fetch()
+    except Exception as e:  # no network, DNS, timeout, proxy refusal: only the fetch, so a fault in the reading shows
         state, detail = "unknown", f"no answer ({e.__class__.__name__}: {str(e)[:120]})"
+    else:
+        state, detail = daily_update_state(*answer)
     if state == "running":
         return False, f"the daily update is running on production ({detail}); wait until it ends"
     if state == "not running":

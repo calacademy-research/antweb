@@ -1325,7 +1325,8 @@ A journal line "place-daily FAILED: ... apply REFUSED: N changes, over the limit
 day brought more than 5,000 new state proposals (a large upload with blank states, or a new boundary file). Nothing was
 written and the report rows are there. Read which collection it is (the query above, by `upload_group`); when the
 proposals are right, run that day by hand once with `--mode apply --max-apply N`; when they are not, add the country to
-`tools/place/place_daily_skip.txt` in a PR. Until one of the two, every morning refuses again.
+`tools/place/place_daily_skip.txt` in a PR. When neither fits (several countries, or right and wrong mixed in one), go
+back to report mode with the line below until it is sorted out. Until one of the three, every morning refuses again.
 
 Back to report mode, the fast way (no merge needed): `sed -i 's#place_daily.py --mode apply >/dev/null#place_daily.py >/dev/null#' /etc/cron.d/antweb-place-daily && grep -v '^#' /etc/cron.d/antweb-place-daily`. Put back one day's apply run: first back to report mode
 (else the next morning writes the same states again), then
