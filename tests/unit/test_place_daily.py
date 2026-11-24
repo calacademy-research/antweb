@@ -231,6 +231,7 @@ def test_apply_mode_dry_run_and_guards():
 def test_the_skip_file_names_countries():
     skip = pd.skipped_countries()
     assert {"United Kingdom", "Slovenia", "Uganda", "Guadeloupe"} <= skip and "Madagascar" not in skip, skip
+    assert {"Fiji", "Belize"} <= skip, skip   # held 2026-11-24: their shapes stand against the specimens filed there
     assert all("#" not in c and c == c.strip() for c in skip)
 
 
@@ -301,12 +302,6 @@ def test_the_cron_line_runs_apply_mode_on_production():
     # apply mode since 2026-11-24 (Brian Fisher: "go ahead as suggested"); never --max-apply here: a day over 5,000 is for a person
     assert line[0].startswith("10 9 * * * root /usr/bin/python3 /root/antweb/tools/place/place_daily.py --mode apply >/dev/null 2>&1"), line
     assert "--max-apply" not in cron
-
-
-def test_fiji_and_belize_are_held():
-    skip = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "tools", "place", "place_daily_skip.txt")).read()
-    names = {l.split("#")[0].strip() for l in skip.splitlines()}
-    assert {"Fiji", "Belize", "United Kingdom"} <= names, names
 
 
 def test_rollback_counts_and_refuses_when_nothing_is_applied():
