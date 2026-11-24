@@ -1,10 +1,13 @@
 # /etc/cron.d/antweb-place-daily -- antweb-prod (ssh root@165.232.137.86). Installed by hand, never by a deploy:
 # see docs/runbook.md, "Places from coordinates". Remove: rm /etc/cron.d/antweb-place-daily
 #
-# Every day 09:10 Pacific, after the daily update (05:00, done by about 08:00): tools/place/place_daily.py, report
-# mode. What the coordinates say each specimen's country and state should be goes into the table place_update; the
-# specimens are not changed (Brian 2026-11-16: one week of reports first). Log: journalctl -t place-daily
+# Every day 09:10 Pacific, after the daily update (05:00, done by about 08:00): tools/place/place_daily.py, apply
+# mode (Brian Fisher, 2026-11-24, after the week of reports and the production dry run). What the coordinates say
+# each specimen's country and state should be goes into the table place_update; then the safe state proposals are
+# written to specimen.adm1 (blank or old-unit states only; at most 5,000 a run; backup place_apply_bak_<date>).
+# Back to report mode: remove "--mode apply" here and install again. One day back: place_daily.py --rollback DATE.
+# Log: journalctl -t place-daily
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 MAILTO=""
-10 9 * * * root /usr/bin/python3 /root/antweb/tools/place/place_daily.py >/dev/null 2>&1   # one journal line per run, failures too
+10 9 * * * root /usr/bin/python3 /root/antweb/tools/place/place_daily.py --mode apply >/dev/null 2>&1   # one journal line per run, failures too

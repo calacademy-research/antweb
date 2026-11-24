@@ -1307,8 +1307,21 @@ apply). The journal line ends "applied N states (backup ...); left out: <reasons
 python3 /root/antweb-next/tools/place/place_daily.py --mode apply --dry-run
 ```
 
-Switch on (production): `sed -i 's#place_daily.py >/dev/null#place_daily.py --mode apply >/dev/null#' /etc/cron.d/antweb-place-daily && grep -v '^#' /etc/cron.d/antweb-place-daily`.
-Back to report mode: the same with the two sides swapped. Put back one day's apply run: first back to report mode
+Switching on (Brian's yes 2026-11-24, after the production dry run: 21,030 states, Fiji and Belize then held in the
+skip list). The cron file in the repository runs `--mode apply`. Two steps on production, in this order:
+
+```
+# ssh root@165.232.137.86
+# 1. the backlog, once, by hand: more than the daily 5,000, so the limit is raised for this run only
+python3 /root/antweb/tools/place/place_daily.py --mode apply --max-apply 20000
+# 2. only after its journal line says "applied N states (backup place_apply_bak_<date>)": the cron file
+install -m 644 /root/antweb/tools/place/antweb-place-daily.cron /etc/cron.d/antweb-place-daily && grep -v '^#' /etc/cron.d/antweb-place-daily
+```
+
+The Academy's specimens are loaded again from TaxonWorks every morning at 05:00, so a state written on one of them is
+written again at 09:10 each day until TaxonWorks has it (the load file for TaxonWorks is the lasting fix). Watch the
+journal line of the first mornings: if the daily count does not fall under a few hundred, look at which group it is.
+Back to report mode, the fast way (no merge needed): `sed -i 's#place_daily.py --mode apply >/dev/null#place_daily.py >/dev/null#' /etc/cron.d/antweb-place-daily && grep -v '^#' /etc/cron.d/antweb-place-daily`. Put back one day's apply run: first back to report mode
 (else the next morning writes the same states again), then
 `python3 /root/antweb/tools/place/place_daily.py --rollback 2026-11-24` (the date of the run). It puts back only the
 specimens that still have the state that run wrote; a later upload or edit stays; the journal line says how many were
