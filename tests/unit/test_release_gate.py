@@ -55,6 +55,11 @@ def test_window_follows_the_daily_update():
     # 04:50: the newest run is yesterday's; today's has not started, so a merge would run into it
     ok, text = gate.window_check(at(4, 50), answer(yesterday))
     assert not ok and "has not started" in text, text
+    # 04:50: a run started by hand at 01:30 today has ended, but the 05:00 run is still to come
+    early = {"started": "2026-11-24T01:30:00", "ended": "2026-11-24T02:20:00", "state": "ok"}
+    ok, text = gate.window_check(at(4, 50), answer(early))
+    assert not ok and "has not started" in text, text
+    assert not gate.window_check(at(4, 50), answer(early), True)[0]
     # the page cannot be read inside the window: closed; outside the window nothing is fetched
     def boom():
         raise OSError("no network")

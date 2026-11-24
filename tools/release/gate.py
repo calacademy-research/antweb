@@ -170,7 +170,7 @@ def todays_update_ended(status, headers, text, now):
     running, or that the newest run is not today's (today's has not started). "unread": anything the gate cannot
     read a date from (no JSON, a challenge, a login page, the HTML page, an unknown state): only then may a person's
     reading stand in. The date is the first 10 characters of "started", which DailyUpdateAction writes in Pacific
-    local time without an offset (DailyUpdateAction.load, the same text the page shows)."""
+    local time without an offset (DailyUpdate.iso)."""
     state, detail = daily_update_state(status, headers, text)
     if state == "unknown":
         return "unread", detail
@@ -179,12 +179,14 @@ def todays_update_ended(status, headers, text, now):
     try:
         runs = json.loads(text)["runs"]
     except (ValueError, KeyError, TypeError):
-        return "unread", "the page form of the daily update status has no date (only the JSON opens the window)"
+        return "unread", "the answer is not the status JSON, so it has no start date (only the JSON opens the window)"
     if not runs:
         return "not ended", "no daily update recorded yet: today's has not started"
     started = str(runs[0].get("started") or "")
     today = now.astimezone(PACIFIC).date().isoformat()
-    if started[:10] != today:
+    # the run of the window: started today at or after 04:45. A run started by hand at 01:30 is today's by date,
+    # but the scheduled 05:00 run is still to come (review of effb987)
+    if started[:10] != today or started[11:16] < CLOSED_FROM.strftime("%H:%M"):
         return "not ended", f"today's daily update has not started (the latest started {started or 'unknown'} Pacific)"
     return "ended", detail
 
@@ -211,7 +213,7 @@ def window_check(now, fetch, ended_by_hand=False):
             return True, f"today's daily update has ended: read by hand (--daily-update-ended; here: {detail[:60]})"
         return False, (f"04:45 to 08:15 Pacific and the daily update status could not be read ({detail}); when "
                        "dailyUpdate.do shows that the run started today has ended, rerun with --daily-update-ended "
-                       "(from 05:15); otherwise open at 08:15")
+                       "(from 05:15) and, for check 8, --daily-update-checked; otherwise open at 08:15")
     return False, f"04:45 to 08:15 Pacific and today's daily update has not ended ({detail}); open when it ends, at the latest 08:15"
 
 
