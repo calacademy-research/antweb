@@ -18,5 +18,3 @@ Monaco
 French Guiana
 Guadeloupe          # arrondissements made the states 2026-11-19; the shapes are communes
 Martinique          # the same
-Fiji                # held 2026-11-24 (production dry run): the province shapes stand against the specimens filed under Rewa, Naitasiri and Namosi (Rewa: 425 in Naitasiri, 387 in Rewa); check the file first
-Belize              # held 2026-11-24: Cayo's specimens lie in Toledo 363, Cayo 251
