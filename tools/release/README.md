@@ -12,7 +12,7 @@ production daily update status (check 8).
 | 3 | known | every failure is in `tests/e2e/known-failures.toml` (test, reason, decided_by, decided, expires; at most 7 days) and no entry has expired |
 | 4 | nightly | the PR changes no nightly code (`NIGHTLY_PATHS` in gate.py), or `--nightly-checked`: a staging nightly (or a by-hand run of the changed sets through schedule.do) of this commit ran clean and the morning tests passed |
 | 5 | review | the latest Claude review is of the head and starts "No blocking issues", or `--no-review "reason"` |
-| 6 | window | not 04:45 to 08:15 Pacific (the daily update) |
+| 6 | window | not between 04:45 Pacific and the end of today's daily update (read from dailyUpdate.do; at the latest 08:15) |
 | 7 | rollback | the PR text has a "Rollback:" line |
 | 8 | daily | the daily update is not running on production: one GET of `dailyUpdate.do?format=json` (no sign-in; `ANTWEB_DAILY_UPDATE_URL` to read it elsewhere, for example through a tunnel). If it cannot be read (Cloudflare challenge, no network, an answer the gate does not know) the check says "unknown - check dailyUpdate.do by hand" and fails, unless `--daily-update-checked` says it was read by hand and is not running |
 

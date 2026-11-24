@@ -1,4 +1,5 @@
 """The release gate's checks (tools/release/gate.py) and the known-failures list (tests/e2e/known-failures.toml)."""
+import json
 import os
 import datetime as dt
 import importlib.util
@@ -36,6 +37,36 @@ def test_window():
     assert not gate.window_closed(dt.datetime(2026, 11, 6, 16, 15, tzinfo=UTC))   # 08:15
     assert not gate.window_closed(dt.datetime(2026, 11, 6, 12, 44, tzinfo=UTC))   # 04:44
     assert gate.window_closed(dt.datetime(2026, 7, 1, 12, 0, tzinfo=UTC))         # 05:00 PDT
+
+
+def test_window_follows_the_daily_update():
+    # Brian Fisher, 2026-11-24: the update ended at 05:55 and the fixed clock kept the gate closed until 08:15.
+    def answer(run):
+        return lambda: (200, {}, json.dumps({"runs": [run]}))
+    at = lambda h, m: dt.datetime(2026, 11, 24, h + 8, m, tzinfo=UTC)   # Pacific (PST) on 2026-11-24
+    ended = {"started": "2026-11-24T05:00:00", "ended": "2026-11-24T06:03:00", "state": "ok"}
+    running = {"started": "2026-11-24T05:00:00", "ended": None, "state": "running"}
+    yesterday = {"started": "2026-11-23T05:00:00", "ended": "2026-11-23T06:01:00", "state": "ok"}
+    failed = {"started": "2026-11-24T05:00:00", "ended": None, "state": "failed"}
+    ok, text = gate.window_check(at(6, 20), answer(ended))
+    assert ok and "today's daily update has ended" in text, text
+    assert gate.window_check(at(6, 20), answer(failed))[0]                 # a failed run has ended too
+    assert not gate.window_check(at(5, 30), answer(running))[0]
+    # 04:50: the newest run is yesterday's; today's has not started, so a merge would run into it
+    ok, text = gate.window_check(at(4, 50), answer(yesterday))
+    assert not ok and "has not started" in text, text
+    # the page cannot be read inside the window: closed; outside the window nothing is fetched
+    def boom():
+        raise OSError("no network")
+    assert not gate.window_check(at(6, 20), boom)[0]
+    assert not gate.window_check(at(6, 20), lambda: (403, {"cf-mitigated": "challenge"}, ""))[0]
+    assert not gate.window_check(at(6, 20), lambda: (200, {}, '<p id="daily-update-state" data-state="ok">'))[0]   # no date on the page
+    assert gate.window_check(at(8, 15), boom)[0] and gate.window_check(at(4, 44), boom)[0]
+    # read by hand (the page cannot be reached from here): opens from 05:15, never before, and never against an
+    # answer that says the run is running or has not started
+    assert gate.window_check(at(6, 20), boom, True)[0] and not gate.window_check(at(5, 10), boom, True)[0]
+    assert not gate.window_check(at(5, 30), answer(running), True)[0]
+    assert not gate.window_check(at(5, 30), answer(yesterday), True)[0]
 
 
 def test_rollback_line():
