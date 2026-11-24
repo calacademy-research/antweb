@@ -1321,6 +1321,13 @@ install -m 644 /root/antweb/tools/place/antweb-place-daily.cron /etc/cron.d/antw
 The Academy's specimens are loaded again from TaxonWorks every morning at 05:00, so a state written on one of them is
 written again at 09:10 each day until TaxonWorks has it (the load file for TaxonWorks is the lasting fix). Watch the
 journal line of the first mornings: if the daily count does not fall under a few hundred, look at which group it is.
+A journal line "place-daily FAILED: ... apply REFUSED: N changes, over the limit of 5,000; nothing applied" means a
+day brought more than 5,000 new state proposals (a large upload with blank states, or a new boundary file). Nothing was
+written and the report rows are there. Read which collection it is (the query above, by `upload_group`); when the
+proposals are right, run that day by hand once with `--mode apply --max-apply N`; when they are not, add the country to
+`tools/place/place_daily_skip.txt` in a PR. When neither fits (several countries, or right and wrong mixed in one), go
+back to report mode with the line below until it is sorted out. Until one of the three, every morning refuses again.
+
 Back to report mode, the fast way (no merge needed): `sed -i 's#place_daily.py --mode apply >/dev/null#place_daily.py >/dev/null#' /etc/cron.d/antweb-place-daily && grep -v '^#' /etc/cron.d/antweb-place-daily`. Put back one day's apply run: first back to report mode
 (else the next morning writes the same states again), then
 `python3 /root/antweb/tools/place/place_daily.py --rollback 2026-11-24` (the date of the run). It puts back only the

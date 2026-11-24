@@ -83,6 +83,49 @@ def test_window_follows_the_daily_update():
     assert "--daily-update-ended" in gate.window_check(at(6, 20), boom)[1]      # the closed text names the flag
 
 
+def test_an_early_run_never_opens_the_window_before_0515():
+    at = lambda h, m: dt.datetime(2026, 11, 24, h + 8, m, tzinfo=UTC)
+    early = lambda: (200, {}, json.dumps({"runs": [{"started": "2026-11-24T04:46:00", "ended": "2026-11-24T04:55:00", "state": "ok"}]}))
+    ok, text = gate.window_check(at(4, 56), early)
+    assert not ok and "05:00 run is still to come" in text, text
+    assert not gate.window_check(at(5, 14), early, True)[0]
+    # a fault in reading the answer is not "no answer": it must show, not open the window with the by-hand flag
+    was = gate.todays_update_ended
+    gate.todays_update_ended = lambda *a: (_ for _ in ()).throw(TypeError("bug"))
+    try:
+        gate.window_check(at(6, 20), early, True)
+    except TypeError:
+        pass
+    else:
+        raise AssertionError("a parsing fault must not be read as no answer")
+    finally:
+        gate.todays_update_ended = was
+    # the same for check 8 (review of d55812d)
+    was = gate.daily_update_state
+    gate.daily_update_state = lambda *a: (_ for _ in ()).throw(TypeError("bug"))
+    try:
+        gate.daily_check(early, True)
+    except TypeError:
+        pass
+    else:
+        raise AssertionError("a parsing fault in check 8 must not be read as unknown")
+    finally:
+        gate.daily_update_state = was
+
+
+def test_the_two_flags_reach_their_own_check_with_one_request():
+    at = dt.datetime(2026, 11, 24, 14, 20, tzinfo=UTC)   # 06:20 Pacific
+    calls = []
+    def boom():
+        calls.append(1)
+        raise OSError("no network")
+    window, daily = gate.daily_update_checks(at, boom, True, False)
+    assert window[0] and not daily[0] and len(calls) == 1, (window, daily, calls)
+    calls.clear()
+    window, daily = gate.daily_update_checks(at, boom, False, True)
+    assert not window[0] and daily[0] and len(calls) == 1, (window, daily, calls)
+
+
 def test_checks_6_and_8_share_one_request():
     calls = []
     def fetch():

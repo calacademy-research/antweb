@@ -3,7 +3,7 @@
 `tools/release/gate.sh PR [--nightly-checked] [--daily-update-checked] [--daily-update-ended] [--no-review "reason"]` says whether a pull request may be merged to
 master (which deploys production): one line per check, then GATE OPEN or GATE CLOSED. Claude runs it before every
 merge and pastes the result into the pull request. It only reads the GitHub API (gh), the repository and the
-production daily update status (check 8).
+production daily update status (checks 6 and 8, one request).
 
 | # | Check | Passes when |
 |---|---|---|
@@ -12,7 +12,7 @@ production daily update status (check 8).
 | 3 | known | every failure is in `tests/e2e/known-failures.toml` (test, reason, decided_by, decided, expires; at most 7 days) and no entry has expired |
 | 4 | nightly | the PR changes no nightly code (`NIGHTLY_PATHS` in gate.py), or `--nightly-checked`: a staging nightly (or a by-hand run of the changed sets through schedule.do) of this commit ran clean and the morning tests passed |
 | 5 | review | the latest Claude review is of the head and starts "No blocking issues", or `--no-review "reason"` |
-| 6 | window | not between 04:45 Pacific and the end of today's daily update (read from `dailyUpdate.do?format=json`; at the latest 08:15). The HTML form of the page has no date and never opens the window. If the status cannot be read, `--daily-update-ended` says a person read that the run that started today has ended (from 05:15). This is not `--daily-update-checked`: "not running" is also true before today's run starts |
+| 6 | window | not between 04:45 Pacific and the end of today's daily update (read from `dailyUpdate.do?format=json`; at the latest 08:15). No run of today opens it before 05:15, read by the gate or by hand. The HTML form of the page has no date and never opens the window. If the status cannot be read, `--daily-update-ended` says a person read that the run that started today has ended (from 05:15). This is not `--daily-update-checked`: "not running" is also true before today's run starts |
 | 7 | rollback | the PR text has a "Rollback:" line |
 | 8 | daily | the daily update is not running on production: one GET of `dailyUpdate.do?format=json` (no sign-in; `ANTWEB_DAILY_UPDATE_URL` to read it elsewhere, for example through a tunnel). If it cannot be read (Cloudflare challenge, no network, an answer the gate does not know) the check says "unknown - check dailyUpdate.do by hand" and fails, unless `--daily-update-checked` says it was read by hand and is not running |
 

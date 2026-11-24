@@ -26,7 +26,8 @@ tools/release/README.md):
               cannot be read inside the window (from Claude's workspace it cannot; the HTML form of the page has
               no date and never opens it), --daily-update-ended says a person read on dailyUpdate.do that the run
               that started today has ended; it opens the window from 05:15 on (the run starts at 05:00, so none
-              has ended before). It is not --daily-update-checked ("not running", true also before today's run
+              has ended before). The same floor holds when the gate reads the status itself: no run of today
+              opens the window before 05:15, so a scheduled run that fails at 05:03 waits until 05:15 too. It is not --daily-update-checked ("not running", true also before today's run
               starts). Without it the window stays closed until 08:15.
  7. rollback  The PR text has a "Rollback:" line.
  8. daily     The daily update is not running on production now (dailyUpdate.do?format=json, the latest run's state).
@@ -191,7 +192,10 @@ def todays_update_ended(status, headers, text, now):
     return "ended", detail
 
 
-BY_HAND_FROM = dt.time(5, 15)   # the daily update starts at 05:00: no run of today has ended before
+# The daily update starts at 05:00: no scheduled run of today has ended before 05:15 (both paths). The floor rests on
+# the 05:00 run being listed as running by 05:15; when its row is written was not checked for this floor, so a row
+# written later than that (Tomcat restarting at 05:00) is not covered: check 8 is the rest.
+BY_HAND_FROM = dt.time(5, 15)
 
 
 def window_check(now, fetch, ended_by_hand=False):
@@ -203,13 +207,18 @@ def window_check(now, fetch, ended_by_hand=False):
     if not window_closed(now):
         return True, "outside the daily update window (04:45 to 08:15 Pacific)"
     try:
-        state, detail = todays_update_ended(*fetch(), now)
-    except Exception as e:  # no network, DNS, timeout, proxy refusal
+        answer = fetch()
+    except Exception as e:  # no network, DNS, timeout, proxy refusal: only the fetch, so a fault in the reading shows
         state, detail = "unread", f"no answer ({e.__class__.__name__}: {str(e)[:120]})"
+    else:
+        state, detail = todays_update_ended(*answer, now)
+    early = now.astimezone(PACIFIC).time() < BY_HAND_FROM
+    if state == "ended" and early:   # a run started by hand at 04:46 that ended at 04:55: the 05:00 run is still to come
+        return False, f"04:45 to 08:15 Pacific: a run of today has ended ({detail}), but before 05:15 the 05:00 run is still to come"
     if state == "ended":
         return True, f"today's daily update has ended ({detail})"
     if state == "unread":
-        if ended_by_hand and now.astimezone(PACIFIC).time() >= BY_HAND_FROM:
+        if ended_by_hand and not early:
             return True, f"today's daily update has ended: read by hand (--daily-update-ended; here: {detail[:60]})"
         return False, (f"04:45 to 08:15 Pacific and the daily update status could not be read ({detail}); when "
                        "dailyUpdate.do shows that the run started today has ended, rerun with --daily-update-ended "
@@ -296,12 +305,21 @@ def once(fetch):
     return get
 
 
+def daily_update_checks(now, fetch, ended_by_hand, checked_by_hand):
+    """((ok, text) of check 6, (ok, text) of check 8) from one GET of the daily update status: each flag reaches its
+    own check only (--daily-update-ended check 6, --daily-update-checked check 8)."""
+    status = once(fetch)
+    return window_check(now, status, ended_by_hand), daily_check(status, checked_by_hand)
+
+
 def daily_check(fetch, checked_by_hand):
     """(ok, text) for check 8. fetch() returns (status, headers, text) or raises."""
     try:
-        state, detail = daily_update_state(*fetch())
-    except Exception as e:  # no network, DNS, timeout, proxy refusal
+        answer = fetch()
+    except Exception as e:  # no network, DNS, timeout, proxy refusal: only the fetch, so a fault in the reading shows
         state, detail = "unknown", f"no answer ({e.__class__.__name__}: {str(e)[:120]})"
+    else:
+        state, detail = daily_update_state(*answer)
     if state == "running":
         return False, f"the daily update is running on production ({detail}); wait until it ends"
     if state == "not running":
@@ -520,14 +538,13 @@ def main(argv=None):
         ok, text = review_state(comments, head)
         check(5, "review", ok, text)
 
-    daily_status = once(fetch_daily_update)   # one GET of the daily update status for checks 6 and 8
-
-    check(6, "window", *window_check(dt.datetime.now(dt.timezone.utc), daily_status, args.daily_update_ended))
+    window, daily = daily_update_checks(dt.datetime.now(dt.timezone.utc), fetch_daily_update, args.daily_update_ended, args.daily_update_checked)
+    check(6, "window", *window)
 
     check(7, "rollback", has_rollback(pr.get("body")), "Rollback: line found" if has_rollback(pr.get("body"))
           else "no 'Rollback:' line in the PR text")
 
-    check(8, "daily", *daily_check(daily_status, args.daily_update_checked))
+    check(8, "daily", *daily)
 
     ok = all(results)
     print("GATE OPEN" if ok else "GATE CLOSED")
