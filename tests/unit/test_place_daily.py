@@ -295,10 +295,18 @@ def test_old_folders_are_pruned():
         assert len(left) == 14 and left[0] == "2026-10-07", left
 
 
-def test_the_cron_line_runs_report_mode_on_production():
+def test_the_cron_line_runs_apply_mode_on_production():
     cron = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "tools", "place", "antweb-place-daily.cron")).read()
     line = [l for l in cron.splitlines() if l and not l.startswith(("#", "SHELL", "PATH", "MAILTO"))]
-    assert line[0].startswith("10 9 * * * root /usr/bin/python3 /root/antweb/tools/place/place_daily.py >/dev/null 2>&1"), line
+    # apply mode since 2026-11-24 (Brian Fisher: "go ahead as suggested"); never --max-apply here: a day over 5,000 is for a person
+    assert line[0].startswith("10 9 * * * root /usr/bin/python3 /root/antweb/tools/place/place_daily.py --mode apply >/dev/null 2>&1"), line
+    assert "--max-apply" not in cron
+
+
+def test_fiji_and_belize_are_held():
+    skip = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "tools", "place", "place_daily_skip.txt")).read()
+    names = {l.split("#")[0].strip() for l in skip.splitlines()}
+    assert {"Fiji", "Belize", "United Kingdom"} <= names, names
 
 
 def test_rollback_counts_and_refuses_when_nothing_is_applied():
