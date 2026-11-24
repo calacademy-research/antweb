@@ -36,8 +36,12 @@ only when all of these hold (eligible(), unit-tested), otherwise it stays a repo
   - the country is not in place_daily_skip.txt (countries whose boundary shapes are at another level than AntWeb's
     states, 2026-11-19 state_sets.py: the United Kingdom, Slovenia, Uganda, ...);
   - the proposed name is a valid state of that country now;
-  - the specimen still has the country and the state the report read (nothing changed since).
-At most MAX_APPLY changes a run (more: nothing is applied, the run logs it, someone looks). Once a day: a second apply
+  - the specimen still has the country and the state the report read (nothing changed since);
+  - the stored state is empty or not a valid state of the country (an old unit: Kenya's Rift Valley). A stored state
+    that is valid is never overwritten: it came from the label, so the coordinates are in doubt (Brian Fisher,
+    2026-11-22) and the row stays in the report for the coordinates to be corrected.
+At most MAX_APPLY changes a run (more: nothing is applied, the run logs it, someone looks; --max-apply N raises it
+for one run by hand, for the first run after the report week). Once a day: a second apply
 run the same day applies nothing. Before writing, the specimens' adm1 and adm1_verbatim go to the backup table
 place_apply_bak_<date>; the written rows are recorded in place_update (mode apply, applied 1).
 Rollback of one day: python3 place_daily.py --rollback <date> (from the backup table). To stop applying: the cron line
@@ -132,6 +136,7 @@ LEFT_OUT = {
     "gone": "the specimen is gone",
     "moved": "the specimen's country is not the proposal's",
     "changed": "the specimen's state changed since the report",
+    "valid": "the stored state is a valid state: the coordinates are in doubt, not the state",
 }
 
 
@@ -156,6 +161,11 @@ def eligible(rows, valid_states, current, skip):
             why["moved"] += 1
         elif stored_now[1] != (r["stored_value"] or ""):
             why["changed"] += 1
+        elif stored_now[1] and (r["country"], stored_now[1]) in valid_states:
+            # Brian Fisher, 2026-11-22 (North Grimston: label North Yorkshire, point in the sea off Northumberland):
+            # a state that is valid as written came from the label; when the point lies elsewhere the coordinates
+            # are wrong and get corrected at the source. Only an empty state or an old unit follows the point.
+            why["valid"] += 1
         else:
             out.append(r)
     return out, why
@@ -302,6 +312,8 @@ def main(argv=None, corrections=None, reader=None, counter=None):
     a.add_argument("--mode", choices=["report", "apply"], default="report")
     a.add_argument("--rollback", metavar="DATE", default=None, help="put back what the apply run of DATE (YYYY-MM-DD) wrote")
     a.add_argument("--dry-run", action="store_true", help="run and summarise; write nothing to the database")
+    a.add_argument("--max-apply", type=int, default=MAX_APPLY, metavar="N",
+                   help="the most changes this run may write (default %d); for a first run by hand" % MAX_APPLY)
     a.add_argument("--project", default=None, help="AntWeb project folder (default /root/antweb or /root/antweb-next)")
     a.add_argument("--container", default="antweb_mysql_1")
     a.add_argument("--out-root", default=OUT_ROOT)
@@ -365,8 +377,8 @@ def main(argv=None, corrections=None, reader=None, counter=None):
             left = ", ".join(LEFT_OUT[k] + " " + cc.n(v) for k, v in why.most_common())
             if done:
                 line += "; apply: none, today's apply run already wrote " + cc.n(done)
-            elif len(todo) > MAX_APPLY:   # one journal line: run() logs it as FAILED
-                raise SystemExit(line + "; apply REFUSED: " + cc.n(len(todo)) + " changes, over the limit of " + cc.n(MAX_APPLY) + "; nothing applied")
+            elif len(todo) > args.max_apply:   # one journal line: run() logs it as FAILED
+                raise SystemExit(line + "; apply REFUSED: " + cc.n(len(todo)) + " changes, over the limit of " + cc.n(args.max_apply) + "; nothing applied")
             elif todo and not args.dry_run:
                 write_sql(project, args.container, apply_statements(todo, run_date))
                 line += "; applied " + cc.n(len(todo)) + " states (backup " + backup_table(run_date) + ")"

@@ -128,6 +128,21 @@ def test_only_safe_states_are_applied():
     assert why == {"flag": 1, "country": 1, "skip": 1, "invalid": 1, "gone": 1, "moved": 1, "changed": 1}, why
 
 
+def test_a_valid_stored_state_is_never_overwritten():
+    # Brian Fisher, 2026-11-22 (North Grimston): the label's state is valid and the point lies in another state: the
+    # coordinates are in doubt, so the row stays a report row. An old unit (Toliara, a former province) and an empty
+    # state follow the point.
+    rows = [{"specimen_code": "label", "field": "adm1", "current_value": "Sava", "proposed_value": "Menabe", "country": "Madagascar"},
+            {"specimen_code": "old", "field": "adm1", "current_value": "Toliara", "proposed_value": "Menabe", "country": "Madagascar"},
+            {"specimen_code": "empty", "field": "adm1", "current_value": "", "proposed_value": "Menabe", "country": "Madagascar"}]
+    with tempfile.TemporaryDirectory() as d:
+        rows = pd.rows_of(corrections_file(d, rows), "2026-11-24", "report")
+    now = {"label": ("Madagascar", "Sava"), "old": ("Madagascar", "Toliara"), "empty": ("Madagascar", "")}
+    todo, why = pd.eligible(rows, VALID, now, set())
+    assert [r["code"] for r in todo] == ["old", "empty"] and why == {"valid": 1}, (todo, why)
+    assert "coordinates are in doubt" in pd.LEFT_OUT["valid"]
+
+
 def test_the_apply_sql_backs_up_first_and_writes_only_unchanged_states():
     with tempfile.TemporaryDirectory() as d:
         rows = pd.rows_of(corrections_file(d, APPLY[:2]), "2026-11-23", "report")
