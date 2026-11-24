@@ -213,6 +213,23 @@ def test_apply_mode_dry_run_and_guards():
             finally:
                 pd.MAX_APPLY = limit
             assert len(calls) == 1, calls          # the report rows only
+            # --max-apply N sets the limit for that run only (review of #412): 2 refuses, 3 writes, the default is unchanged
+            calls.clear()
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    pd.main(args + ["--max-apply", "2"], corrections=path, reader=lambda *a: (VALID, NOW, 0))
+            except SystemExit as e:
+                assert "apply REFUSED: 3 changes, over the limit of 2" in str(e), e
+            else:
+                raise AssertionError("--max-apply 2 must refuse 3 changes")
+            assert len(calls) == 1, calls
+            calls.clear()
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                pd.main(args + ["--max-apply", "3"], corrections=path, reader=lambda *a: (VALID, NOW, 0))
+            assert len(calls) == 2 and "applied 3 states" in out.getvalue(), out.getvalue()
+            assert pd.MAX_APPLY == limit
+            calls.clear()
             # a skip file that cannot be read stops the apply (review of #384)
             calls.clear()
             os.remove(pd.SKIP_FILE)

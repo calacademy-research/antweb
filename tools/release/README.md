@@ -3,7 +3,7 @@
 `tools/release/gate.sh PR [--nightly-checked] [--daily-update-checked] [--daily-update-ended] [--no-review "reason"]` says whether a pull request may be merged to
 master (which deploys production): one line per check, then GATE OPEN or GATE CLOSED. Claude runs it before every
 merge and pastes the result into the pull request. It only reads the GitHub API (gh), the repository and the
-production daily update status (check 8).
+production daily update status (checks 6 and 8, one request).
 
 | # | Check | Passes when |
 |---|---|---|
