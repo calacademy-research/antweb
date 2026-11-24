@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Release gate: may this pull request be merged to master (which deploys production)?
 
-    python3 tools/release/gate.py PR_NUMBER [--nightly-checked] [--daily-update-checked] [--no-review "reason"]
+    python3 tools/release/gate.py PR_NUMBER [--nightly-checked] [--daily-update-checked] [--daily-update-ended] [--no-review "reason"]
 
 Prints one line per check and then GATE OPEN or GATE CLOSED (exit 0 or 1). Claude runs it before every merge
 and pastes the result into the pull request. The checks (decided by Brian Fisher, 2026-11-05; docs in
@@ -19,7 +19,15 @@ tools/release/README.md):
               commit and the morning tests passed.
  5. review    The latest Claude review comment is for the head commit and starts "No blocking issues";
               --no-review "reason" when there is none (for example, the review credit is used up).
- 6. window    Not between 04:45 and 08:15 Pacific (the daily update).
+ 6. window    Not between 04:45 and the end of today's daily update (Brian Fisher, 2026-11-24: "the merge gate should
+              have logic that makes sense"; before, a fixed clock closed it until 08:15 though the update ended at
+              05:55). From 04:45 Pacific the gate is closed until dailyUpdate.do says the run that started today has
+              ended (finished or failed), and at the latest until 08:15, when check 8 alone decides. When the page
+              cannot be read inside the window (from Claude's workspace it cannot; the HTML form of the page has
+              no date and never opens it), --daily-update-ended says a person read on dailyUpdate.do that the run
+              that started today has ended; it opens the window from 05:15 on (the run starts at 05:00, so none
+              has ended before). It is not --daily-update-checked ("not running", true also before today's run
+              starts). Without it the window stays closed until 08:15.
  7. rollback  The PR text has a "Rollback:" line.
  8. daily     The daily update is not running on production now (dailyUpdate.do?format=json, the latest run's state).
               When the page cannot be read (Cloudflare challenge, no network, unexpected answer) the check fails as
@@ -151,9 +159,62 @@ def staged_by_tree(head_tree, staging_runs, tree_of):
     return None
 
 def window_closed(now):
-    """True between 04:45 and 08:15 Pacific, when the nightly run works and nothing is merged."""
+    """True between 04:45 and 08:15 Pacific, the hours in which the daily update usually runs."""
     t = now.astimezone(PACIFIC).time()
     return CLOSED_FROM <= t < CLOSED_UNTIL
+
+
+def todays_update_ended(status, headers, text, now):
+    """("ended" | "not ended" | "unread", detail) for today's (Pacific) daily update, from the status JSON.
+    "ended": the newest run started today and has ended, finished or failed. "not ended": the answer says it is
+    running, or that the newest run is not today's (today's has not started). "unread": anything the gate cannot
+    read a date from (no JSON, a challenge, a login page, the HTML page, an unknown state): only then may a person's
+    reading stand in. The date is the first 10 characters of "started", which DailyUpdateAction writes in Pacific
+    local time without an offset (DailyUpdate.iso)."""
+    state, detail = daily_update_state(status, headers, text)
+    if state == "unknown":
+        return "unread", detail
+    if state == "running":
+        return "not ended", detail
+    try:
+        runs = json.loads(text)["runs"]
+    except (ValueError, KeyError, TypeError):
+        return "unread", "the answer is not the status JSON, so it has no start date (only the JSON opens the window)"
+    if not runs:
+        return "not ended", "no daily update recorded yet: today's has not started"
+    started = str(runs[0].get("started") or "")
+    today = now.astimezone(PACIFIC).date().isoformat()
+    # the run of the window: started today at or after 04:45. A run started by hand at 01:30 is today's by date,
+    # but the scheduled 05:00 run is still to come (review of effb987)
+    if started[:10] != today or started[11:16] < CLOSED_FROM.strftime("%H:%M"):
+        return "not ended", f"today's daily update has not started (the latest started {started or 'unknown'} Pacific)"
+    return "ended", detail
+
+
+BY_HAND_FROM = dt.time(5, 15)   # the daily update starts at 05:00: no run of today has ended before
+
+
+def window_check(now, fetch, ended_by_hand=False):
+    """(ok, text) for check 6. Outside 04:45 to 08:15 Pacific: open. Inside: open only once today's daily update has
+    ended; fetch() returns (status, headers, text) or raises. ended_by_hand (--daily-update-ended): a person read on
+    dailyUpdate.do that the run that started today has ended; used only when the gate could not read the status
+    itself ("unread"), and not before 05:15. It is a flag of its own: --daily-update-checked says "not running",
+    which is also true before today's run starts."""
+    if not window_closed(now):
+        return True, "outside the daily update window (04:45 to 08:15 Pacific)"
+    try:
+        state, detail = todays_update_ended(*fetch(), now)
+    except Exception as e:  # no network, DNS, timeout, proxy refusal
+        state, detail = "unread", f"no answer ({e.__class__.__name__}: {str(e)[:120]})"
+    if state == "ended":
+        return True, f"today's daily update has ended ({detail})"
+    if state == "unread":
+        if ended_by_hand and now.astimezone(PACIFIC).time() >= BY_HAND_FROM:
+            return True, f"today's daily update has ended: read by hand (--daily-update-ended; here: {detail[:60]})"
+        return False, (f"04:45 to 08:15 Pacific and the daily update status could not be read ({detail}); when "
+                       "dailyUpdate.do shows that the run started today has ended, rerun with --daily-update-ended "
+                       "(from 05:15) and, for check 8, --daily-update-checked; otherwise open at 08:15")
+    return False, f"04:45 to 08:15 Pacific and today's daily update has not ended ({detail}); open when it ends, at the latest 08:15"
 
 
 def daily_update_state(status, headers, text):
@@ -217,6 +278,22 @@ def fetch_daily_update(url=None):
             return r.status, dict(r.headers), r.read().decode("utf-8", "replace")
     except urllib.error.HTTPError as e:
         return e.code, dict(e.headers or {}), (e.read().decode("utf-8", "replace") if e.fp else "")
+
+
+def once(fetch):
+    """fetch() made once: the same answer, or the same exception, on every call (checks 6 and 8 share one GET)."""
+    answer = []
+
+    def get():
+        if not answer:
+            try:
+                answer.append(fetch())
+            except Exception as e:
+                answer.append(e)
+        if isinstance(answer[0], Exception):
+            raise answer[0]
+        return answer[0]
+    return get
 
 
 def daily_check(fetch, checked_by_hand):
@@ -379,6 +456,10 @@ def main(argv=None):
     ap.add_argument("pr", type=int)
     ap.add_argument("--daily-update-checked", action="store_true",
                     help="dailyUpdate.do on production was read by hand: the daily update is not running (check 8)")
+    ap.add_argument("--daily-update-ended", action="store_true",
+                    help="dailyUpdate.do on production was read by hand: the run that started TODAY has ended "
+                         "(check 6, inside 04:45 to 08:15 Pacific). Not the same as not running: before today's run "
+                         "starts, the page shows yesterday's, ended")
     ap.add_argument("--nightly-checked", action="store_true",
                     help="the morning compute.log and morning tests were read for this commit (check 4); also: "
                          "dailyUpdate.do was read by hand and the daily update is not running (check 8)")
@@ -439,14 +520,14 @@ def main(argv=None):
         ok, text = review_state(comments, head)
         check(5, "review", ok, text)
 
-    closed = window_closed(dt.datetime.now(dt.timezone.utc))
-    check(6, "window", not closed, "04:45 to 08:15 Pacific: the daily update is running" if closed
-          else "outside the daily update window (04:45 to 08:15 Pacific)")
+    daily_status = once(fetch_daily_update)   # one GET of the daily update status for checks 6 and 8
+
+    check(6, "window", *window_check(dt.datetime.now(dt.timezone.utc), daily_status, args.daily_update_ended))
 
     check(7, "rollback", has_rollback(pr.get("body")), "Rollback: line found" if has_rollback(pr.get("body"))
           else "no 'Rollback:' line in the PR text")
 
-    check(8, "daily", *daily_check(fetch_daily_update, args.daily_update_checked))
+    check(8, "daily", *daily_check(daily_status, args.daily_update_checked))
 
     ok = all(results)
     print("GATE OPEN" if ok else "GATE CLOSED")
