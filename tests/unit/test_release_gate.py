@@ -62,11 +62,40 @@ def test_window_follows_the_daily_update():
     assert not gate.window_check(at(6, 20), lambda: (403, {"cf-mitigated": "challenge"}, ""))[0]
     assert not gate.window_check(at(6, 20), lambda: (200, {}, '<p id="daily-update-state" data-state="ok">'))[0]   # no date on the page
     assert gate.window_check(at(8, 15), boom)[0] and gate.window_check(at(4, 44), boom)[0]
-    # read by hand (the page cannot be reached from here): opens from 05:15, never before, and never against an
-    # answer that says the run is running or has not started
+    # read by hand (--daily-update-ended; the page cannot be reached from here): opens from 05:15, never before,
+    # and never against an answer that says the run is running or has not started
     assert gate.window_check(at(6, 20), boom, True)[0] and not gate.window_check(at(5, 10), boom, True)[0]
     assert not gate.window_check(at(5, 30), answer(running), True)[0]
     assert not gate.window_check(at(5, 30), answer(yesterday), True)[0]
+    assert not gate.window_check(at(5, 30), lambda: (200, {}, '{"runs": []}'), True)[0]
+    # every answer the gate cannot read takes the person's reading (review of fc0966c: not a list of wordings)
+    for unread in ((200, {}, "<html>Sign in</html>"), (200, {}, '{"other": 1}'),
+                   (200, {}, json.dumps({"runs": [{"started": "2026-11-24T05:00:00", "state": "ok", "ended": None}]})),
+                   (200, {}, '<p id="daily-update-state" data-state="ok">'), (502, {}, "")):
+        assert not gate.window_check(at(6, 20), lambda: unread)[0], unread
+        ok, text = gate.window_check(at(6, 20), lambda: unread, True)
+        assert ok and "--daily-update-ended" in text, unread
+    assert "--daily-update-ended" in gate.window_check(at(6, 20), boom)[1]      # the closed text names the flag
+
+
+def test_checks_6_and_8_share_one_request():
+    calls = []
+    def fetch():
+        calls.append(1)
+        return 200, {}, '{"runs": []}'
+    get = gate.once(fetch)
+    assert get() == get() and len(calls) == 1
+    def boom():
+        calls.append(1)
+        raise OSError("no network")
+    get = gate.once(boom)
+    for _ in range(2):
+        try:
+            get()
+            assert False
+        except OSError:
+            pass
+    assert len(calls) == 2                                                       # the error is kept, not fetched again
 
 
 def test_rollback_line():
