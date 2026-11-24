@@ -1307,8 +1307,8 @@ apply). The journal line ends "applied N states (backup ...); left out: <reasons
 python3 /root/antweb-next/tools/place/place_daily.py --mode apply --dry-run
 ```
 
-Switching on (Brian's yes 2026-11-24, after the production dry run: 21,030 states, Fiji and Belize then held in the
-skip list). The cron file in the repository runs `--mode apply`. Two steps on production, in this order:
+Switching on (Brian's yes 2026-11-24, after the production dry run: 21,030 states; Fiji and Belize were held in the
+skip list for the first run and released the same day, once their boundary files were checked). The cron file in the repository runs `--mode apply`. Two steps on production, in this order:
 
 ```
 # ssh root@165.232.137.86
