@@ -368,6 +368,8 @@ Philippines,ADM2,"NCR, Fourth District",National Capital Region
 # specimens there as Zambezi (corrected the next morning; AntWeb's box of Zambezi flagged them). So Caprivi is told
 # apart by the file's constituencies: the unit it names Arandis (21.0 to 22.5 E) is Kavango East; Kongola (22.5 to
 # 24.2 E) lies on both sides of the Kwando and has no line, so a point in it gets no proposal; the others are Zambezi.
+# The unit names are the file's own labels (shapeName of geoBoundaries NAM ADM2 at the pinned commit, read 2026-11-25),
+# misspellings included: its Arandis here is not the Erongo constituency of that name.
 split,Namibia,Caprivi,ADM2,Arandis,Kavango East,"2013: the strip west of the Kwando River went from Caprivi to Kavango East"
 split,Namibia,Caprivi,ADM2,Kabe,Zambezi,Caprivi was renamed Zambezi in 2013
 split,Namibia,Caprivi,ADM2,Katima Muliro Rural,Zambezi,renamed Zambezi in 2013
@@ -579,7 +581,7 @@ level,Slovenia,ADM2
 # Kiribati (2026-11-25): the file's shape Phoenix Islands also holds Tarawa (Betio, Tarawa Ieta, Tarawa Teinainano) and
 # Banaba, which are Gilbert Islands, 1,700 km west of the Phoenix group. The first apply run wrote 18 specimens from
 # Tarawa and Banaba as Phoenix Islands (corrected the next morning). The shape is told apart by the file's islands
-# (ADM2); of the Phoenix group it has Kanton only.
+# (ADM2; names as the file labels them, read 2026-11-25); of the Phoenix group it has Kanton only.
 split,Kiribati,Phoenix Islands,ADM2,Kanton,Phoenix Islands,the one island of the Phoenix group in the file
 split,Kiribati,Phoenix Islands,ADM2,Banaba,Gilbert Islands,Banaba is administered with the Gilbert Islands
 split,Kiribati,Phoenix Islands,ADM2,Betio,Gilbert Islands,Tarawa

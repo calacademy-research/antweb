@@ -164,10 +164,11 @@ def test_a_point_outside_antwebs_box_of_the_proposed_state_is_not_written():
     now = {r["code"]: (r["country"], "") for r in rows}
     boxes = {("Kiribati", "Phoenix Islands"): pd.box_of("-174.6, -4.7, -170.6, -2.7"), ("Namibia", "Zambezi"): pd.box_of("(23.3, -18.5, 25.3, -17.4)")}
     todo, why = pd.eligible(rows, valid, now, set(), boxes)
-    assert [r["code"] for r in todo] == ["canton", "sangwali", "nobox", "nopoint"] and why == {"box": 2}, (todo, why)
+    assert [r["code"] for r in todo] == ["canton", "sangwali", "nobox"] and why == {"box": 2, "nopoint": 1}, (todo, why)
     assert pd.eligible(rows, valid, now, set())[1] == {}                       # without boxes, as before
     # the box as AntWeb reads it: four numbers, 0.2 degree of grace, across the 180 meridian when left is east of right
     assert pd.box_of("") is None and pd.box_of("null") is None and pd.box_of("0, 0, 0, 0") is None and pd.box_of("1, 2, 3") is None
+    assert pd.box_of("1, 2, 3, 4, 5") is None and pd.box_of("-.5, .5, 1., 2") == (-0.5, 0.5, 1.0, 2.0)
     assert pd.within_box((10, 10, 20, 20), 20.19, 9.81) and not pd.within_box((10, 10, 20, 20), 20.21, 15)
     fiji = (177.0, -19.2, -178.2, -16.1)
     assert pd.within_box(fiji, -17.0, 179.9) and pd.within_box(fiji, -17.0, -179.5) and not pd.within_box(fiji, -17.0, 170.0)
@@ -243,6 +244,23 @@ def test_apply_mode_dry_run_and_guards():
             finally:
                 pd.MAX_APPLY = limit
             assert len(calls) == 1, calls          # the report rows only
+            # the boxes the reader hands in reach the rule (review of 424d090): Sava's box here does not hold its point
+            calls.clear()
+            boxed = corrections_file(d, [dict(r, latitude="-14.3", longitude="50.0") for r in APPLY])
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                pd.main(args, corrections=boxed, reader=lambda *a: (VALID, NOW, 0, {("Madagascar", "Sava"): (10.0, 10.0, 11.0, 11.0)}))
+            assert "applied 2 states" in out.getvalue() and pd.LEFT_OUT["box"] + " 1" in out.getvalue(), out.getvalue()
+            # the database path: a fixed box that is no box does not hide the box
+            was_sql = pd.cc.run_sql
+            hx = lambda t: t.encode().hex()
+            pd.cc.run_sql = lambda *a: [(hx("Tanzania"), hx("Geita"), hx("0, 0, 0, 0"), hx("31.1, -4.4, 32.8, -2.1")),
+                                        (hx("Tanzania"), hx("Mara"), hx(""), hx("null"))]
+            try:
+                assert pd.read_boxes(d, "c") == {("Tanzania", "Geita"): (31.1, -4.4, 32.8, -2.1)}
+            finally:
+                pd.cc.run_sql = was_sql
+            calls.clear()
             # --max-apply N sets the limit for that run only (review of #412): 2 refuses, 3 writes, the default is unchanged
             calls.clear()
             try:

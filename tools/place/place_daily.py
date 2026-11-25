@@ -102,11 +102,11 @@ BOX_GRACE = 0.2   # degrees, as LocalityOverview.isWithinBounds (the upload repo
 
 def box_of(text):
     """(left, bottom, right, top) of a stored bounding box "left, bottom, right, top", or None for no box (empty,
-    "null", fewer than four numbers, or all zero: LocalityOverview reads those as no box)."""
-    parts = re.findall(r"-?\d+(?:\.\d+)?", text or "")
-    if len(parts) < 4:
+    "null", not exactly four numbers, or all zero: LocalityOverview reads those as no box)."""
+    parts = re.findall(r"-?(?:\d+\.?\d*|\.\d+)", text or "")
+    if len(parts) != 4:
         return None
-    box = tuple(float(x) for x in parts[:4])
+    box = tuple(float(x) for x in parts)
     return None if not any(box) else box
 
 
@@ -173,6 +173,7 @@ LEFT_OUT = {
     "changed": "the specimen's state changed since the report",
     "valid": "the stored state is a valid state: the coordinates are in doubt, not the state",
     "box": "the point is outside AntWeb's own box of the proposed state: the boundary file or the box is wrong",
+    "nopoint": "the report row has no coordinates to ask the state's box with",
 }
 
 
@@ -204,8 +205,9 @@ def eligible(rows, valid_states, current, skip, boxes=None):
             # a state that is valid as written came from the label; when the point lies elsewhere the coordinates
             # are wrong and get corrected at the source. Only an empty state or an old unit follows the point.
             why["valid"] += 1
-        elif (r["country"], r["proposed"]) in boxes and r.get("lat") is not None and r.get("lon") is not None \
-                and not within_box(boxes[(r["country"], r["proposed"])], r["lat"], r["lon"]):
+        elif (r["country"], r["proposed"]) in boxes and (r.get("lat") is None or r.get("lon") is None):
+            why["nopoint"] += 1   # a proposal from coordinates always has them: without, the box cannot be asked
+        elif (r["country"], r["proposed"]) in boxes and not within_box(boxes[(r["country"], r["proposed"])], r["lat"], r["lon"]):
             # 2026-11-25: the first apply run wrote Tarawa as Phoenix Islands (a mislabeled shape of the boundary file)
             # and West Caprivi as Zambezi (a file older than 2013); AntWeb's boxes were right in both, and the daily box
             # check said so a day late. A state with no box is not guarded.
@@ -298,9 +300,10 @@ def read_boxes(project, container):
     """{(country, state): (left, bottom, right, top)} of the valid states that have a box: the fixed box where one is
     set, else the box (LocalityOverview.useBoundingBox)."""
     out = {}
-    for r in cc.run_sql(project, "select hex(parent), hex(name), hex(ifnull(nullif(bounding_box_fixed, ''), ifnull(bounding_box, '')))"
+    for r in cc.run_sql(project, "select hex(parent), hex(name), hex(ifnull(bounding_box_fixed, '')), hex(ifnull(bounding_box, ''))"
                         " from geolocale where georank = 'adm1' and is_valid = 1 and parent is not null", container):
-        box = box_of(cc.unhex(r[2]))
+        # a fixed box that is no box (cleared to 0, 0, 0, 0) must not hide the box (review of 424d090)
+        box = box_of(cc.unhex(r[2])) or box_of(cc.unhex(r[3]))
         if box is not None:
             out[(cc.unhex(r[0]), cc.unhex(r[1]))] = box
     return out
