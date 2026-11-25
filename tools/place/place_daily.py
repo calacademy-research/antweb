@@ -191,7 +191,8 @@ def near_border_only(flag):
 
 LEFT_OUT = {
     "country": "a country proposal (for a person)",
-    "flag": "another state within the stated error (the state is filled, or the stated error is " + str(NEAR_BORDER_KM) + " km or more)",
+    "flag": ("another state within the stated error (the state is filled, the stated error is " + str(NEAR_BORDER_KM)
+             + " km or more, or the allowed distance is over " + str(ALLOWED_KM) + " km)"),
     "flagunread": "a flag the daily step cannot read (its wording changed?): for a person",
     "skip": "country left out (its shapes are at another level)",
     "invalid": "the proposed state is not a valid state of the country",

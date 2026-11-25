@@ -1298,11 +1298,13 @@ def test_madagascar_from_the_provinces_to_the_regions():
     # a stored state that is no unit AntWeb knows follows the coordinates like an empty one (Brian Fisher, 2026-11-25); without coordinates it stays
     [unknown] = work.work(m("casent0000100", -15.0, 47.0, "Nosy Be"))
     assert (unknown.field, unknown.current) == ("adm1", "Nosy Be") and unknown.proposed and pc.NOT_KNOWN in unknown.note, unknown
-    assert work.work(m("casent0000101", "", "", "Nosy Be")) == [pc.Not("adm1", pc.NOT_KNOWN_STAYS, "Nosy Be")]
+    assert work.work(m("casent0000103", "", "", "Nosy Be")) == [pc.Not("adm1", pc.NOT_KNOWN_STAYS, "Nosy Be")]
+    # a valid state written in another case or with spaces is that state: known, from the label, never overwritten (review of #419)
+    assert work.work(m("casent0000104", -15.0, 47.0, "diana ")) == [] and work.work(m("casent0000105", -24.0, 42.995, " DIANA")) == []
+    assert work.states.has_row("Madagascar", "DIANA") and not work.states.has_row("Madagascar", "Nosy Be")
     assert work.work(m("casent0000101", -15.0, 47.0, "Toliara", island="Nosy Be")) == []
-    # another country: no conversion; Toliara is no state of Mexico, so the stored text follows the coordinates as any unknown one does
-    other = work.work(row("casent0000102", "Mexico", 25.0, -108.0, adm1="Toliara"))
-    assert all(isinstance(x, pc.Not) or (pc.NOT_KNOWN in x.note and pc.SAME_PROVINCE not in x.note and pc.OTHER_PROVINCE not in x.note) for x in other), other
+    # another country: no conversion; Mexico has no states in this test, so a filled state there is left alone as before
+    assert work.work(row("casent0000102", "Mexico", 25.0, -108.0, adm1="Toliara")) == []
     assert work.kind(m("x", adm1="Toliara")) == "Madagascar: a province to convert to its region" and work.kind(m("x", adm1="Diana")) == "has a state (left as it is)"
     assert setup().work(m("casent0000103", -15.0, 47.0, "Antsiranana")) == []                      # no "convert" line in the mapping file: nothing
     # the provinces are left out of the test and of the states the shapes are compared with: 450 specimens of Toliara decide nothing

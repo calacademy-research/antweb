@@ -513,13 +513,13 @@ class States:
         self.same = collections.defaultdict(lambda: collections.defaultdict(list))  # country -> plain name -> every valid state so written
         self.points_to = collections.defaultdict(dict)           # country -> plain old name -> the valid state its row names
         self.given_up = collections.defaultdict(dict)            # country -> plain name -> a row that is not valid and names no valid state
-        self.rows = collections.defaultdict(set)                 # country -> every name that has an adm1 row, as written (valid or not)
+        self.rows = collections.defaultdict(set)                 # country -> the plain form of every name that has an adm1 row (valid or not)
         old = []
         for name, parent, is_valid, valid_name in rows:
             country = countries.resolve(parent)
             if country is None or not name:
                 continue
-            self.rows[country.name].add(name)
+            self.rows[country.name].add(plain(name))
             if str(is_valid) == "1":
                 self.valid[country.name].add(name)
             elif cc.clean(valid_name):
@@ -566,9 +566,12 @@ class States:
         return self.valid_of(country, name) or self.given_up.get(country, {}).get(plain(name))
 
     def has_row(self, country, name):
-        """True when AntWeb has an adm1 row of the country written exactly so (valid, an old name, or a unit given up).
-        A stored state without a row is not a unit AntWeb knows: a garbled accent, a misspelling, a town."""
-        return name in self.rows.get(country, ())
+        """True when AntWeb has an adm1 row of the country with this name (valid, an old name, or a unit given up),
+        compared as names are compared everywhere here (plain(): case, accents and spaces do not count). So "sava" and
+        "Sava " are Sava, a valid state from the label that is never overwritten (2026-11-22; review of #419: an
+        exact comparison made them unknown). A stored state without a row is not a unit AntWeb knows: a garbled
+        accent, a misspelling, a town."""
+        return plain(name) in self.rows.get(country, ())
 
     def twins(self, country, state):
         """Every valid state of the country that is the same name as this one (itself among them), in order."""
@@ -2039,7 +2042,7 @@ class Corrections:
         if island_state is not None:
             return out + [island_state]
         if not self.states.of(country):
-            return out + [Not("adm1", NO_STATES, country, country)]
+            return out if unknown else out + [Not("adm1", NO_STATES, country, country)]   # a filled state of a country without states: left alone, as before
         if point is None:
             return out + [Not("adm1", STAYS if converting else (NOT_KNOWN_STAYS if unknown else NO_COORDINATES), row.adm1 if unknown else "")]
         placed = self.locate(row.country if stated_country is not None else None, country, point[0], point[1], row.stated)
