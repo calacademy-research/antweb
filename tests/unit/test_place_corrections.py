@@ -312,9 +312,18 @@ def test_mapping_file_of_the_repository():
     # Argentina and Trinidad and Tobago from Natural Earth (geoBoundaries has no Entre Ríos, no Arima); Tobago is two shapes there
     assert [r[2] for r in rows if r[0] == "Trinidad and Tobago" and r[3] == "Tobago"] == ["Eastern Tobago", "Western Tobago"]
     # Namibia: Kavango told apart by its old constituencies; the file's Rundu Rural (before 2003) has no line
-    kavango = {s[3]: s[4] for s in rules.splits if s[0] == "Namibia"}
+    kavango = {s[3]: s[4] for s in rules.splits if s[0] == "Namibia" and s[1] == "Kavango"}
     assert kavango == {"Kahenge": "Kavango West", "Kapako": "Kavango West", "Mpungu": "Kavango West", "Mashare": "Kavango East", "Mukwe": "Kavango East",
                        "Ndiyona": "Kavango East", "Rundu Urban": "Kavango East"}
+    # 2026-11-25, after the first apply run: Caprivi west of the Kwando is Kavango East (2013); Kongola lies on both sides
+    # and has no line; no name line for Caprivi is left (a split shape is not one state)
+    caprivi = {s[3]: s[4] for s in rules.splits if s[0] == "Namibia" and s[1] == "Caprivi"}
+    assert caprivi == {"Arandis": "Kavango East", "Kabe": "Zambezi", "Katima Muliro Rural": "Zambezi", "Katima Muliro Urban": "Zambezi",
+                       "Linyandi": "Zambezi", "Sibinda": "Zambezi"} and not [n for n in rules.names if n[0] == "Namibia" and n[2] == "Caprivi"]
+    # Kiribati: the file's Phoenix Islands shape also holds Tarawa and Banaba (Gilbert Islands)
+    assert {s[3]: s[4] for s in rules.splits if s[0] == "Kiribati"} == {
+        "Kanton": "Phoenix Islands", "Banaba": "Gilbert Islands", "Betio": "Gilbert Islands", "Tarawa Ieta": "Gilbert Islands",
+        "Tarawa Teinainano": "Gilbert Islands"}
     # every county of Croatia's file has its Croatian name; no shape has two name lines at one level
     assert len({n[2] for n in rules.names if n[0] == "Croatia"}) == 21
     within = rules.within["Madagascar"]
@@ -356,7 +365,7 @@ def test_mapping_file_of_the_repository():
     # less the lines the place renames made unneeded (the state now has the shape's name): 25 of the first ISO pass
     # (20261120: the Swedish län ...), 15 of the second (20261120b), 28 of the English names (20261121), 1 of their second pass (20261121b: Qatar's Al Shamal); no shape twice;
     # none is a hard row as well
-    assert len(rules.names) == 324 and len({(c, l, pc.plain(x)) for c, l, x, _ in rules.names}) == 324 and all(l in pc.LEVELS + [pc.NE_LEVEL] and x and a for _, l, x, a in rules.names)
+    assert len(rules.names) == 323 and len({(c, l, pc.plain(x)) for c, l, x, _ in rules.names}) == 323 and all(l in pc.LEVELS + [pc.NE_LEVEL] and x and a for _, l, x, a in rules.names)
     assert ("Czech Republic", "ADM1", "Jiho\u010desk\u00fd kraj", "Jiho\u010desk\u00fd") in rules.names
     # the renames' lines point to the new names, and the old names do not come back (review of #401)
     assert ("Belgium", "ADM2", "Brussels", "R\u00e9gion de Bruxelles-Capitale") in rules.names
