@@ -2132,13 +2132,6 @@ def test_every_statement_is_a_single_select():
             assert name in str(e)
 
 
-if __name__ == "__main__":
-    tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
-    for name, fn in tests:
-        fn()
-    print(str(len(tests)) + " tests passed")
-
-
 def test_a_unit_given_up_is_still_converted():
     # 2026-11-25: the nations of the United Kingdom, Uganda's regions and Kenya's provinces stopped being valid states
     # (rows kept, not valid, no valid name). Their records must still be converted to the state of the coordinates:
@@ -2153,3 +2146,10 @@ def test_a_unit_given_up_is_still_converted():
                             pc.Rules(convert={"Uganda": ["Western", "Central"]}))
     assert shapes.convert["Uganda"] == {"Western"}                               # Central: no row in AntWeb, not converted
     assert shapes.wanted("Uganda") == ["Kabarole"]
+
+
+if __name__ == "__main__":
+    tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
+    for name, fn in tests:
+        fn()
+    print(str(len(tests)) + " tests passed")
