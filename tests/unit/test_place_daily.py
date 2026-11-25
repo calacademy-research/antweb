@@ -294,7 +294,7 @@ def test_apply_mode_dry_run_and_guards():
 
 def test_the_skip_file_names_countries():
     skip = pd.skipped_countries()
-    assert skip == {"United Kingdom", "Oman", "American Samoa", "Monaco", "French Guiana"}, skip
+    assert skip == {"Oman", "American Samoa", "Monaco", "French Guiana"}, skip
     # held for a day, released 2026-11-24: Fiji's province file is the statistics office's (pacificdata.org) and puts 22
     # known places right; where it stands against stored provinces, the stored ones disagree among themselves (the same
     # point filed under Ba and Naitasiri). Belize: two files agree; the one conflict is a peak 0.4 km from the line.

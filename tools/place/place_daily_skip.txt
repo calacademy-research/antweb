@@ -6,7 +6,9 @@
 # taken off this list: their levels were set right in adm1_shape_map.csv on 2026-11-19 and 20, the proposals of
 # 2026-11-25 are units of AntWeb's own level (Uganda's districts checked at seven known places), and since that day
 # no state is written outside AntWeb's own box of it.
-United Kingdom      # 130 proposals; a stored nation (Wales) can get a county across the border (Tintern Abbey: Gloucestershire); boxes of several counties are wrong
+# 2026-11-25: the United Kingdom was taken off too. A stored nation (Wales, Tintern Abbey) is a valid state and is
+# never overwritten (2026-11-22), and all 218 of its valid states were given a box from the boundary file that day
+# (geolocale.bounding_box_fixed; before, 14 boxes lay in New Zealand or the Philippines and many were one street wide).
 Oman
 American Samoa      # no mapping (ADM3)
 Monaco              # no mapping (ADM2)
