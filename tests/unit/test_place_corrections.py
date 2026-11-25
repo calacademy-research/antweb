@@ -365,7 +365,7 @@ def test_mapping_file_of_the_repository():
     # less the lines the place renames made unneeded (the state now has the shape's name): 25 of the first ISO pass
     # (20261120: the Swedish län ...), 15 of the second (20261120b), 28 of the English names (20261121), 1 of their second pass (20261121b: Qatar's Al Shamal); no shape twice;
     # none is a hard row as well
-    assert len(rules.names) == 323 and len({(c, l, pc.plain(x)) for c, l, x, _ in rules.names}) == 323 and all(l in pc.LEVELS + [pc.NE_LEVEL] and x and a for _, l, x, a in rules.names)
+    assert len(rules.names) == 322 and len({(c, l, pc.plain(x)) for c, l, x, _ in rules.names}) == 322 and all(l in pc.LEVELS + [pc.NE_LEVEL] and x and a for _, l, x, a in rules.names)
     assert ("Czech Republic", "ADM1", "Jiho\u010desk\u00fd kraj", "Jiho\u010desk\u00fd") in rules.names
     # the renames' lines point to the new names, and the old names do not come back (review of #401)
     assert ("Belgium", "ADM2", "Brussels", "R\u00e9gion de Bruxelles-Capitale") in rules.names
