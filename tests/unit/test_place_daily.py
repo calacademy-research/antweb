@@ -128,6 +128,27 @@ def test_only_safe_states_are_applied():
     assert why == {"flag": 1, "country": 1, "skip": 1, "invalid": 1, "gone": 1, "moved": 1, "changed": 1}, why
 
 
+def test_an_empty_state_near_a_border_is_written():
+    # Brian Fisher, 2026-11-25: coordinates decide. A blank state gets the state of its point although a border is
+    # within 1 km or within a stated error under 50 km; a filled state, a stated error of 50 km or more and a flag
+    # that cannot be read stay report rows.
+    row = lambda code, flag, stored="": {"specimen_code": code, "field": "adm1", "current_value": stored, "proposed_value": "Sava",
+                                          "country": "Madagascar", "other_state_flag": flag}
+    rows = [row("line", "within the allowed 1 km of Analanjirofo"), row("err10", "within the stated error (10 km) of Analanjirofo"),
+            row("err2", "within the stated error (2.5 km) of Analanjirofo"), row("err50", "within the stated error (50 km) of Analanjirofo"),
+            row("err1500", "within the stated error (1,500 km) of Analanjirofo"), row("odd", "within the stated error of Analanjirofo"),
+            row("filled", "within the allowed 1 km of Analanjirofo", "Toliara")]
+    with tempfile.TemporaryDirectory() as d:
+        read = pd.rows_of(corrections_file(d, rows), "2026-11-25", "report")
+    now = {r["specimen_code"]: ("Madagascar", r["current_value"]) for r in rows}
+    todo, why = pd.eligible(read, VALID, now, set())
+    assert [r["code"] for r in todo] == ["line", "err10", "err2"], todo
+    assert all(r["flag"] for r in todo)                                          # the flag stays with the written row
+    assert why == {"flag": 4}, why
+    assert pd.near_border_only("within the allowed 1 km of X") and not pd.near_border_only("") and not pd.near_border_only(None)
+    assert pd.near_border_only("within the stated error (49.9 km) of X") and not pd.near_border_only("something else")
+
+
 def test_a_valid_stored_state_is_never_overwritten():
     # Brian Fisher, 2026-11-22 (North Grimston): the label's state is valid and the point lies in another state: the
     # coordinates are in doubt, so the row stays a report row. An old unit (Toliara, a former province) and an empty
