@@ -336,6 +336,20 @@ jobs:
             grep -q "^OK (3 tests)" /tmp/out.txt
           '
 
+      - name: Java unit test of the upload report's garbled-text check (accents damaged before the upload, 2026-11-25)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/upload/GarbledText.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/upload/GarbledTextTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.GarbledTextTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (2 tests)" /tmp/out.txt
+          '
+
       - name: Java unit tests of the EXIF section on the image page (Latin-1 and UTF-8 text, binary fields, escaping)
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
