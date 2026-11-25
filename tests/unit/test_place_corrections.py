@@ -2137,3 +2137,19 @@ if __name__ == "__main__":
     for name, fn in tests:
         fn()
     print(str(len(tests)) + " tests passed")
+
+
+def test_a_unit_given_up_is_still_converted():
+    # 2026-11-25: the nations of the United Kingdom, Uganda's regions and Kenya's provinces stopped being valid states
+    # (rows kept, not valid, no valid name). Their records must still be converted to the state of the coordinates:
+    # the daily step never overwrites a valid stored state, so a coarser unit can only be written once it is not valid.
+    known = cc.Countries([cc.Country("Uganda", 1, "", 0, "")])
+    states = pc.States([("Kabarole", "Uganda", 1, ""), ("Western", "Uganda", 0, ""), ("Kabarole District", "Uganda", 0, "Kabarole")], known)
+    assert states.valid_of("Uganda", "Western") is None and states.unit_of("Uganda", "Western") == "Western"
+    assert states.unit_of("Uganda", "western") == "Western"                      # as the names are compared everywhere
+    assert states.unit_of("Uganda", "Kabarole District") == "Kabarole"           # an old name still means its valid state
+    assert states.unit_of("Uganda", "Nowhere") is None and "Western" not in states.of("Uganda")
+    shapes = pc.StateShapes(_made.get("store") or (setup() and _made["store"]), states, known, [], None,
+                            pc.Rules(convert={"Uganda": ["Western", "Central"]}))
+    assert shapes.convert["Uganda"] == {"Western"}                               # Central: no row in AntWeb, not converted
+    assert shapes.wanted("Uganda") == ["Kabarole"]
