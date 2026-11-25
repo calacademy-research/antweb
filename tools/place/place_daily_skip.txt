@@ -2,19 +2,12 @@
 # another level than AntWeb's states, so a proposal would be a coarser or finer unit (state_sets.py on antweb-prod,
 # 2026-11-19: few shapes against many valid states, or the reverse). Remove a line once the country's level is set
 # right in adm1_shape_map.csv and its report rows look right. One country per line, AntWeb's valid name.
-United Kingdom
-Slovenia
-Ireland
-Iceland
-Norway
+# 2026-11-25: Denmark, Guadeloupe, Iceland, Ireland, Martinique, Nepal, Norway, Poland, Slovenia, Thailand and Uganda were
+# taken off this list: their levels were set right in adm1_shape_map.csv on 2026-11-19 and 20, the proposals of
+# 2026-11-25 are units of AntWeb's own level (Uganda's districts checked at seven known places), and since that day
+# no state is written outside AntWeb's own box of it.
+United Kingdom      # 130 proposals; a stored nation (Wales) can get a county across the border (Tintern Abbey: Gloucestershire); boxes of several counties are wrong
 Oman
-Nepal
-Denmark
-Uganda
-Poland
-Thailand
-American Samoa
-Monaco
-French Guiana
-Guadeloupe          # arrondissements made the states 2026-11-19; the shapes are communes
-Martinique          # the same
+American Samoa      # no mapping (ADM3)
+Monaco              # no mapping (ADM2)
+French Guiana       # the boundary file has the two arrondissements of before 2022; Saint-Georges (Régina, Camopi, Ouanary, Saint-Georges) is drawn inside Cayenne. Its specimens were placed by commune on 2026-11-25

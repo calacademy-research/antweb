@@ -1297,7 +1297,7 @@ Stop it: `rm /etc/cron.d/antweb-place-daily`.
 **Step 2, apply mode (built 2026-11-19; switched on only with Brian's yes, after the week of reports).** `--mode apply`
 loads the report rows as before, then writes the safe state proposals to `specimen.adm1` (the uploaded value goes to
 `adm1_verbatim`): states only (never a country), no other state within the stated error, the country not in
-`tools/place/place_daily_skip.txt` (shapes at another level: the United Kingdom, Slovenia, Uganda, ...), the proposed
+`tools/place/place_daily_skip.txt` (the United Kingdom, French Guiana and three more: see the file), the proposed
 name a valid state, the specimen unchanged since the report, the stored state empty or not a valid state, and the
 point inside AntWeb's own box of the proposed state (2026-11-25: the first run wrote 81 specimens wrongly from an old
 and a mislabeled boundary file; they were corrected the next morning from `place_fix_20261125`). At most 5,000 a run (more: nothing applied, the run says
