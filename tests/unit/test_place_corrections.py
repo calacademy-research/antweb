@@ -369,6 +369,9 @@ def test_mapping_file_of_the_repository():
     assert ("Czech Republic", "ADM1", "Jiho\u010desk\u00fd kraj", "Jiho\u010desk\u00fd") in rules.names
     # the renames' lines point to the new names, and the old names do not come back (review of #401)
     assert ("Belgium", "ADM2", "Brussels", "R\u00e9gion de Bruxelles-Capitale") in rules.names
+    # 2026-11-25: Sara Buri became an old name of Saraburi (review of #416)
+    assert ("Thailand", "ADM1", "Saraburi Province", "Saraburi") in rules.names
+    assert not [n for n in rules.names if n[3] == "Sara Buri"]
     assert ("Greece", "ADM2", "Attikis", "Attica") in rules.names and ("Eritrea", "ADM1", "Maekel Region", "Maekel") in rules.names
     gone = {("Spain", "ADM1", "Canarias", "Canary Islands"), ("United Arab Emirates", "ADM1", "Ras al-Khaimah", "Ra's al Khaymah"),
             ("Greece", "ADM2", "Attikis", "Attik\u00ed")}
