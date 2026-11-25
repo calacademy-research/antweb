@@ -510,6 +510,7 @@ class States:
         self.old = collections.defaultdict(lambda: collections.defaultdict(list))   # country -> valid state -> its old names
         self.same = collections.defaultdict(lambda: collections.defaultdict(list))  # country -> plain name -> every valid state so written
         self.points_to = collections.defaultdict(dict)           # country -> plain old name -> the valid state its row names
+        self.given_up = collections.defaultdict(dict)            # country -> plain name -> a row that is not valid and names no valid state
         old = []
         for name, parent, is_valid, valid_name in rows:
             country = countries.resolve(parent)
@@ -519,6 +520,8 @@ class States:
                 self.valid[country.name].add(name)
             elif cc.clean(valid_name):
                 old.append((country.name, name, cc.clean(valid_name)))
+            else:                                                # not valid and no valid name: a unit given up (Uganda's Western)
+                self.given_up[country.name].setdefault(plain(name), name)
         # AntWeb has pairs of valid states that are one name (Murang'a and Murang'A, Taita Taveta and Taita/Taveta): twins.
         # They count as one state wherever names are compared; the first in order stands for both, always the same one
         # (version 7 took whichever came first out of a set, another one from run to run).
@@ -550,6 +553,13 @@ class States:
         """The valid state a stored name means: itself, or the valid state an old name points to. None otherwise.
         Of twins the one that stands for both."""
         return self.by_plain.get(country, {}).get(plain(name))
+
+    def unit_of(self, country, name):
+        """The unit a name of a convert line means: the valid state (valid_of), or the row AntWeb keeps as not valid
+        with no valid name. The coarser units of a convert line are given up: once they stop being valid states
+        (2026-11-25: the nations of the United Kingdom, Uganda's regions, Kenya's provinces) their records must still
+        be converted, and only then can the daily step write them (it never overwrites a valid stored state)."""
+        return self.valid_of(country, name) or self.given_up.get(country, {}).get(plain(name))
 
     def twins(self, country, state):
         """Every valid state of the country that is the same name as this one (itself among them), in order."""
@@ -1313,8 +1323,8 @@ class StateShapes:
         for country, units in self.rules.convert.items():
             c = countries.resolve(country)
             if c is not None:
-                self.convert[c.name] = {u for u in (states.valid_of(c.name, unit) for unit in units) if u}
-                self.within[c.name] = {state: states.valid_of(c.name, unit) for state, unit in self.rules.within.get(country, {}).items()}
+                self.convert[c.name] = {u for u in (states.unit_of(c.name, unit) for unit in units) if u}
+                self.within[c.name] = {state: states.unit_of(c.name, unit) for state, unit in self.rules.within.get(country, {}).items()}
         self.levels = {}                                         # valid country -> the level of its states (a "level" line)
         self.level_warned = set()                                # countries whose level line names a level their source lacks (warned)
         for country, level in self.rules.levels.items():
@@ -1990,7 +2000,7 @@ class Corrections:
         units = self.shapes.convert.get(country)
         if not units or not row.adm1 or row.island:
             return None
-        stored = self.states.valid_of(country, row.adm1)
+        stored = self.states.unit_of(country, row.adm1)
         return stored if stored in units else None
 
     def _work(self, row):
