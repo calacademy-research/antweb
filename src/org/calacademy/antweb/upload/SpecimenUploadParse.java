@@ -53,6 +53,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
     static int MAXLENGTH = 80;
 
+    /** The garbled values (GarbledText) already said in this upload's report, "column: value"; no more than GARBLED_SHOWN. */
+    private final HashSet<String> garbledSeen = new HashSet<>();
+    static final int GARBLED_SHOWN = 40;
+
     /**
      * Brian Fisher, 2026-11-03: only a morphospecies or indet (or a line without species) moves with a synonym genus to
      * the valid genus, as GenusSynonymRule decides for the nightly name update; a species name stays.
@@ -165,6 +169,12 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                     if (colList.get(colIndex) != null) {
                         String col = colList.get(colIndex);
                         col = col.toLowerCase();
+
+                        // 2026-11-25: accents damaged before the upload ("Li" + a square-root sign + "ge"): said in the report,
+                        // uploaded as sent. The first GARBLED_SHOWN distinct values only: a whole damaged file would fill the report.
+                        if (garbledSeen.size() < GARBLED_SHOWN && GarbledText.is(element) && garbledSeen.add(col + ": " + element)) {
+                            getMessageMgr().addToMessages(MessageMgr.garbledText, Html.esc(col + ": " + element));
+                        }
  
                         /* This code block handles columns and headers as listed and defined in AntwebUpload */
                     if (taxonomyHeaders.contains(col)) {
