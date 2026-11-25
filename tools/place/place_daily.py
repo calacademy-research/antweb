@@ -40,6 +40,10 @@ only when all of these hold (eligible(), unit-tested), otherwise it stays a repo
   - the stored state is empty or not a valid state of the country (an old unit: Kenya's Rift Valley). A stored state
     that is valid is never overwritten: it came from the label, so the coordinates are in doubt (Brian Fisher,
     2026-11-22) and the row stays in the report for the coordinates to be corrected.
+  - the point lies inside AntWeb's own box of the proposed state, widened by 0.2 degree as the upload report does
+    (2026-11-25, after the first run wrote 81 specimens wrongly: a boundary file can be older than a change of
+    borders, or name a shape wrongly, and AntWeb's box is the one check that does not come from that file). A state
+    with no box is not guarded.
 At most MAX_APPLY changes a run (more: nothing is applied, the run logs it, someone looks; --max-apply N raises it
 for one run by hand, for the first run after the report week). Once a day: a second apply
 run the same day applies nothing. Before writing, the specimens' adm1 and adm1_verbatim go to the backup table
@@ -85,6 +89,36 @@ def quote(value):
     return "'" + str(value).replace("\\", "\\\\").replace("'", "''").replace("\0", "") + "'"
 
 
+def number(text):
+    """A coordinate as a float, or None."""
+    try:
+        return float(text)
+    except (TypeError, ValueError):
+        return None
+
+
+BOX_GRACE = 0.2   # degrees, as LocalityOverview.isWithinBounds (the upload report's and the daily box check's rule)
+
+
+def box_of(text):
+    """(left, bottom, right, top) of a stored bounding box "left, bottom, right, top", or None for no box (empty,
+    "null", fewer than four numbers, or all zero: LocalityOverview reads those as no box)."""
+    parts = re.findall(r"-?\d+(?:\.\d+)?", text or "")
+    if len(parts) < 4:
+        return None
+    box = tuple(float(x) for x in parts[:4])
+    return None if not any(box) else box
+
+
+def within_box(box, lat, lon, grace=BOX_GRACE):
+    """LocalityOverview.isWithinBounds: inside the box widened by grace; a box whose left is east of its right crosses
+    the 180 meridian."""
+    left, bottom, right, top = box[0] - grace, box[1] - grace, box[2] + grace, box[3] + grace
+    if not bottom <= lat <= top:
+        return False
+    return left <= lon <= right if left <= right else (lon >= left or lon <= right)
+
+
 def rows_of(corrections_csv, run_date, mode):
     """The rows for place_update from place_corrections.py's corrections.csv, cut to the columns' widths."""
     out = []
@@ -95,7 +129,8 @@ def rows_of(corrections_csv, run_date, mode):
             row = {"run_date": run_date, "mode": mode, "code": r["specimen_code"], "upload_group": r.get("upload_group") or None,
                    "field": r.get("field") or "", "stored_value": r.get("current_value") or None, "proposed": r["proposed_value"],
                    "basis": r.get("basis") or None, "flag": r.get("other_state_flag") or None, "note": r.get("note") or None,
-                   "country": r.get("country") or ""}   # not a column of place_update: for the apply mode
+                   "country": r.get("country") or "",   # not a column of place_update: for the apply mode
+                   "lat": number(r.get("latitude")), "lon": number(r.get("longitude"))}   # for the box guard of the apply mode
             if len(row["code"]) > WIDTH["code"]:   # a cut code would name another specimen: skipped, never cut
                 continue
             for k, w in WIDTH.items():
@@ -137,13 +172,16 @@ LEFT_OUT = {
     "moved": "the specimen's country is not the proposal's",
     "changed": "the specimen's state changed since the report",
     "valid": "the stored state is a valid state: the coordinates are in doubt, not the state",
+    "box": "the point is outside AntWeb's own box of the proposed state: the boundary file or the box is wrong",
 }
 
 
-def eligible(rows, valid_states, current, skip):
+def eligible(rows, valid_states, current, skip, boxes=None):
     """The report rows the apply mode writes, and why the others are left out (Counter of LEFT_OUT keys).
     valid_states: {(country, state)} of the valid states now; current: {code: (country, adm1)} as stored now
-    ("" for none); skip: countries left out."""
+    ("" for none); skip: countries left out; boxes: {(country, state): (left, bottom, right, top)} of the states that
+    have a box in AntWeb (the fixed one where set)."""
+    boxes = boxes or {}
     out, why = [], collections.Counter()
     for r in rows:
         stored_now = current.get(r["code"])
@@ -166,6 +204,12 @@ def eligible(rows, valid_states, current, skip):
             # a state that is valid as written came from the label; when the point lies elsewhere the coordinates
             # are wrong and get corrected at the source. Only an empty state or an old unit follows the point.
             why["valid"] += 1
+        elif (r["country"], r["proposed"]) in boxes and r.get("lat") is not None and r.get("lon") is not None \
+                and not within_box(boxes[(r["country"], r["proposed"])], r["lat"], r["lon"]):
+            # 2026-11-25: the first apply run wrote Tarawa as Phoenix Islands (a mislabeled shape of the boundary file)
+            # and West Caprivi as Zambezi (a file older than 2013); AntWeb's boxes were right in both, and the daily box
+            # check said so a day late. A state with no box is not guarded.
+            why["box"] += 1
         else:
             out.append(r)
     return out, why
@@ -248,6 +292,18 @@ def read_state(project, container, codes):
                             + ",".join(quote(c) for c in codes[i:i + BATCH]) + ")", container):
             current[cc.unhex(r[0])] = (cc.unhex(r[1]), cc.unhex(r[2]))
     return valid, current
+
+
+def read_boxes(project, container):
+    """{(country, state): (left, bottom, right, top)} of the valid states that have a box: the fixed box where one is
+    set, else the box (LocalityOverview.useBoundingBox)."""
+    out = {}
+    for r in cc.run_sql(project, "select hex(parent), hex(name), hex(ifnull(nullif(bounding_box_fixed, ''), ifnull(bounding_box, '')))"
+                        " from geolocale where georank = 'adm1' and is_valid = 1 and parent is not null", container):
+        box = box_of(cc.unhex(r[2]))
+        if box is not None:
+            out[(cc.unhex(r[0]), cc.unhex(r[1]))] = box
+    return out
 
 
 def applied_today(project, container, run_date):
@@ -371,9 +427,11 @@ def main(argv=None, corrections=None, reader=None, counter=None):
             if reader is None:
                 valid, current = read_state(project, args.container, [r["code"] for r in rows])
                 done = applied_today(project, args.container, run_date)
-            else:
-                valid, current, done = reader(project, args.container, [r["code"] for r in rows])
-            todo, why = eligible(rows, valid, current, skipped_countries())
+                boxes = read_boxes(project, args.container)
+            else:   # the tests' reader: (valid, current, done) or (valid, current, done, boxes)
+                valid, current, done, *rest = reader(project, args.container, [r["code"] for r in rows])
+                boxes = rest[0] if rest else {}
+            todo, why = eligible(rows, valid, current, skipped_countries(), boxes)
             left = ", ".join(LEFT_OUT[k] + " " + cc.n(v) for k, v in why.most_common())
             if done:
                 line += "; apply: none, today's apply run already wrote " + cc.n(done)

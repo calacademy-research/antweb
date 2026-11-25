@@ -363,7 +363,17 @@ Philippines,ADM2,"NCR, Fourth District",National Capital Region
 # constituencies Rundu Rural and Kahenge, read 2026-11-19. The file's Rundu Rural is the constituency before it
 # was divided in 2003 (now Rundu Rural in Kavango East and Ncuncuni in Kavango West): no line, so a point in it
 # gets no proposal.
-name,Namibia,ADM1,Caprivi,Zambezi,renamed Zambezi in 2013
+# 2026-11-25: the file's Caprivi is the region before 2013 and reaches west to 21 E. In 2013 the strip west of the Kwando
+# River went to Kavango East (Bwabwata: West Caprivi, Mahango, Popa Falls, Bagani). The first apply run wrote 51
+# specimens there as Zambezi (corrected the next morning; AntWeb's box of Zambezi flagged them). So Caprivi is told
+# apart by the file's constituencies: the unit it names Arandis (21.0 to 22.5 E) is Kavango East; Kongola (22.5 to
+# 24.2 E) lies on both sides of the Kwando and has no line, so a point in it gets no proposal; the others are Zambezi.
+split,Namibia,Caprivi,ADM2,Arandis,Kavango East,"2013: the strip west of the Kwando River went from Caprivi to Kavango East"
+split,Namibia,Caprivi,ADM2,Kabe,Zambezi,Caprivi was renamed Zambezi in 2013
+split,Namibia,Caprivi,ADM2,Katima Muliro Rural,Zambezi,renamed Zambezi in 2013
+split,Namibia,Caprivi,ADM2,Katima Muliro Urban,Zambezi,renamed Zambezi in 2013
+split,Namibia,Caprivi,ADM2,Linyandi,Zambezi,renamed Zambezi in 2013
+split,Namibia,Caprivi,ADM2,Sibinda,Zambezi,renamed Zambezi in 2013
 split,Namibia,Kavango,ADM2,Kahenge,Kavango West,"2013: Kavango divided into Kavango East and Kavango West; Kahenge divided into Tondoro, Musese and Mankumpi"
 split,Namibia,Kavango,ADM2,Kapako,Kavango West,2013
 split,Namibia,Kavango,ADM2,Mpungu,Kavango West,2013
@@ -566,3 +576,12 @@ name,Slovenia,ADM2,Voatanj,Šoštanj,the letters č/š/ž spoilt in the file
 # and Slovenia at ADM1 (two cohesion regions, the municipalities' names spoilt at ADM2). Their levels:
 level,Uganda,ADM3
 level,Slovenia,ADM2
+# Kiribati (2026-11-25): the file's shape Phoenix Islands also holds Tarawa (Betio, Tarawa Ieta, Tarawa Teinainano) and
+# Banaba, which are Gilbert Islands, 1,700 km west of the Phoenix group. The first apply run wrote 18 specimens from
+# Tarawa and Banaba as Phoenix Islands (corrected the next morning). The shape is told apart by the file's islands
+# (ADM2); of the Phoenix group it has Kanton only.
+split,Kiribati,Phoenix Islands,ADM2,Kanton,Phoenix Islands,the one island of the Phoenix group in the file
+split,Kiribati,Phoenix Islands,ADM2,Banaba,Gilbert Islands,Banaba is administered with the Gilbert Islands
+split,Kiribati,Phoenix Islands,ADM2,Betio,Gilbert Islands,Tarawa
+split,Kiribati,Phoenix Islands,ADM2,Tarawa Ieta,Gilbert Islands,Tarawa
+split,Kiribati,Phoenix Islands,ADM2,Tarawa Teinainano,Gilbert Islands,Tarawa

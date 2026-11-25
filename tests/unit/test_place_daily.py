@@ -143,6 +143,36 @@ def test_a_valid_stored_state_is_never_overwritten():
     assert "coordinates are in doubt" in pd.LEFT_OUT["valid"]
 
 
+def test_a_point_outside_antwebs_box_of_the_proposed_state_is_not_written():
+    # 2026-11-25: the first apply run wrote Tarawa (173.0 E) as Phoenix Islands and West Caprivi (21.7 E) as Zambezi;
+    # AntWeb's boxes of both states were right. Canton Island and Sangwali are inside their boxes and are written;
+    # a state with no box is not guarded.
+    rows = [{"specimen_code": "tarawa", "field": "adm1", "current_value": "", "proposed_value": "Phoenix Islands", "country": "Kiribati",
+             "latitude": "1.33", "longitude": "172.98"},
+            {"specimen_code": "canton", "field": "adm1", "current_value": "", "proposed_value": "Phoenix Islands", "country": "Kiribati",
+             "latitude": "-2.81", "longitude": "-171.67"},
+            {"specimen_code": "mahango", "field": "adm1", "current_value": "", "proposed_value": "Zambezi", "country": "Namibia",
+             "latitude": "-18.2", "longitude": "21.7"},
+            {"specimen_code": "sangwali", "field": "adm1", "current_value": "", "proposed_value": "Zambezi", "country": "Namibia",
+             "latitude": "-18.2", "longitude": "23.6"},
+            {"specimen_code": "nobox", "field": "adm1", "current_value": "", "proposed_value": "Erongo", "country": "Namibia",
+             "latitude": "-22.0", "longitude": "15.0"},
+            {"specimen_code": "nopoint", "field": "adm1", "current_value": "", "proposed_value": "Zambezi", "country": "Namibia"}]
+    with tempfile.TemporaryDirectory() as d:
+        rows = pd.rows_of(corrections_file(d, rows), "2026-11-25", "report")
+    valid = {("Kiribati", "Phoenix Islands"), ("Namibia", "Zambezi"), ("Namibia", "Erongo")}
+    now = {r["code"]: (r["country"], "") for r in rows}
+    boxes = {("Kiribati", "Phoenix Islands"): pd.box_of("-174.6, -4.7, -170.6, -2.7"), ("Namibia", "Zambezi"): pd.box_of("(23.3, -18.5, 25.3, -17.4)")}
+    todo, why = pd.eligible(rows, valid, now, set(), boxes)
+    assert [r["code"] for r in todo] == ["canton", "sangwali", "nobox", "nopoint"] and why == {"box": 2}, (todo, why)
+    assert pd.eligible(rows, valid, now, set())[1] == {}                       # without boxes, as before
+    # the box as AntWeb reads it: four numbers, 0.2 degree of grace, across the 180 meridian when left is east of right
+    assert pd.box_of("") is None and pd.box_of("null") is None and pd.box_of("0, 0, 0, 0") is None and pd.box_of("1, 2, 3") is None
+    assert pd.within_box((10, 10, 20, 20), 20.19, 9.81) and not pd.within_box((10, 10, 20, 20), 20.21, 15)
+    fiji = (177.0, -19.2, -178.2, -16.1)
+    assert pd.within_box(fiji, -17.0, 179.9) and pd.within_box(fiji, -17.0, -179.5) and not pd.within_box(fiji, -17.0, 170.0)
+
+
 def test_the_apply_sql_backs_up_first_and_writes_only_unchanged_states():
     with tempfile.TemporaryDirectory() as d:
         rows = pd.rows_of(corrections_file(d, APPLY[:2]), "2026-11-23", "report")
