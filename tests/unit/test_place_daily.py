@@ -107,7 +107,7 @@ APPLY = [
     {"specimen_code": "ok1", "field": "adm1", "current_value": "Toliara", "proposed_value": "Menabe", "country": "Madagascar", "upload_group": "CAS"},
     {"specimen_code": "ok2", "field": "adm1", "current_value": "", "proposed_value": "Sava", "country": "Madagascar", "upload_group": "CAS"},
     {"specimen_code": "near", "field": "adm1", "current_value": "", "proposed_value": "Sava", "country": "Madagascar",
-     "other_state_flag": "within the stated error of Analanjirofo"},
+     "other_state_flag": "within the stated error (60 km) of Analanjirofo"},
     {"specimen_code": "ctry", "field": "country", "current_value": "", "proposed_value": "Kenya", "country": "Kenya"},
     {"specimen_code": "uk", "field": "adm1", "current_value": "", "proposed_value": "England", "country": "United Kingdom"},
     {"specimen_code": "bad", "field": "adm1", "current_value": "", "proposed_value": "Atlantis", "country": "Madagascar"},
@@ -130,23 +130,27 @@ def test_only_safe_states_are_applied():
 
 def test_an_empty_state_near_a_border_is_written():
     # Brian Fisher, 2026-11-25: coordinates decide. A blank state gets the state of its point although a border is
-    # within 1 km or within a stated error under 50 km; a filled state, a stated error of 50 km or more and a flag
-    # that cannot be read stay report rows.
-    row = lambda code, flag, stored="": {"specimen_code": code, "field": "adm1", "current_value": stored, "proposed_value": "Sava",
-                                          "country": "Madagascar", "other_state_flag": flag}
-    rows = [row("line", "within the allowed 1 km of Analanjirofo"), row("err10", "within the stated error (10 km) of Analanjirofo"),
-            row("err2", "within the stated error (2.5 km) of Analanjirofo"), row("err50", "within the stated error (50 km) of Analanjirofo"),
-            row("err1500", "within the stated error (1,500 km) of Analanjirofo"), row("odd", "within the stated error of Analanjirofo"),
-            row("filled", "within the allowed 1 km of Analanjirofo", "Toliara")]
+    # within 1 km or within a stated error under 50 km; a filled state, a stated error of 50 km or more, an allowed
+    # distance above 1 km and a flag that cannot be read stay report rows. The flags are built by the function that
+    # writes them (place_corrections.border_flag), so a change of wording there fails here (review of #419).
+    flag = place_corrections.border_flag
+    row = lambda code, text, stored="": {"specimen_code": code, "field": "adm1", "current_value": stored, "proposed_value": "Sava",
+                                          "country": "Madagascar", "other_state_flag": text}
+    rows = [row("line", flag(1, 1, "Analanjirofo")), row("err10", flag(10, 1, "Analanjirofo")), row("err2", flag(2.5, 1, "Analanjirofo")),
+            row("err50", flag(50, 1, "Analanjirofo")), row("err1500", flag(1500, 1, "Analanjirofo")), row("wide", flag(5, 5, "Analanjirofo")),
+            row("odd", "within the stated error of Analanjirofo"), row("filled", flag(1, 1, "Analanjirofo"), "Toliara")]
+    assert rows[0]["other_state_flag"] == "within the allowed 1 km of Analanjirofo" and rows[1]["other_state_flag"] == "within the stated error (10 km) of Analanjirofo"
     with tempfile.TemporaryDirectory() as d:
         read = pd.rows_of(corrections_file(d, rows), "2026-11-25", "report")
     now = {r["specimen_code"]: ("Madagascar", r["current_value"]) for r in rows}
     todo, why = pd.eligible(read, VALID, now, set())
     assert [r["code"] for r in todo] == ["line", "err10", "err2"], todo
     assert all(r["flag"] for r in todo)                                          # the flag stays with the written row
-    assert why == {"flag": 4}, why
-    assert pd.near_border_only("within the allowed 1 km of X") and not pd.near_border_only("") and not pd.near_border_only(None)
-    assert pd.near_border_only("within the stated error (49.9 km) of X") and not pd.near_border_only("something else")
+    assert why == {"flag": 4, "flagunread": 1}, why                               # err50, err1500, wide, filled; odd
+    doubt = pd.border_doubt
+    assert doubt(flag(1, 1, "X")) == "near" and doubt(flag(5, 5, "X")) == "far" and doubt(flag(40, 1, "X")) == "near"
+    assert doubt(flag(50, 1, "X")) == "far" and doubt(flag(1500, 1, "X")) == "far"
+    assert doubt("") == doubt(None) == doubt("something else") == doubt("within the stated error of X") == "unread"
 
 
 def test_a_valid_stored_state_is_never_overwritten():

@@ -1294,9 +1294,15 @@ def test_madagascar_from_the_provinces_to_the_regions():
     assert work.work(m("casent0000096", -24.0, 42.995)) == [pc.Proposal("adm1", "", "Atsimo-Andrefana", water, "Madagascar", "", "", "", coast)]
     # a missing state gets the region; a record that has a region, another state, or its island country, is left as it is
     assert work.work(m("casent0000098", -15.0, 47.0)) == [pc.Proposal("adm1", "", "Diana", inside, "Madagascar")]
-    assert work.work(m("casent0000099", -15.0, 47.0, "Diana")) == [] and work.work(m("casent0000100", -15.0, 47.0, "Nosy Be")) == []
+    assert work.work(m("casent0000099", -15.0, 47.0, "Diana")) == []
+    # a stored state that is no unit AntWeb knows follows the coordinates like an empty one (Brian Fisher, 2026-11-25); without coordinates it stays
+    [unknown] = work.work(m("casent0000100", -15.0, 47.0, "Nosy Be"))
+    assert (unknown.field, unknown.current) == ("adm1", "Nosy Be") and unknown.proposed and pc.NOT_KNOWN in unknown.note, unknown
+    assert work.work(m("casent0000101", "", "", "Nosy Be")) == [pc.Not("adm1", pc.NOT_KNOWN_STAYS, "Nosy Be")]
     assert work.work(m("casent0000101", -15.0, 47.0, "Toliara", island="Nosy Be")) == []
-    assert work.work(row("casent0000102", "Mexico", 25.0, -108.0, adm1="Toliara")) == []           # another country: no conversion
+    # another country: no conversion; Toliara is no state of Mexico, so the stored text follows the coordinates as any unknown one does
+    other = work.work(row("casent0000102", "Mexico", 25.0, -108.0, adm1="Toliara"))
+    assert all(isinstance(x, pc.Not) or (pc.NOT_KNOWN in x.note and pc.SAME_PROVINCE not in x.note and pc.OTHER_PROVINCE not in x.note) for x in other), other
     assert work.kind(m("x", adm1="Toliara")) == "Madagascar: a province to convert to its region" and work.kind(m("x", adm1="Diana")) == "has a state (left as it is)"
     assert setup().work(m("casent0000103", -15.0, 47.0, "Antsiranana")) == []                      # no "convert" line in the mapping file: nothing
     # the provinces are left out of the test and of the states the shapes are compared with: 450 specimens of Toliara decide nothing
@@ -1400,7 +1406,8 @@ def test_madagascar_by_region():
                      ["Atsimo-Andrefana", "29", "21", "Toliara", "26", "0", "3", "0"], ["Diana", "22", "0", "Antsiranana", "10", "6", "4", "2"]], cells
     # the two counts are the same because both ask the one function: for every record, a proposal exactly where the table places it
     proposed = collections.Counter(p.proposed for _, p in lists.proposals if p.field == "adm1")
-    assert proposed == {"Analamanga": 4, "Anosy": 2, "Atsimo-Andrefana": 29, "Diana": 13}           # Diana: all but the 6 that have the region and the 3 left as they are
+    assert proposed == {"Analamanga": 4, "Anosy": 2, "Atsimo-Andrefana": 29, "Diana": 14}, proposed  # Diana: all but the 6 that have the region and the 2 left as they are;
+    #                                           # the record whose stored state is a name AntWeb does not know follows its coordinates (2026-11-25)
     assert collections.Counter(n.reason for _, n in lists.nots) == {pc.OUTSIDE: 11, pc.NO_COORDINATES: 10}, lists.nots       # 9 with none, 1 with 0, 0
     for event, locality, adm1, island, lat, lon, stated, count, first in MDG_RECORDS:
         if lat not in ("", "NULL") and cc.usable(float(lat), float(lon)):
@@ -2106,7 +2113,9 @@ def test_every_statement_is_a_single_select():
             assert word not in cc.re.findall(r"[a-z_]+", bare), (word, sql)
     # the records with a gap, of one group; a name AntWeb does not know is compared exactly, as hex
     sql = pc.rows_sql(columns, 1, ["Africa"])
-    assert " and s.access_group = 1 and (s.adm1 is null or s.adm1 = '' or s.country is null or s.country = '' or hex(s.country) in ('416672696361'))" in sql
+    # ... and a stored state that no adm1 row of the country is written as (2026-11-25: the coordinates decide)
+    assert (" and s.access_group = 1 and (s.adm1 is null or s.adm1 = '' or s.country is null or s.country = '' or hex(s.country) in ('416672696361')"
+            " or (s.adm1 is not null and s.adm1 <> '' and not exists (select 1 from geolocale g where g.georank = 'adm1' and g.parent = s.country and g.name = s.adm1)))") in sql
     assert sql.endswith("order by s.country, s.code") and "hex(ifnull(s.collectioncode, ''))" in sql and "ifnull(round(s.decimal_latitude, 5), '')" in sql
     # a table without a column gives an empty text for it
     assert "collectioncode" not in pc.rows_sql({"code", "country", "adm1"}) and "access_group = " not in pc.rows_sql(columns)

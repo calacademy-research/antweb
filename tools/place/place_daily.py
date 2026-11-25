@@ -166,27 +166,33 @@ def skipped_countries(path=None):
 
 
 NEAR_BORDER_KM = 50   # a stated error of this many km or more says too little about the state to write it
+ALLOWED_KM = 1        # the tolerance of place_corrections.py: "within the allowed 1 km of <state>"
+
+
+def border_doubt(flag):
+    """What a flag says of a point that lies inside the proposed state (the two forms place_corrections.border_flag
+    writes): "near" for "within the allowed N km of <state>" with N up to ALLOWED_KM and for "within the stated error
+    (N km) of <state>" with N under NEAR_BORDER_KM; "far" for a larger distance; "unread" for any other text."""
+    found = re.match(r"within the (allowed|stated error) \(?([0-9][0-9.,]*) km\)? of .", flag or "")
+    if not found:
+        return "unread"
+    try:
+        km = float(found.group(2).replace(",", ""))
+    except ValueError:
+        return "unread"
+    if found.group(1) == "allowed":
+        return "near" if km <= ALLOWED_KM else "far"
+    return "near" if km < NEAR_BORDER_KM else "far"
 
 
 def near_border_only(flag):
-    """True when the flag is the border doubt of a point that lies inside the proposed state and the doubt is small:
-    "within the allowed 1 km of <state>", or "within the stated error (N km) of <state>" with N under NEAR_BORDER_KM.
-    Any other flag, and one whose distance cannot be read, is False."""
-    flag = flag or ""
-    if flag.startswith("within the allowed "):
-        return True
-    found = re.match(r"within the stated error \(([0-9][0-9.,]*) km\) of ", flag)
-    if not found:
-        return False
-    try:
-        return float(found.group(1).replace(",", "")) < NEAR_BORDER_KM
-    except ValueError:
-        return False
+    return border_doubt(flag) == "near"
 
 
 LEFT_OUT = {
     "country": "a country proposal (for a person)",
     "flag": "another state within the stated error (the state is filled, or the stated error is " + str(NEAR_BORDER_KM) + " km or more)",
+    "flagunread": "a flag the daily step cannot read (its wording changed?): for a person",
     "skip": "country left out (its shapes are at another level)",
     "invalid": "the proposed state is not a valid state of the country",
     "gone": "the specimen is gone",
@@ -209,6 +215,8 @@ def eligible(rows, valid_states, current, skip, boxes=None):
         stored_now = current.get(r["code"])
         if r["field"] != "adm1":
             why["country"] += 1
+        elif r.get("flag") and border_doubt(r["flag"]) == "unread":
+            why["flagunread"] += 1
         elif r.get("flag") and not (near_border_only(r["flag"]) and not (r["stored_value"] or "")):
             # Brian Fisher, 2026-11-25: an empty state gets the state its point lies in even when a border is within
             # 1 km or within a stated error under 50 km (1,050 specimens of 198 field sites on a ridge or river that
