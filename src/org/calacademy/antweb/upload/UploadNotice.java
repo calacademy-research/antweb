@@ -238,10 +238,10 @@ public class UploadNotice {
         // Places (Brian Fisher, 2026-11-27: the upload tells the curator, instead of an email by hand). Said with what
         // AntWeb does about it, so the curator knows which value AntWeb keeps.
         if (f.unknownAdm1 > 0) parts.add(plural(f.unknownAdm1, "specimen has", "specimens have")
-            + " an adm1 AntWeb does not know (with coordinates, AntWeb sets it from them and keeps your text)");
+            + " an adm1 AntWeb does not know (where there are coordinates, AntWeb sets it from them and keeps your text)");
         if (f.outsidePlace > 0) parts.add(plural(f.outsidePlace, "specimen has", "specimens have")
             + (f.outsidePlace == 1 ? " coordinates outside its country or adm1" : " coordinates outside their country or adm1"));
-        if (f.garbledValues > 0) parts.add(plural(f.garbledValues, "value has", "values have")
+        if (f.garbledValues > 0) parts.add(plural(f.garbledValues, "different value has", "different values have")
             + " accented letters damaged before the upload (save your file as UTF-8 with the letters restored)");
         if (parts.isEmpty()) return "Nothing in the report needs your attention.";
         String list = parts.size() == 1 ? parts.get(0)

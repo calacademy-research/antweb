@@ -260,17 +260,17 @@ public class UploadNoticeTest extends TestCase {
     public void testAttentionSummaryPlaces() {
         Facts f = counts(0, 0, 0);
         f.unknownAdm1 = 12;
-        assertEquals("12 specimens have an adm1 AntWeb does not know (with coordinates, AntWeb sets it from them and keeps your text);"
+        assertEquals("12 specimens have an adm1 AntWeb does not know (where there are coordinates, AntWeb sets it from them and keeps your text);"
             + " see the report. Please fix them in your own data before your next upload.", UploadNotice.attentionSummary(f));
         f.unknownAdm1 = 1;
-        assertEquals("1 specimen has an adm1 AntWeb does not know (with coordinates, AntWeb sets it from them and keeps your text);"
+        assertEquals("1 specimen has an adm1 AntWeb does not know (where there are coordinates, AntWeb sets it from them and keeps your text);"
             + " see the report. Please fix it in your own data before your next upload.", UploadNotice.attentionSummary(f));
         Facts all = counts(1, 0, 0);
         all.unknownAdm1 = 3;
         all.outsidePlace = 2;
         all.garbledValues = 1;
-        assertEquals("1 specimen was corrected, 3 specimens have an adm1 AntWeb does not know (with coordinates, AntWeb sets it"
-            + " from them and keeps your text), 2 specimens have coordinates outside their country or adm1 and 1 value has accented letters"
+        assertEquals("1 specimen was corrected, 3 specimens have an adm1 AntWeb does not know (where there are coordinates, AntWeb"
+            + " sets it from them and keeps your text), 2 specimens have coordinates outside their country or adm1 and 1 different value has accented letters"
             + " damaged before the upload (save your file as UTF-8 with the letters restored); see the report. Please fix them"
             + " in your own data before your next upload.", UploadNotice.attentionSummary(all));
         // Coordinates outside the country or adm1 are red flags too: said once, with the reason (review of #420).
@@ -310,7 +310,7 @@ public class UploadNoticeTest extends TestCase {
         assertFalse(UploadNotice.body(f).contains("corrected"));
     }
 
-    /** EcoFoG: 2 lines not loaded (no code), 7 adm1 names not recognised (a note: not counted). The whole email. */
+    /** EcoFoG: 2 lines not loaded (no code). The whole email (the 7 adm1 names AntWeb did not know are counted since 2026-11-27: testAttentionSummaryPlaces). */
     public void testSummaryInEmailLinesNotLoaded() {
         Facts f = counts(0, 2, 0);
         f.fileName = "EcoFoG_specimens.txt";

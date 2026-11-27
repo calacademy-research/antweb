@@ -54,7 +54,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     static int MAXLENGTH = 80;
 
     /** The garbled values (GarbledText) already said in this upload's report, "column: value"; no more than GARBLED_SHOWN. */
-    private final HashSet<String> garbledSeen = new HashSet<>();
+    private final HashSet<String> garbledSeen = new HashSet<>();      // every different "column: value" of the upload
+    private final ArrayList<String> garbledPending = new ArrayList<>(); // those of the line being read
     static final int GARBLED_SHOWN = 40;
 
     /**
@@ -152,6 +153,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             String[] loopComponents = tab.split(theLine);
             elements = new ArrayList<>(Arrays.asList(loopComponents));
             int colIndex = 0;
+            garbledPending.clear();
 
             for (String next : elements) {
                 String element = multipleSpaces.subst(next.trim(), " ");
@@ -172,12 +174,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
                         // 2026-11-25: accents damaged before the upload ("Li" + a square-root sign + "ge"): said in the report,
                         // uploaded as sent. The first GARBLED_SHOWN distinct values only: a whole damaged file would fill the report.
-                        if (GarbledText.is(element)) {
-                            getMessageMgr().countGarbled();   // every one, for the email; the report lists the first GARBLED_SHOWN
-                            if (garbledSeen.size() < GARBLED_SHOWN && garbledSeen.add(col + ": " + element)) {
-                                getMessageMgr().addToMessages(MessageMgr.garbledText, Html.esc(col + ": " + element));
-                            }
-                        }
+                        if (GarbledText.is(element)) garbledPending.add(col + ": " + element);   // said once the line's code is known
  
                         /* This code block handles columns and headers as listed and defined in AntwebUpload */
                     if (taxonomyHeaders.contains(col)) {
@@ -352,6 +349,17 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                     break;
                 }
             } // end for looping through columns
+
+            // Damaged accents of this line (review of #420): said after the columns, so the report names this line's code
+            // and a line refused above is not counted. The email counts the different values; the report lists the first
+            // GARBLED_SHOWN of them.
+            if (errorMessage == null) {
+                for (String value : garbledPending) {
+                    if (!garbledSeen.add(value)) continue;
+                    getMessageMgr().countGarbled();
+                    if (garbledSeen.size() <= GARBLED_SHOWN) getMessageMgr().addToMessages(MessageMgr.garbledText, Html.esc(value));
+                }
+            }
 
             //A.log("XXX10 localityCode:" + (String) specimenItem.get("localitycode"));
             // ONCE WE HAVE THE COLUMNS PARSED, NOW WE CAN TOUCH DATA...
