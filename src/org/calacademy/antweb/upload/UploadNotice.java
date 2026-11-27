@@ -276,7 +276,11 @@ public class UploadNotice {
         if (f.complete) {
             if (f.uploadId > 0) b.append("Upload ID: ").append(f.uploadId).append("\n");
             if (f.specimensLoaded >= 0) b.append("Specimens loaded: ").append(n(f.specimensLoaded)).append("\n");
-            if (f.redFlagged >= 0) b.append("Red-flagged specimens: ").append(n(f.redFlagged)).append(outsideOfRed(f.redFlagged, f.outsideInRedFlags >= 0 ? f.outsideInRedFlags : f.outsidePlace)).append("\n");
+            // The summary below names the specimens with coordinates outside: then not here too, where refused lines
+            // would count and give another number (review of #420).
+            boolean outsideSaidBelow = f.reportUrl != null && f.outsidePlace > 0;
+            if (f.redFlagged >= 0) b.append("Red-flagged specimens: ").append(n(f.redFlagged)).append(outsideSaidBelow ? ""
+                : outsideOfRed(f.redFlagged, f.outsideInRedFlags >= 0 ? f.outsideInRedFlags : f.outsidePlace)).append("\n");
             if (f.imagesSaved >= 0) b.append("Images saved: ").append(n(f.imagesSaved)).append("\n");
             if (f.images && f.imagesNotSaved >= 0) b.append("Images not saved: ").append(n(f.imagesNotSaved)).append("\n");
         } else if (f.failure != null && !f.failure.isEmpty()) {
