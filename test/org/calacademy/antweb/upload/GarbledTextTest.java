@@ -11,7 +11,7 @@ import org.calacademy.antweb.upload.GarbledText;
 public class GarbledTextTest extends TestCase {
 
     public void testTheDamagedStatesOfProductionCount() {
-        String[] garbled = {"Li\u221A\u00AEge", "San Luis Potos\uFFFD", "Michoac\uFFFDn", "Panam\u00B7", "Chiriqu\u00CC", "Rond\u00D9nia", "Pet\u00C8n", "Gal\u2021pagos", "S\u201Eo Paulo", "Solol\u00B7", "Kh\u00B7nh H\u00DAa", "Tucum\u00B7n", "Li\u00C3\u00A8ge", "Cura\u00C3\u00A7ao", "Alajuela: San Ram\u00DBn", "Tamaul\u00CCpas"};
+        String[] garbled = {"Li\u221A\u00AEge", "San Luis Potos\uFFFD", "Michoac\uFFFDn", "Panam\u00B7", "Chiriqu\u00CC", "Rond\u00D9nia", "Pet\u00C8n", "Gal\u2021pagos", "S\u201Eo Paulo", "Solol\u00B7", "Kh\u00B7nh H\u00DAa", "Tucum\u00B7n", "Li\u00C3\u00A8ge", "Cura\u00C3\u00A7ao", "Alajuela: San Ram\u00DBn", "Tamaul\u00CCpas", "\u00C3\u2030vora", "Jalapa de D\u00C3\u00ADaz", "\u00C3\u0161rsula"};
         for (String text : garbled) {
             assertTrue(text, GarbledText.is(text));
         }

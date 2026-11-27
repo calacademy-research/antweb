@@ -12,7 +12,8 @@ import java.util.regex.Pattern;
  *
  * What counts:
  *   1. the replacement character U+FFFD (the letter was lost);
- *   2. UTF-8 read as Latin-1 or Windows-1252: A-tilde or A-circumflex followed by a character of U+0080 to U+00BF;
+ *   2. UTF-8 read as Latin-1 or Windows-1252: A-tilde or A-circumflex followed by a character of U+0080 to U+00BF,
+ *      or by one of the characters Windows-1252 puts at 0x80 to 0x9F (curly quotes, dashes, the per-mille sign, S-caron...);
  *   3. UTF-8 read as MacRoman: the square-root sign followed by a symbol or letter;
  *   4. MacRoman read as Latin-1: an upper-case I-grave, U-circumflex, E-grave, O-grave or U-grave straight after a
  *      lower-case letter; a double dagger or a low double quote after any letter; a middle dot after a lower-case
@@ -27,6 +28,7 @@ public final class GarbledText {
     private static final Pattern GARBLED = Pattern.compile(
         "\uFFFD"
         + "|[\u00C3\u00C2][\u0080-\u00BF]"
+        + "|[\u00C3\u00C2][\u0152\u0153\u0160\u0161\u0178\u017D\u017E\u0192\u02C6\u02DC\u2013\u2014\u2018-\u201E\u2020-\u2022\u2026\u2030\u2039\u203A\u20AC\u2122]"
         + "|\u221A[^\\s\\d\\p{Punct}]"
         + "|\\p{Ll}[\u00CC\u00DB\u00C8\u00D2\u00D9]"
         + "|\\p{L}[\u2021\u201E]"

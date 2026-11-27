@@ -584,6 +584,7 @@ public class UploadAction extends AntwebAction {
 				notice.alreadyInAntweb = uploadDetails.getMessageMgr().getAlreadyInAntwebCount();
 				notice.unknownAdm1 = uploadDetails.getMessageMgr().getUnknownAdm1Count();
 				notice.outsidePlace = uploadDetails.getMessageMgr().getOutsidePlaceCount();
+				notice.outsideInRedFlags = uploadDetails.getMessageMgr().getOutsidePlaceLines();
 				notice.garbledValues = uploadDetails.getMessageMgr().getGarbledCount();
 			} else {
 				notice.failure = UploadNotice.failureText(failureMessage);

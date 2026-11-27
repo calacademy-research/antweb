@@ -162,6 +162,7 @@ public final class UploadReportPage {
         f.alreadyInAntweb = m.getAlreadyInAntwebCount();
         f.unknownAdm1 = m.getUnknownAdm1Count();
         f.outsidePlace = m.getOutsidePlaceCount();
+        f.outsideInRedFlags = m.getOutsidePlaceLines();
         f.garbledValues = m.getGarbledCount();
         return f;
     }

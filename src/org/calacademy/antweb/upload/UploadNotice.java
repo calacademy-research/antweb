@@ -178,6 +178,7 @@ public class UploadNotice {
         public int alreadyInAntweb = 0;     // codes another group uploaded first: not loaded, nothing to do
         public int unknownAdm1 = 0;         // specimens whose adm1 AntWeb does not know (MessageMgr.notValidAdm1), 2026-11-27
         public int outsidePlace = 0;        // specimens whose coordinates lie outside their country or adm1
+        public int outsideInRedFlags = -1;  // the report's lines of those sections, refused lines included, as redFlagged counts them (-1: outsidePlace)
         public int garbledValues = 0;       // values whose accented letters were damaged before the upload (GarbledText)
         public int imagesSaved = -1;
         public int imagesNotSaved = -1;     // files the Image Uploader did not save (listed in the report)
@@ -233,7 +234,8 @@ public class UploadNotice {
         if (f.notLoaded > 0) parts.add(were(f.notLoaded, "line", "lines") + "not loaded");
         // Coordinates outside the country or adm1 are red flags too (MessageMgr's "red" sections): said once, below,
         // with the reason (review of #420).
-        int red = Math.max(f.redFlagged - Math.max(f.outsidePlace, 0), 0);
+        // redFlagged counts the report's lines, refused lines included: take away the same lines (review of #420)
+        int red = Math.max(f.redFlagged - (f.outsideInRedFlags >= 0 ? f.outsideInRedFlags : Math.max(f.outsidePlace, 0)), 0);
         if (red > 0) parts.add(were(red, "specimen", "specimens") + "red-flagged");
         // Places (Brian Fisher, 2026-11-27: the upload tells the curator, instead of an email by hand). An adm1 AntWeb
         // does not know is set from the coordinates by AntWeb, so it is said apart, with what AntWeb does, and is not

@@ -411,7 +411,7 @@ public class MessageMgr {
 
       testList.add(new Test(specialCharacterFound, SET, "<b>Special Character Found <font color=red>(not uploaded)</font></b>"));
 			testList.add(new Test(specimenIdSpacesRemoved, SET, "<b>Spaces removed from specimen code (auto-corrected — please fix your source data)</b>"));
-      testList.add(new Test(garbledText, SET, "<b>Garbled characters: accented letters were damaged before the upload <font color=green>(uploaded as sent)</font> — please save your source file as UTF-8 with the letters restored and upload again (column: value; the first 40)</b>"));
+      testList.add(new Test(garbledText, SET, "<b>Garbled characters: accented letters were damaged before the upload <font color=green>(uploaded as sent)</font> — please save your source file as UTF-8 with the letters restored and upload again (column: value; the first " + SpecimenUploadParse.GARBLED_SHOWN + ")</b>"));
       testList.add(new Test(whitespaceInTaxonField, SET, "<b>Whitespace in taxonomic field <font color=red>(not uploaded)</font> — please fix your source data</b>"));
       testList.add(new Test(invalidSpecimenCode, SET, "<b>Specimen code with characters other than letters, digits and . _ : / ( ) # + - <font color=red>(not uploaded)</font> — please fix your source data</b>"));
     }     
@@ -651,6 +651,8 @@ public class MessageMgr {
     public int getUnknownAdm1Count() { return Math.max(sectionCount(notValidAdm1) - refusedUnknownAdm1, 0); }
     public int getOutsidePlaceCount() { return Math.max(placeCounts()[1] - refusedOutsidePlace, 0); }
     /** The two place counts now (adm1 not known, outside the country or adm1), taken when a line starts (SpecimenUploadParse). */
+    /** The lines of the two coordinates-outside sections, refused lines included (as getRedFlagCount counts them). */
+    public int getOutsidePlaceLines() { return placeCounts()[1]; }
     public int[] placeCounts() {
       return new int[] {sectionCount(notValidAdm1), sectionCount(latLonNotInCountryBounds) + sectionCount(latLonNotInAdm1Bounds)};
     }

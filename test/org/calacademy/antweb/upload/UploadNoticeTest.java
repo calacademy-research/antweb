@@ -289,6 +289,12 @@ public class UploadNoticeTest extends TestCase {
         red.redFlagged = 1;
         assertEquals("1 specimen has coordinates outside its country or adm1; see the report. Please fix it in your own"
             + " data before your next upload.", UploadNotice.attentionSummary(red));
+        // A refused line with coordinates outside its country: in the red-flag count (the report's lines), not a
+        // specimen. The same lines are taken away, so nothing is said red-flagged (review of #420).
+        Facts refused = counts(0, 0, 1);
+        refused.outsidePlace = 0;
+        refused.outsideInRedFlags = 1;
+        assertEquals("Nothing in the report needs your attention.", UploadNotice.attentionSummary(refused));
     }
 
     /** SAM: one Ocymyrmex line corrected (species indet with a subspecies). The whole email. */

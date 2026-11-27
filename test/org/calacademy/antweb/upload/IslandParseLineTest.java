@@ -272,14 +272,31 @@ public class IslandParseLineTest extends TestCase {
 
     /** A line with HEADER and the given taxon through parseLine: its error (null when it would be loaded). */
     private Object parseTaxon(String subfamily, String genus, String country, String adm1) throws Exception {
+        return parseTaxon(subfamily, genus, "sp1", country, adm1);
+    }
+
+    private Object parseTaxon(String subfamily, String genus, String species, String country, String adm1) throws Exception {
         ArrayList<?> columns = (ArrayList<?>) method("getSpecimenColumns", String.class).invoke(upload, HEADER);
         ArrayList<?> others = (ArrayList<?>) method("getOtherColumns", String.class).invoke(upload, HEADER);
         Login curator = new Login();
         curator.setGroupId(group.getId());
         ++line;
-        String theLine = "test" + String.format("%07d", line) + "\t" + subfamily + "\t" + genus + "\tsp1\t" + country + "\t" + adm1 + "\t\t";
+        String theLine = "test" + String.format("%07d", line) + "\t" + subfamily + "\t" + genus + "\t" + species + "\t" + country + "\t" + adm1 + "\t\t";
         return method("parseLine", String.class, int.class, Hashtable.class, Hashtable.class, ArrayList.class, ArrayList.class,
             String.class, Login.class).invoke(upload, theLine, line, new Hashtable<String, Object>(), new Hashtable<String, Object>(), others, columns, "garbled.txt", curator);
+    }
+
+    /**
+     * A line parseLine refuses after its adm1 check (a species name with a quote: invalidSpeciesName) adds nothing to
+     * the email's count of adm1 names AntWeb does not know; a loaded line with the same adm1 does (review of #420).
+     */
+    public void testALineRefusedAfterThePlaceChecksIsNotCounted() throws Exception {
+        MessageMgr messages = ((AntwebUpload) upload).getMessageMgr();
+        int before = messages.getUnknownAdm1Count();
+        assertNotNull(parseTaxon("myrmicinae", "pheidole", "mega\"cephala", "United States", "Lemuria"));
+        assertEquals("a refused line is not counted", before, messages.getUnknownAdm1Count());
+        parse("United States", "Lemuria");
+        assertEquals("a loaded line is", before + 1, messages.getUnknownAdm1Count());
     }
 
     /** The codes the report keeps for one line of a section (MessageMgr.Test.codesByLine). */
