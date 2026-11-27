@@ -110,6 +110,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
             // Get the header values
             ArrayList<String> colList = getSpecimenColumns(theLine);
             ArrayList<String> otherColumns = getOtherColumns(theLine);
+            setFileHeaders(theLine);
 
             //s_log.info("importSpecimens() colList:" + colList.toString());
             theLine = in.readLine();

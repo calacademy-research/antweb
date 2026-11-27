@@ -353,6 +353,28 @@ public class IslandParseLineTest extends TestCase {
         assertEquals(46, section.count);
     }
 
+    /** The report names a damaged value's column as the curator's file does: CollXYAccuracy, not collectionnotes (review of #420). */
+    public void testGarbledValueNamesTheFileColumn() throws Exception {
+        String header = "SpecimenCode\tSubfamily\tGenus\tSpecies\tCountry\tAdm1\tCollXYAccuracy";
+        ArrayList<?> columns = (ArrayList<?>) method("getSpecimenColumns", String.class).invoke(upload, header);
+        ArrayList<?> others = (ArrayList<?>) method("getOtherColumns", String.class).invoke(upload, header);
+        method("setFileHeaders", String.class).invoke(upload, header);
+        try {
+            Login curator = new Login();
+            curator.setGroupId(group.getId());
+            ++line;
+            String damaged = "Li\u221a\u00a8ge";
+            String theLine = "test" + String.format("%07d", line) + "\tmyrmicinae\tpheidole\tmegacephala\tUnited States\t" + damaged + "\t" + damaged;
+            assertNull(method("parseLine", String.class, int.class, Hashtable.class, Hashtable.class, ArrayList.class, ArrayList.class,
+                String.class, Login.class).invoke(upload, theLine, line, new Hashtable<String, Object>(), new Hashtable<String, Object>(), others, columns, "header.txt", curator));
+            assertEquals(1, codesOf(MessageMgr.garbledText, "Adm1: " + damaged));
+            assertEquals(1, codesOf(MessageMgr.garbledText, "CollXYAccuracy: " + damaged));
+            assertEquals(0, codesOf(MessageMgr.garbledText, "collectionnotes: " + damaged));
+        } finally {
+            method("setFileHeaders", String.class).invoke(upload, (Object) null);
+        }
+    }
+
     /** Mauritius + adm1 Rodrigues: the country Rodrigues (not flagged as an island: no island_country). */
     public void testRodriguesOfMauritius() throws Exception {
         assertEquals("Rodrigues | - | - | Africa | Eastern Africa | Malagasy", place(parse("Mauritius", "Rodrigues")));

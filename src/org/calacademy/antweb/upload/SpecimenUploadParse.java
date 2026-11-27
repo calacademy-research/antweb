@@ -180,7 +180,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                         // 2026-11-25: accents damaged before the upload ("Li" + a square-root sign + "ge"): said in the report,
                         // uploaded as sent. The first GARBLED_SHOWN distinct values only: a whole damaged file would fill the report.
                         // The columns AntWeb maps only: the others go unread into the record's other columns.
-                        if (GarbledText.is(element, GarbledText.isFreeText(col))) garbledPending.add(col + ": " + element);   // said once the line's code is known
+                        // The report names the column as the curator's file does (LifeStageSex, not caste; review of #420).
+                        if (GarbledText.is(element, GarbledText.isFreeText(col))) garbledPending.add(fileHeader(colIndex, col) + ": " + element);   // said once the line's code is known
  
                         /* This code block handles columns and headers as listed and defined in AntwebUpload */
                     if (taxonomyHeaders.contains(col)) {
@@ -1286,6 +1287,20 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         if (!buildHeaderArrayList().contains(head)) return null;
         String translated = buildColumnTranslations().get(head);
         return translated != null ? translated : head;
+    }
+
+    private String[] fileHeaders;
+
+    /** The header line of the file being read, so the report can name a column as the curator's file does. */
+    protected void setFileHeaders(String headerLine) {
+        fileHeaders = headerLine == null ? null : headerLine.split("\t", -1);
+    }
+
+    /** The file's own name of column colIndex; the AntWeb name when the header is not known. */
+    String fileHeader(int colIndex, String col) {
+        if (fileHeaders == null || colIndex >= fileHeaders.length) return col;
+        String head = fileHeaders[colIndex].trim();
+        return head.isEmpty() ? col : head;
     }
 
     protected Hashtable<String, String> getColumnTranslations() {
