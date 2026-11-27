@@ -302,7 +302,11 @@ public class IslandParseLineTest extends TestCase {
     public void testGarbledValuesInParseLine() throws Exception {
         MessageMgr messages = ((AntwebUpload) upload).getMessageMgr();
         String damaged = "Li\u221a\u00a8ge";      // "Liège" saved in one encoding and read in another
-        for (int i = 0; i < 3; i++) parse("United States", damaged);
+        for (int i = 0; i < 3; i++) {
+            messages.setCurrentLine(line + 1);   // as SpecimenUpload's loop does before each parseLine
+            parse("United States", damaged);
+        }
+        messages.setCurrentLine(0);
         assertEquals("one different value", 1, messages.getGarbledCount());
         assertEquals("the codes of all three lines", 3, codesOf(MessageMgr.garbledText, "adm1: " + damaged));
         Field lineCounts = MessageMgr.class.getDeclaredMethod("getTest", String.class).getReturnType().getDeclaredField("fileLineCounts");
