@@ -55,7 +55,7 @@ import pytest
 from antweb import BASE_URL, TIMEOUT, new_session
 from staging_accounts import (BASELINE_HEADER, assert_upload_complete, assert_upload_recorded, baseline_text, code,
                               group_upload_count, login, needs, require_test_group, report_url, specimen_page,
-                              upload_specimens, IS_STAGING)
+                              skip_if_busy, upload_specimens, IS_STAGING)
 
 pytestmark = pytest.mark.skipif(not IS_STAGING, reason="specimen uploads run only on staging")
 
@@ -373,8 +373,8 @@ def test_upload_needs_post(uploader):
 
 
 def _museum_calc(s, token):
-    return s.post(f"{BASE_URL}/upload.do?_csrf={token}", files={"action": (None, "museumCalc"), "_csrf": (None, token)},
-                  timeout=max(TIMEOUT, 300))
+    return skip_if_busy(s.post(f"{BASE_URL}/upload.do?_csrf={token}", files={"action": (None, "museumCalc"), "_csrf": (None, token)},
+                               timeout=max(TIMEOUT, 300)))
 
 
 @needs("uploader")

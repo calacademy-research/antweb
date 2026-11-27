@@ -19,6 +19,7 @@ import pytest
 
 from antweb import BASE_URL, IS_PRODUCTION, TIMEOUT, classify, new_session
 import test_page_editor as pe
+from staging_accounts import skip_if_busy
 
 staging_only = pytest.mark.skipif(
     IS_PRODUCTION or pe.HOST not in pe.ALLOWED_HOSTS or not pe.USER or not pe.PASSWORD,
@@ -47,7 +48,7 @@ def _post_upload(s, fields, files=None):
     parts["_csrf"] = (None, token)
     if files:
         parts.update(files)
-    return s.post(f"{BASE_URL}/upload.do?_csrf={token}", files=parts, timeout=TIMEOUT)
+    return skip_if_busy(s.post(f"{BASE_URL}/upload.do?_csrf={token}", files=parts, timeout=TIMEOUT))
 
 
 @pytest.fixture(scope="module")

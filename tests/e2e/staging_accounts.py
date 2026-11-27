@@ -106,6 +106,15 @@ BUSY = ("currently in an Upload Process", "currently in the process of an Upload
         "AntwebMgr not yet initialized", "down time", "Another data job is running")
 
 
+def skip_if_busy(r):
+    """Skips the test when upload.do answered that the server is busy (the 5 AM nightly holds the
+    upload lock on staging, or another upload runs); returns the response otherwise."""
+    busy = next((b for b in BUSY if b in r.text), None)
+    if busy:
+        pytest.skip("staging is busy: " + busy)
+    return r
+
+
 JOB_STATUS = re.compile(r'data-status="(\w+)"')
 
 
