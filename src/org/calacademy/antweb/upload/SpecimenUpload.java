@@ -203,6 +203,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
 							processedSome = true;
 						  } else { 
 							getMessageMgr().uncountRefusedPlaces(placeAtLineStart);
+							uncountGarbledOfLine();
 							//A.log("processLine retVal:" + retVal + " lineNum:" + lineNum);
 						  }
 						} else {

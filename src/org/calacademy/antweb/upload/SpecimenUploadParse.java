@@ -56,10 +56,21 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     /** The garbled values (GarbledText) already said in this upload's report, "column: value"; no more than GARBLED_SHOWN. */
     private final HashSet<String> garbledSeen = new HashSet<>();      // every different "column: value" of the upload
     private final ArrayList<String> garbledPending = new ArrayList<>(); // those of the line being read
+    private final ArrayList<String> garbledNewOnLine = new ArrayList<>(); // those the line being read counted first
     static final int GARBLED_SHOWN = 40;
     private final HashSet<String> garbledListed = new HashSet<>();   // the values listed in the report (the first GARBLED_SHOWN)
     private boolean isGarbledShown(String value) { return garbledListed.contains(value); }
     private int[] placeAtLineStart;   // MessageMgr.placeCounts() when the line being read started
+
+    /** The line just read passed parseLine and was then skipped (processLine): the damaged values it counted first are
+     *  not counted, so a later loaded line with one counts it (review of #420). The report still lists the line. */
+    protected void uncountGarbledOfLine() {
+        for (String value : garbledNewOnLine) {
+            garbledSeen.remove(value);
+            getMessageMgr().uncountGarbled();
+        }
+        garbledNewOnLine.clear();
+    }
 
 
     /**
@@ -158,6 +169,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             elements = new ArrayList<>(Arrays.asList(loopComponents));
             int colIndex = 0;
             garbledPending.clear();
+            garbledNewOnLine.clear();
             placeAtLineStart = getMessageMgr().placeCounts();
 
             for (String next : elements) {
@@ -179,6 +191,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
                         // 2026-11-25: accents damaged before the upload ("Li" + a square-root sign + "ge"): said in the report,
                         // uploaded as sent. The first GARBLED_SHOWN distinct values only: a whole damaged file would fill the report.
+                        // The columns AntWeb maps only: the others go unread into the record's other columns.
                         if (GarbledText.is(element)) garbledPending.add(col + ": " + element);   // said once the line's code is known
  
                         /* This code block handles columns and headers as listed and defined in AntwebUpload */
@@ -946,11 +959,13 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             for (String value : garbledPending) {
                 String shown = Html.esc(value);
                 if (garbledSeen.add(value)) {
+                    garbledNewOnLine.add(value);
                     getMessageMgr().countGarbled();
-                    if (garbledSeen.size() <= GARBLED_SHOWN) {
+                    if (!isGarbledShown(value) && garbledListed.size() < GARBLED_SHOWN) {
                         garbledListed.add(value);
                         getMessageMgr().addToMessages(MessageMgr.garbledText, shown);
                     }
+                    else if (isGarbledShown(value)) getMessageMgr().addRepeat(MessageMgr.garbledText, shown);
                 } else if (isGarbledShown(value)) {
                     getMessageMgr().addRepeat(MessageMgr.garbledText, shown);
                 }

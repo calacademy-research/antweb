@@ -324,6 +324,9 @@ public class MessageMgr {
         reportCodesLeft = MAX_REPORT_CODES;
         currentLine = 0;
         reportLinesLeft = MAX_REPORT_LINES;
+        refusedUnknownAdm1 = 0;
+        refusedOutsidePlace = 0;
+        garbledValues = 0;
         addTests();
     }
 
@@ -650,9 +653,9 @@ public class MessageMgr {
      *  know, whose coordinates lie outside their country or adm1, and values with damaged accents. */
     public int getUnknownAdm1Count() { return Math.max(sectionCount(notValidAdm1) - refusedUnknownAdm1, 0); }
     public int getOutsidePlaceCount() { return Math.max(placeCounts()[1] - refusedOutsidePlace, 0); }
-    /** The two place counts now (adm1 not known, outside the country or adm1), taken when a line starts (SpecimenUploadParse). */
     /** The lines of the two coordinates-outside sections, refused lines included (as getRedFlagCount counts them). */
     public int getOutsidePlaceLines() { return placeCounts()[1]; }
+    /** The two place counts now (adm1 not known, outside the country or adm1), taken when a line starts (SpecimenUploadParse). */
     public int[] placeCounts() {
       return new int[] {sectionCount(notValidAdm1), sectionCount(latLonNotInCountryBounds) + sectionCount(latLonNotInAdm1Bounds)};
     }
@@ -676,6 +679,7 @@ public class MessageMgr {
     public int getGarbledCount() { return garbledValues; }
     private int garbledValues = 0;
     public void countGarbled() { ++garbledValues; }
+    public void uncountGarbled() { if (garbledValues > 0) --garbledValues; }
 
     private int sectionCount(String key) {
       for (Test test : getTests()) {

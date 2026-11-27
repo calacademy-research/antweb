@@ -297,6 +297,15 @@ public class IslandParseLineTest extends TestCase {
         assertEquals("a refused line is not counted", before, messages.getUnknownAdm1Count());
         parse("United States", "Lemuria");
         assertEquals("a loaded line is", before + 1, messages.getUnknownAdm1Count());
+        // a line processLine then skips (SpecimenUpload calls uncountGarbledOfLine): its damaged value is not counted,
+        // and a later loaded line with the value counts it
+        int garbled = messages.getGarbledCount();
+        parse("United States", "Mu\u221a\u00a9");
+        assertEquals(garbled + 1, messages.getGarbledCount());
+        method("uncountGarbledOfLine").invoke(upload);
+        assertEquals("a skipped line is not counted", garbled, messages.getGarbledCount());
+        parse("United States", "Mu\u221a\u00a9");
+        assertEquals("a loaded line is", garbled + 1, messages.getGarbledCount());
     }
 
     /** The codes the report keeps for one line of a section (MessageMgr.Test.codesByLine). */
