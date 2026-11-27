@@ -953,7 +953,6 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                         garbledListed.add(value);
                         getMessageMgr().addToMessages(MessageMgr.garbledText, shown);
                     }
-                    else if (isGarbledShown(value)) getMessageMgr().addRepeat(MessageMgr.garbledText, shown);
                 } else if (isGarbledShown(value)) {
                     getMessageMgr().addRepeat(MessageMgr.garbledText, shown);
                 }
