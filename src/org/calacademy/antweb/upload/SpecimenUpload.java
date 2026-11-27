@@ -97,6 +97,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
             // parse the header 
             String theLine = in.readLine();         
+            setFileHeaders(theLine);   // as the curator wrote them, for the report
             theLine = theLine.toLowerCase();
 
             org.calacademy.antweb.util.BackgroundJobs.step("Removing the group's current specimens (the file replaces them).");
@@ -110,7 +111,6 @@ public class SpecimenUpload extends SpecimenUploadParse {
             // Get the header values
             ArrayList<String> colList = getSpecimenColumns(theLine);
             ArrayList<String> otherColumns = getOtherColumns(theLine);
-            setFileHeaders(theLine);
 
             //s_log.info("importSpecimens() colList:" + colList.toString());
             theLine = in.readLine();
