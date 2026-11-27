@@ -680,6 +680,9 @@ public class MessageMgr {
     public int getGarbledCount() { return garbledValues; }
     private int garbledValues = 0;
     public void countGarbled() { ++garbledValues; }
+    /** The damaged-accents section's count, in the report and its notes tile: every different value the upload counted
+     *  (countGarbled), or the values listed when nothing was counted that way. */
+    private int garbledSectionCount(Test test) { return garbledValues > 0 ? garbledValues : test.getCount(); }
 
     private int sectionCount(String key) {
       // placeCounts() runs for every line of a file (a CAS file has 265,000): the three sections are looked up once
@@ -698,7 +701,7 @@ public class MessageMgr {
     public int getNoteCount() {
       int n = 0;
       for (Test test : getTests()) {
-        if (NOTE.equals(kind(test))) n += garbledText.equals(test.getKey()) ? garbledValues : test.getCount();   // as its section (reportSections)
+        if (NOTE.equals(kind(test))) n += garbledText.equals(test.getKey()) ? garbledSectionCount(test) : test.getCount();   // as its section (reportSections)
       }
       for (String flag : new String[] {"is_introduced", "noCasteNotes"}) {
         Integer c = flags.get(flag);
@@ -796,7 +799,7 @@ public class MessageMgr {
           // every different value, as the email counts them, not only the GARBLED_SHOWN listed (review of #420)
           sec.unit = "value";
           sec.units = "values";
-          sec.count = Math.max(garbledValues, 1);
+          sec.count = Math.max(garbledSectionCount(test), 1);
         } else if (multipleBioregionsForNonIntroducedTaxa.equals(test.getKey())) {
           sec.unit = "taxon";
           sec.units = "taxa";
