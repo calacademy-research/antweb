@@ -23,5 +23,10 @@ public class GarbledTextTest extends TestCase {
             assertFalse(text, GarbledText.is(text));
         }
         assertFalse(GarbledText.is(null));
+        // free text: a middle dot after a letter can be a real separator; the other rules still apply (review of #420)
+        assertTrue(GarbledText.is("Panam\u00B7"));
+        assertFalse(GarbledText.is("leaf\u00B7litter, 2 m\u00B7s", true));
+        assertTrue(GarbledText.is("Li\u221A\u00AEge, leaf litter", true));
+        assertTrue(GarbledText.isFreeText("localitynotes") && GarbledText.isFreeText("microhabitat") && !GarbledText.isFreeText("adm1"));
     }
 }

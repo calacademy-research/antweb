@@ -177,7 +177,8 @@ public final class SpecimenUploadJob implements BackgroundJobs.Work {
         StringBuilder s = new StringBuilder("Upload complete: ")
             .append(String.format("%,d", d.getInsertedSpecimenCount())).append(" specimens loaded");
         int red = d.getMessageMgr().getRedFlagCount();
-        if (red > 0) s.append(", ").append(String.format("%,d", red)).append(" of them red-flagged");
+        if (red > 0) s.append(", ").append(String.format("%,d", red)).append(" of them red-flagged")
+            .append(UploadNotice.outsideOfRed(red, d.getMessageMgr().getOutsidePlaceCount()));
         s.append(". Upload ID ").append(uploadId).append(".");
         // The upload-complete email's summary, when lines were corrected or not loaded (red flags are said above).
         UploadNotice.Facts f = new UploadNotice.Facts();

@@ -222,6 +222,13 @@ public class UploadNotice {
      * nothing. Null when the counts are not known (image uploads, uploads that did not complete).
      * Which report sections count: MessageMgr.CORRECTED.
      */
+    /** The red flags that are coordinates outside the country or adm1, said with the red-flag count so it matches the
+     *  summary, which names them apart (review of #420): " (2 for coordinates outside their country or adm1)". */
+    public static String outsideOfRed(int redFlagged, int outsidePlace) {
+        if (outsidePlace <= 0 || outsidePlace > redFlagged) return "";
+        return " (" + n(outsidePlace) + " for coordinates outside " + (outsidePlace == 1 ? "its" : "their") + " country or adm1)";
+    }
+
     public static String attentionSummary(Facts f) {
         if (f.images || !f.complete || f.notLoaded < 0 || f.corrected < 0) return null;
         List<String> parts = new ArrayList<>();
@@ -269,7 +276,7 @@ public class UploadNotice {
         if (f.complete) {
             if (f.uploadId > 0) b.append("Upload ID: ").append(f.uploadId).append("\n");
             if (f.specimensLoaded >= 0) b.append("Specimens loaded: ").append(n(f.specimensLoaded)).append("\n");
-            if (f.redFlagged >= 0) b.append("Red-flagged specimens: ").append(n(f.redFlagged)).append("\n");
+            if (f.redFlagged >= 0) b.append("Red-flagged specimens: ").append(n(f.redFlagged)).append(outsideOfRed(f.redFlagged, f.outsidePlace)).append("\n");
             if (f.imagesSaved >= 0) b.append("Images saved: ").append(n(f.imagesSaved)).append("\n");
             if (f.images && f.imagesNotSaved >= 0) b.append("Images not saved: ").append(n(f.imagesNotSaved)).append("\n");
         } else if (f.failure != null && !f.failure.isEmpty()) {

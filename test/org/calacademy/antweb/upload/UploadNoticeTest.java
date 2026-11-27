@@ -295,6 +295,11 @@ public class UploadNoticeTest extends TestCase {
         refused.outsidePlace = 0;
         refused.outsideInRedFlags = 1;
         assertEquals("Nothing in the report needs your attention.", UploadNotice.attentionSummary(refused));
+        // the red-flag count of the email's header says how many of its flags are those coordinates
+        assertEquals(" (2 for coordinates outside their country or adm1)", UploadNotice.outsideOfRed(5, 2));
+        assertEquals(" (1 for coordinates outside its country or adm1)", UploadNotice.outsideOfRed(1, 1));
+        assertEquals("", UploadNotice.outsideOfRed(5, 0));
+        assertEquals("", UploadNotice.outsideOfRed(0, 3));
     }
 
     /** SAM: one Ocymyrmex line corrected (species indet with a subspecies). The whole email. */
