@@ -1298,7 +1298,7 @@ def test_madagascar_from_the_provinces_to_the_regions():
     # a stored state that is no unit AntWeb knows follows the coordinates like an empty one (Brian Fisher, 2026-11-25); without coordinates it stays
     [unknown] = work.work(m("casent0000100", -15.0, 47.0, "Nosy Be"))
     assert (unknown.field, unknown.current) == ("adm1", "Nosy Be") and unknown.proposed and pc.NOT_KNOWN in unknown.note, unknown
-    assert work.work(m("casent0000103", "", "", "Nosy Be")) == [pc.Not("adm1", pc.NOT_KNOWN_STAYS, "Nosy Be")]
+    assert work.work(m("casent0000106", "", "", "Nosy Be")) == [pc.Not("adm1", pc.NOT_KNOWN_STAYS, "Nosy Be")]
     # a valid state written in another case or with spaces is that state: known, from the label, never overwritten (review of #419)
     assert work.work(m("casent0000104", -15.0, 47.0, "diana ")) == [] and work.work(m("casent0000105", -24.0, 42.995, " DIANA")) == []
     assert work.states.has_row("Madagascar", "DIANA") and not work.states.has_row("Madagascar", "Nosy Be")

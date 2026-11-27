@@ -147,6 +147,17 @@ def test_an_empty_state_near_a_border_is_written():
     assert [r["code"] for r in todo] == ["line", "err10", "err2"], todo
     assert all(r["flag"] for r in todo)                                          # the flag stays with the written row
     assert why == {"flag": 4, "flagunread": 1}, why                               # err50, err1500, wide, filled; odd
+    # a stored text AntWeb does not know follows the point as an empty state does, near a border too; a known one never
+    assert pd.NOT_KNOWN == place_corrections.NOT_KNOWN
+    unknown = [dict(row("unk", flag(1, 1, "Analanjirofo"), "Li\u221a\u00aege"), note=place_corrections.NOT_KNOWN),
+               dict(row("unk_far", flag(60, 1, "Analanjirofo"), "Sambava town"), note=place_corrections.NOT_KNOWN),
+               dict(row("unk_plain", "", "Dept. of Sava"), note=place_corrections.NOT_KNOWN),
+               dict(row("known_odd", "within the stated error of Analanjirofo", "Toliara"))]
+    with tempfile.TemporaryDirectory() as d:
+        read = pd.rows_of(corrections_file(d, unknown), "2026-11-25", "report")
+    todo, why = pd.eligible(read, VALID, {r["specimen_code"]: ("Madagascar", r["current_value"]) for r in unknown}, set())
+    assert [r["code"] for r in todo] == ["unk", "unk_plain"], todo
+    assert why == {"flag": 2}, why                                               # unk_far: 60 km; known_odd: a known state, not "unread"
     doubt = pd.border_doubt
     assert doubt(flag(1, 1, "X")) == "near" and doubt(flag(5, 5, "X")) == "far" and doubt(flag(40, 1, "X")) == "near"
     assert doubt(flag(50, 1, "X")) == "far" and doubt(flag(1500, 1, "X")) == "far"
@@ -207,7 +218,7 @@ def test_the_apply_sql_backs_up_first_and_writes_only_unchanged_states():
     assert sql[1].startswith("CREATE TABLE place_apply_bak_20261123 ") and sql[2] == "START TRANSACTION" and sql[-1] == "COMMIT"
     sql = sql[:1] + sql[2:3] + sql[1:2] + sql[3:]      # the rest as before
     assert sql[3].startswith("INSERT INTO place_apply_bak_20261123 (code, adm1, adm1_verbatim) SELECT") and "'ok1','ok2'" in sql[3]
-    assert sql[4] == ("UPDATE specimen SET adm1_verbatim = IFNULL(adm1_verbatim, adm1), adm1 = 'Menabe' WHERE code = 'ok1'"
+    assert sql[4] == ("UPDATE specimen SET adm1_verbatim = COALESCE(NULLIF(adm1, ''), adm1_verbatim), adm1 = 'Menabe' WHERE code = 'ok1'"
                       " AND BINARY IFNULL(adm1, '') = BINARY 'Toliara'"), sql[4]
     assert sql[5].endswith("WHERE code = 'ok2' AND BINARY IFNULL(adm1, '') = BINARY ''"), sql[5]
     assert sql[6].startswith("INSERT INTO place_update (") and ",applied) VALUES " in sql[6] and "'apply'" in sql[6] and sql[6].count(",1)") == 2
