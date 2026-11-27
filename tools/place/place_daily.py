@@ -32,7 +32,9 @@ into adm1, which every page reads; the state the curator uploaded is kept in adm
 only when all of these hold (eligible(), unit-tested), otherwise it stays a report row and the summary counts why:
   - it is a state (adm1), never a country: a point that disagrees with its country is more likely wrong than the
     country, so country proposals are for a person (R5 of the place rules);
-  - no other state lies within the stated error of the point (the flag column);
+  - no other state lies within the stated error of the point (the flag column); but an empty state is written
+    even so when the border is within 1 km or within a stated error under 50 km (2026-11-25, near_border_only()):
+    the best estimate is worth more than a blank, and the row keeps its flag;
   - the country is not in place_daily_skip.txt (countries whose boundary shapes are at another level than AntWeb's
     states, 2026-11-19 state_sets.py: the United Kingdom, Slovenia, Uganda, ...);
   - the proposed name is a valid state of that country now;
@@ -163,9 +165,46 @@ def skipped_countries(path=None):
         raise SystemExit("apply refused: the skip file " + (path or SKIP_FILE) + " cannot be read (" + e.__class__.__name__ + ")")
 
 
+NEAR_BORDER_KM = 50   # a stated error of this many km or more says too little about the state to write it
+ALLOWED_KM = 1        # the tolerance of place_corrections.py: "within the allowed 1 km of <state>"
+
+
+def border_doubt(flag):
+    """What a flag says of a point that lies inside the proposed state (the two forms place_corrections.border_flag
+    writes): "near" for "within the allowed N km of <state>" with N up to ALLOWED_KM and for "within the stated error
+    (N km) of <state>" with N under NEAR_BORDER_KM; "far" for a larger distance; "unread" for any other text."""
+    found = re.match(r"within the (allowed|stated error) \(?([0-9][0-9.,]*) km\)? of .", flag or "")
+    if not found:
+        return "unread"
+    try:
+        km = float(found.group(2).replace(",", ""))
+    except ValueError:
+        return "unread"
+    if found.group(1) == "allowed":
+        return "near" if km <= ALLOWED_KM else "far"
+    return "near" if km < NEAR_BORDER_KM else "far"
+
+
+def near_border_only(flag):
+    return border_doubt(flag) == "near"
+
+
+# place_corrections.NOT_KNOWN, the note of a proposal whose stored state is no unit AntWeb knows (2026-11-25, rule 2);
+# the test checks the two are the same text.
+NOT_KNOWN = "the stored state is not a unit AntWeb knows: the state of the coordinates replaces it"
+
+
+def like_empty(row):
+    """True for a proposal whose stored state is empty, or is a text that is no unit AntWeb knows (its note says so):
+    both follow the coordinates, near a border too (Brian Fisher, 2026-11-25)."""
+    return not (row.get("stored_value") or "") or NOT_KNOWN in (row.get("note") or "")
+
+
 LEFT_OUT = {
     "country": "a country proposal (for a person)",
-    "flag": "another state within the stated error",
+    "flag": ("another state within the stated error (a state AntWeb knows is filled, the stated error is " + str(NEAR_BORDER_KM)
+             + " km or more, or the allowed distance is over " + str(ALLOWED_KM) + " km)"),
+    "flagunread": "a flag the daily step cannot read (its wording changed?): for a person",
     "skip": "country left out (its shapes are at another level)",
     "invalid": "the proposed state is not a valid state of the country",
     "gone": "the specimen is gone",
@@ -188,7 +227,16 @@ def eligible(rows, valid_states, current, skip, boxes=None):
         stored_now = current.get(r["code"])
         if r["field"] != "adm1":
             why["country"] += 1
-        elif r.get("flag"):
+        elif r.get("flag") and not like_empty(r):
+            why["flag"] += 1   # a state AntWeb knows is filled: a border near the point never moves it
+        elif r.get("flag") and border_doubt(r["flag"]) == "unread":
+            why["flagunread"] += 1
+        elif r.get("flag") and not near_border_only(r["flag"]):
+            # Brian Fisher, 2026-11-25: an empty state gets the state its point lies in even when a border is within
+            # 1 km or within a stated error under 50 km (1,050 specimens of 198 field sites on a ridge or river that
+            # is the border, most of them naming the proposed state in the locality): the best estimate is worth more
+            # than a blank, and the row keeps its flag in place_update for the curator. So does a stored text that
+            # is no unit AntWeb knows (like_empty).
             why["flag"] += 1
         elif r["country"] in skip:
             why["skip"] += 1
@@ -237,7 +285,9 @@ def apply_statements(rows, run_date):
         out.append("INSERT INTO " + bak + " (code, adm1, adm1_verbatim) SELECT code, adm1, adm1_verbatim FROM specimen WHERE code IN ("
                    + ",".join(quote(c) for c in codes[i:i + BATCH]) + ")")
     for r in rows:
-        out.append("UPDATE specimen SET adm1_verbatim = IFNULL(adm1_verbatim, adm1), adm1 = " + quote(r["proposed"])
+        # adm1_verbatim keeps the text the state replaces when there is one (a curator's old unit or a text AntWeb does
+        # not know: review of #419), and what it held otherwise; the day's backup table keeps both.
+        out.append("UPDATE specimen SET adm1_verbatim = COALESCE(NULLIF(adm1, ''), adm1_verbatim), adm1 = " + quote(r["proposed"])
                    + " WHERE code = " + quote(r["code"]) + " AND BINARY IFNULL(adm1, '') = BINARY " + quote(r["stored_value"] or ""))
     applied = [dict(r, mode="apply") for r in rows]
     for i in range(0, len(applied), BATCH):

@@ -401,6 +401,8 @@ NO_COORDINATES = "no coordinates"
 OUTSIDE = "coordinates outside the stated country"
 TWO = "two candidates"
 NOT_A_STATE = "the boundary file's name is not a state in AntWeb"
+NOT_KNOWN = "the stored state is not a unit AntWeb knows: the state of the coordinates replaces it"
+NOT_KNOWN_STAYS = "the stored state is not a unit AntWeb knows, and there are no coordinates: it stays"
 NO_MATCH = "AntWeb's states and the boundary file do not match: needs a mapping"
 STAYS = "no coordinates: stays with the province"
 STAYS_OUTSIDE = "coordinates in no region's shape: stays with the province"
@@ -511,11 +513,13 @@ class States:
         self.same = collections.defaultdict(lambda: collections.defaultdict(list))  # country -> plain name -> every valid state so written
         self.points_to = collections.defaultdict(dict)           # country -> plain old name -> the valid state its row names
         self.given_up = collections.defaultdict(dict)            # country -> plain name -> a row that is not valid and names no valid state
+        self.rows = collections.defaultdict(set)                 # country -> the plain form of every name that has an adm1 row (valid or not)
         old = []
         for name, parent, is_valid, valid_name in rows:
             country = countries.resolve(parent)
             if country is None or not name:
                 continue
+            self.rows[country.name].add(plain(name))
             if str(is_valid) == "1":
                 self.valid[country.name].add(name)
             elif cc.clean(valid_name):
@@ -560,6 +564,14 @@ class States:
         (2026-11-25: the nations of the United Kingdom, Uganda's regions, Kenya's provinces) their records must still
         be converted, and only then can the daily step write them (it never overwrites a valid stored state)."""
         return self.valid_of(country, name) or self.given_up.get(country, {}).get(plain(name))
+
+    def has_row(self, country, name):
+        """True when AntWeb has an adm1 row of the country with this name (valid, an old name, or a unit given up),
+        compared as names are compared everywhere here (plain(): case, accents and spaces do not count). So "sava" and
+        "Sava " are Sava, a valid state from the label that is never overwritten (2026-11-22; review of #419: an
+        exact comparison made them unknown). A stored state without a row is not a unit AntWeb knows: a garbled
+        accent, a misspelling, a town."""
+        return plain(name) in self.rows.get(country, ())
 
     def twins(self, country, state):
         """Every valid state of the country that is the same name as this one (itself among them), in order."""
@@ -1897,9 +1909,7 @@ class StateShapes:
             if others:
                 other, other_km = others[0][1], cc.rounded(others[0][0])
                 if reach == allowed:
-                    limit = tolerance if tolerance is not None and allowed <= tolerance else None
-                    flag = ("within the allowed " + format(limit, "g") + " km of " if limit is not None
-                            else "within the stated error (" + cc.rounded(allowed) + " km) of ") + other
+                    flag = border_flag(allowed, tolerance, other)
                 break
         where = chosen.where
         if chosen.hows[first] == SPLIT:                          # the state is that of the finer unit the point lies in
@@ -1908,9 +1918,7 @@ class StateShapes:
                 return At(None, name, "", NO_SPLIT_UNIT, name + (": in " + unit + " (" + units_from + ")" if unit else ": in no unit of " + units_from))
             if half and (other_km == "" or half_km < float(other_km)):
                 other, other_km = half, cc.rounded(half_km)
-                limit = tolerance if tolerance is not None and allowed <= tolerance else None
-                flag = "" if half_km > allowed else (("within the allowed " + format(limit, "g") + " km of " if limit is not None
-                                                     else "within the stated error (" + cc.rounded(allowed) + " km) of ") + half)
+                flag = "" if half_km > allowed else border_flag(allowed, tolerance, half)
             basis = (("coordinates inside " if inside else "in the water, " + cc.rounded(near[first]) + " km from ") + name + ", " + where + "; in its unit " + unit
                      + " (" + units_from + "), which the mapping file gives to " + state + (", a " + TO_ADD if new else ""))
             return At(state, name, basis, "", "", other, other_km, flag, NEW if new else SPLIT, bool(inside), chosen.units[first], chosen.label,
@@ -1922,6 +1930,16 @@ class StateShapes:
         basis = ("coordinates inside " if inside else "in the water, " + cc.rounded(near[first]) + " km from ") + name + ", " + where
         return At(chosen.states[first], chosen.names[first], basis, "", "", other, other_km, flag, chosen.hows[first], bool(inside), chosen.units[first], chosen.label,
                   "" if inside else cc.rounded(near[first]))
+
+
+def border_flag(allowed, tolerance, other):
+    """The flag of a point that lies inside one state with another state within the allowed distance: "within the
+    allowed 1 km of <state>" when the allowed distance is the tolerance, "within the stated error (N km) of <state>"
+    when the record's own stated error is larger. tools/place/place_daily.py reads these two forms back
+    (border_doubt()); its test builds its flags with this function, so the two cannot drift apart."""
+    limit = tolerance if tolerance is not None and allowed <= tolerance else None
+    return ("within the allowed " + format(limit, "g") + " km of " if limit is not None
+            else "within the stated error (" + cc.rounded(allowed) + " km) of ") + other
 
 
 def files_as_island(country, island):
@@ -2015,14 +2033,18 @@ class Corrections:
         else:
             country = stated_country = valid.name
         converting = self.converting(row, country) if stated_country is not None else None
-        if (row.adm1 and converting is None) or row.island or country is None:
+        # Brian Fisher, 2026-11-25: a stored state that is not a unit AntWeb knows (no adm1 row of the country is
+        # written so: "Li√®ge", "Dept. of Loreto", "Secteur Nord") follows the coordinates like an empty one; the
+        # text the curator sent stays in adm1_verbatim. Without coordinates it stays as it is.
+        unknown = bool(row.adm1) and stated_country is not None and converting is None and not self.states.has_row(country, row.adm1)
+        if (row.adm1 and converting is None and not unknown) or row.island or country is None:
             return out
         if island_state is not None:
             return out + [island_state]
         if not self.states.of(country):
-            return out + [Not("adm1", NO_STATES, country, country)]
+            return out if unknown else out + [Not("adm1", NO_STATES, country, country)]   # a filled state of a country without states: left alone, as before
         if point is None:
-            return out + [Not("adm1", STAYS if converting else NO_COORDINATES, "")]
+            return out + [Not("adm1", STAYS if converting else (NOT_KNOWN_STAYS if unknown else NO_COORDINATES), row.adm1 if unknown else "")]
         placed = self.locate(row.country if stated_country is not None else None, country, point[0], point[1], row.stated)
         if placed.stop is not None:                              # no state for the point; a province stays, and the reason speaks of regions
             words = {NO_SHAPE_HERE: STAYS_OUTSIDE, ANOTHER_COUNTRY: in_regions(MADAGASCAR, ANOTHER_COUNTRY)} if converting else {}
@@ -2037,6 +2059,8 @@ class Corrections:
                 notes.insert(0, "the mapping file does not say which province " + at.state + " is in")
             else:
                 notes.insert(0, SAME_PROVINCE if belongs == converting else OTHER_PROVINCE + " (" + at.state + " is in " + belongs + ")")
+        if unknown:
+            notes.insert(0, NOT_KNOWN)
         if placed.note:
             notes.append(placed.note)
         return out + [Proposal("adm1", row.adm1, at.state, at.basis, country, at.other, at.other_km, at.flag, "; ".join(notes), at.unit.code, at.unit.ident, "",
@@ -3164,7 +3188,8 @@ def madagascar_regions(work, code, rows, group_text, lists=None):
         return ["", "Madagascar by region: no shapes of " + code + " (" + work.shapes.problems.get(MADAGASCAR, "") + ")."], []
     table, totals, reasons, differs = found
     within = work.shapes.within.get(MADAGASCAR, {})
-    proposals = sum(1 for row, p in lists.proposals if p.field == "adm1" and p.current and p.country == MADAGASCAR) if lists is not None else 0
+    proposals = sum(1 for row, p in lists.proposals if p.field == "adm1" and p.current and p.country == MADAGASCAR
+                    and NOT_KNOWN not in p.note) if lists is not None else 0   # a stored text AntWeb does not know is no province
     where = work.shapes.tables[MADAGASCAR]["where"]
     return region_lines(table, totals, reasons, lambda region: within.get(plain(region)), where, group_text, proposals, differs), differs
 
@@ -3188,6 +3213,9 @@ def rows_sql(columns, group_id=None, unknown=(), convert=()):
     gap = "s.adm1 is null or s.adm1 = '' or s.country is null or s.country = ''"
     if unknown:
         gap += " or hex(s.country) in (" + hexes(unknown) + ")"
+    # a stored state no adm1 row of the country is written as (2026-11-25): read too, the coordinates decide
+    gap += (" or (s.adm1 is not null and s.adm1 <> '' and not exists (select 1 from geolocale g where g.georank = 'adm1'"
+            " and g.parent = s.country and g.name = s.adm1))")
     for spellings, units in convert:
         if spellings and units:
             gap += " or (hex(s.country) in (" + hexes(spellings) + ") and s.adm1 in (" + ", ".join(cc.sql_string(u) for u in units) + "))"

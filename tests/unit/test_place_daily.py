@@ -107,7 +107,7 @@ APPLY = [
     {"specimen_code": "ok1", "field": "adm1", "current_value": "Toliara", "proposed_value": "Menabe", "country": "Madagascar", "upload_group": "CAS"},
     {"specimen_code": "ok2", "field": "adm1", "current_value": "", "proposed_value": "Sava", "country": "Madagascar", "upload_group": "CAS"},
     {"specimen_code": "near", "field": "adm1", "current_value": "", "proposed_value": "Sava", "country": "Madagascar",
-     "other_state_flag": "within the stated error of Analanjirofo"},
+     "other_state_flag": "within the stated error (60 km) of Analanjirofo"},
     {"specimen_code": "ctry", "field": "country", "current_value": "", "proposed_value": "Kenya", "country": "Kenya"},
     {"specimen_code": "uk", "field": "adm1", "current_value": "", "proposed_value": "England", "country": "United Kingdom"},
     {"specimen_code": "bad", "field": "adm1", "current_value": "", "proposed_value": "Atlantis", "country": "Madagascar"},
@@ -126,6 +126,42 @@ def test_only_safe_states_are_applied():
     todo, why = pd.eligible(rows, VALID, NOW, {"United Kingdom"})
     assert [r["code"] for r in todo] == ["ok1", "ok2"], todo
     assert why == {"flag": 1, "country": 1, "skip": 1, "invalid": 1, "gone": 1, "moved": 1, "changed": 1}, why
+
+
+def test_an_empty_state_near_a_border_is_written():
+    # Brian Fisher, 2026-11-25: coordinates decide. A blank state gets the state of its point although a border is
+    # within 1 km or within a stated error under 50 km; a filled state, a stated error of 50 km or more, an allowed
+    # distance above 1 km and a flag that cannot be read stay report rows. The flags are built by the function that
+    # writes them (place_corrections.border_flag), so a change of wording there fails here (review of #419).
+    flag = place_corrections.border_flag
+    row = lambda code, text, stored="": {"specimen_code": code, "field": "adm1", "current_value": stored, "proposed_value": "Sava",
+                                          "country": "Madagascar", "other_state_flag": text}
+    rows = [row("line", flag(1, 1, "Analanjirofo")), row("err10", flag(10, 1, "Analanjirofo")), row("err2", flag(2.5, 1, "Analanjirofo")),
+            row("err50", flag(50, 1, "Analanjirofo")), row("err1500", flag(1500, 1, "Analanjirofo")), row("wide", flag(5, 5, "Analanjirofo")),
+            row("odd", "within the stated error of Analanjirofo"), row("filled", flag(1, 1, "Analanjirofo"), "Toliara")]
+    assert rows[0]["other_state_flag"] == "within the allowed 1 km of Analanjirofo" and rows[1]["other_state_flag"] == "within the stated error (10 km) of Analanjirofo"
+    with tempfile.TemporaryDirectory() as d:
+        read = pd.rows_of(corrections_file(d, rows), "2026-11-25", "report")
+    now = {r["specimen_code"]: ("Madagascar", r["current_value"]) for r in rows}
+    todo, why = pd.eligible(read, VALID, now, set())
+    assert [r["code"] for r in todo] == ["line", "err10", "err2"], todo
+    assert all(r["flag"] for r in todo)                                          # the flag stays with the written row
+    assert why == {"flag": 4, "flagunread": 1}, why                               # err50, err1500, wide, filled; odd
+    # a stored text AntWeb does not know follows the point as an empty state does, near a border too; a known one never
+    assert pd.NOT_KNOWN == place_corrections.NOT_KNOWN
+    unknown = [dict(row("unk", flag(1, 1, "Analanjirofo"), "Li\u221a\u00aege"), note=place_corrections.NOT_KNOWN),
+               dict(row("unk_far", flag(60, 1, "Analanjirofo"), "Sambava town"), note=place_corrections.NOT_KNOWN),
+               dict(row("unk_plain", "", "Dept. of Sava"), note=place_corrections.NOT_KNOWN),
+               dict(row("known_odd", "within the stated error of Analanjirofo", "Toliara"))]
+    with tempfile.TemporaryDirectory() as d:
+        read = pd.rows_of(corrections_file(d, unknown), "2026-11-25", "report")
+    todo, why = pd.eligible(read, VALID, {r["specimen_code"]: ("Madagascar", r["current_value"]) for r in unknown}, set())
+    assert [r["code"] for r in todo] == ["unk", "unk_plain"], todo
+    assert why == {"flag": 2}, why                                               # unk_far: 60 km; known_odd: a known state, not "unread"
+    doubt = pd.border_doubt
+    assert doubt(flag(1, 1, "X")) == "near" and doubt(flag(5, 5, "X")) == "far" and doubt(flag(40, 1, "X")) == "near"
+    assert doubt(flag(50, 1, "X")) == "far" and doubt(flag(1500, 1, "X")) == "far"
+    assert doubt("") == doubt(None) == doubt("something else") == doubt("within the stated error of X") == "unread"
 
 
 def test_a_valid_stored_state_is_never_overwritten():
@@ -182,7 +218,7 @@ def test_the_apply_sql_backs_up_first_and_writes_only_unchanged_states():
     assert sql[1].startswith("CREATE TABLE place_apply_bak_20261123 ") and sql[2] == "START TRANSACTION" and sql[-1] == "COMMIT"
     sql = sql[:1] + sql[2:3] + sql[1:2] + sql[3:]      # the rest as before
     assert sql[3].startswith("INSERT INTO place_apply_bak_20261123 (code, adm1, adm1_verbatim) SELECT") and "'ok1','ok2'" in sql[3]
-    assert sql[4] == ("UPDATE specimen SET adm1_verbatim = IFNULL(adm1_verbatim, adm1), adm1 = 'Menabe' WHERE code = 'ok1'"
+    assert sql[4] == ("UPDATE specimen SET adm1_verbatim = COALESCE(NULLIF(adm1, ''), adm1_verbatim), adm1 = 'Menabe' WHERE code = 'ok1'"
                       " AND BINARY IFNULL(adm1, '') = BINARY 'Toliara'"), sql[4]
     assert sql[5].endswith("WHERE code = 'ok2' AND BINARY IFNULL(adm1, '') = BINARY ''"), sql[5]
     assert sql[6].startswith("INSERT INTO place_update (") and ",applied) VALUES " in sql[6] and "'apply'" in sql[6] and sql[6].count(",1)") == 2
