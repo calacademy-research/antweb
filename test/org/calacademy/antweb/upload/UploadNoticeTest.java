@@ -436,4 +436,12 @@ public class UploadNoticeTest extends TestCase {
         assertNull(MessageMgr.attention("x", "<b>Something <font color=green>(uploaded)</font></b>"));
         assertEquals("notLoaded", MessageMgr.attention("x", "<b>Something <font color=red>(not uploaded)</font></b>"));
     }
+
+    /** The report's heading for an adm1 AntWeb does not know says what AntWeb does and, as the email, asks for no fix (review of #420). */
+    public void testUnknownAdm1HeadingAsksForNoFix() {
+        String heading = MessageMgr.getMessageDisplay(MessageMgr.notValidAdm1);
+        assertTrue(heading, heading.contains("AntWeb sets the adm1 from them"));
+        assertFalse(heading, heading.contains("in your file"));
+        assertFalse(heading, heading.toLowerCase().contains("please fix"));
+    }
 }

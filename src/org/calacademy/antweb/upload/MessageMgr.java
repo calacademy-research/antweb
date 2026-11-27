@@ -373,7 +373,7 @@ public class MessageMgr {
       testList.add(new Test(invalidLatLon, STR, "<b>Invalid lat/lon <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(unrecognizedColumn, STR, "<b>" + COLUMNS_IGNORED_HEADING + "</b>"));
       testList.add(new Test(invalidColumn, SET, "<b>Invalid Column Count <font color=red>(not uploaded)</font></b>"));
-      testList.add(new Test(notValidAdm1, STR, "<b>Not valid Antweb adm1</b> <font color=green>(uploaded as sent; where there are coordinates, AntWeb sets the adm1 from them the next morning and keeps your text)</font>: click a name to see the country's adm1 names, and use one of them in your file"));
+      testList.add(new Test(notValidAdm1, STR, "<b>Not valid Antweb adm1</b> <font color=green>(uploaded as sent; where there are coordinates, AntWeb sets the adm1 from them the next morning and keeps your text)</font>: click a name to see the country's adm1 names"));   // no request to fix what AntWeb handles (Brian Fisher, 2026-11-21; review of #420)
       //testList.add(new Test(noCasteNotes, STR, "<b>No life stage/sex data. Undiscernable <a href='" + AntwebProps.getDomainApp() + "/casteDisplayPage.do'>caste</a></b>"));
       testList.add(new Test(unrecognizedCaste, STR, "<b>Unrecognized Caste</b>")); // Not a recognized <a href='" + AntwebProps.getDomainApp() + "/casteList.do'>caste</a>
       testList.add(new Test(invalidDateCollectedStart, STR, "<b>Invalid Date Collected Start <font color=green>(uploaded without this date)</font></b>"));
