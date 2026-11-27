@@ -160,6 +160,9 @@ public final class UploadReportPage {
         f.corrected = m.getCorrectedCount();
         f.nameChanges = m.getNameChangeCount();
         f.alreadyInAntweb = m.getAlreadyInAntwebCount();
+        f.unknownAdm1 = m.getUnknownAdm1Count();
+        f.outsidePlace = m.getOutsidePlaceCount();
+        f.garbledValues = m.getGarbledCount();
         return f;
     }
 

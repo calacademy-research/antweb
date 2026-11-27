@@ -255,6 +255,26 @@ public class UploadNoticeTest extends TestCase {
         }
     }
 
+    /** 2026-11-27: place problems are in the summary, said with what AntWeb does (Brian Fisher: the upload tells the
+     *  curator, instead of an email by hand). */
+    public void testAttentionSummaryPlaces() {
+        Facts f = counts(0, 0, 0);
+        f.unknownAdm1 = 12;
+        assertEquals("12 specimens have an adm1 AntWeb does not know (AntWeb sets it from the coordinates and keeps your text);"
+            + " see the report. Please fix them in your own data before your next upload.", UploadNotice.attentionSummary(f));
+        f.unknownAdm1 = 1;
+        assertEquals("1 specimen has an adm1 AntWeb does not know (AntWeb sets it from the coordinates and keeps your text);"
+            + " see the report. Please fix it in your own data before your next upload.", UploadNotice.attentionSummary(f));
+        Facts all = counts(1, 0, 0);
+        all.unknownAdm1 = 3;
+        all.outsidePlace = 2;
+        all.garbledValues = 1;
+        assertEquals("1 specimen was corrected, 3 specimens have an adm1 AntWeb does not know (AntWeb sets it from the coordinates"
+            + " and keeps your text), 2 specimens have coordinates outside their country or adm1 and 1 value has accented letters"
+            + " damaged before the upload (save your file as UTF-8 with the letters restored); see the report. Please fix them"
+            + " in your own data before your next upload.", UploadNotice.attentionSummary(all));
+    }
+
     /** SAM: one Ocymyrmex line corrected (species indet with a subspecies). The whole email. */
     public void testSummaryInEmailOneCorrection() {
         Facts f = counts(1, 0, 0);

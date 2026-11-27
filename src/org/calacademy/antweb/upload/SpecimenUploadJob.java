@@ -185,7 +185,10 @@ public final class SpecimenUploadJob implements BackgroundJobs.Work {
         f.notLoaded = d.getMessageMgr().getNotLoadedCount();
         f.corrected = d.getMessageMgr().getCorrectedCount();
         f.nameChanges = d.getMessageMgr().getNameChangeCount();
-        if (f.notLoaded + f.corrected + f.nameChanges > 0) s.append(" ").append(UploadNotice.attentionSummary(f));
+        f.unknownAdm1 = d.getMessageMgr().getUnknownAdm1Count();
+        f.outsidePlace = d.getMessageMgr().getOutsidePlaceCount();
+        f.garbledValues = d.getMessageMgr().getGarbledCount();
+        if (f.notLoaded + f.corrected + f.nameChanges + f.unknownAdm1 + f.outsidePlace + f.garbledValues > 0) s.append(" ").append(UploadNotice.attentionSummary(f));
         String note = UploadNotice.plain(d.getMessage());
         if (note != null && !"success".equals(note)) s.append(" Note: ").append(note);
         return s.toString();

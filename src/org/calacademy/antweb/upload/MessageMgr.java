@@ -369,7 +369,7 @@ public class MessageMgr {
       testList.add(new Test(invalidLatLon, STR, "<b>Invalid lat/lon <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(unrecognizedColumn, STR, "<b>" + COLUMNS_IGNORED_HEADING + "</b>"));
       testList.add(new Test(invalidColumn, SET, "<b>Invalid Column Count <font color=red>(not uploaded)</font></b>"));
-      testList.add(new Test(notValidAdm1, STR, "<b>Not valid Antweb adm1</b>"));
+      testList.add(new Test(notValidAdm1, STR, "<b>adm1 AntWeb does not know <font color=green>(uploaded as sent; with coordinates, AntWeb sets the adm1 from them the next morning and keeps your text)</font> — click a name to see the country's adm1 names, and use one of them in your file</b>"));
       //testList.add(new Test(noCasteNotes, STR, "<b>No life stage/sex data. Undiscernable <a href='" + AntwebProps.getDomainApp() + "/casteDisplayPage.do'>caste</a></b>"));
       testList.add(new Test(unrecognizedCaste, STR, "<b>Unrecognized Caste</b>")); // Not a recognized <a href='" + AntwebProps.getDomainApp() + "/casteList.do'>caste</a>
       testList.add(new Test(invalidDateCollectedStart, STR, "<b>Invalid Date Collected Start <font color=green>(uploaded without this date)</font></b>"));
@@ -644,6 +644,19 @@ public class MessageMgr {
     /** Lines loaded after AntWeb changed what the curator wrote (CORRECTED), other than name changes. */
     public int getCorrectedCount() {
       return attentionCount("corrected");
+    }
+
+    /** The place sections of the upload-complete email's summary (2026-11-27): specimens whose adm1 AntWeb does not
+     *  know, whose coordinates lie outside their country or adm1, and values with damaged accents. */
+    public int getUnknownAdm1Count() { return sectionCount(notValidAdm1); }
+    public int getOutsidePlaceCount() { return sectionCount(latLonNotInCountryBounds) + sectionCount(latLonNotInAdm1Bounds); }
+    public int getGarbledCount() { return sectionCount(garbledText); }
+
+    private int sectionCount(String key) {
+      for (Test test : getTests()) {
+        if (key.equals(test.getKey())) return test.getCount();
+      }
+      return 0;
     }
 
     /** Lines in the report's other sections (notes: neither corrected, not loaded nor red-flagged), with the

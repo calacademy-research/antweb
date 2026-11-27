@@ -176,6 +176,9 @@ public class UploadNotice {
         public int corrected = -1;          // lines AntWeb corrected and loaded (MessageMgr.CORRECTED, not name changes)
         public int nameChanges = 0;         // lines filed under AntCat's current name (MessageMgr.NAME_CHANGES)
         public int alreadyInAntweb = 0;     // codes another group uploaded first: not loaded, nothing to do
+        public int unknownAdm1 = 0;         // specimens whose adm1 AntWeb does not know (MessageMgr.notValidAdm1), 2026-11-27
+        public int outsidePlace = 0;        // specimens whose coordinates lie outside their country or adm1
+        public int garbledValues = 0;       // values whose accented letters were damaged before the upload (GarbledText)
         public int imagesSaved = -1;
         public int imagesNotSaved = -1;     // files the Image Uploader did not save (listed in the report)
         public String reportUrl;            // null: no report was written
@@ -229,11 +232,19 @@ public class UploadNotice {
         if (f.corrected > 0) parts.add(were(f.corrected, "specimen", "specimens") + "corrected");
         if (f.notLoaded > 0) parts.add(were(f.notLoaded, "line", "lines") + "not loaded");
         if (f.redFlagged > 0) parts.add(were(f.redFlagged, "specimen", "specimens") + "red-flagged");
+        // Places (Brian Fisher, 2026-11-27: the upload tells the curator, instead of an email by hand). Said with what
+        // AntWeb does about it, so the curator knows which value AntWeb keeps.
+        if (f.unknownAdm1 > 0) parts.add(plural(f.unknownAdm1, "specimen has", "specimens have")
+            + " an adm1 AntWeb does not know (AntWeb sets it from the coordinates and keeps your text)");
+        if (f.outsidePlace > 0) parts.add(plural(f.outsidePlace, "specimen has", "specimens have")
+            + (f.outsidePlace == 1 ? " coordinates outside its country or adm1" : " coordinates outside their country or adm1"));
+        if (f.garbledValues > 0) parts.add(plural(f.garbledValues, "value has", "values have")
+            + " accented letters damaged before the upload (save your file as UTF-8 with the letters restored)");
         if (parts.isEmpty()) return "Nothing in the report needs your attention.";
         String list = parts.size() == 1 ? parts.get(0)
             : String.join(", ", parts.subList(0, parts.size() - 1)) + " and " + parts.get(parts.size() - 1);
-        return list + "; see the report. Please fix " + (f.nameChanges + f.corrected + f.notLoaded + Math.max(f.redFlagged, 0) == 1 ? "it" : "them")
-            + " in your own data before your next upload.";
+        int total = f.nameChanges + f.corrected + f.notLoaded + Math.max(f.redFlagged, 0) + f.unknownAdm1 + f.outsidePlace + f.garbledValues;
+        return list + "; see the report. Please fix " + (total == 1 ? "it" : "them") + " in your own data before your next upload.";
     }
 
     public static String body(Facts f) {
