@@ -242,7 +242,9 @@ public class UploadNotice {
         // Coordinates outside the country or adm1 are red flags too (MessageMgr's "red" sections): said once, below,
         // with the reason (review of #420).
         // redFlagged counts the report's lines, refused lines included: take away the same lines (review of #420)
-        int red = Math.max(f.redFlagged - (f.outsideInRedFlags >= 0 ? f.outsideInRedFlags : Math.max(f.outsidePlace, 0)), 0);
+        // The red flags not said as coordinates outside: when the summary names those specimens, its own number, so the
+        // two parts add up to the header's red-flag count (review of #420); otherwise the report lines of those sections.
+        int red = Math.max(f.redFlagged - (f.outsidePlace > 0 ? f.outsidePlace : Math.max(f.outsideInRedFlags, 0)), 0);
         if (red > 0) parts.add(were(red, "specimen", "specimens") + "red-flagged");
         // Places (Brian Fisher, 2026-11-27: the upload tells the curator, instead of an email by hand). An adm1 AntWeb
         // does not know is set from the coordinates by AntWeb, so it is said apart, with what AntWeb does, and is not

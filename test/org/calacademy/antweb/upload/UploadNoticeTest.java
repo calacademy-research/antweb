@@ -455,7 +455,7 @@ public class UploadNoticeTest extends TestCase {
         f.reportUrl = "https://www.antweb.org/web/log/specimen/20261127-14:01:07-specimenUpload.html";
         String body = UploadNotice.body(f);
         assertTrue(body, body.contains("Red-flagged specimens: 5\n"));
-        assertTrue(body, body.contains("2 specimens have coordinates outside their country or adm1"));
+        assertTrue(body, body.contains("3 specimens were red-flagged and 2 specimens have coordinates outside their country or adm1"));
         assertFalse(body, body.contains("3 for coordinates"));
         f.outsidePlace = 0;        // nothing in the summary: the header says them
         assertTrue(UploadNotice.body(f).contains("Red-flagged specimens: 5 (3 for coordinates outside their country or adm1)\n"));
