@@ -56,21 +56,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     /** The garbled values (GarbledText) already said in this upload's report, "column: value"; no more than GARBLED_SHOWN. */
     private final HashSet<String> garbledSeen = new HashSet<>();      // every different "column: value" of the upload
     private final ArrayList<String> garbledPending = new ArrayList<>(); // those of the line being read
-    private final ArrayList<String> garbledNewOnLine = new ArrayList<>(); // those the line being read counted first
     static final int GARBLED_SHOWN = 40;
     private final HashSet<String> garbledListed = new HashSet<>();   // the values listed in the report (the first GARBLED_SHOWN)
     private boolean isGarbledShown(String value) { return garbledListed.contains(value); }
     private int[] placeAtLineStart;   // MessageMgr.placeCounts() when the line being read started
-
-    /** The line just read passed parseLine and was then skipped (processLine): the damaged values it counted first are
-     *  not counted, so a later loaded line with one counts it (review of #420). The report still lists the line. */
-    protected void uncountGarbledOfLine() {
-        for (String value : garbledNewOnLine) {
-            garbledSeen.remove(value);
-            getMessageMgr().uncountGarbled();
-        }
-        garbledNewOnLine.clear();
-    }
 
 
     /**
@@ -169,7 +158,6 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             elements = new ArrayList<>(Arrays.asList(loopComponents));
             int colIndex = 0;
             garbledPending.clear();
-            garbledNewOnLine.clear();
             placeAtLineStart = getMessageMgr().placeCounts();
 
             for (String next : elements) {
@@ -954,12 +942,12 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         // (errorMessage set) is not counted, and the report names this line's code. The email counts the different
         // values; the report lists the first GARBLED_SHOWN of them, each with the codes of every line that has it.
         // The place counts of the email follow the same rule: a line refused after its place checks is not counted.
+        // (A line processLine skips later keeps its damaged values counted and listed: they are in the curator's file.)
         if (errorMessage != null) getMessageMgr().uncountRefusedPlaces(placeAtLineStart);
         if (errorMessage == null) {
             for (String value : garbledPending) {
                 String shown = Html.esc(value);
                 if (garbledSeen.add(value)) {
-                    garbledNewOnLine.add(value);
                     getMessageMgr().countGarbled();
                     if (!isGarbledShown(value) && garbledListed.size() < GARBLED_SHOWN) {
                         garbledListed.add(value);

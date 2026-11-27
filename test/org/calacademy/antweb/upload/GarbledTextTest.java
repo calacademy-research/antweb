@@ -27,6 +27,7 @@ public class GarbledTextTest extends TestCase {
         assertTrue(GarbledText.is("Panam\u00B7"));
         assertFalse(GarbledText.is("leaf\u00B7litter, 2 m\u00B7s", true));
         assertTrue(GarbledText.is("Li\u221A\u00AEge, leaf litter", true));
-        assertTrue(GarbledText.isFreeText("localitynotes") && GarbledText.isFreeText("microhabitat") && !GarbledText.isFreeText("adm1"));
+        assertTrue(GarbledText.isFreeText("localitynotes") && GarbledText.isFreeText("microhabitat") && !GarbledText.isFreeText("adm1")
+            && !GarbledText.isFreeText("localityname"));
     }
 }

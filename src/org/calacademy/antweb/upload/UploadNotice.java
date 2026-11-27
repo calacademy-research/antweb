@@ -215,13 +215,6 @@ public class UploadNotice {
         return plural(i, one, many) + (i == 1 ? " was " : " were ");
     }
 
-    /**
-     * What in the report needs the curator's attention, in one or two sentences (Brian Fisher, 2026-10-29):
-     * "2 specimens were corrected and 1 line was not loaded; see the report. Please fix them in your own data
-     * before your next upload." Only counts; "Nothing in the report needs your attention." when there is
-     * nothing. Null when the counts are not known (image uploads, uploads that did not complete).
-     * Which report sections count: MessageMgr.CORRECTED.
-     */
     /** The red flags that are coordinates outside the country or adm1, said with the red-flag count so it matches the
      *  summary, which names them apart (review of #420): " (2 for coordinates outside their country or adm1)". */
     public static String outsideOfRed(int redFlagged, int outsidePlace) {
@@ -229,6 +222,13 @@ public class UploadNotice {
         return " (" + n(outsidePlace) + " for coordinates outside " + (outsidePlace == 1 ? "its" : "their") + " country or adm1)";
     }
 
+    /**
+     * What in the report needs the curator's attention, in one or two sentences (Brian Fisher, 2026-10-29):
+     * "2 specimens were corrected and 1 line was not loaded; see the report. Please fix them in your own data
+     * before your next upload." Only counts; "Nothing in the report needs your attention." when there is
+     * nothing. Null when the counts are not known (image uploads, uploads that did not complete).
+     * Which report sections count: MessageMgr.CORRECTED.
+     */
     public static String attentionSummary(Facts f) {
         if (f.images || !f.complete || f.notLoaded < 0 || f.corrected < 0) return null;
         List<String> parts = new ArrayList<>();

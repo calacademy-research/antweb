@@ -25,10 +25,11 @@ public final class GarbledText {
 
     private GarbledText() {}
 
-    /** A column of free text (lower case, as the upload reads the header): notes, habitat, locality, method. */
+    /** A column of free text (lower case, as the upload reads the header): notes, habitat, method. Not the locality
+     *  name or code: place names, where this damage is most likely. */
     public static boolean isFreeText(String column) {
         if (column == null) return false;
-        return column.contains("notes") || column.contains("habitat") || column.contains("locality") || column.contains("method")
+        return column.contains("notes") || column.contains("habitat") || column.contains("method")
             || column.contains("remarks") || column.contains("description");
     }
 

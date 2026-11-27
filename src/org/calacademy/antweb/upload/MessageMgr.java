@@ -680,7 +680,6 @@ public class MessageMgr {
     public int getGarbledCount() { return garbledValues; }
     private int garbledValues = 0;
     public void countGarbled() { ++garbledValues; }
-    public void uncountGarbled() { if (garbledValues > 0) --garbledValues; }
 
     private int sectionCount(String key) {
       // placeCounts() runs for every line of a file (a CAS file has 265,000): the three sections are looked up once
@@ -699,7 +698,7 @@ public class MessageMgr {
     public int getNoteCount() {
       int n = 0;
       for (Test test : getTests()) {
-        if (NOTE.equals(kind(test))) n += test.getCount();
+        if (NOTE.equals(kind(test))) n += garbledText.equals(test.getKey()) ? garbledValues : test.getCount();   // as its section (reportSections)
       }
       for (String flag : new String[] {"is_introduced", "noCasteNotes"}) {
         Integer c = flags.get(flag);
