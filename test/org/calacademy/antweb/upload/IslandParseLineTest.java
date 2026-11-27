@@ -305,6 +305,12 @@ public class IslandParseLineTest extends TestCase {
         for (int i = 0; i < 3; i++) parse("United States", damaged);
         assertEquals("one different value", 1, messages.getGarbledCount());
         assertEquals("the codes of all three lines", 3, codesOf(MessageMgr.garbledText, "adm1: " + damaged));
+        Field lineCounts = MessageMgr.class.getDeclaredMethod("getTest", String.class).getReturnType().getDeclaredField("fileLineCounts");
+        lineCounts.setAccessible(true);
+        Method getTest = MessageMgr.class.getDeclaredMethod("getTest", String.class);
+        getTest.setAccessible(true);
+        assertEquals("and their file lines", Integer.valueOf(3),
+            ((Map<?, ?>) lineCounts.get(getTest.invoke(messages, MessageMgr.garbledText))).get("adm1: " + damaged));
         // a refused line (a subfamily that is not an ant, with no ant genus) adds nothing
         assertNotNull(parseTaxon("pselaphinae", "batrisodes", "United States", "Namur\u221a\u00a9"));
         assertEquals("a refused line is not counted", 1, messages.getGarbledCount());

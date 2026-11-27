@@ -648,8 +648,28 @@ public class MessageMgr {
 
     /** The place sections of the upload-complete email's summary (2026-11-27): specimens whose adm1 AntWeb does not
      *  know, whose coordinates lie outside their country or adm1, and values with damaged accents. */
-    public int getUnknownAdm1Count() { return sectionCount(notValidAdm1); }
-    public int getOutsidePlaceCount() { return sectionCount(latLonNotInCountryBounds) + sectionCount(latLonNotInAdm1Bounds); }
+    public int getUnknownAdm1Count() { return Math.max(sectionCount(notValidAdm1) - refusedUnknownAdm1, 0); }
+    public int getOutsidePlaceCount() { return Math.max(placeCounts()[1] - refusedOutsidePlace, 0); }
+    /** The two place counts now (adm1 not known, outside the country or adm1), taken when a line starts (SpecimenUploadParse). */
+    public int[] placeCounts() {
+      return new int[] {sectionCount(notValidAdm1), sectionCount(latLonNotInCountryBounds) + sectionCount(latLonNotInAdm1Bounds)};
+    }
+    /** A line refused after its place checks (review of #420): what it added to the place sections is not a specimen,
+     *  so the email does not count it. The report still lists the line. */
+    public void uncountRefusedPlaces(int[] atLineStart) {
+      if (atLineStart == null) return;
+      int[] now = placeCounts();
+      refusedUnknownAdm1 += Math.max(now[0] - atLineStart[0], 0);
+      refusedOutsidePlace += Math.max(now[1] - atLineStart[1], 0);
+    }
+    private int refusedUnknownAdm1 = 0, refusedOutsidePlace = 0;
+    /** A further line with a value already listed: its code and its file line, without adding to the section's count. */
+    public void addRepeat(String key, String value) {
+      Test test = getTest(key);
+      if (test == null) return;
+      test.recordCode(value, currentCode);
+      test.recordLine(value);
+    }
     /** The different values with damaged accents (GarbledText), not only the first ones the report lists (review of #420). */
     public int getGarbledCount() { return garbledValues; }
     private int garbledValues = 0;

@@ -59,6 +59,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     static final int GARBLED_SHOWN = 40;
     private final HashSet<String> garbledListed = new HashSet<>();   // the values listed in the report (the first GARBLED_SHOWN)
     private boolean isGarbledShown(String value) { return garbledListed.contains(value); }
+    private int[] placeAtLineStart;   // MessageMgr.placeCounts() when the line being read started
+
 
     /**
      * Brian Fisher, 2026-11-03: only a morphospecies or indet (or a line without species) moves with a synonym genus to
@@ -156,6 +158,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             elements = new ArrayList<>(Arrays.asList(loopComponents));
             int colIndex = 0;
             garbledPending.clear();
+            placeAtLineStart = getMessageMgr().placeCounts();
 
             for (String next : elements) {
                 String element = multipleSpaces.subst(next.trim(), " ");
@@ -850,6 +853,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 errorMessage = "code Not Found In Line line:" + lineNum + " displayLine:" + LineNumMgr.getDisplayLineNum(lineNum);
                 getMessageMgr().addToMessages(MessageMgr.codeNotFoundInLine, "line:" + LineNumMgr.getDisplayLineNum(lineNum));
               }
+                getMessageMgr().uncountRefusedPlaces(placeAtLineStart);   // a refused line is not a specimen (review of #420)
                 return errorMessage;
             } else {
               specimenItem.put("taxon_name", taxonName);
@@ -936,6 +940,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         // Damaged accents of this line (reviews of #420): said at the end of parseLine, so a line refused anywhere above
         // (errorMessage set) is not counted, and the report names this line's code. The email counts the different
         // values; the report lists the first GARBLED_SHOWN of them, each with the codes of every line that has it.
+        // The place counts of the email follow the same rule: a line refused after its place checks is not counted.
+        if (errorMessage != null) getMessageMgr().uncountRefusedPlaces(placeAtLineStart);
         if (errorMessage == null) {
             for (String value : garbledPending) {
                 String shown = Html.esc(value);
@@ -946,7 +952,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                         getMessageMgr().addToMessages(MessageMgr.garbledText, shown);
                     }
                 } else if (isGarbledShown(value)) {
-                    getMessageMgr().addCode(MessageMgr.garbledText, shown, getMessageMgr().getCurrentCode());
+                    getMessageMgr().addRepeat(MessageMgr.garbledText, shown);
                 }
             }
         }

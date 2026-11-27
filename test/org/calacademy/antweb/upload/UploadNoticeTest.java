@@ -371,6 +371,16 @@ public class UploadNoticeTest extends TestCase {
         m.addToMessages(MessageMgr.latLonNotInCountryBounds, "SAM-ENT-011941", "not in South Africa");
         m.addToMessages(MessageMgr.latLonNotInAdm1Bounds, "SAM-ENT-011942", "not in Western Cape");
         assertEquals(2, m.getOutsidePlaceCount());
+        // A line refused after its place checks (review of #420): listed in the report, not counted as a specimen.
+        int[] lineStart = m.placeCounts();
+        m.addToMessages(MessageMgr.notValidAdm1, "Atlantis");
+        m.addToMessages(MessageMgr.latLonNotInCountryBounds, "SAM-ENT-011943", "not in South Africa");
+        m.uncountRefusedPlaces(lineStart);
+        assertEquals(7, m.getUnknownAdm1Count());
+        assertEquals(2, m.getOutsidePlaceCount());
+        // a later loaded line counts again
+        m.addToMessages(MessageMgr.notValidAdm1, "Atlantis");
+        assertEquals(8, m.getUnknownAdm1Count());
         for (int i = 0; i < 50; i++) m.countGarbled();
         assertEquals(50, m.getGarbledCount());
     }
