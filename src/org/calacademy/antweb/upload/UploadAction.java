@@ -582,6 +582,10 @@ public class UploadAction extends AntwebAction {
 				notice.corrected = uploadDetails.getMessageMgr().getCorrectedCount();
 				notice.nameChanges = uploadDetails.getMessageMgr().getNameChangeCount();
 				notice.alreadyInAntweb = uploadDetails.getMessageMgr().getAlreadyInAntwebCount();
+				notice.unknownAdm1 = uploadDetails.getMessageMgr().getUnknownAdm1Count();
+				notice.outsidePlace = uploadDetails.getMessageMgr().getOutsidePlaceCount();
+				notice.outsideInRedFlags = uploadDetails.getMessageMgr().getOutsidePlaceLines();
+				notice.garbledValues = uploadDetails.getMessageMgr().getGarbledCount();
 			} else {
 				notice.failure = UploadNotice.failureText(failureMessage);
 				notice.uploadPageUrl = AntwebProps.getDomainApp() + "/curate.do";

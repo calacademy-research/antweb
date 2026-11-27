@@ -53,6 +53,15 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
     static int MAXLENGTH = 80;
 
+    /** The garbled values (GarbledText) already said in this upload's report, "column: value"; no more than GARBLED_SHOWN. */
+    private final HashSet<String> garbledSeen = new HashSet<>();      // every different "column: value" of the upload
+    private final ArrayList<String> garbledPending = new ArrayList<>(); // those of the line being read
+    static final int GARBLED_SHOWN = 40;
+    private final HashSet<String> garbledListed = new HashSet<>();   // the values listed in the report (the first GARBLED_SHOWN)
+    private boolean isGarbledShown(String value) { return garbledListed.contains(value); }
+    private int[] placeAtLineStart;   // MessageMgr.placeCounts() when the line being read started
+
+
     /**
      * Brian Fisher, 2026-11-03: only a morphospecies or indet (or a line without species) moves with a synonym genus to
      * the valid genus, as GenusSynonymRule decides for the nightly name update; a species name stays.
@@ -148,6 +157,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             String[] loopComponents = tab.split(theLine);
             elements = new ArrayList<>(Arrays.asList(loopComponents));
             int colIndex = 0;
+            garbledPending.clear();
+            placeAtLineStart = getMessageMgr().placeCounts();
 
             for (String next : elements) {
                 String element = multipleSpaces.subst(next.trim(), " ");
@@ -165,6 +176,12 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                     if (colList.get(colIndex) != null) {
                         String col = colList.get(colIndex);
                         col = col.toLowerCase();
+
+                        // 2026-11-25: accents damaged before the upload ("Li" + a square-root sign + "ge"): said in the report,
+                        // uploaded as sent. The first GARBLED_SHOWN distinct values only: a whole damaged file would fill the report.
+                        // The columns AntWeb maps only: the others go unread into the record's other columns.
+                        // The report names the column as the curator's file does (LifeStageSex, not caste; review of #420).
+                        if (GarbledText.is(element, !GarbledText.isNameColumn(col))) garbledPending.add(fileHeader(colIndex, col) + ": " + element);   // said once the line's code is known
  
                         /* This code block handles columns and headers as listed and defined in AntwebUpload */
                     if (taxonomyHeaders.contains(col)) {
@@ -838,6 +855,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 errorMessage = "code Not Found In Line line:" + lineNum + " displayLine:" + LineNumMgr.getDisplayLineNum(lineNum);
                 getMessageMgr().addToMessages(MessageMgr.codeNotFoundInLine, "line:" + LineNumMgr.getDisplayLineNum(lineNum));
               }
+                getMessageMgr().uncountRefusedPlaces(placeAtLineStart);   // a refused line is not a specimen (review of #420)
                 return errorMessage;
             } else {
               specimenItem.put("taxon_name", taxonName);
@@ -919,6 +937,27 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             s_log.error("parseLine() e:" + e);
             //AntwebUtil.errorStackTrace(e);
             errorMessage = "e:" + e;
+        }
+
+        // Damaged accents of this line (reviews of #420): said at the end of parseLine, so a line refused anywhere above
+        // (errorMessage set) is not counted, and the report names this line's code. The email counts the different
+        // values; the report lists the first GARBLED_SHOWN of them, each with the codes of every line that has it.
+        // The place counts of the email follow the same rule: a line refused after its place checks is not counted.
+        // (A line processLine skips later keeps its damaged values counted and listed: they are in the curator's file.)
+        if (errorMessage != null) getMessageMgr().uncountRefusedPlaces(placeAtLineStart);
+        if (errorMessage == null) {
+            for (String value : garbledPending) {
+                String shown = Html.esc(value);
+                if (garbledSeen.add(value)) {
+                    getMessageMgr().countGarbled();
+                    if (!isGarbledShown(value) && garbledListed.size() < GARBLED_SHOWN) {
+                        garbledListed.add(value);
+                        getMessageMgr().addToMessages(MessageMgr.garbledText, shown);
+                    }
+                } else if (isGarbledShown(value)) {
+                    getMessageMgr().addRepeat(MessageMgr.garbledText, shown);
+                }
+            }
         }
 
         Profiler.profile("parseLine", startTime);
@@ -1248,6 +1287,23 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         if (!buildHeaderArrayList().contains(head)) return null;
         String translated = buildColumnTranslations().get(head);
         return translated != null ? translated : head;
+    }
+
+    private String[] fileHeaders;
+
+    /** The header line of the file being read, so the report can name a column as the curator's file does. */
+    protected void setFileHeaders(String headerLine) {
+        fileHeaders = headerLine == null ? null : headerLine.split("\t", -1);
+    }
+
+    /** The file's own name of column colIndex; the AntWeb name when the header is not known. */
+    String fileHeader(int colIndex, String col) {
+        if (fileHeaders == null || colIndex >= fileHeaders.length) return col;
+        // A byte-order mark on the first header and quotes around a header are not part of the name (review of #420).
+        String head = fileHeaders[colIndex].replace("\uFEFF", "").trim();
+        if (head.length() >= 2 && (head.charAt(0) == '"' || head.charAt(0) == '\'')
+            && head.charAt(head.length() - 1) == head.charAt(0)) head = head.substring(1, head.length() - 1).trim();
+        return head.isEmpty() ? col : head;
     }
 
     protected Hashtable<String, String> getColumnTranslations() {

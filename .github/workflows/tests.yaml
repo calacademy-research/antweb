@@ -336,6 +336,20 @@ jobs:
             grep -q "^OK (3 tests)" /tmp/out.txt
           '
 
+      - name: Java unit test of the upload report's garbled-text check (accents damaged before the upload, 2026-11-25)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/upload/GarbledText.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/upload/GarbledTextTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.GarbledTextTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (2 tests)" /tmp/out.txt
+          '
+
       - name: Java unit tests of the EXIF section on the image page (Latin-1 and UTF-8 text, binary fields, escaping)
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
@@ -887,7 +901,7 @@ jobs:
                      util.BackgroundJobsTest:16 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
                      util.JobSummaryTest:8 upload.SubfamilyFromGenusTest:9 upload.LocalityCodePlainTest:6 \
-                     util.CountrySpellingTest:8 util.Adm1SpellingTest:7 util.Adm1NamesNoteTest:4 util.DuplicateStateTest:5 util.PlaceBioregionTest:10 upload.IslandCountryTest:10 upload.IslandParseLineTest:10 upload.AntcatLocalityTest:9 util.QuoteTrimTest:5 util.DataExtractTest:19 upload.AntcatStatusTest:3; do
+                     util.CountrySpellingTest:8 util.Adm1SpellingTest:7 util.Adm1NamesNoteTest:4 util.DuplicateStateTest:5 util.PlaceBioregionTest:10 upload.IslandCountryTest:10 upload.IslandParseLineTest:14 upload.AntcatLocalityTest:9 util.QuoteTrimTest:5 util.DataExtractTest:19 upload.AntcatStatusTest:3; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
@@ -1239,7 +1253,7 @@ jobs:
             # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.UploadNoticeTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (20 tests)" /tmp/out.txt
+            grep -q "^OK (23 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the upload report page (UploadReportPageTest)

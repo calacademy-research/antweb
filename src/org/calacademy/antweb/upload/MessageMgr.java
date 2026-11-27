@@ -215,6 +215,7 @@ public class MessageMgr {
     public static final String specialCharacterFound = "specialCharacterFound";
     public static final String specimenIdSpacesRemoved = "specimenIdSpacesRemoved";
     public static final String whitespaceInTaxonField = "whitespaceInTaxonField";
+    public static final String garbledText = "garbledText";   // 2026-11-25, GarbledText: accents damaged before the upload
     public static final String invalidSpecimenCode = "invalidSpecimenCode";
     // public static final String  = "";
     
@@ -323,6 +324,10 @@ public class MessageMgr {
         reportCodesLeft = MAX_REPORT_CODES;
         currentLine = 0;
         reportLinesLeft = MAX_REPORT_LINES;
+        refusedUnknownAdm1 = 0;
+        refusedOutsidePlace = 0;
+        garbledValues = 0;
+        sectionByKey.clear();
         addTests();
     }
 
@@ -368,7 +373,7 @@ public class MessageMgr {
       testList.add(new Test(invalidLatLon, STR, "<b>Invalid lat/lon <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(unrecognizedColumn, STR, "<b>" + COLUMNS_IGNORED_HEADING + "</b>"));
       testList.add(new Test(invalidColumn, SET, "<b>Invalid Column Count <font color=red>(not uploaded)</font></b>"));
-      testList.add(new Test(notValidAdm1, STR, "<b>Not valid Antweb adm1</b>"));
+      testList.add(new Test(notValidAdm1, STR, "<b>Not valid Antweb adm1</b> <font color=green>(uploaded as sent; where there are coordinates, AntWeb sets the adm1 from them the next morning and keeps your text)</font>: click a name to see the country's adm1 names"));   // no request to fix what AntWeb handles (Brian Fisher, 2026-11-21; review of #420)
       //testList.add(new Test(noCasteNotes, STR, "<b>No life stage/sex data. Undiscernable <a href='" + AntwebProps.getDomainApp() + "/casteDisplayPage.do'>caste</a></b>"));
       testList.add(new Test(unrecognizedCaste, STR, "<b>Unrecognized Caste</b>")); // Not a recognized <a href='" + AntwebProps.getDomainApp() + "/casteList.do'>caste</a>
       testList.add(new Test(invalidDateCollectedStart, STR, "<b>Invalid Date Collected Start <font color=green>(uploaded without this date)</font></b>"));
@@ -410,6 +415,7 @@ public class MessageMgr {
 
       testList.add(new Test(specialCharacterFound, SET, "<b>Special Character Found <font color=red>(not uploaded)</font></b>"));
 			testList.add(new Test(specimenIdSpacesRemoved, SET, "<b>Spaces removed from specimen code (auto-corrected — please fix your source data)</b>"));
+      testList.add(new Test(garbledText, SET, "<b>Garbled characters: accented letters were damaged before the upload <font color=green>(uploaded as sent)</font> — please save your source file as UTF-8 with the letters restored and upload again (column: value; the first " + SpecimenUploadParse.GARBLED_SHOWN + ")</b>"));
       testList.add(new Test(whitespaceInTaxonField, SET, "<b>Whitespace in taxonomic field <font color=red>(not uploaded)</font> — please fix your source data</b>"));
       testList.add(new Test(invalidSpecimenCode, SET, "<b>Specimen code with characters other than letters, digits and . _ : / ( ) # + - <font color=red>(not uploaded)</font> — please fix your source data</b>"));
     }     
@@ -644,12 +650,58 @@ public class MessageMgr {
       return attentionCount("corrected");
     }
 
+    /** The place sections of the upload-complete email's summary (2026-11-27): specimens whose adm1 AntWeb does not
+     *  know, whose coordinates lie outside their country or adm1, and values with damaged accents. */
+    public int getUnknownAdm1Count() { return Math.max(sectionCount(notValidAdm1) - refusedUnknownAdm1, 0); }
+    public int getOutsidePlaceCount() { return Math.max(placeCounts()[1] - refusedOutsidePlace, 0); }
+    /** The lines of the two coordinates-outside sections, refused lines included (as getRedFlagCount counts them). */
+    public int getOutsidePlaceLines() { return placeCounts()[1]; }
+    /** The two place counts now (adm1 not known, outside the country or adm1), taken when a line starts (SpecimenUploadParse). */
+    public int[] placeCounts() {
+      return new int[] {sectionCount(notValidAdm1), sectionCount(latLonNotInCountryBounds) + sectionCount(latLonNotInAdm1Bounds)};
+    }
+    /** A line refused after its place checks (review of #420): what it added to the place sections is not a specimen,
+     *  so the email does not count it. The report still lists the line. */
+    public void uncountRefusedPlaces(int[] atLineStart) {
+      if (atLineStart == null) return;
+      int[] now = placeCounts();
+      refusedUnknownAdm1 += Math.max(now[0] - atLineStart[0], 0);
+      refusedOutsidePlace += Math.max(now[1] - atLineStart[1], 0);
+    }
+    private int refusedUnknownAdm1 = 0, refusedOutsidePlace = 0;
+    /** A further line with a value already listed: its code and its file line, without adding to the section's count. */
+    public void addRepeat(String key, String value) {
+      Test test = getTest(key);
+      if (test == null) return;
+      test.recordCode(value, currentCode);
+      test.recordLine(value);
+    }
+    /** The different values with damaged accents (GarbledText), not only the first ones the report lists (review of #420). */
+    public int getGarbledCount() { return garbledValues; }
+    private int garbledValues = 0;
+    public void countGarbled() { ++garbledValues; }
+    /** The damaged-accents section's count, in the report and its notes tile: every different value the upload counted
+     *  (countGarbled), or the values listed when nothing was counted that way. */
+    private int garbledSectionCount(Test test) { return garbledValues > 0 ? garbledValues : test.getCount(); }
+
+    private int sectionCount(String key) {
+      // placeCounts() runs for every line of a file (a CAS file has 265,000): the three sections are looked up once
+      Test test = sectionByKey.get(key);
+      if (test == null) {
+        for (Test t : getTests()) {
+          if (key.equals(t.getKey())) { test = t; sectionByKey.put(key, t); break; }
+        }
+      }
+      return test == null ? 0 : test.getCount();
+    }
+    private final HashMap<String, Test> sectionByKey = new HashMap<>();
+
     /** Lines in the report's other sections (notes: neither corrected, not loaded nor red-flagged), with the
      *  specimens flagged as introduced and those whose caste is indiscernible. */
     public int getNoteCount() {
       int n = 0;
       for (Test test : getTests()) {
-        if (NOTE.equals(kind(test))) n += test.getCount();
+        if (NOTE.equals(kind(test))) n += garbledText.equals(test.getKey()) ? garbledSectionCount(test) : test.getCount();   // as its section (reportSections)
       }
       for (String flag : new String[] {"is_introduced", "noCasteNotes"}) {
         Integer c = flags.get(flag);
@@ -743,6 +795,11 @@ public class MessageMgr {
         if (unrecognizedColumn.equals(test.getKey())) {
           sec.unit = "column";
           sec.units = "columns";
+        } else if (garbledText.equals(test.getKey())) {
+          // every different value, as the email counts them, not only the GARBLED_SHOWN listed (review of #420)
+          sec.unit = "value";
+          sec.units = "values";
+          sec.count = Math.max(garbledSectionCount(test), 1);
         } else if (multipleBioregionsForNonIntroducedTaxa.equals(test.getKey())) {
           sec.unit = "taxon";
           sec.units = "taxa";

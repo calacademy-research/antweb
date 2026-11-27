@@ -176,6 +176,10 @@ public class UploadNotice {
         public int corrected = -1;          // lines AntWeb corrected and loaded (MessageMgr.CORRECTED, not name changes)
         public int nameChanges = 0;         // lines filed under AntCat's current name (MessageMgr.NAME_CHANGES)
         public int alreadyInAntweb = 0;     // codes another group uploaded first: not loaded, nothing to do
+        public int unknownAdm1 = 0;         // specimens whose adm1 AntWeb does not know (MessageMgr.notValidAdm1), 2026-11-27
+        public int outsidePlace = 0;        // specimens whose coordinates lie outside their country or adm1
+        public int outsideInRedFlags = -1;  // the report's lines of those sections, refused lines included, as redFlagged counts them (-1: outsidePlace)
+        public int garbledValues = 0;       // values whose accented letters were damaged before the upload (GarbledText)
         public int imagesSaved = -1;
         public int imagesNotSaved = -1;     // files the Image Uploader did not save (listed in the report)
         public String reportUrl;            // null: no report was written
@@ -211,6 +215,13 @@ public class UploadNotice {
         return plural(i, one, many) + (i == 1 ? " was " : " were ");
     }
 
+    /** The red flags that are coordinates outside the country or adm1, said with the red-flag count so it matches the
+     *  summary, which names them apart (review of #420): " (2 for coordinates outside their country or adm1)". */
+    public static String outsideOfRed(int redFlagged, int outsidePlace) {
+        if (outsidePlace <= 0 || outsidePlace > redFlagged) return "";
+        return " (" + n(outsidePlace) + " for coordinates outside " + (outsidePlace == 1 ? "its" : "their") + " country or adm1)";
+    }
+
     /**
      * What in the report needs the curator's attention, in one or two sentences (Brian Fisher, 2026-10-29):
      * "2 specimens were corrected and 1 line was not loaded; see the report. Please fix them in your own data
@@ -228,12 +239,30 @@ public class UploadNotice {
         if (f.nameChanges > 0) parts.add(were(f.nameChanges, "specimen", "specimens") + "filed under a name AntCat has changed");
         if (f.corrected > 0) parts.add(were(f.corrected, "specimen", "specimens") + "corrected");
         if (f.notLoaded > 0) parts.add(were(f.notLoaded, "line", "lines") + "not loaded");
-        if (f.redFlagged > 0) parts.add(were(f.redFlagged, "specimen", "specimens") + "red-flagged");
-        if (parts.isEmpty()) return "Nothing in the report needs your attention.";
+        // Coordinates outside the country or adm1 are red flags too (MessageMgr's "red" sections): said once, below,
+        // with the reason (review of #420).
+        // redFlagged counts the report's lines, refused lines included: take away the same lines (review of #420)
+        // The red flags not said as coordinates outside: when the summary names those specimens, its own number, so the
+        // two parts add up to the header's red-flag count (review of #420); otherwise the report lines of those sections.
+        int red = Math.max(f.redFlagged - (f.outsidePlace > 0 ? f.outsidePlace : Math.max(f.outsideInRedFlags, 0)), 0);
+        if (red > 0) parts.add(were(red, "specimen", "specimens") + "red-flagged");
+        // Places (Brian Fisher, 2026-11-27: the upload tells the curator, instead of an email by hand). An adm1 AntWeb
+        // does not know is set from the coordinates by AntWeb, so it is said apart, with what AntWeb does, and is not
+        // among the things to fix (MessageMgr, Brian Fisher 2026-11-21: no request to fix what AntWeb handles).
+        String adm1Note = f.unknownAdm1 > 0 ? plural(f.unknownAdm1, "specimen has", "specimens have")
+            + " an adm1 AntWeb does not know" : null;
+        String adm1Does = "where there are coordinates, AntWeb sets the adm1 from them and keeps your text.";
+        if (f.outsidePlace > 0) parts.add(plural(f.outsidePlace, "specimen has", "specimens have")
+            + (f.outsidePlace == 1 ? " coordinates outside its country or adm1" : " coordinates outside their country or adm1"));
+        if (f.garbledValues > 0) parts.add(plural(f.garbledValues, "different value in your file has", "different values in your file have")
+            + " accented letters damaged before the upload (save your file as UTF-8 with the letters restored)");
+        if (parts.isEmpty() && adm1Note == null) return "Nothing in the report needs your attention.";
+        if (parts.isEmpty()) return adm1Note + "; see the report. W" + adm1Does.substring(1);
         String list = parts.size() == 1 ? parts.get(0)
             : String.join(", ", parts.subList(0, parts.size() - 1)) + " and " + parts.get(parts.size() - 1);
-        return list + "; see the report. Please fix " + (f.nameChanges + f.corrected + f.notLoaded + Math.max(f.redFlagged, 0) == 1 ? "it" : "them")
-            + " in your own data before your next upload.";
+        int total = f.nameChanges + f.corrected + f.notLoaded + red + f.outsidePlace + f.garbledValues;
+        String sentence = list + "; see the report. Please fix " + (total == 1 ? "it" : "them") + " in your own data before your next upload.";
+        return adm1Note == null ? sentence : sentence + " " + adm1Note + ": " + adm1Does;
     }
 
     public static String body(Facts f) {
@@ -249,7 +278,11 @@ public class UploadNotice {
         if (f.complete) {
             if (f.uploadId > 0) b.append("Upload ID: ").append(f.uploadId).append("\n");
             if (f.specimensLoaded >= 0) b.append("Specimens loaded: ").append(n(f.specimensLoaded)).append("\n");
-            if (f.redFlagged >= 0) b.append("Red-flagged specimens: ").append(n(f.redFlagged)).append("\n");
+            // The summary below names the specimens with coordinates outside: then not here too, where refused lines
+            // would count and give another number (review of #420).
+            boolean outsideSaidBelow = f.reportUrl != null && f.outsidePlace > 0;
+            if (f.redFlagged >= 0) b.append("Red-flagged specimens: ").append(n(f.redFlagged)).append(outsideSaidBelow ? ""
+                : outsideOfRed(f.redFlagged, f.outsideInRedFlags >= 0 ? f.outsideInRedFlags : f.outsidePlace)).append("\n");
             if (f.imagesSaved >= 0) b.append("Images saved: ").append(n(f.imagesSaved)).append("\n");
             if (f.images && f.imagesNotSaved >= 0) b.append("Images not saved: ").append(n(f.imagesNotSaved)).append("\n");
         } else if (f.failure != null && !f.failure.isEmpty()) {

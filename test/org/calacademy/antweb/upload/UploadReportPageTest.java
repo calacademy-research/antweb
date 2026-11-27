@@ -79,6 +79,10 @@ public class UploadReportPageTest extends TestCase {
             f.nameChanges = mgr.getNameChangeCount();
             f.alreadyInAntweb = mgr.getAlreadyInAntwebCount();
             f.redFlagged = mgr.getRedFlagCount();
+            f.unknownAdm1 = mgr.getUnknownAdm1Count();      // the places of #420, as UploadReportPage.noticeFacts
+            f.outsidePlace = mgr.getOutsidePlaceCount();
+            f.outsideInRedFlags = mgr.getOutsidePlaceLines();
+            f.garbledValues = mgr.getGarbledCount();
             f.specimensLoaded = facts.insertedSpecimens;
             return f;
         }

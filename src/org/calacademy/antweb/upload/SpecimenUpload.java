@@ -97,6 +97,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
             // parse the header 
             String theLine = in.readLine();         
+            setFileHeaders(theLine);   // as the curator wrote them, for the report
             theLine = theLine.toLowerCase();
 
             org.calacademy.antweb.util.BackgroundJobs.step("Removing the group's current specimens (the file replaces them).");
@@ -182,6 +183,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
 					if (LineNumMgr.isGoodCarriageReturnLine(LineNumMgr.fileLine(lineNum))) {   // file numbering (header = 1)
 						// Do the work to populate the specimenItem, taxonItem
 						long t0 = System.nanoTime();
+						int[] placeAtLineStart = getMessageMgr().placeCounts();   // a line processLine skips is not a specimen either (review of #420)
 						String errorMessage = parseLine(theLine, lineNum, specimenItem, taxonItem, otherColumns, colList, uploadFileName, curator);
 						parseNanos += System.nanoTime() - t0;
 						if (errorMessage == null) {
@@ -201,6 +203,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
 							++processLineTotal;
 							processedSome = true;
 						  } else { 
+							getMessageMgr().uncountRefusedPlaces(placeAtLineStart);
 							//A.log("processLine retVal:" + retVal + " lineNum:" + lineNum);
 						  }
 						} else {

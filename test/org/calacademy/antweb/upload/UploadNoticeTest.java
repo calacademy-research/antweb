@@ -255,6 +255,53 @@ public class UploadNoticeTest extends TestCase {
         }
     }
 
+    /** 2026-11-27: place problems are in the summary, said with what AntWeb does (Brian Fisher: the upload tells the
+     *  curator, instead of an email by hand). */
+    public void testAttentionSummaryPlaces() {
+        // An adm1 AntWeb does not know: said apart, with what AntWeb does, and not among the things to fix (review of #420).
+        Facts f = counts(0, 0, 0);
+        f.unknownAdm1 = 12;
+        assertEquals("12 specimens have an adm1 AntWeb does not know; see the report. Where there are coordinates, AntWeb"
+            + " sets the adm1 from them and keeps your text.", UploadNotice.attentionSummary(f));
+        f.unknownAdm1 = 1;
+        assertEquals("1 specimen has an adm1 AntWeb does not know; see the report. Where there are coordinates, AntWeb"
+            + " sets the adm1 from them and keeps your text.", UploadNotice.attentionSummary(f));
+        Facts all = counts(1, 0, 0);
+        all.unknownAdm1 = 3;
+        all.outsidePlace = 2;
+        all.garbledValues = 1;
+        assertEquals("1 specimen was corrected, 2 specimens have coordinates outside their country or adm1 and 1 different"
+            + " value in your file has accented letters damaged before the upload (save your file as UTF-8 with the letters restored);"
+            + " see the report. Please fix them in your own data before your next upload. 3 specimens have an adm1 AntWeb"
+            + " does not know: where there are coordinates, AntWeb sets the adm1 from them and keeps your text.",
+            UploadNotice.attentionSummary(all));
+        Facts one = counts(1, 0, 0);
+        one.unknownAdm1 = 4;
+        assertTrue(UploadNotice.attentionSummary(one).startsWith("1 specimen was corrected; see the report. Please fix it in"));
+        // Coordinates outside the country or adm1 are red flags too: said once, with the reason (review of #420).
+        Facts red = counts(0, 0, 3);
+        red.outsidePlace = 3;
+        assertEquals("3 specimens have coordinates outside their country or adm1; see the report. Please fix them in your own"
+            + " data before your next upload.", UploadNotice.attentionSummary(red));
+        red.redFlagged = 5;
+        assertTrue(UploadNotice.attentionSummary(red).startsWith("2 specimens were red-flagged and 3 specimens have coordinates"));
+        red.outsidePlace = 1;
+        red.redFlagged = 1;
+        assertEquals("1 specimen has coordinates outside its country or adm1; see the report. Please fix it in your own"
+            + " data before your next upload.", UploadNotice.attentionSummary(red));
+        // A refused line with coordinates outside its country: in the red-flag count (the report's lines), not a
+        // specimen. The same lines are taken away, so nothing is said red-flagged (review of #420).
+        Facts refused = counts(0, 0, 1);
+        refused.outsidePlace = 0;
+        refused.outsideInRedFlags = 1;
+        assertEquals("Nothing in the report needs your attention.", UploadNotice.attentionSummary(refused));
+        // the red-flag count of the email's header says how many of its flags are those coordinates
+        assertEquals(" (2 for coordinates outside their country or adm1)", UploadNotice.outsideOfRed(5, 2));
+        assertEquals(" (1 for coordinates outside its country or adm1)", UploadNotice.outsideOfRed(1, 1));
+        assertEquals("", UploadNotice.outsideOfRed(5, 0));
+        assertEquals("", UploadNotice.outsideOfRed(0, 3));
+    }
+
     /** SAM: one Ocymyrmex line corrected (species indet with a subspecies). The whole email. */
     public void testSummaryInEmailOneCorrection() {
         Facts f = counts(1, 0, 0);
@@ -283,7 +330,7 @@ public class UploadNoticeTest extends TestCase {
         assertFalse(UploadNotice.body(f).contains("corrected"));
     }
 
-    /** EcoFoG: 2 lines not loaded (no code), 7 adm1 names not recognised (a note: not counted). The whole email. */
+    /** EcoFoG: 2 lines not loaded (no code). The whole email (the 7 adm1 names AntWeb did not know are counted since 2026-11-27: testAttentionSummaryPlaces). */
     public void testSummaryInEmailLinesNotLoaded() {
         Facts f = counts(0, 2, 0);
         f.fileName = "EcoFoG_specimens.txt";
@@ -329,6 +376,24 @@ public class UploadNoticeTest extends TestCase {
         assertEquals(3, m.getNotLoadedCount());
         assertEquals(1, m.getCorrectedCount());
         assertEquals("subfamily for the genus replaced: a name change (2026-11-02)", 1, m.getNameChangeCount());
+        // The place counts of the summary (2026-11-27): the 7 adm1 names above, coordinates out of bounds, damaged
+        // accents counted in full though the report lists only the first ones.
+        assertEquals(7, m.getUnknownAdm1Count());
+        m.addToMessages(MessageMgr.latLonNotInCountryBounds, "SAM-ENT-011941", "not in South Africa");
+        m.addToMessages(MessageMgr.latLonNotInAdm1Bounds, "SAM-ENT-011942", "not in Western Cape");
+        assertEquals(2, m.getOutsidePlaceCount());
+        // A line refused after its place checks (review of #420): listed in the report, not counted as a specimen.
+        int[] lineStart = m.placeCounts();
+        m.addToMessages(MessageMgr.notValidAdm1, "Atlantis");
+        m.addToMessages(MessageMgr.latLonNotInCountryBounds, "SAM-ENT-011943", "not in South Africa");
+        m.uncountRefusedPlaces(lineStart);
+        assertEquals(7, m.getUnknownAdm1Count());
+        assertEquals(2, m.getOutsidePlaceCount());
+        // a later loaded line counts again
+        m.addToMessages(MessageMgr.notValidAdm1, "Atlantis");
+        assertEquals(8, m.getUnknownAdm1Count());
+        for (int i = 0; i < 50; i++) m.countGarbled();
+        assertEquals(50, m.getGarbledCount());
     }
 
     /** Brian Fisher, 2026-11-02: a code another group uploaded first is "already in AntWeb", not "not loaded";
@@ -370,5 +435,29 @@ public class UploadNoticeTest extends TestCase {
         // A section is never both: no correction section says "(not uploaded)".
         assertNull(MessageMgr.attention("x", "<b>Something <font color=green>(uploaded)</font></b>"));
         assertEquals("notLoaded", MessageMgr.attention("x", "<b>Something <font color=red>(not uploaded)</font></b>"));
+    }
+
+    /** The report's heading for an adm1 AntWeb does not know says what AntWeb does and, as the email, asks for no fix (review of #420). */
+    public void testUnknownAdm1HeadingAsksForNoFix() {
+        String heading = MessageMgr.getMessageDisplay(MessageMgr.notValidAdm1);
+        assertTrue(heading, heading.contains("AntWeb sets the adm1 from them"));
+        assertFalse(heading, heading.contains("in your file"));
+        assertFalse(heading, heading.toLowerCase().contains("please fix"));
+    }
+
+    /** Coordinates outside the country or adm1 are said once in the email, with the summary's number (review of #420). */
+    public void testOutsideCoordinatesSaidOnceInTheEmail() {
+        Facts f = counts(0, 0, 5);
+        f.uploadId = 4321;
+        f.specimensLoaded = 100;
+        f.outsideInRedFlags = 3;   // report lines, one of them refused
+        f.outsidePlace = 2;        // loaded specimens
+        f.reportUrl = "https://www.antweb.org/web/log/specimen/20261127-14:01:07-specimenUpload.html";
+        String body = UploadNotice.body(f);
+        assertTrue(body, body.contains("Red-flagged specimens: 5\n"));
+        assertTrue(body, body.contains("3 specimens were red-flagged and 2 specimens have coordinates outside their country or adm1"));
+        assertFalse(body, body.contains("3 for coordinates"));
+        f.outsidePlace = 0;        // nothing in the summary: the header says them
+        assertTrue(UploadNotice.body(f).contains("Red-flagged specimens: 5 (3 for coordinates outside their country or adm1)\n"));
     }
 }

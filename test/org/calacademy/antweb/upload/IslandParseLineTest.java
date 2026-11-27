@@ -270,6 +270,126 @@ public class IslandParseLineTest extends TestCase {
         assertFalse(report, report.contains("adm1Name=Maui") || report.contains("adm1Name=Isabela"));
     }
 
+    /** A line with HEADER and the given taxon through parseLine: its error (null when it would be loaded). */
+    private Object parseTaxon(String subfamily, String genus, String country, String adm1) throws Exception {
+        return parseTaxon(subfamily, genus, "sp1", country, adm1);
+    }
+
+    private Object parseTaxon(String subfamily, String genus, String species, String country, String adm1) throws Exception {
+        ArrayList<?> columns = (ArrayList<?>) method("getSpecimenColumns", String.class).invoke(upload, HEADER);
+        ArrayList<?> others = (ArrayList<?>) method("getOtherColumns", String.class).invoke(upload, HEADER);
+        Login curator = new Login();
+        curator.setGroupId(group.getId());
+        ++line;
+        String theLine = "test" + String.format("%07d", line) + "\t" + subfamily + "\t" + genus + "\t" + species + "\t" + country + "\t" + adm1 + "\t\t";
+        return method("parseLine", String.class, int.class, Hashtable.class, Hashtable.class, ArrayList.class, ArrayList.class,
+            String.class, Login.class).invoke(upload, theLine, line, new Hashtable<String, Object>(), new Hashtable<String, Object>(), others, columns, "garbled.txt", curator);
+    }
+
+    /**
+     * A line parseLine refuses after its adm1 check (a species name with a quote: invalidSpeciesName) adds nothing to
+     * the email's count of adm1 names AntWeb does not know; a loaded line with the same adm1 does (review of #420).
+     */
+    public void testALineRefusedAfterThePlaceChecksIsNotCounted() throws Exception {
+        MessageMgr messages = ((AntwebUpload) upload).getMessageMgr();
+        int before = messages.getUnknownAdm1Count();
+        assertNotNull(parseTaxon("myrmicinae", "pheidole", "mega\"cephala", "United States", "Lemuria"));
+        assertEquals("a refused line is not counted", before, messages.getUnknownAdm1Count());
+        parse("United States", "Lemuria");
+        assertEquals("a loaded line is", before + 1, messages.getUnknownAdm1Count());
+    }
+
+    /** The codes the report keeps for one line of a section (MessageMgr.Test.codesByLine). */
+    private int codesOf(String key, String reportLine) throws Exception {
+        MessageMgr messages = ((AntwebUpload) upload).getMessageMgr();
+        Method getTest = MessageMgr.class.getDeclaredMethod("getTest", String.class);
+        getTest.setAccessible(true);
+        Object test = getTest.invoke(messages, key);
+        Field f = test.getClass().getDeclaredField("codesByLine");
+        f.setAccessible(true);
+        Object codes = ((Map<?, ?>) f.get(test)).get(reportLine);
+        return codes == null ? 0 : ((org.calacademy.antweb.util.SpecimenCodes) codes).count();
+    }
+
+    /**
+     * Damaged accents (#420, reviews): each different value is counted once for the email and listed once in the report,
+     * with the codes of every line that has it; a refused line is not counted; past GARBLED_SHOWN values only the count
+     * grows.
+     */
+    public void testGarbledValuesInParseLine() throws Exception {
+        MessageMgr messages = ((AntwebUpload) upload).getMessageMgr();
+        String damaged = "Li\u221a\u00a8ge";      // "Liège" saved in one encoding and read in another
+        for (int i = 0; i < 3; i++) {
+            messages.setCurrentLine(line + 1);   // as SpecimenUpload's loop does before each parseLine
+            parse("United States", damaged);
+        }
+        messages.setCurrentLine(0);
+        assertEquals("one different value", 1, messages.getGarbledCount());
+        assertEquals("the codes of all three lines", 3, codesOf(MessageMgr.garbledText, "adm1: " + damaged));
+        Field lineCounts = MessageMgr.class.getDeclaredMethod("getTest", String.class).getReturnType().getDeclaredField("fileLineCounts");
+        lineCounts.setAccessible(true);
+        Method getTest = MessageMgr.class.getDeclaredMethod("getTest", String.class);
+        getTest.setAccessible(true);
+        assertEquals("and their file lines", Integer.valueOf(3),
+            ((Map<?, ?>) lineCounts.get(getTest.invoke(messages, MessageMgr.garbledText))).get("adm1: " + damaged));
+        // a refused line (a subfamily that is not an ant, with no ant genus) adds nothing
+        assertNotNull(parseTaxon("pselaphinae", "batrisodes", "United States", "Namur\u221a\u00a9"));
+        assertEquals("a refused line is not counted", 1, messages.getGarbledCount());
+        assertEquals(0, codesOf(MessageMgr.garbledText, "adm1: Namur\u221a\u00a9"));
+        // many different values: all counted, the first GARBLED_SHOWN listed
+        for (int i = 0; i < 45; i++) parse("United States", "Place" + i + "\u221a\u00a9");
+        assertEquals(46, messages.getGarbledCount());
+        assertEquals("listed", 1, codesOf(MessageMgr.garbledText, "adm1: Place38\u221a\u00a9"));
+        assertEquals("past the first 40: counted, not listed", 0, codesOf(MessageMgr.garbledText, "adm1: Place40\u221a\u00a9"));
+        parse("United States", "Place44\u221a\u00a9");
+        assertEquals("a repeat of a value not listed adds no code", 0, codesOf(MessageMgr.garbledText, "adm1: Place44\u221a\u00a9"));
+        assertEquals(46, messages.getGarbledCount());
+        // the report's section counts the values as the email does, not the 40 listed
+        report();
+        MessageMgr.ReportSection section = null;
+        for (MessageMgr.ReportSection s : messages.reportSections()) if (MessageMgr.garbledText.equals(s.key)) section = s;
+        assertNotNull(section);
+        assertEquals("value", section.unit);
+        assertEquals(46, section.count);
+    }
+
+    /** The report names a damaged value's column as the curator's file does: CollXYAccuracy, not collectionnotes (review of #420). */
+    public void testGarbledValueNamesTheFileColumn() throws Exception {
+        String header = "SpecimenCode\tSubfamily\tGenus\tSpecies\tCountry\tAdm1\tLocLatitude\tLocLongitude\tCollXYAccuracy";
+        method("setFileHeaders", String.class).invoke(upload, header);   // as importSpecimens: before the header is lowercased
+        ArrayList<?> columns = (ArrayList<?>) method("getSpecimenColumns", String.class).invoke(upload, header.toLowerCase());
+        ArrayList<?> others = (ArrayList<?>) method("getOtherColumns", String.class).invoke(upload, header.toLowerCase());
+        try {
+            Login curator = new Login();
+            curator.setGroupId(group.getId());
+            ++line;
+            String damaged = "Li\u221a\u00a8ge";
+            String theLine = "test" + String.format("%07d", line) + "\tmyrmicinae\tpheidole\tmegacephala\tUnited States\t" + damaged + "\t\t\t" + damaged;
+            assertNull(method("parseLine", String.class, int.class, Hashtable.class, Hashtable.class, ArrayList.class, ArrayList.class,
+                String.class, Login.class).invoke(upload, theLine, line, new Hashtable<String, Object>(), new Hashtable<String, Object>(), others, columns, "header.txt", curator));
+            assertEquals(1, codesOf(MessageMgr.garbledText, "Adm1: " + damaged));
+            assertEquals(1, codesOf(MessageMgr.garbledText, "CollXYAccuracy: " + damaged));
+            assertEquals(0, codesOf(MessageMgr.garbledText, "collectionnotes: " + damaged));
+        } finally {
+            method("setFileHeaders", String.class).invoke(upload, (Object) null);
+        }
+    }
+
+    /** A byte-order mark and quotes around a header are not shown as part of the column's name (review of #420). */
+    public void testFileHeaderDropsByteOrderMarkAndQuotes() throws Exception {
+        method("setFileHeaders", String.class).invoke(upload, "\uFEFFSpecimenCode\t\"Adm1\"\t'Country'\t \tGenus");
+        try {
+            java.lang.reflect.Method head = method("fileHeader", int.class, String.class);
+            assertEquals("SpecimenCode", head.invoke(upload, 0, "code"));
+            assertEquals("Adm1", head.invoke(upload, 1, "adm1"));
+            assertEquals("Country", head.invoke(upload, 2, "country"));
+            assertEquals("collectionnotes", head.invoke(upload, 3, "collectionnotes"));   // blank header: AntWeb's name
+            assertEquals("caste", head.invoke(upload, 9, "caste"));                       // past the header: AntWeb's name
+        } finally {
+            method("setFileHeaders", String.class).invoke(upload, (Object) null);
+        }
+    }
+
     /** Mauritius + adm1 Rodrigues: the country Rodrigues (not flagged as an island: no island_country). */
     public void testRodriguesOfMauritius() throws Exception {
         assertEquals("Rodrigues | - | - | Africa | Eastern Africa | Malagasy", place(parse("Mauritius", "Rodrigues")));
