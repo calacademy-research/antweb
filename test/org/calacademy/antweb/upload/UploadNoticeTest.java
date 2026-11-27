@@ -258,28 +258,37 @@ public class UploadNoticeTest extends TestCase {
     /** 2026-11-27: place problems are in the summary, said with what AntWeb does (Brian Fisher: the upload tells the
      *  curator, instead of an email by hand). */
     public void testAttentionSummaryPlaces() {
+        // An adm1 AntWeb does not know: said apart, with what AntWeb does, and not among the things to fix (review of #420).
         Facts f = counts(0, 0, 0);
         f.unknownAdm1 = 12;
-        assertEquals("12 specimens have an adm1 AntWeb does not know (where there are coordinates, AntWeb sets it from them and keeps your text);"
-            + " see the report. Please fix them in your own data before your next upload.", UploadNotice.attentionSummary(f));
+        assertEquals("12 specimens have an adm1 AntWeb does not know; see the report. Where there are coordinates, AntWeb"
+            + " sets the adm1 from them and keeps your text.", UploadNotice.attentionSummary(f));
         f.unknownAdm1 = 1;
-        assertEquals("1 specimen has an adm1 AntWeb does not know (where there are coordinates, AntWeb sets it from them and keeps your text);"
-            + " see the report. Please fix it in your own data before your next upload.", UploadNotice.attentionSummary(f));
+        assertEquals("1 specimen has an adm1 AntWeb does not know; see the report. Where there are coordinates, AntWeb"
+            + " sets the adm1 from them and keeps your text.", UploadNotice.attentionSummary(f));
         Facts all = counts(1, 0, 0);
         all.unknownAdm1 = 3;
         all.outsidePlace = 2;
         all.garbledValues = 1;
-        assertEquals("1 specimen was corrected, 3 specimens have an adm1 AntWeb does not know (where there are coordinates, AntWeb"
-            + " sets it from them and keeps your text), 2 specimens have coordinates outside their country or adm1 and 1 different value has accented letters"
-            + " damaged before the upload (save your file as UTF-8 with the letters restored); see the report. Please fix them"
-            + " in your own data before your next upload.", UploadNotice.attentionSummary(all));
+        assertEquals("1 specimen was corrected, 2 specimens have coordinates outside their country or adm1 and 1 different"
+            + " value has accented letters damaged before the upload (save your file as UTF-8 with the letters restored);"
+            + " see the report. Please fix them in your own data before your next upload. 3 specimens have an adm1 AntWeb"
+            + " does not know: where there are coordinates, AntWeb sets the adm1 from them and keeps your text.",
+            UploadNotice.attentionSummary(all));
+        Facts one = counts(1, 0, 0);
+        one.unknownAdm1 = 4;
+        assertTrue(UploadNotice.attentionSummary(one).startsWith("1 specimen was corrected; see the report. Please fix it in"));
         // Coordinates outside the country or adm1 are red flags too: said once, with the reason (review of #420).
         Facts red = counts(0, 0, 3);
         red.outsidePlace = 3;
         assertEquals("3 specimens have coordinates outside their country or adm1; see the report. Please fix them in your own"
             + " data before your next upload.", UploadNotice.attentionSummary(red));
         red.redFlagged = 5;
-        assertTrue(UploadNotice.attentionSummary(red).startsWith("2 specimens were red-flagged, 3 specimens have coordinates"));
+        assertTrue(UploadNotice.attentionSummary(red).startsWith("2 specimens were red-flagged and 3 specimens have coordinates"));
+        red.outsidePlace = 1;
+        red.redFlagged = 1;
+        assertEquals("1 specimen has coordinates outside its country or adm1; see the report. Please fix it in your own"
+            + " data before your next upload.", UploadNotice.attentionSummary(red));
     }
 
     /** SAM: one Ocymyrmex line corrected (species indet with a subspecies). The whole email. */

@@ -57,6 +57,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     private final HashSet<String> garbledSeen = new HashSet<>();      // every different "column: value" of the upload
     private final ArrayList<String> garbledPending = new ArrayList<>(); // those of the line being read
     static final int GARBLED_SHOWN = 40;
+    private final HashSet<String> garbledListed = new HashSet<>();   // the values listed in the report (the first GARBLED_SHOWN)
+    private boolean isGarbledShown(String value) { return garbledListed.contains(value); }
 
     /**
      * Brian Fisher, 2026-11-03: only a morphospecies or indet (or a line without species) moves with a synonym genus to
@@ -349,17 +351,6 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                     break;
                 }
             } // end for looping through columns
-
-            // Damaged accents of this line (review of #420): said after the columns, so the report names this line's code
-            // and a line refused above is not counted. The email counts the different values; the report lists the first
-            // GARBLED_SHOWN of them.
-            if (errorMessage == null) {
-                for (String value : garbledPending) {
-                    if (!garbledSeen.add(value)) continue;
-                    getMessageMgr().countGarbled();
-                    if (garbledSeen.size() <= GARBLED_SHOWN) getMessageMgr().addToMessages(MessageMgr.garbledText, Html.esc(value));
-                }
-            }
 
             //A.log("XXX10 localityCode:" + (String) specimenItem.get("localitycode"));
             // ONCE WE HAVE THE COLUMNS PARSED, NOW WE CAN TOUCH DATA...
@@ -940,6 +931,24 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             s_log.error("parseLine() e:" + e);
             //AntwebUtil.errorStackTrace(e);
             errorMessage = "e:" + e;
+        }
+
+        // Damaged accents of this line (reviews of #420): said at the end of parseLine, so a line refused anywhere above
+        // (errorMessage set) is not counted, and the report names this line's code. The email counts the different
+        // values; the report lists the first GARBLED_SHOWN of them, each with the codes of every line that has it.
+        if (errorMessage == null) {
+            for (String value : garbledPending) {
+                String shown = Html.esc(value);
+                if (garbledSeen.add(value)) {
+                    getMessageMgr().countGarbled();
+                    if (garbledSeen.size() <= GARBLED_SHOWN) {
+                        garbledListed.add(value);
+                        getMessageMgr().addToMessages(MessageMgr.garbledText, shown);
+                    }
+                } else if (isGarbledShown(value)) {
+                    getMessageMgr().addCode(MessageMgr.garbledText, shown, getMessageMgr().getCurrentCode());
+                }
+            }
         }
 
         Profiler.profile("parseLine", startTime);
