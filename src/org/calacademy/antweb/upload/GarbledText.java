@@ -33,6 +33,10 @@ public final class GarbledText {
         + "|(?!l\u00B7l)\\p{Ll}\u00B7");
 
     public static boolean is(String text) {
-        return text != null && !text.isEmpty() && GARBLED.matcher(text).find();
+        if (text == null || text.isEmpty()) return false;
+        // Plain ASCII, nearly every cell of a file: no pattern needed (a CAS file has about 13 million cells).
+        boolean ascii = true;
+        for (int i = 0; i < text.length() && ascii; i++) ascii = text.charAt(i) < 0x80;
+        return !ascii && GARBLED.matcher(text).find();
     }
 }

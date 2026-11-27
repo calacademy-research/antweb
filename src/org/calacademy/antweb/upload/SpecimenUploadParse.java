@@ -172,8 +172,11 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
                         // 2026-11-25: accents damaged before the upload ("Li" + a square-root sign + "ge"): said in the report,
                         // uploaded as sent. The first GARBLED_SHOWN distinct values only: a whole damaged file would fill the report.
-                        if (garbledSeen.size() < GARBLED_SHOWN && GarbledText.is(element) && garbledSeen.add(col + ": " + element)) {
-                            getMessageMgr().addToMessages(MessageMgr.garbledText, Html.esc(col + ": " + element));
+                        if (GarbledText.is(element)) {
+                            getMessageMgr().countGarbled();   // every one, for the email; the report lists the first GARBLED_SHOWN
+                            if (garbledSeen.size() < GARBLED_SHOWN && garbledSeen.add(col + ": " + element)) {
+                                getMessageMgr().addToMessages(MessageMgr.garbledText, Html.esc(col + ": " + element));
+                            }
                         }
  
                         /* This code block handles columns and headers as listed and defined in AntwebUpload */

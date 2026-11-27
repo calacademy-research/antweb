@@ -650,7 +650,10 @@ public class MessageMgr {
      *  know, whose coordinates lie outside their country or adm1, and values with damaged accents. */
     public int getUnknownAdm1Count() { return sectionCount(notValidAdm1); }
     public int getOutsidePlaceCount() { return sectionCount(latLonNotInCountryBounds) + sectionCount(latLonNotInAdm1Bounds); }
-    public int getGarbledCount() { return sectionCount(garbledText); }
+    /** Every value with damaged accents (GarbledText), not only the first ones the report lists (review of #420). */
+    public int getGarbledCount() { return garbledValues; }
+    private int garbledValues = 0;
+    public void countGarbled() { ++garbledValues; }
 
     private int sectionCount(String key) {
       for (Test test : getTests()) {

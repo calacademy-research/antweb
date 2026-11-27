@@ -260,19 +260,26 @@ public class UploadNoticeTest extends TestCase {
     public void testAttentionSummaryPlaces() {
         Facts f = counts(0, 0, 0);
         f.unknownAdm1 = 12;
-        assertEquals("12 specimens have an adm1 AntWeb does not know (AntWeb sets it from the coordinates and keeps your text);"
+        assertEquals("12 specimens have an adm1 AntWeb does not know (with coordinates, AntWeb sets it from them and keeps your text);"
             + " see the report. Please fix them in your own data before your next upload.", UploadNotice.attentionSummary(f));
         f.unknownAdm1 = 1;
-        assertEquals("1 specimen has an adm1 AntWeb does not know (AntWeb sets it from the coordinates and keeps your text);"
+        assertEquals("1 specimen has an adm1 AntWeb does not know (with coordinates, AntWeb sets it from them and keeps your text);"
             + " see the report. Please fix it in your own data before your next upload.", UploadNotice.attentionSummary(f));
         Facts all = counts(1, 0, 0);
         all.unknownAdm1 = 3;
         all.outsidePlace = 2;
         all.garbledValues = 1;
-        assertEquals("1 specimen was corrected, 3 specimens have an adm1 AntWeb does not know (AntWeb sets it from the coordinates"
-            + " and keeps your text), 2 specimens have coordinates outside their country or adm1 and 1 value has accented letters"
+        assertEquals("1 specimen was corrected, 3 specimens have an adm1 AntWeb does not know (with coordinates, AntWeb sets it"
+            + " from them and keeps your text), 2 specimens have coordinates outside their country or adm1 and 1 value has accented letters"
             + " damaged before the upload (save your file as UTF-8 with the letters restored); see the report. Please fix them"
             + " in your own data before your next upload.", UploadNotice.attentionSummary(all));
+        // Coordinates outside the country or adm1 are red flags too: said once, with the reason (review of #420).
+        Facts red = counts(0, 0, 3);
+        red.outsidePlace = 3;
+        assertEquals("3 specimens have coordinates outside their country or adm1; see the report. Please fix them in your own"
+            + " data before your next upload.", UploadNotice.attentionSummary(red));
+        red.redFlagged = 5;
+        assertTrue(UploadNotice.attentionSummary(red).startsWith("2 specimens were red-flagged, 3 specimens have coordinates"));
     }
 
     /** SAM: one Ocymyrmex line corrected (species indet with a subspecies). The whole email. */
@@ -349,6 +356,14 @@ public class UploadNoticeTest extends TestCase {
         assertEquals(3, m.getNotLoadedCount());
         assertEquals(1, m.getCorrectedCount());
         assertEquals("subfamily for the genus replaced: a name change (2026-11-02)", 1, m.getNameChangeCount());
+        // The place counts of the summary (2026-11-27): the 7 adm1 names above, coordinates out of bounds, damaged
+        // accents counted in full though the report lists only the first ones.
+        assertEquals(7, m.getUnknownAdm1Count());
+        m.addToMessages(MessageMgr.latLonNotInCountryBounds, "SAM-ENT-011941", "not in South Africa");
+        m.addToMessages(MessageMgr.latLonNotInAdm1Bounds, "SAM-ENT-011942", "not in Western Cape");
+        assertEquals(2, m.getOutsidePlaceCount());
+        for (int i = 0; i < 50; i++) m.countGarbled();
+        assertEquals(50, m.getGarbledCount());
     }
 
     /** Brian Fisher, 2026-11-02: a code another group uploaded first is "already in AntWeb", not "not loaded";
