@@ -177,8 +177,8 @@ public final class SpecimenUploadJob implements BackgroundJobs.Work {
         StringBuilder s = new StringBuilder("Upload complete: ")
             .append(String.format("%,d", d.getInsertedSpecimenCount())).append(" specimens loaded");
         int red = d.getMessageMgr().getRedFlagCount();
-        if (red > 0) s.append(", ").append(String.format("%,d", red)).append(" of them red-flagged")
-            .append(UploadNotice.outsideOfRed(red, d.getMessageMgr().getOutsidePlaceLines()));
+        String outsideRed = UploadNotice.outsideOfRed(red, d.getMessageMgr().getOutsidePlaceLines());
+        if (red > 0) s.append(", ").append(String.format("%,d", red)).append(" of them red-flagged").append(outsideRed);
         s.append(". Upload ID ").append(uploadId).append(".");
         // The upload-complete email's summary, when lines were corrected or not loaded (red flags are said above).
         UploadNotice.Facts f = new UploadNotice.Facts();
@@ -187,7 +187,8 @@ public final class SpecimenUploadJob implements BackgroundJobs.Work {
         f.corrected = d.getMessageMgr().getCorrectedCount();
         f.nameChanges = d.getMessageMgr().getNameChangeCount();
         f.unknownAdm1 = d.getMessageMgr().getUnknownAdm1Count();
-        f.outsidePlace = d.getMessageMgr().getOutsidePlaceCount();
+        // Said once: when the red-flag part above names them, not again in the summary (review of #420).
+        f.outsidePlace = red > 0 && !outsideRed.isEmpty() ? 0 : d.getMessageMgr().getOutsidePlaceCount();
         f.garbledValues = d.getMessageMgr().getGarbledCount();
         if (f.notLoaded + f.corrected + f.nameChanges + f.unknownAdm1 + f.outsidePlace + f.garbledValues > 0) s.append(" ").append(UploadNotice.attentionSummary(f));
         String note = UploadNotice.plain(d.getMessage());

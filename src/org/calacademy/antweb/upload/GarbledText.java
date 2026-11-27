@@ -33,6 +33,15 @@ public final class GarbledText {
             || column.contains("remarks") || column.contains("description");
     }
 
+    private static final java.util.Set<String> NAME_COLUMNS = java.util.Set.of("country", "adm1", "adm2", "localityname",
+        "subfamily", "tribe", "genus", "subgenus", "speciesgroup", "species", "subspecies");
+
+    /** A place or taxon column, the only kind where the middle-dot rule applies: elsewhere (Collected By, notes) a
+     *  middle dot after a letter can be a real separator ("Smith\u00B7Jones"; review of #420). */
+    public static boolean isNameColumn(String column) {
+        return column != null && NAME_COLUMNS.contains(column);
+    }
+
     private static final Pattern GARBLED = Pattern.compile(
         "\uFFFD"
         + "|[\u00C3\u00C2][\u0080-\u00BF]"

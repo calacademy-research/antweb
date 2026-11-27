@@ -29,5 +29,10 @@ public class GarbledTextTest extends TestCase {
         assertTrue(GarbledText.is("Li\u221A\u00AEge, leaf litter", true));
         assertTrue(GarbledText.isFreeText("localitynotes") && GarbledText.isFreeText("microhabitat") && !GarbledText.isFreeText("adm1")
             && !GarbledText.isFreeText("localityname"));
+        // the middle-dot rule only in place and taxon columns (review of #420)
+        assertTrue(GarbledText.isNameColumn("adm1") && GarbledText.isNameColumn("genus") && GarbledText.isNameColumn("localityname"));
+        assertFalse(GarbledText.isNameColumn("collectedby") || GarbledText.isNameColumn("determinedby") || GarbledText.isNameColumn(null));
+        assertFalse(GarbledText.is("Smith\u00B7Jones", !GarbledText.isNameColumn("collectedby")));
+        assertTrue(GarbledText.is("Panam\u00B7", !GarbledText.isNameColumn("country")));
     }
 }

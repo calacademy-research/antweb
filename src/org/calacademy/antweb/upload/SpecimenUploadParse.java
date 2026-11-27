@@ -181,7 +181,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                         // uploaded as sent. The first GARBLED_SHOWN distinct values only: a whole damaged file would fill the report.
                         // The columns AntWeb maps only: the others go unread into the record's other columns.
                         // The report names the column as the curator's file does (LifeStageSex, not caste; review of #420).
-                        if (GarbledText.is(element, GarbledText.isFreeText(col))) garbledPending.add(fileHeader(colIndex, col) + ": " + element);   // said once the line's code is known
+                        if (GarbledText.is(element, !GarbledText.isNameColumn(col))) garbledPending.add(fileHeader(colIndex, col) + ": " + element);   // said once the line's code is known
  
                         /* This code block handles columns and headers as listed and defined in AntwebUpload */
                     if (taxonomyHeaders.contains(col)) {
