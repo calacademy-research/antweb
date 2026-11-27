@@ -271,7 +271,7 @@ public class UploadNoticeTest extends TestCase {
         all.outsidePlace = 2;
         all.garbledValues = 1;
         assertEquals("1 specimen was corrected, 2 specimens have coordinates outside their country or adm1 and 1 different"
-            + " value has accented letters damaged before the upload (save your file as UTF-8 with the letters restored);"
+            + " value in your file has accented letters damaged before the upload (save your file as UTF-8 with the letters restored);"
             + " see the report. Please fix them in your own data before your next upload. 3 specimens have an adm1 AntWeb"
             + " does not know: where there are coordinates, AntWeb sets the adm1 from them and keeps your text.",
             UploadNotice.attentionSummary(all));

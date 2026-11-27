@@ -252,7 +252,7 @@ public class UploadNotice {
         String adm1Does = "where there are coordinates, AntWeb sets the adm1 from them and keeps your text.";
         if (f.outsidePlace > 0) parts.add(plural(f.outsidePlace, "specimen has", "specimens have")
             + (f.outsidePlace == 1 ? " coordinates outside its country or adm1" : " coordinates outside their country or adm1"));
-        if (f.garbledValues > 0) parts.add(plural(f.garbledValues, "different value has", "different values have")
+        if (f.garbledValues > 0) parts.add(plural(f.garbledValues, "different value in your file has", "different values in your file have")
             + " accented letters damaged before the upload (save your file as UTF-8 with the letters restored)");
         if (parts.isEmpty() && adm1Note == null) return "Nothing in the report needs your attention.";
         if (parts.isEmpty()) return adm1Note + "; see the report. W" + adm1Does.substring(1);

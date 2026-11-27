@@ -375,6 +375,21 @@ public class IslandParseLineTest extends TestCase {
         }
     }
 
+    /** A byte-order mark and quotes around a header are not shown as part of the column's name (review of #420). */
+    public void testFileHeaderDropsByteOrderMarkAndQuotes() throws Exception {
+        method("setFileHeaders", String.class).invoke(upload, "\uFEFFSpecimenCode\t\"Adm1\"\t'Country'\t \tGenus");
+        try {
+            java.lang.reflect.Method head = method("fileHeader", int.class, String.class);
+            assertEquals("SpecimenCode", head.invoke(upload, 0, "code"));
+            assertEquals("Adm1", head.invoke(upload, 1, "adm1"));
+            assertEquals("Country", head.invoke(upload, 2, "country"));
+            assertEquals("collectionnotes", head.invoke(upload, 3, "collectionnotes"));   // blank header: AntWeb's name
+            assertEquals("caste", head.invoke(upload, 9, "caste"));                       // past the header: AntWeb's name
+        } finally {
+            method("setFileHeaders", String.class).invoke(upload, (Object) null);
+        }
+    }
+
     /** Mauritius + adm1 Rodrigues: the country Rodrigues (not flagged as an island: no island_country). */
     public void testRodriguesOfMauritius() throws Exception {
         assertEquals("Rodrigues | - | - | Africa | Eastern Africa | Malagasy", place(parse("Mauritius", "Rodrigues")));

@@ -1299,7 +1299,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     /** The file's own name of column colIndex; the AntWeb name when the header is not known. */
     String fileHeader(int colIndex, String col) {
         if (fileHeaders == null || colIndex >= fileHeaders.length) return col;
-        String head = fileHeaders[colIndex].trim();
+        // A byte-order mark on the first header and quotes around a header are not part of the name (review of #420).
+        String head = fileHeaders[colIndex].replace("\uFEFF", "").trim();
+        if (head.length() >= 2 && (head.charAt(0) == '"' || head.charAt(0) == '\'')
+            && head.charAt(head.length() - 1) == head.charAt(0)) head = head.substring(1, head.length() - 1).trim();
         return head.isEmpty() ? col : head;
     }
 
