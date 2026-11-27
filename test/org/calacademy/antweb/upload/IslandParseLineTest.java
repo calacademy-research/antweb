@@ -353,6 +353,13 @@ public class IslandParseLineTest extends TestCase {
         parse("United States", "Place44\u221a\u00a9");
         assertEquals("a repeat of a value not listed adds no code", 0, codesOf(MessageMgr.garbledText, "adm1: Place44\u221a\u00a9"));
         assertEquals(46, messages.getGarbledCount());
+        // the report's section counts the values as the email does, not the 40 listed
+        report();
+        MessageMgr.ReportSection section = null;
+        for (MessageMgr.ReportSection s : messages.reportSections()) if (MessageMgr.garbledText.equals(s.key)) section = s;
+        assertNotNull(section);
+        assertEquals("value", section.unit);
+        assertEquals(46, section.count);
     }
 
     /** Mauritius + adm1 Rodrigues: the country Rodrigues (not flagged as an island: no island_country). */

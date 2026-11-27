@@ -327,6 +327,7 @@ public class MessageMgr {
         refusedUnknownAdm1 = 0;
         refusedOutsidePlace = 0;
         garbledValues = 0;
+        sectionByKey.clear();
         addTests();
     }
 
@@ -682,11 +683,16 @@ public class MessageMgr {
     public void uncountGarbled() { if (garbledValues > 0) --garbledValues; }
 
     private int sectionCount(String key) {
-      for (Test test : getTests()) {
-        if (key.equals(test.getKey())) return test.getCount();
+      // placeCounts() runs for every line of a file (a CAS file has 265,000): the three sections are looked up once
+      Test test = sectionByKey.get(key);
+      if (test == null) {
+        for (Test t : getTests()) {
+          if (key.equals(t.getKey())) { test = t; sectionByKey.put(key, t); break; }
+        }
       }
-      return 0;
+      return test == null ? 0 : test.getCount();
     }
+    private final HashMap<String, Test> sectionByKey = new HashMap<>();
 
     /** Lines in the report's other sections (notes: neither corrected, not loaded nor red-flagged), with the
      *  specimens flagged as introduced and those whose caste is indiscernible. */
@@ -787,6 +793,11 @@ public class MessageMgr {
         if (unrecognizedColumn.equals(test.getKey())) {
           sec.unit = "column";
           sec.units = "columns";
+        } else if (garbledText.equals(test.getKey())) {
+          // every different value, as the email counts them, not only the GARBLED_SHOWN listed (review of #420)
+          sec.unit = "value";
+          sec.units = "values";
+          sec.count = Math.max(garbledValues, 1);
         } else if (multipleBioregionsForNonIntroducedTaxa.equals(test.getKey())) {
           sec.unit = "taxon";
           sec.units = "taxa";
